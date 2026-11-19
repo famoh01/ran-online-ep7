@@ -64,6 +64,9 @@
     <PostBuildEvent>
       <Command>regsvr32 /s /c "$(TargetPath)"</Command>
     </PostBuildEvent>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -92,6 +95,9 @@
     <PostBuildEvent>
       <Command>regsvr32 /s /c "$(TargetPath)"</Command>
     </PostBuildEvent>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include=".\DaumParam\DaumGameParameter.cpp" />
@@ -123,6 +129,7 @@
   <ItemGroup>
     <Midl Include=".\MinWebLauncher.idl">
       <OutputDirectory>$(ProjectDir)</OutputDirectory>
+      <TypeLibraryName>$(ProjectDir)MinWebLauncher.tlb</TypeLibraryName>
     </Midl>
   </ItemGroup>
   <ItemGroup>
