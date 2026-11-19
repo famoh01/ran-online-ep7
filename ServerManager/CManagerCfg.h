@@ -28,7 +28,7 @@
 #include "strsafe.h" // Safe string function
 
 // Auto Link Library Files
-#pragma comment (lib,"strsafe.lib")
+/* strsafe.lib pragma removed: modern SDK strsafe is inline */
 
 #define USER_ID_LENGTH				20
 #define	USER_PASS_LENGTH				20

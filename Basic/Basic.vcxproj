@@ -1497,8 +1497,7 @@
     </ProjectReference>
     <ProjectReference Include="..\MfcExLib\MfcExLib.vcxproj">
       <Project>{D94E8461-50B9-46AC-A08F-EFA6811CE2F5}</Project>
-      <LinkLibraryDependencies>false</LinkLibraryDependencies>
-    </ProjectReference>
+          </ProjectReference>
     <ProjectReference Include="..\EngineSoundLib\EngineSoundLib.vcxproj">
       <Project>{DD642AD2-FD38-4171-9432-3EFE08EC7CAD}</Project>
     </ProjectReference>
