@@ -179,7 +179,7 @@ DWORD GLClubDeathMatch::IsBattleWeekDay ( int nDayOfWeek, int nDay )
 {
 	if ( IsBattle() )	return UINT_MAX;
 
-	//	Note : °áÁ¤ÀüÀÌ ÀÖ´Â ³¯ÀÎÁö °Ë»ç. °áÁ¤ÀüÀÌ ¿À´Ã ÀÖ¾ú´ÂÁö °Ë»ç.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ë»ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ö¾ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ë»ï¿½.
 	for ( DWORD i=0; i<MAX_TIME; ++i )
 	{
 		if ( (nDayOfWeek==m_sCdmTIME[i].dwWeekDay) && (m_dwLastBattleDay!=nDay) )
@@ -190,10 +190,10 @@ DWORD GLClubDeathMatch::IsBattleWeekDay ( int nDayOfWeek, int nDay )
 	return UINT_MAX;
 }
 
-// ¼±µµÅ¬·´ ½ÃÀÛ½Ã°£ÀÎ°¡?
+// ï¿½ï¿½ï¿½ï¿½Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½Û½Ã°ï¿½ï¿½Î°ï¿½?
 bool GLClubDeathMatch::IsBattleHour ( DWORD dwORDER, int nHour )
 {
-	// ¼±µµÅ¬·´ °áÁ¤ÀüÀº ³¯Â¥°¡ ´Ù¸¥ ¿äÀÏ ÃÑ 4¹øÀÌ °¡´ÉÇÏ´Ù.
+	// ï¿½ï¿½ï¿½ï¿½Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Â¥ï¿½ï¿½ ï¿½Ù¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ 4ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.
 	if ( dwORDER>=MAX_TIME )
 	{
 		return false;
@@ -209,14 +209,14 @@ bool GLClubDeathMatch::IsBattleHour ( DWORD dwORDER, int nHour )
 	}	
 }
 
-// ÃÖÁ¾ÀûÀ¸·Î ¼±µµÅ¬·´°áÁ¤ÀüÀÌ ÀÏ¾î³­ ³¯À» ¼¼ÆÃÇÑ´Ù.
-// ÇÏ·ç¿¡ µÎ¹ø ÀÏ¾î³ªÁö ¾Ê±â À§ÇØ¼­ÀÌ´Ù.
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Å¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ï¾î³­ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+// ï¿½Ï·ç¿¡ ï¿½Î¹ï¿½ ï¿½Ï¾î³ªï¿½ï¿½ ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½Ø¼ï¿½ï¿½Ì´ï¿½.
 void GLClubDeathMatch::UpdateBattleDay ( int nDay )
 {
 	m_dwLastBattleDay = nDay;
 }
 
-// ¼±µµÅ¬·´ °áÁ¤Àü ³²Àº ½Ã°£À» Å¬¶óÀÌ¾ðÆ®¿¡°Ô ¾Ë¸°´Ù.
+// ï¿½ï¿½ï¿½ï¿½Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½Ë¸ï¿½ï¿½ï¿½.
 void GLClubDeathMatch::UpdateNotifyBattle ( DWORD dwORDER, int nHour, int nMinute )
 {
 	if ( dwORDER>=MAX_TIME )	return;
@@ -232,7 +232,7 @@ void GLClubDeathMatch::UpdateNotifyBattle ( DWORD dwORDER, int nHour, int nMinut
 		{
 			m_bNotifyOneHour = true;
 
-			//	Note : ¸ðµç Å¬¶óÀÌ¾ðÆ®¿¡ ¾Ë¸².
+			//	Note : ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ ï¿½Ë¸ï¿½.
 			GLMSG::SNET_CLUB_DEATHMATCH_START_BRD NetMsgBrd;
 			NetMsgBrd.nTIME = 60-nMinute;
 			StringCchCopy ( NetMsgBrd.szName, GLMSG::SNET_CLUB_DEATHMATCH_START_BRD::TEXT_LEN, m_strName.c_str() );
@@ -245,7 +245,7 @@ void GLClubDeathMatch::UpdateNotifyBattle ( DWORD dwORDER, int nHour, int nMinut
 			{
 				m_bNotifyHalfHour = true;
 
-				//	Note : ¸ðµç Å¬¶óÀÌ¾ðÆ®¿¡ ¾Ë¸².
+				//	Note : ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ ï¿½Ë¸ï¿½.
 				GLMSG::SNET_CLUB_DEATHMATCH_START_BRD NetMsgBrd;
 				NetMsgBrd.nTIME = 30;
 				StringCchCopy ( NetMsgBrd.szName, GLMSG::SNET_CLUB_DEATHMATCH_START_BRD::TEXT_LEN, m_strName.c_str() );
@@ -260,7 +260,7 @@ void GLClubDeathMatch::UpdateNotifyBattle ( DWORD dwORDER, int nHour, int nMinut
 				m_bNotify10MinHour = true;
 				m_emBattleState = BATTLE_READY;
 
-				//	Note : ¸ðµç Å¬¶óÀÌ¾ðÆ®¿¡ ¾Ë¸².
+				//	Note : ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ ï¿½Ë¸ï¿½.
 				GLMSG::SNET_CLUB_DEATHMATCH_START_BRD NetMsgBrd;
 				NetMsgBrd.nTIME = 10;
 				StringCchCopy ( NetMsgBrd.szName, GLMSG::SNET_CLUB_DEATHMATCH_START_BRD::TEXT_LEN, m_strName.c_str() );
@@ -275,10 +275,10 @@ void GLClubDeathMatch::UpdateNotifyBattle ( DWORD dwORDER, int nHour, int nMinut
 
 }
 
-// ¼±µµÅ¬·´ °áÁ¤ÀüÀ» ½ÃÀÛÇÑ´Ù.
+// ï¿½ï¿½ï¿½ï¿½Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 void GLClubDeathMatch::DoBattleStart ( DWORD dwORDER, int nDay )
 {
-	//	Note : °áÁ¤ÀüÀ» ½ÃÀÛ½ÃÅ´.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Û½ï¿½Å´.
 	m_emBattleState = BATTLE_START;
 	m_dwBattleOrder = dwORDER;
 	m_fRankingUpdate = 0.0f;
@@ -288,20 +288,20 @@ void GLClubDeathMatch::DoBattleStart ( DWORD dwORDER, int nDay )
 	UpdateBattleDay ( nDay );
 
 /*
-	//	Note : ¼±µµ Å¬·´ º¯°æÀ» ÇÊµå¼­¹ö¿¡ ¾Ë¸².
+	//	Note : ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Êµå¼­ï¿½ï¿½ï¿½ï¿½ ï¿½Ë¸ï¿½.
 	//
 	GLMSG::SNET_CLUB_CERTIFIED_FLD NetMsgGuidFld;
 	NetMsgGuidFld.dwID = m_dwID;
 	NetMsgGuidFld.dwCLUBID = m_dwGuidanceClub;
 	GLAgentServer::GetInstance().SENDTOALLCHANNEL ( &NetMsgGuidFld );
 
-	//	Note : ¼ö¼ö·á º¯°æ ÇÊµå¿¡ ¾Ë¸².
+	//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Êµå¿¡ ï¿½Ë¸ï¿½.
 	GLMSG::SNET_CLUB_GUID_COMMISSION_FLD NetMsgCommissionFld;
 	NetMsgCommissionFld.dwID = m_dwID;
 	NetMsgCommissionFld.fCommission = m_fCommissionPercent;
 	GLAgentServer::GetInstance().SENDTOALLCHANNEL ( &NetMsgCommissionFld );
 
-	//	Note : Å¬¶óÀÌ¾ðÆ®µé¿¡°Ô ¾Ë¸².
+	//	Note : Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½é¿¡ï¿½ï¿½ ï¿½Ë¸ï¿½.
 	GLMSG::SNET_CLUB_GUID_COMMISSION_BRD NetMsgCmBrd;
 	NetMsgCmBrd.fCommission = m_fCommissionPercent;
 
@@ -315,12 +315,12 @@ void GLClubDeathMatch::DoBattleStart ( DWORD dwORDER, int nDay )
 		pLand->SENDTOALLCLIENT ( &NetMsgCmBrd );
 	}
 */
-	//	Note : ÀüÅõ ½ÃÀÛÀ» ¾Ë¸².
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ë¸ï¿½.
 	GLMSG::SNET_CLUB_DEATHMATCH_START_FLD NetMsgFld;
 	NetMsgFld.dwID = m_dwID;
 	GLAgentServer::GetInstance().SENDTOCHANNEL ( &NetMsgFld, 0 );
 
-	//	Note : ¸ðµç Å¬¶óÀÌ¾ðÆ®¿¡ ¾Ë¸².
+	//	Note : ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ ï¿½Ë¸ï¿½.
 	GLMSG::SNET_CLUB_DEATHMATCH_START_BRD NetMsgBrd;
 	NetMsgBrd.nTIME = 0;
 	StringCchCopy ( NetMsgBrd.szName, GLMSG::SNET_CLUB_BATTLE_START_BRD::TEXT_LEN, m_strName.c_str() );
@@ -330,7 +330,7 @@ void GLClubDeathMatch::DoBattleStart ( DWORD dwORDER, int nDay )
 
 void GLClubDeathMatch::DoBattleEnd()
 {
-	//	Note : °áÁ¤ÀüÀÌ Á¾·á.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	m_emBattleState = BATTLE_END;
 	m_dwBattleOrder = UINT_MAX;
 
@@ -341,19 +341,19 @@ void GLClubDeathMatch::DoBattleEnd()
 	m_fRankingUpdate = 0.0f;
 
 
-	//	Note : °áÁ¤Àü Á¾·á¸¦ ¾Ë¸².
+	//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½á¸¦ ï¿½Ë¸ï¿½.
 	//
 	GLCLUB *pCLUB = GLAgentServer::GetInstance().GetClubMan().GetClub(m_dwWinClub);
 
 	std::string strClubName;
 	if ( pCLUB )	strClubName = pCLUB->m_szName;
 
-	//	Note : ÀüÅõ Á¾·á¸¦ ¾Ë¸².
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½á¸¦ ï¿½Ë¸ï¿½.
 	GLMSG::SNET_CLUB_DEATHMATCH_END_FLD NetMsgFld;
 	NetMsgFld.dwID = m_dwID;
 	GLAgentServer::GetInstance().SENDTOCHANNEL ( &NetMsgFld, 0 );
 
-	//	Note : ÀüÅõ °á°ú¸¦ ¾Ë·ÁÁÜ ( ÇØ´ç ¸Ê¿¡ ÀÖ´Â À¯Àúµé¿¡°Ô¸¸ ) 
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ë·ï¿½ï¿½ï¿½ ( ï¿½Ø´ï¿½ ï¿½Ê¿ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½é¿¡ï¿½Ô¸ï¿½ ) 
 
 	GLMSG::SNET_CLUB_DEATHMATCH_END_BRD NetMsgBrd;
 	StringCchCopy ( NetMsgBrd.szName, GLMSG::SNET_CLUB_DEATHMATCH_END_BRD::TEXT_LEN, m_strName.c_str() );
@@ -373,7 +373,7 @@ void GLClubDeathMatch::CheckExtraGuild ( float fElaps )
 			m_fCHECK_TIMER = 0.0f;
 		}
 
-		//	º¸»ó Áö±Þ
+		//	ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		{
 
 		}
@@ -393,10 +393,10 @@ void GLClubDeathMatch::CheckAwardClub( float fElaps )
 	m_fCHECK_TIMER += fElaps;
 	if ( m_fCHECK_TIMER > m_fCHECK_TIME )
 	{
-		//	30ÃÊ µ¿¾ÈÀº º¸»óÁö±Þ
+		//	30ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		if ( m_fCHECK_TIME < 30.0f )
 		{
-			//º¸»ó Áö±Þ
+			//ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			m_fCHECK_TIME += 10.0f;
 			return;
 		}
@@ -584,7 +584,7 @@ bool GLClubDeathMatchAgentMan::SetMapState ()
 	{
 		GLClubDeathMatch &sCDM= m_vecClubDM[i];
 
-		//	Note : ¼±µµ Å¬·´ ÀüÅõ ÀÔ±¸Á¸.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ô±ï¿½ï¿½ï¿½.
 		SNATIVEID nidHallMAP ( sCDM.m_dwClubHallMap );
 		GLAGLandMan *pLandMan = GLAgentServer::GetInstance().GetByMapID ( nidHallMAP );
 		if ( pLandMan )
@@ -592,7 +592,7 @@ bool GLClubDeathMatchAgentMan::SetMapState ()
 			pLandMan->m_dwClubMapID = sCDM.m_dwID;
 		}
 
-		//	Note : ¼±µµ Å¬·´ ÀüÅõÁ¸.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 		SNATIVEID nidMAP ( sCDM.m_dwClubMap );
 		pLandMan = GLAgentServer::GetInstance().GetByMapID ( nidMAP );
 		if ( pLandMan )
@@ -629,7 +629,7 @@ bool GLGuidanceAgentMan::ChangeCommission ( DWORD dwID, float fRate )
 
 bool GLClubDeathMatchAgentMan::FrameMove ( float fElapsedAppTime )
 {
-	// ¼±µµÀüÀ» ½ÃÀÛÇÏÁö ¾Ê´Â´Ù.
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê´Â´ï¿½.
 	if ( GLCONST_CHAR::bPKLESS ) return false;
 
 	for ( CDM_VEC::size_type i=0; i<m_vecClubDM.size(); ++i )
@@ -645,17 +645,17 @@ bool GLClubDeathMatchAgentMan::FrameMove ( float fElapsedAppTime )
 		DWORD dwORDER = sClubDM.IsBattleWeekDay(nDayOfWeek,nDay);
 		if ( dwORDER!=UINT_MAX )
 		{
-			//	Note : °áÁ¤Àü ½ÃÀÛ Á¡°Ë.
+			//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 			if ( sClubDM.IsBattleHour ( dwORDER, nHour ) )
 			{
-				//	Note : Å¬·´ °áÁ¤Àü ½ÃÀÛ.
+				//	Note : Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 				sClubDM.DoBattleStart ( dwORDER, nDay );
 				m_fRemainTimer = (float)sClubDM.m_dwBattleTime;
 				m_fTimer = 0.0f;
 			}
 			else
 			{
-				//	Note : °áÁ¤Àü ½ÃÀÛ °øÁö.
+				//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 				sClubDM.UpdateNotifyBattle ( dwORDER, nHour, nMinute );
 			}
 		}
@@ -670,14 +670,14 @@ bool GLClubDeathMatchAgentMan::FrameMove ( float fElapsedAppTime )
 		}
 	}
 
-	// Å¬¶óÀÌ¾ðÆ®¿¡°Ô °æ°ú ½Ã°£À» ¾Ë¸°´Ù.
+	// Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ï¿½ï¿½ ï¿½Ë¸ï¿½ï¿½ï¿½.
 	if ( !m_vecClubDM.empty() )
 	{
 		if ( m_vecClubDM[0].IsBattle() )
 		{
 			GLMSG::SNET_CLUB_DEATHMATCH_REMAIN_BRD NetMsgBrd;
 
-			// ½ÃÀÛÇÏ¸é ÅëÁö
+			// ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ ï¿½ï¿½ï¿½ï¿½
 			if ( m_fRemainTimer == m_vecClubDM[0].m_dwBattleTime )
 			{
 				NetMsgBrd.dwTime = (DWORD)m_fRemainTimer;
@@ -687,7 +687,7 @@ bool GLClubDeathMatchAgentMan::FrameMove ( float fElapsedAppTime )
 			m_fTimer += fElapsedAppTime;
 			m_fRemainTimer -= fElapsedAppTime;
 
-			// ÀÌÈÄ 10ºÐ¸¸´Ù ÅëÁö
+			// ï¿½ï¿½ï¿½ï¿½ 10ï¿½Ð¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			if ( m_fTimer > 600.0f )
 			{
 				NetMsgBrd.dwTime = (DWORD)m_fRemainTimer;
@@ -712,7 +712,7 @@ bool GLClubDeathMatchFieldMan::SetMapState ()
 	{
 		GLClubDeathMatch &sCDM = m_vecClubDM[i];
 
-		//	Note : ¼±µµ Å¬·´ ÀüÅõ ÀÔ±¸Á¸.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ô±ï¿½ï¿½ï¿½.
 		SNATIVEID nidHallMAP ( sCDM.m_dwClubHallMap );
 		GLLandMan *pLandMan = GLGaeaServer::GetInstance().GetByMapID ( nidHallMAP );
 		if ( pLandMan )
@@ -723,7 +723,7 @@ bool GLClubDeathMatchFieldMan::SetMapState ()
 			pLandMan->m_bClubDeathMatchMapHall = true;
 		}
 
-		//	Note : ¼±µµ Å¬·´ ÀüÅõÁ¸.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 		SNATIVEID nidMAP ( sCDM.m_dwClubMap );
 		SMAPNODE *pMAPNODE = GLGaeaServer::GetInstance().FindMapNode ( nidMAP );
 		if ( pMAPNODE )
@@ -750,7 +750,7 @@ bool GLClubDeathMatchFieldMan::ReadyBattle( DWORD dwID )
 
 	pCDM->SetBattle( GLClubDeathMatch::BATTLE_READY );
 
-	//	Note : ¸ã ¼³Á¤ º¯°æ.
+	//	Note : ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 
 	return true;
 }
@@ -762,7 +762,7 @@ bool GLClubDeathMatchFieldMan::BeginBattle ( DWORD dwID )
 
 	pCDM->SetBattle( GLClubDeathMatch::BATTLE_START );
 
-	//	Note : ¸ã ¼³Á¤ º¯°æ.
+	//	Note : ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	return true;
 }
 
@@ -773,7 +773,7 @@ bool GLClubDeathMatchFieldMan::EndBattle ( DWORD dwID )
 
 	pCDM->SetBattle( GLClubDeathMatch::BATTLE_END_AWARD );
 
-	// Ã¼Å©½ÃÀÛ
+	// Ã¼Å©ï¿½ï¿½ï¿½ï¿½
 //	pCDM->m_bBattleEndCheck = true;
 	pCDM->m_fCHECK_TIME = 10.0f;
 
@@ -818,7 +818,7 @@ bool GLClubDeathMatchFieldMan::FrameMove ( float fElaps )
 		{
 			sClubDM.m_fRankingUpdate += fElaps;
 
-			//	5ºÐ¸¶´Ù ·©Å· °»½Å
+			//	5ï¿½Ð¸ï¿½ï¿½ï¿½ ï¿½ï¿½Å· ï¿½ï¿½ï¿½ï¿½
 			if ( sClubDM.m_fRankingUpdate > 60.0f )
 			{
 				UpdateCDMRanking( sClubDM.m_dwID );
@@ -861,7 +861,7 @@ void GLClubDeathMatchFieldMan::UpdateCDMRanking( DWORD dwID )
 	
 	std::sort( m_vecCdmRankNew.begin(), m_vecCdmRankNew.end() );	
 
-	// ·©Å· °è»ê
+	// ï¿½ï¿½Å· ï¿½ï¿½ï¿½
 	int nSize = m_vecCdmRankNew.size();
 
 	for ( int i = 0; i < nSize; ++i )
@@ -870,7 +870,7 @@ void GLClubDeathMatchFieldMan::UpdateCDMRanking( DWORD dwID )
 		m_vecCdmRankNew[i].nIndex = i;
 	}
 
-	//	µ¿Á¡»óÈ² ·©Å· °è»ê ¾Æ·¡ ·©Å·¿¡ ¸ÂÃã
+	//	ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È² ï¿½ï¿½Å· ï¿½ï¿½ï¿½ ï¿½Æ·ï¿½ ï¿½ï¿½Å·ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	int nRanking;
 
 	for ( int i = nSize-1; i > 0; --i )
@@ -887,7 +887,7 @@ void GLClubDeathMatchFieldMan::UpdateCDMRanking( DWORD dwID )
 	for ( int i = 0; i < m_vecCdmRankNew.size(); ++i )
 	{
 		CDM_RANK_INFO_MAP_ITER iter = sClubDM.m_mapCdmScore.find( m_vecCdmRankNew[i].dwClubID );
-		if ( iter == sClubDM.m_mapCdmScore.end() )	continue;	//	ÀÌ·²°æ¿ì´Â ¾ø¾î¾ß ÇÔ
+		if ( iter == sClubDM.m_mapCdmScore.end() )	continue;	//	ï¿½Ì·ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
 
 		SCDM_RANK_INFO&	sRankInfo = iter->second;
 		
@@ -897,7 +897,7 @@ void GLClubDeathMatchFieldMan::UpdateCDMRanking( DWORD dwID )
 			sRankInfo.wClubRanking = m_vecCdmRankNew[i].wClubRanking;
 			sRankInfo.nIndex = m_vecCdmRankNew[i].nIndex;
 			
-			//	9°³ Å¬·´¸¸ º¸³½´Ù.
+			//	9ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 			if ( m_vecCdmRankNew[i].nIndex < RANKING_NUM ) 
 			{
 				SCDM_RANK sCdmRank = sRankInfo;
@@ -937,7 +937,7 @@ void GLClubDeathMatchFieldMan::CDMAwardItem( DWORD dwID )
 	GLLandMan *pLandMan = GLGaeaServer::GetInstance().GetByMapID ( pCDM->m_dwClubMap );
 	if ( !pLandMan ) return;
 
-	//	ÇØ´ç ¸Ê¿¡ ÀÖ´Â À¯Àúµé º¸»ó Áö±Þ
+	//	ï¿½Ø´ï¿½ ï¿½Ê¿ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	{
 		GLClubMan& cClubMan = GLGaeaServer::GetInstance().GetClubMan();
 
@@ -955,7 +955,7 @@ void GLClubDeathMatchFieldMan::CDMAwardItem( DWORD dwID )
 			{
 				SCDM_RANK_INFO& sCdmRankInfo = iter->second;
 
-				// ( º¸»ó ¹ÞÀº Ä³¸¯ÅÍÀÎÁö Á¡°Ë ) 
+				// ( ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ) 
 				CDM_AWARD_CHAR_ITER iter = pCDM->m_vecCdmAwardChar.find( pChar->m_dwCharID );
 				if ( iter != pCDM->m_vecCdmAwardChar.end() )	continue;
 
@@ -1012,3 +1012,9 @@ void GLClubDeathMatchFieldMan::CheckExtraGuild ( float fElaps )
 }
 */
 
+
+// Round-25 fix: declared in GLClubDeathMatch.h but never defined in the
+// original tree (dead feature); provide a no-op so servers link.
+void GLClubDeathMatch::CheckExtraClub( float fElaps )
+{
+}
