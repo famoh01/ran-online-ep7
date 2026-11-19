@@ -108,7 +108,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max6.0sdk/Include";"../=max6.0sdk/cssdk/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max6.0sdk/Include";"../=max6.0sdk/cssdk/include";$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,_DEBUG,_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -140,7 +140,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release6.0|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max6.0sdk/Include";"../=max6.0sdk/cssdk/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max6.0sdk/Include";"../=max6.0sdk/cssdk/include";$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
@@ -172,7 +172,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD6.0|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max6.0sdk/Include";"../=max6.0sdk/cssdk/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max6.0sdk/Include";"../=max6.0sdk/cssdk/include";$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
@@ -204,7 +204,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release7.0|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max7.0sdk/Include";"../=max7.0sdk/include/cs";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max7.0sdk/Include";"../=max7.0sdk/include/cs";$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
@@ -236,7 +236,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD7.0|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max7.0sdk/Include";"../=max7.0sdk/include/cs";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max7.0sdk/Include";"../=max7.0sdk/include/cs";$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
@@ -268,7 +268,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release8.0|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max8.0sdk/Include";"../=max8.0sdk/include/cs";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max8.0sdk/Include";"../=max8.0sdk/include/cs";$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
@@ -300,7 +300,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD8.0|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max8.0sdk/Include";"../=max8.0sdk/include/cs";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max8.0sdk/Include";"../=max8.0sdk/include/cs";$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
@@ -332,7 +332,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release9.0|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max9.0sdk/Include";"../=max9.0sdk/include/cs";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max9.0sdk/Include";"../=max9.0sdk/include/cs";$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>

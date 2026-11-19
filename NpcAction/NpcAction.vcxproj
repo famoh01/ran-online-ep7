@@ -77,7 +77,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../engineLib/dxcommon;../engineLib/dxframe/;../engineLib/dxcommon9;../engineLib/DxSound;../engineLib/Meshs;../engineLib/Common/;"../engineLib/G-Logic";../RanClientLib/NpcTalk;"../RanClientLib/G-Logic";../enginelib/DxOctree;../RanClientLib;../NetServerLib;../NetClientLib;../SQL/Include;"../=DaumCrypt";../MfcExLib/ExLibs;../MfcExLib/;"$(SolutionDir)/=include";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../engineLib/dxcommon;../engineLib/dxframe/;../engineLib/dxcommon9;../engineLib/DxSound;../engineLib/Meshs;../engineLib/Common/;"../engineLib/G-Logic";../RanClientLib/NpcTalk;"../RanClientLib/G-Logic";../enginelib/DxOctree;../RanClientLib;../NetServerLib;../NetClientLib;../SQL/Include;"../=DaumCrypt";../MfcExLib/ExLibs;../MfcExLib/;"$(SolutionDir)/=include";"$(SolutionDir)/=TbbLib/include";$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -105,7 +105,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../engineLib/dxcommon;../engineLib/dxframe/;../engineLib/dxcommon9;../engineLib/DxSound;../engineLib/Meshs;../engineLib/Common/;"../engineLib/G-Logic";../RanClientLib/NpcTalk;"../RanClientLib/G-Logic";../enginelib/DxOctree;../RanClientLib;../NetServerLib;../NetClientLib;../SQL/Include;"../=DaumCrypt";../MfcExLib/ExLibs;../MfcExLib/;"$(SolutionDir)/=include";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../engineLib/dxcommon;../engineLib/dxframe/;../engineLib/dxcommon9;../engineLib/DxSound;../engineLib/Meshs;../engineLib/Common/;"../engineLib/G-Logic";../RanClientLib/NpcTalk;"../RanClientLib/G-Logic";../enginelib/DxOctree;../RanClientLib;../NetServerLib;../NetClientLib;../SQL/Include;"../=DaumCrypt";../MfcExLib/ExLibs;../MfcExLib/;"$(SolutionDir)/=include";"$(SolutionDir)/=TbbLib/include";$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
@@ -136,7 +136,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../engineLib/dxcommon;../engineLib/dxframe/;../engineLib/dxcommon9;../engineLib/DxSound;../engineLib/Meshs;../engineLib/Common/;"../engineLib/G-Logic";../RanClientLib/NpcTalk;"../RanClientLib/G-Logic";../enginelib/DxOctree;../RanClientLib;../NetServerLib;../NetClientLib;../SQL/Include;"../=DaumCrypt";../MfcExLib/ExLibs;../MfcExLib/;"$(SolutionDir)/=include";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../engineLib/dxcommon;../engineLib/dxframe/;../engineLib/dxcommon9;../engineLib/DxSound;../engineLib/Meshs;../engineLib/Common/;"../engineLib/G-Logic";../RanClientLib/NpcTalk;"../RanClientLib/G-Logic";../enginelib/DxOctree;../RanClientLib;../NetServerLib;../NetClientLib;../SQL/Include;"../=DaumCrypt";../MfcExLib/ExLibs;../MfcExLib/;"$(SolutionDir)/=include";"$(SolutionDir)/=TbbLib/include";$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -165,7 +165,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Read|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../engineLib/dxcommon;../engineLib/dxframe/;../engineLib/dxcommon9;../engineLib/DxSound;../engineLib/Meshs;../engineLib/Common/;"../engineLib/G-Logic";../RanClientLib/NpcTalk;"../RanClientLib/G-Logic";../enginelib/DxOctree;../RanClientLib;../NetServerLib;../NetClientLib;../SQL/Include;"../=DaumCrypt";../MfcExLib/ExLibs;../MfcExLib/;"$(SolutionDir)/=include";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../engineLib/dxcommon;../engineLib/dxframe/;../engineLib/dxcommon9;../engineLib/DxSound;../engineLib/Meshs;../engineLib/Common/;"../engineLib/G-Logic";../RanClientLib/NpcTalk;"../RanClientLib/G-Logic";../enginelib/DxOctree;../RanClientLib;../NetServerLib;../NetClientLib;../SQL/Include;"../=DaumCrypt";../MfcExLib/ExLibs;../MfcExLib/;"$(SolutionDir)/=include";"$(SolutionDir)/=TbbLib/include";$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;READTOOL_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
@@ -196,7 +196,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Read|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../engineLib/dxcommon;../engineLib/dxframe/;../engineLib/dxcommon9;../engineLib/DxSound;../engineLib/Meshs;../engineLib/Common/;"../engineLib/G-Logic";../RanClientLib/NpcTalk;"../RanClientLib/G-Logic";../enginelib/DxOctree;../RanClientLib;../NetServerLib;../NetClientLib;../SQL/Include;"../=DaumCrypt";../MfcExLib/ExLibs;../MfcExLib/;"$(SolutionDir)/=include";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../engineLib/dxcommon;../engineLib/dxframe/;../engineLib/dxcommon9;../engineLib/DxSound;../engineLib/Meshs;../engineLib/Common/;"../engineLib/G-Logic";../RanClientLib/NpcTalk;"../RanClientLib/G-Logic";../enginelib/DxOctree;../RanClientLib;../NetServerLib;../NetClientLib;../SQL/Include;"../=DaumCrypt";../MfcExLib/ExLibs;../MfcExLib/;"$(SolutionDir)/=include";"$(SolutionDir)/=TbbLib/include";$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;READTOOL_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>

@@ -51,7 +51,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../EngineSoundLib/DxSound;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../EngineSoundLib/DxSound;$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -78,7 +78,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../EngineSoundLib/DxSound;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../EngineSoundLib/DxSound;$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -110,7 +110,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../EngineSoundLib/DxSound;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../EngineSoundLib/DxSound;$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
