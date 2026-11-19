@@ -121,7 +121,9 @@
     <ResourceCompile Include=".\MinWebLauncher.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Midl Include=".\MinWebLauncher.idl" />
+    <Midl Include=".\MinWebLauncher.idl">
+      <OutputDirectory>$(ProjectDir)</OutputDirectory>
+    </Midl>
   </ItemGroup>
   <ItemGroup>
     <None Include=".\MinWebLauncher.def" />

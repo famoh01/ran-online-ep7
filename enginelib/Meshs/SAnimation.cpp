@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <functional>
 #include "DxBoneCollector.h"
 #include "../DxEffect/EffAni/DxEffAni.h"
 #include "DxSkinAniMan.h"
@@ -109,16 +110,16 @@ SANIMCONINFO& SANIMCONINFO::operator = ( SANIMCONINFO &value )
 	StringCchCopy( m_szName, ACF_SZNAME, value.m_szName );
 	StringCchCopy( m_szSkeletion, ACF_SZNAME, value.m_szSkeletion );
 
-	m_dwFlag = value.m_dwFlag;					//	±âÅ¸ ¼Ó¼º.
-	m_dwSTime = value.m_dwSTime;					//	½ÃÀÛ ½Ã°£.
+	m_dwFlag = value.m_dwFlag;					//	ï¿½ï¿½Å¸ ï¿½Ó¼ï¿½.
+	m_dwSTime = value.m_dwSTime;					//	ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½.
 	m_dwETime = value.m_dwETime;
-	m_dwETimeOrig = value.m_dwETimeOrig;	//	³¡ ½Ã°£.
-	m_UNITTIME = value.m_UNITTIME;					//	Å°´ÜÀ§ ½Ã°£.
+	m_dwETimeOrig = value.m_dwETimeOrig;	//	ï¿½ï¿½ ï¿½Ã°ï¿½.
+	m_UNITTIME = value.m_UNITTIME;					//	Å°ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½.
 
 	m_MainType = (EMANI_MAINTYPE)value.m_MainType;
 	m_SubType = (EMANI_SUBTYPE)value.m_SubType;
 
-	m_wDivCount = value.m_wDivCount;				//	¿¡´Ï¸ÞÀÌ¼Ç ºÐÇÒ Å° °¹¼ö.
+	m_wDivCount = value.m_wDivCount;				//	ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½ Å° ï¿½ï¿½ï¿½ï¿½.
 	for ( DWORD i=0;i<m_wDivCount; ++i )
 	{
 		m_wDivFrame[i] = value.m_wDivFrame[i];
@@ -212,8 +213,8 @@ const SMatrixKey* SAnimation::GetMapThisKey ( float fGlobalTime ) const
 	//if ( m_pMatrixKeys )
 	//{
 
-	//	//	Note : f = fmod ( x, y )  : x = i*y + f ( ³ª¸ÓÁö ±¸ÇÏ´Â ÇÔ¼ö )
-	//	//		¿¡´Ï¸ÞÀÌ¼Ç ·çÇÁ.
+	//	//	Note : f = fmod ( x, y )  : x = i*y + f ( ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½Ô¼ï¿½ )
+	//	//		ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//	//
 	//	float fTime = (float)fmod ( fGlobalTime, static_cast<float>(m_vecMatrixKeys[m_cMatrixKeys-1].dwTime) );
 
@@ -240,7 +241,7 @@ const SMatrixKey* SAnimation::GetMapThisKey ( float fGlobalTime ) const
 	//	fTime1 = (float)pMatrixKey2->dwTime;
 	//	fTime2 = (float)pMatrixKey3->dwTime;
 
-	//	//	Note : µÎ Å° Áß¿¡ °¡Àå °¡±î¿î Å°¸¦ ¼±ÅÃ.
+	//	//	Note : ï¿½ï¿½ Å° ï¿½ß¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//	//
 	//	if ( (fTime2 - fTime1) ==0 )	fLerpValue = 0;
 	//	else							fLerpValue =  (fTime-fTime1)  / (fTime2-fTime1);
@@ -252,15 +253,15 @@ const SMatrixKey* SAnimation::GetMapThisKey ( float fGlobalTime ) const
 	return NULL;
 }
 
-//	Note : MatrixKey Áß¿¡¼­ ÇöÁ¦ ½Ã°£¿¡ ¸Â´Â ¿¡´Ï¸ÞÀÌ¼Ç Å°¸¦ ¼±ÅÃÇØ ÁØ´Ù.
+//	Note : MatrixKey ï¿½ß¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ï¿½ï¿½ ï¿½Â´ï¿½ ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ø´ï¿½.
 //
 UINT SAnimation::GetThisKey ( float fGlobalTime ) const
 {
-	//// Note : ¼Óµµ ¶§¹®¿¡ ÀÌ°ÍÀ¸·Î ´ëÃ³ Çß´Ù.. Á¤È®ÇÏÁö ¾ÊÀº µ¥ÀÌÅÍ°¡ ³ª¿Ã ¼öµµ ÀÖ´Ù.
+	//// Note : ï¿½Óµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì°ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã³ ï¿½ß´ï¿½.. ï¿½ï¿½È®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½.
 	//UINT nKey(0);
 	//if( m_pMatrixKeys )
 	//{
-	//	// 1¹ø´ç.. °É¸®´Â ½Ã°£À» ±¸ÇØ¾ß ÇÑ´Ù.
+	//	// 1ï¿½ï¿½ï¿½ï¿½.. ï¿½É¸ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø¾ï¿½ ï¿½Ñ´ï¿½.
 	//	DWORD dwTime = m_pMatrixKeys[m_cMatrixKeys-1].dwTime+m_pMatrixKeys[1].dwTime;
 	//	float fTime = (float)fmod ( fGlobalTime, static_cast<float>(dwTime) );
 	//	float fDiv = (float)dwTime/(m_cMatrixKeys-1);
@@ -277,8 +278,8 @@ UINT SAnimation::GetThisKey ( float fGlobalTime ) const
 
 	if ( m_pMatrixKeys )
 	{
-		//	Note : f = fmod ( x, y )  : x = i*y + f ( ³ª¸ÓÁö ±¸ÇÏ´Â ÇÔ¼ö )
-		//		¿¡´Ï¸ÞÀÌ¼Ç ·çÇÁ.
+		//	Note : f = fmod ( x, y )  : x = i*y + f ( ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½Ô¼ï¿½ )
+		//		ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½.
 		//
 		float fTime = (float)fmod ( fGlobalTime, static_cast<float>(m_pMatrixKeys[m_cMatrixKeys-1].dwTime) );
 
@@ -300,8 +301,8 @@ UINT SAnimation::GetThisKey ( float fGlobalTime ) const
 
 	//if ( m_pMatrixKeys )
 	//{
-	//	//	Note : f = fmod ( x, y )  : x = i*y + f ( ³ª¸ÓÁö ±¸ÇÏ´Â ÇÔ¼ö )
-	//	//		¿¡´Ï¸ÞÀÌ¼Ç ·çÇÁ.
+	//	//	Note : f = fmod ( x, y )  : x = i*y + f ( ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½Ô¼ï¿½ )
+	//	//		ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//	//
 	//	fTime = (float)fmod ( fGlobalTime, static_cast<float>(m_pMatrixKeys[m_cMatrixKeys-1].dwTime) );
 
@@ -318,7 +319,7 @@ UINT SAnimation::GetThisKey ( float fGlobalTime ) const
 	//		dwp2 = iKey;
 	//	}
 
-	//	//	Note : ÇöÁ¦ fTime¿¡ µé¾î°¡´Â ½Ã°£´ëÀÇ Å°¸¦ ¼±ÅÃ.
+	//	//	Note : ï¿½ï¿½ï¿½ï¿½ fTimeï¿½ï¿½ ï¿½ï¿½î°¡ï¿½ï¿½ ï¿½Ã°ï¿½ï¿½ï¿½ï¿½ï¿½ Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//	//
 	//	//for ( iKey = 0 ; iKey < m_cMatrixKeys ; iKey++ )
 	//	//{
@@ -343,7 +344,7 @@ UINT SAnimation::GetThisKey ( float fGlobalTime ) const
 	//	fTime2 = (float)m_pMatrixKeys[dwp3].dwTime;
 
  //       
-	//	//	Note : µÎ Å° Áß¿¡ °¡Àå °¡±î¿î Å°¸¦ ¼±ÅÃ.
+	//	//	Note : ï¿½ï¿½ Å° ï¿½ß¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//	//
 	//	if ( (fTime2 - fTime1) ==0 )	fLerpValue = 0;
 	//	else							fLerpValue =  (fTime-fTime1)  / (fTime2-fTime1);
@@ -357,7 +358,7 @@ UINT SAnimation::GetThisKey ( float fGlobalTime ) const
 
 void SAnimation::SetMatrix ( UINT iKey )
 {
-	//	Note : 4byte * 16 °³.. ¸Â³ª ? ¤»
+	//	Note : 4byte * 16 ï¿½ï¿½.. ï¿½Â³ï¿½ ? ï¿½ï¿½
 	memcpy( pBoneToAnimate->matRot, m_pMatrixKeys[iKey].mat, 64 ); 
 }
 
@@ -382,14 +383,14 @@ void SAnimation::SetMix ( float fGlobalTime )
 
 	if ( m_pMatrixKeys )
 	{
-		//	Note : ¿¡´Ï¸ÞÀÌ¼Ç Å° ¼³Á¤.
+		//	Note : ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ Å° ï¿½ï¿½ï¿½ï¿½.
 		//
 		UINT iKey = GetThisKey(fGlobalTime);
 		const SMatrixKey* pMatrixKey = &m_pMatrixKeys[iKey];
 
 		//const SMatrixKey* pMatrixKey = GetMapThisKey ( fGlobalTime );
 
-		//	Note : ¿¡´Ï¸ÞÀÌ¼Ç Å° ¼³Á¤.
+		//	Note : ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ Å° ï¿½ï¿½ï¿½ï¿½.
 		if ( pMatrixKey )
 		{
 			//if ( ISDIFFERENT(&pMatrixKey->mat,&pBoneToAnimate->matRotOrig) )
@@ -404,8 +405,8 @@ void SAnimation::SetMix ( float fGlobalTime )
 	}
 	else if( m_pQuatPosKeys )
 	{
-		//	Note : f = fmod ( x, y )  : x = i*y + f ( ³ª¸ÓÁö ±¸ÇÏ´Â ÇÔ¼ö )
-		//		¿¡´Ï¸ÞÀÌ¼Ç ·çÇÁ.
+		//	Note : f = fmod ( x, y )  : x = i*y + f ( ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½Ô¼ï¿½ )
+		//		ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½.
 		float fTime = (float)fmod ( fGlobalTime, static_cast<float>(m_pQuatPosKeys[m_cQuatPosKeys-1].m_dwTime) );
 
 		SQuatPosKey* pFOUND =  Lower_bound3312( m_pQuatPosKeys, m_cQuatPosKeys, (DWORD)fGlobalTime );
@@ -416,7 +417,7 @@ void SAnimation::SetMix ( float fGlobalTime )
 			dwKey = m_cQuatPosKeys-1;
 		}
 
-		// Note : ¾ø´Â ¾Öµé¸¸ ¼ÂÆÃÇÑ´Ù.. MIX ¸¸ ÇÏ´Â °ÍÀÓ.
+		// Note : ï¿½ï¿½ï¿½ï¿½ ï¿½Öµé¸¸ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.. MIX ï¿½ï¿½ ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½.
 		if( !m_pQuatOrigRot )
 		{
 			m_pQuatOrigRot = new D3DXQUATERNION[m_cQuatPosKeys];
@@ -429,7 +430,7 @@ void SAnimation::SetMix ( float fGlobalTime )
 				D3DXQuaternionInverse( &vQuatInv, &vQuat );
 
 				DecompressionQuaternion( vQuat, m_pQuatPosKeys[i].m_vQuatComp );
-				D3DXQuaternionMultiply( &m_pQuatOrigRot[i], &vQuat, &vQuatInv );	// ½ÇÁ¦ È¸ÀüÀÌ´Ù.
+				D3DXQuaternionMultiply( &m_pQuatOrigRot[i], &vQuat, &vQuatInv );	// ï¿½ï¿½ï¿½ï¿½ È¸ï¿½ï¿½ï¿½Ì´ï¿½.
 			}
 		}
 
@@ -442,8 +443,8 @@ void SetPosQuat( SQuatPosKey* pQuatPosKeys, DWORD cMatrixKeys, DxBoneTrans* pBon
 {
 	if( !pQuatPosKeys )		return;
 
-	//	Note : f = fmod ( x, y )  : x = i*y + f ( ³ª¸ÓÁö ±¸ÇÏ´Â ÇÔ¼ö )
-	//		¿¡´Ï¸ÞÀÌ¼Ç ·çÇÁ.
+	//	Note : f = fmod ( x, y )  : x = i*y + f ( ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½Ô¼ï¿½ )
+	//		ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	float fTime = (float)fmod ( fGlobalTime, static_cast<float>(pQuatPosKeys[cMatrixKeys-1].m_dwTime) );
 
 	SQuatPosKey* pFOUND =  Lower_bound3312( pQuatPosKeys, cMatrixKeys, (DWORD)fTime );
@@ -454,9 +455,9 @@ void SetPosQuat( SQuatPosKey* pQuatPosKeys, DWORD cMatrixKeys, DxBoneTrans* pBon
 		dwKey = cMatrixKeys-1;
 	}
 
-	// Note : QuaternionÀÇ.. º¸°£.
+	// Note : Quaternionï¿½ï¿½.. ï¿½ï¿½ï¿½ï¿½.
 	
-	// Note : Bone¿¡ ¼ÂÆÃ.~!
+	// Note : Boneï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.~!
 	if( bFirst )
 	{
 		pBoneToAnimate->m_pQuatPosCUR.m_vPos = pQuatPosKeys[dwKey].m_vPos;
@@ -496,11 +497,11 @@ void SAnimation::SetTime ( float fGlobalTime, float fWeight, BOOL bFirst )
 
 	if ( m_pMatrixKeys )
 	{
-		//	Note : ¿¡´Ï¸ÞÀÌ¼Ç Å° ¼³Á¤.
+		//	Note : ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ Å° ï¿½ï¿½ï¿½ï¿½.
 		iKey = GetThisKey ( fGlobalTime );
 		SetMatrix ( iKey );
 
-		//	Note : ¿¡´Ï¸ÞÀÌ¼Ç Å° ¼³Á¤.
+		//	Note : ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ Å° ï¿½ï¿½ï¿½ï¿½.
 		//const SMatrixKey* pMatrixKey = GetMapThisKey ( fGlobalTime );
 		//if ( pMatrixKey )	SetMatrix ( pMatrixKey );
 	}
@@ -545,7 +546,7 @@ void SAnimation::SetTime ( float fGlobalTime, float fWeight, BOOL bFirst )
 			else
 				fLerpValue =  (fTime - fTime1)  / (fTime2 - fTime1);
 
-			//	Note : ¼±Çü º¸°£.
+			//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 			//
 			D3DXVec3Lerp ( &vScale,
 					&m_pScaleKeys[dwp2].vScale,
@@ -689,7 +690,7 @@ SAnimContainer::~SAnimContainer()
 	m_listAniUPBODY.clear();
 }
 
-//	Note : xFile¿¡¼­ ¿¡´Ï¸ÞÀÌ¼Ç µ¥ÀÌÅÍ¸¦ ·Îµù.
+//	Note : xFileï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½Îµï¿½.
 //
 HRESULT SAnimContainer::CreateAnimationData ( SANIMCONINFO &sAnimInfo, LPDIRECT3DDEVICEQ pd3dDevice, bool bREPRESH /*=false*/ )
 {
@@ -702,7 +703,7 @@ HRESULT SAnimContainer::CreateAnimationData ( SANIMCONINFO &sAnimInfo, LPDIRECT3
 	{
 		if ( bTHREAD && !(m_MainType==AN_GUARD_N||m_MainType==AN_PLACID) )
 		{
-			//	½º·¹µå¸¦ »ç¿ëÇÏ¿© ³ªÁß¿¡ ÇÊ¿ä½Ã¿¡ ÀÐÀ½.
+			//	ï¿½ï¿½ï¿½ï¿½ï¿½å¸¦ ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ß¿ï¿½ ï¿½Ê¿ï¿½Ã¿ï¿½ ï¿½ï¿½ï¿½ï¿½.
 			m_bLOAD = false;
 			m_bVALID = false;
 			
@@ -727,7 +728,7 @@ HRESULT SAnimContainer::CreateAnimationData ( SANIMCONINFO &sAnimInfo, LPDIRECT3
 		return E_FAIL;
 	}
 
-	//	x ÆÄÀÏ¿¡¼­ Á÷Á¢ ÀÐ¾î¿À´Â °æ¿ì, ½º·¹µå »ç¿ëÇÏÁö ¾ÊÀ½.
+	//	x ï¿½ï¿½ï¿½Ï¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ð¾ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	m_bLOAD = true;
 	m_bVALID = true;
 
@@ -745,7 +746,7 @@ HRESULT SAnimContainer::CreateAnimationData ( SANIMCONINFO &sAnimInfo, LPDIRECT3
 	m_pSkeleton = DxBoneCollector::GetInstance().Load ( m_szSkeletion, pd3dDevice );
 	if ( !m_pSkeleton )	return E_FAIL;
 
-	//	Note : xFile ¿­±â.
+	//	Note : xFile ï¿½ï¿½ï¿½ï¿½.
 	//
 	cchFileName = strlen(m_szName);
 	if (cchFileName < 2)
@@ -754,11 +755,11 @@ HRESULT SAnimContainer::CreateAnimationData ( SANIMCONINFO &sAnimInfo, LPDIRECT3
 		goto e_Exit;
 	}
     
-	//	xFile °³Ã¼¸¦ ¸¸µë.
+	//	xFile ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	hr = DirectXFileCreate(&pxofapi);
 	if (FAILED(hr))	goto e_Exit;
     
-    //	xFile ÅÛÇÃ¸®Æ® µî·Ï.
+    //	xFile ï¿½ï¿½ï¿½Ã¸ï¿½Æ® ï¿½ï¿½ï¿½.
 	hr = pxofapi->RegisterTemplates((LPVOID)D3DRM_XTEMPLATES,
 		D3DRM_XTEMPLATE_BYTES);
 	if (FAILED(hr))
@@ -769,13 +770,13 @@ HRESULT SAnimContainer::CreateAnimationData ( SANIMCONINFO &sAnimInfo, LPDIRECT3
 	StringCchCopy( szPath, MAX_PATH, DxSkinAniMan::GetInstance().GetPath () );
 	StringCchCat( szPath, MAX_PATH, m_szName );
 
-    //	½ÇÁ¦ xFileÀ» ¿­À½.
+    //	ï¿½ï¿½ï¿½ï¿½ xFileï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	hr = pxofapi->CreateEnumObject((LPVOID)szPath,
 		DXFILELOAD_FROMFILE,
 		&pxofenum);
 	if (FAILED(hr))	goto e_Exit;
 
-	//	Note : ÃÖ»óÀ§ ¿ÀºêÁ§Æ®¸¦ ÀÐ¾î¿È.
+	//	Note : ï¿½Ö»ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ð¾ï¿½ï¿½.
 	//
 	while (SUCCEEDED(pxofenum->GetNextDataObject(&pxofobjCur)))
 	{
@@ -784,7 +785,7 @@ HRESULT SAnimContainer::CreateAnimationData ( SANIMCONINFO &sAnimInfo, LPDIRECT3
 		hr = pxofobjCur->GetType(&type);
 		if (FAILED(hr))	goto e_Exit;
 
-		//	Note : ¿¡´Ï¸ÞÀÌ¼Ç ¿ÀºêÁ§Æ®.
+		//	Note : ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®.
 		//
 		if ( *type == TID_D3DRMAnimationSet )
 		{
@@ -816,7 +817,7 @@ e_Exit:
     return hr;
 }
 
-//	Note : ¿¡´Ï¸ÞÀÌ¼ÇÀ» ÀÐ¾î¿È.
+//	Note : ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ï¿½ï¿½ ï¿½Ð¾ï¿½ï¿½.
 //
 //
 HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
@@ -839,7 +840,7 @@ HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
 	DWORD cchName;
 	TCHAR *szBoneName;
     
-	//	Note : »õ·Î¿î Animation ¸¸µë.
+	//	Note : ï¿½ï¿½ï¿½Î¿ï¿½ Animation ï¿½ï¿½ï¿½ï¿½.
 	//
 	pAnimationCur = new SAnimation();
 	if (pAnimationCur == NULL)
@@ -848,12 +849,12 @@ HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
 		goto e_Exit;
 	}
     
-	//	Note : ¼øÂ÷ÀûÀ¸·Î Å½»öÇÏ¸é¼­ ¿¡´Ï¸ÞÀÌ¼ÇÀ» ÀÐ¾î¿Â´Ù.
-	//		QueryInterface()¸¦ »ç¿ëÇÏ¿© ¿ÀºêÁ§Æ®ÀÇ Å¸ÀÔÀ» È®ÀÎÇÔ.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å½ï¿½ï¿½ï¿½Ï¸é¼­ ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ï¿½ï¿½ ï¿½Ð¾ï¿½Â´ï¿½.
+	//		QueryInterface()ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½ï¿½ï¿½.
 	//
 	while ( SUCCEEDED(pxofobjCur->GetNextObject(&pxofChild)) )
 	{
-        //	Note : Object°¡ "FileDataReference"ÀÏ¶§.
+        //	Note : Objectï¿½ï¿½ "FileDataReference"ï¿½Ï¶ï¿½.
 		//
 		hr = pxofChild->QueryInterface ( IID_IDirectXFileDataReference, (LPVOID *)&pxofobjChildRef );
 		if (SUCCEEDED(hr))
@@ -865,7 +866,7 @@ HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
 				if (FAILED(hr))
 					goto e_Exit;
                 
-				//	Note : ¿¡´Ï¿¡ÀÌ¼Ç¿¡ ¿¬°áµÈ ÇÁ·¹ÀÓÀ» ÁöÁ¤.
+				//	Note : ï¿½ï¿½ï¿½Ï¿ï¿½ï¿½Ì¼Ç¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 				//
 				if ( TID_D3DRMFrame == *type )
 				{
@@ -875,7 +876,7 @@ HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
 						goto e_Exit;
 					}
                     
-					//	Note : ¿¬°áµÈ ÇÁ·¹ÀÓÀÇ ÀÌ¸§À» °¡Á®¿È.
+					//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 					//
 					hr = pxofobjChild->GetName ( NULL, &cchName );
 					if (FAILED(hr))
@@ -898,7 +899,7 @@ HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
 					if (FAILED(hr))
 						goto e_Exit;
                     
-					//	NEED : ¿¬°áµÈ "BONE" À» ÁöÁ¤.
+					//	NEED : ï¿½ï¿½ï¿½ï¿½ï¿½ "BONE" ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 					//
 					pAnimationCur->pBoneToAnimate = m_pSkeleton->FindBone ( szBoneName );
 					if ( !pAnimationCur->pBoneToAnimate )
@@ -907,7 +908,7 @@ HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
 						goto e_Exit;
 					}
 
-					//	Note : ¿¬°áµÈ "BONE" ÀÌ¸§ ÀúÀå.
+					//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ "BONE" ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½.
 					//
 					pAnimationCur->m_strBone = szBoneName;
 				}
@@ -921,7 +922,7 @@ HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
 		}	// IID_IDirectXFileDataReference ?
 		else
 		{
-            //	Note : Object°¡ "FileData"ÀÏ °æ¿ì.
+            //	Note : Objectï¿½ï¿½ "FileData"ï¿½ï¿½ ï¿½ï¿½ï¿½.
 			//
 			hr = pxofChild->QueryInterface(IID_IDirectXFileData,
 				(LPVOID *)&pxofobjChild);
@@ -947,7 +948,7 @@ HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
 					DWORD dwEndTime = 0;
 					DWORD dwUnitKey = UINT_MAX;
 					
-					//	Note : ÄõÅÍ´Ï¾ð È¸Àü Å°.
+					//	Note : ï¿½ï¿½ï¿½Í´Ï¾ï¿½ È¸ï¿½ï¿½ Å°.
 					//
 					if ( dwKeyType == 0 )
 					{
@@ -957,7 +958,7 @@ HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
 							goto e_Exit;
 						}
                         
-						//	Note : È¸ÀüÅ° »ý¼º.
+						//	Note : È¸ï¿½ï¿½Å° ï¿½ï¿½ï¿½ï¿½.
 						//
 						pAnimationCur->m_pRotateKeys = new SRotateKey[cKeys];
 						if ( pAnimationCur->m_pRotateKeys == NULL )
@@ -966,15 +967,15 @@ HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
 							goto e_Exit;
 						}
                         
-						//	È¸ÀüÅ°ÀÇ °¹¼ö.
+						//	È¸ï¿½ï¿½Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
                         pAnimationCur->m_cRotateKeys = cKeys;
                         
-						//	NOTE : ÄõÅÍ´Ï¾ð °ª.
+						//	NOTE : ï¿½ï¿½ï¿½Í´Ï¾ï¿½ ï¿½ï¿½.
 						//
                         pFileRotateKey =  (SRotateKeyXFile*)(pData + (sizeof(DWORD) * 2));
                         for (iKey = 0;iKey < cKeys; iKey++)
                         {
-							//	ÇöÁ¦ Å°ÀÇ ½Ã°£.
+							//	ï¿½ï¿½ï¿½ï¿½ Å°ï¿½ï¿½ ï¿½Ã°ï¿½.
                             pAnimationCur->m_pRotateKeys[iKey].dwTime = pFileRotateKey->dwTime;
 
                             pAnimationCur->m_pRotateKeys[iKey].quatRotate.x = pFileRotateKey->x;
@@ -994,7 +995,7 @@ HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
 
 						dwEndTime = pAnimationCur->m_pRotateKeys[cKeys-1].dwTime;
                     }
-					//	Note : ½ºÄÉÀÏ Å°.
+					//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å°.
 					//
                     else if (dwKeyType == 1)
                     {
@@ -1004,7 +1005,7 @@ HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
                             goto e_Exit;
                         }
                 
-						//	Note : ½ºÄÉÀÏÅ° »ý¼º.
+						//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å° ï¿½ï¿½ï¿½ï¿½.
 						//
                         pAnimationCur->m_pScaleKeys = new SScaleKey[cKeys];
                         if (pAnimationCur->m_pScaleKeys == NULL)
@@ -1013,15 +1014,15 @@ HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
                             goto e_Exit;
                         }
                         
-						//	½ºÄÉÀÏÅ° °¹¼ö.
+						//	ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å° ï¿½ï¿½ï¿½ï¿½.
                         pAnimationCur->m_cScaleKeys = cKeys;
                         
-						//	Note : ½ºÄÉÀÏÅ° °ª.
+						//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å° ï¿½ï¿½.
 						//
                         pFileScaleKey =  (SScaleKeyXFile*)(pData + (sizeof(DWORD) * 2));
                         for (iKey = 0;iKey < cKeys; iKey++)
                         {
-							//	ÇöÁ¦ Å°ÀÇ ½Ã°£.
+							//	ï¿½ï¿½ï¿½ï¿½ Å°ï¿½ï¿½ ï¿½Ã°ï¿½.
                             pAnimationCur->m_pScaleKeys[iKey].dwTime = pFileScaleKey->dwTime;
                             
 							pAnimationCur->m_pScaleKeys[iKey].vScale = pFileScaleKey->vScale;
@@ -1038,7 +1039,7 @@ HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
 
 						dwEndTime = pAnimationCur->m_pScaleKeys[cKeys-1].dwTime;
                     }
-					//	Note : ÀÌµ¿ Å°.
+					//	Note : ï¿½Ìµï¿½ Å°.
 					//
                     else if (dwKeyType == 2)
                     {
@@ -1048,7 +1049,7 @@ HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
                             goto e_Exit;
                         }
                         
-						//	Note : ÀÌµ¿ Å° »ý¼º.
+						//	Note : ï¿½Ìµï¿½ Å° ï¿½ï¿½ï¿½ï¿½.
 						//
                         pAnimationCur->m_pPositionKeys = new SPositionKey[cKeys];
                         if (pAnimationCur->m_pPositionKeys == NULL)
@@ -1057,15 +1058,15 @@ HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
                             goto e_Exit;
                         }
                         
-						//	ÀÌµ¿Å° °¹¼ö.
+						//	ï¿½Ìµï¿½Å° ï¿½ï¿½ï¿½ï¿½.
                         pAnimationCur->m_cPositionKeys = cKeys;
                         
-						//	Note : ÀÌµ¿Å° °ª.
+						//	Note : ï¿½Ìµï¿½Å° ï¿½ï¿½.
 						//
                         pFilePosKey =  (SPositionKeyXFile*)(pData + (sizeof(DWORD) * 2));
                         for (iKey = 0;iKey < cKeys; iKey++)
                         {
-							//	ÇöÁ¦ Å°ÀÇ ½Ã°£.
+							//	ï¿½ï¿½ï¿½ï¿½ Å°ï¿½ï¿½ ï¿½Ã°ï¿½.
                             pAnimationCur->m_pPositionKeys[iKey].dwTime = pFilePosKey->dwTime;
                             
 							pAnimationCur->m_pPositionKeys[iKey].vPos = pFilePosKey->vPos;
@@ -1082,7 +1083,7 @@ HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
 
 						dwEndTime = pAnimationCur->m_pPositionKeys[cKeys-1].dwTime;
                     }
-					//	Note : Æ®·»½ºÆû Å°.
+					//	Note : Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å°.
 					//
                     else if (dwKeyType == 4)
                     {
@@ -1092,7 +1093,7 @@ HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
                             goto e_Exit;
                         }
                         
-						//	Note : Æ®·»½ºÆû Å° »ý¼º.
+						//	Note : Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å° ï¿½ï¿½ï¿½ï¿½.
 						//
 						pAnimationCur->m_pMatrixKeys = new SMatrixKey[cKeys];
 						if (pAnimationCur->m_pMatrixKeys == NULL)
@@ -1101,15 +1102,15 @@ HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
 							goto e_Exit;
 						}
 
-						//	Æ®·»½ºÆû Å° °¹¼ö.
+						//	Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å° ï¿½ï¿½ï¿½ï¿½.
                         pAnimationCur->m_cMatrixKeys = cKeys;
                         
-						//	Note : Æ®·»½ºÆû Å° °ª.
+						//	Note : Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å° ï¿½ï¿½.
 						//
                         pFileMatrixKey =  (SMatrixKeyXFile*)(pData + (sizeof(DWORD) * 2));
                         for (iKey = 0;iKey < cKeys; iKey++)
                         {
-							//	ÇöÁ¦ ÇÁ·¹ÀÓÀÇ ½Ã°£.
+							//	ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½.
                             pAnimationCur->m_pMatrixKeys[iKey].dwTime = pFileMatrixKey->dwTime;
                             
 							pAnimationCur->m_pMatrixKeys[iKey].mat = pFileMatrixKey->mat;
@@ -1156,7 +1157,7 @@ HRESULT SAnimContainer::LoadAnimation ( LPDIRECTXFILEDATA pxofobjCur )
         GXRELEASE(pxofChild);
     }
 
-	//	Note : ¿¡´Ï¸ÞÀÌ¼Ç ¸®½ºÆ®¿¡ µî·Ï.
+	//	Note : ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½.
 	switch( pAnimationCur->pBoneToAnimate->m_emBody )
 	{
 	case EMBODY_DEFAULT:
@@ -1174,7 +1175,7 @@ e_Exit:
     return hr;
 }
 
-//	Note : AnimationSet ¸¦ ÀÐ¾î¿Í ±¸¼ºÇÔ.
+//	Note : AnimationSet ï¿½ï¿½ ï¿½Ð¾ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 //
 HRESULT SAnimContainer::LoadAnimationSet ( LPDIRECTXFILEDATA pxofobjCur )
 {
@@ -1184,8 +1185,8 @@ HRESULT SAnimContainer::LoadAnimationSet ( LPDIRECTXFILEDATA pxofobjCur )
     LPDIRECTXFILEOBJECT pxofChild = NULL;
     
    
-	//	Note : ¼øÂ÷ÀûÀ¸·Î Å½»öÇÏ¸é¼­ ¿¡´Ï¸ÞÀÌ¼ÇÀ» ÀÐ¾î¿Â´Ù.
-	//		QueryInterface()¸¦ »ç¿ëÇÏ¿© ¿ÀºêÁ§Æ®ÀÇ Å¸ÀÔÀ» È®ÀÎÇÔ.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å½ï¿½ï¿½ï¿½Ï¸é¼­ ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ï¿½ï¿½ ï¿½Ð¾ï¿½Â´ï¿½.
+	//		QueryInterface()ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½ï¿½ï¿½.
 	//
     while (SUCCEEDED(pxofobjCur->GetNextObject(&pxofChild)))
     {
@@ -1221,7 +1222,7 @@ BOOL SAnimContainer::IsValidateANI()
 {
 	if ( !m_pSkeleton )		return FALSE;
 
-	if ( !m_bLOAD )		// ·Îµå ¿äÃ»À» ¾È Çß´Ù¸é ¿äÃ»À» ÇÑ´Ù.
+	if ( !m_bLOAD )		// ï¿½Îµï¿½ ï¿½ï¿½Ã»ï¿½ï¿½ ï¿½ï¿½ ï¿½ß´Ù¸ï¿½ ï¿½ï¿½Ã»ï¿½ï¿½ ï¿½Ñ´ï¿½.
 	{
 		m_bLOAD = true;
 		DxSkinAniMan::GetInstance().AddBinFIleLoad ( m_szName, m_pSkeleton );
@@ -1238,7 +1239,7 @@ bool SAnimContainer::UpdateTime ( float fCurTime, float fWeight, BOOL bFirst, EM
 
 	if ( !m_bLOAD )
 	{
-		//	·Îµå ¿äÃ».
+		//	ï¿½Îµï¿½ ï¿½ï¿½Ã».
 		m_bLOAD = true;
 		DxSkinAniMan::GetInstance().AddBinFIleLoad ( m_szName, m_pSkeleton );
 		return false;
@@ -1295,7 +1296,7 @@ bool SAnimContainer::UpdateMix ( float fCurMixTime )
 
 	if ( !m_bLOAD )
 	{
-		//	·Îµå ¿äÃ».
+		//	ï¿½Îµï¿½ ï¿½ï¿½Ã».
 		m_bLOAD = true;
 		DxSkinAniMan::GetInstance().AddBinFIleLoad ( m_szName, m_pSkeleton );
 		return false;
@@ -1338,10 +1339,10 @@ void SAnimation::ConvertMatToQuat()
 
 			D3DXMatrixToSQT( m_pQuatPosKeys[i].m_vScale, vQuat, m_pQuatPosKeys[i].m_vPos, m_pMatrixKeys[i].mat );
 
-			CompressionQuaternion( m_pQuatPosKeys[i].m_vQuatComp, vQuat );	// »ç¿ø¼ö ¾ÐÃà
+			CompressionQuaternion( m_pQuatPosKeys[i].m_vQuatComp, vQuat );	// ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		}
 
-		// Note : Matrix´Â »ç¿ëÇÏÁö ¾ÊÀ» °ÍÀÌ´Ù. µ¥ÀÌÅÍÀÇ ¿ë·®°úµµ »ó°üÀÌ ÀÖ´Ù.
+		// Note : Matrixï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ì´ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ë·®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½.
 		m_cMatrixKeys = 0L;
 		SAFE_DELETE_ARRAY( m_pMatrixKeys );
 	}
@@ -1367,7 +1368,7 @@ HRESULT SAnimation::SaveToFile ( CSerialFile &SFile )
 		SFile.WriteBuffer ( m_pPositionKeys, sizeof(SPositionKey)*m_cPositionKeys );
 	}
 
-	// ¾²·¹±â°ª
+	// ï¿½ï¿½ï¿½ï¿½ï¿½â°ª
 	DWORD dwGabageData = m_strBone.length();
 	SFile << dwGabageData;
 
@@ -1377,7 +1378,7 @@ HRESULT SAnimation::SaveToFile ( CSerialFile &SFile )
 		SFile.WriteBuffer ( m_pQuatPosKeys, sizeof(SQuatPosKey)*m_cQuatPosKeys );
 	}
 
-	// ¾²·¹±â°ª
+	// ï¿½ï¿½ï¿½ï¿½ï¿½â°ª
 	dwGabageData = m_strBone.length() + VERSION;
 	SFile << dwGabageData;
 
@@ -1408,7 +1409,7 @@ HRESULT SAnimation::LoadFromFile ( CSerialFile &SFile, const DxSkeleton* pSkelet
 	else if ( 0x100==dwVER )	Load_0100( SFile, pSkeleton );
 	else
 	{
-		GASSERT(0&&"SAnimation::LoadFromFile() ¾Ë¼ö ¾ø´Â ¹öÀüÀÔ´Ï´Ù.");	
+		GASSERT(0&&"SAnimation::LoadFromFile() ï¿½Ë¼ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ô´Ï´ï¿½.");	
 		return E_FAIL;
 	}
 
@@ -1451,7 +1452,7 @@ HRESULT SAnimation::Load_0100( CSerialFile &SFile, const DxSkeleton* pSkeleton )
 
 	SFile >> m_strBone;
 
-	//	Àû¿ëµÉ BONE °ú ¿¬°á.
+	//	ï¿½ï¿½ï¿½ï¿½ï¿½ BONE ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	pBoneToAnimate = pSkeleton->FindBone ( m_strBone.c_str() );
 
 	// Convert Quaternion
@@ -1503,7 +1504,7 @@ HRESULT SAnimation::Load_0101( CSerialFile &SFile, const DxSkeleton* pSkeleton )
 
 	SFile >> m_strBone;
 
-	//	Àû¿ëµÉ BONE °ú ¿¬°á.
+	//	ï¿½ï¿½ï¿½ï¿½ï¿½ BONE ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	pBoneToAnimate = pSkeleton->FindBone ( m_strBone.c_str() );
 
 	// Convert Quaternion
@@ -1560,7 +1561,7 @@ HRESULT SAnimation::Load( CSerialFile &SFile, const DxSkeleton* pSkeleton )
 		SFile.ReadBuffer ( m_pScaleKeys, sizeof(SScaleKey)*m_cScaleKeys );
 	}
 
-	//	Àû¿ëµÉ BONE °ú ¿¬°á.
+	//	ï¿½ï¿½ï¿½ï¿½ï¿½ BONE ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	pBoneToAnimate = pSkeleton->FindBone ( m_strBone.c_str() );
 
 	// Convert Quaternion
@@ -1606,7 +1607,7 @@ HRESULT SAnimContainer::SaveToFile ()
 
 HRESULT SAnimContainer::SetInfo ( SANIMCONINFO &sAnimInfo, LPDIRECT3DDEVICEQ pd3dDevice )
 {
-	//	Note : INFO ÀúÀå.
+	//	Note : INFO ï¿½ï¿½ï¿½ï¿½.
 	SANIMCONINFO::operator = ( sAnimInfo );
 
 	m_pSkeleton = DxBoneCollector::GetInstance().Load ( m_szSkeletion, pd3dDevice );
@@ -1649,7 +1650,7 @@ HRESULT  SAnimContainer::Load_0100( CSerialFile &SFile )
 		listANI.push_back ( pAnimation );
 	}
 
-	//	·ÎµåÇÑ °ªÀ» ¼³Á¤.
+	//	ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	std::for_each(m_listAnimation.begin(),m_listAnimation.end(),std_afunc::DeleteObject());
 	m_listAnimation = listANI;
 
@@ -1675,7 +1676,7 @@ HRESULT  SAnimContainer::Load_0101( CSerialFile &SFile )
 		listANI.push_back ( pAnimation );
 	}
 
-	//	·ÎµåÇÑ °ªÀ» ¼³Á¤.
+	//	ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	std::for_each(m_listAnimation.begin(),m_listAnimation.end(),std_afunc::DeleteObject());
 	m_listAnimation = listANI;
 
@@ -1693,7 +1694,7 @@ HRESULT  SAnimContainer::Load_0101( CSerialFile &SFile )
 		m_listAniUPBODY.push_back ( pAnimation );
 	}
 	
-	//	data À¯È¿¼º on.
+	//	data ï¿½ï¿½È¿ï¿½ï¿½ on.
 	m_bVALID = true;
 
 	return S_OK;
@@ -1725,11 +1726,11 @@ HRESULT  SAnimContainer::Load( CSerialFile &SFile )
 		listANI.push_back ( pAnimation );
 	}
 
-	//	·ÎµåÇÑ °ªÀ» ¼³Á¤.
+	//	ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	std::for_each(m_listAnimation.begin(),m_listAnimation.end(),std_afunc::DeleteObject());
 	m_listAnimation = listANI;
 	
-	//	data À¯È¿¼º on.
+	//	data ï¿½ï¿½È¿ï¿½ï¿½ on.
 	m_bVALID = true;
 
 	return S_OK;
@@ -1737,16 +1738,16 @@ HRESULT  SAnimContainer::Load( CSerialFile &SFile )
 
 void SAnimContainer::SetAnimFromList ( SANILIST &listANI, SANILIST &listANIUPBODY )
 {
-	//	Á¾Àü Á¤º¸ »èÁ¦.
+	//	ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	std::for_each(m_listAnimation.begin(),m_listAnimation.end(),std_afunc::DeleteObject());
 	std::for_each(m_listAniUPBODY.begin(),m_listAniUPBODY.end(),std_afunc::DeleteObject());
 	m_listAniUPBODY.clear();
 
-	//	·ÎµåÇÑ °ªÀ» ¼³Á¤.
+	//	ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	m_listAnimation = listANI;
 	m_listAniUPBODY = listANIUPBODY;
 	
-	//	data À¯È¿¼º on.
+	//	data ï¿½ï¿½È¿ï¿½ï¿½ on.
 	m_bVALID = true;
 }
 

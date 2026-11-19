@@ -16,9 +16,9 @@ public:
 	static DWORD		VERSION;
 
 protected:
-	TCHAR			m_szFileName[32];		// ÆÄÀÏ ÀÌ¸§.
-	TCHAR			m_szSkinName[32];		// Skin xFile ÀÌ¸§.
-	TCHAR			m_szSkeleton[32];		// Skeleton xFile ÀÌ¸§.
+	TCHAR			m_szFileName[32];		// ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½.
+	TCHAR			m_szSkinName[32];		// Skin xFile ï¿½Ì¸ï¿½.
+	TCHAR			m_szSkeleton[32];		// Skeleton xFile ï¿½Ì¸ï¿½.
 
 public:
 	static DWORD			g_NumBoneMatricesMax;
@@ -79,9 +79,13 @@ public:
 };
 
 
+#if defined(_MSC_VER) && _MSC_VER >= 1900
+#include <xmmintrin.h>
+#else
 typedef struct __declspec(intrin_type) __declspec(align(16)) __m128 {
    float m128_f32[4];
 } __m128;
+#endif
 
 struct SMatrix4_SSE  
 {

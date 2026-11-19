@@ -92,7 +92,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib dxerr8.lib d3dx8dt.lib d3d8.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;dxerr8.lib;d3dx8dt.lib;d3d8.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/=Library/vorbisfile_static.lib;$(SolutionDir)/=Library/ogg_static.lib;$(SolutionDir)/=Library/dbghelp.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib,;libc.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/$(ProjectName)D.exe</OutputFile>
@@ -120,7 +120,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib dxerr8.lib d3dx8dt.lib d3d8.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;dxerr8.lib;d3dx8dt.lib;d3d8.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/=Library/vorbisfile_static.lib;$(SolutionDir)/=Library/ogg_static.lib;$(SolutionDir)/=Library/dbghelp.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib,;libc.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/$(ProjectName).exe</OutputFile>
@@ -150,7 +150,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib dxerr8.lib d3dx8dt.lib d3d8.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;dxerr8.lib;d3dx8dt.lib;d3d8.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/=Library/vorbisfile_static.lib;$(SolutionDir)/=Library/ogg_static.lib;$(SolutionDir)/=Library/dbghelp.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib,;libc.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/$(ProjectName)R.exe</OutputFile>
@@ -180,7 +180,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib dxerr8.lib d3dx8dt.lib d3d8.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;dxerr8.lib;d3dx8dt.lib;d3d8.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/=Library/vorbisfile_static.lib;$(SolutionDir)/=Library/ogg_static.lib;$(SolutionDir)/=Library/dbghelp.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib,;libc.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/$(ProjectName)_Read.exe</OutputFile>
@@ -210,7 +210,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib dxerr8.lib d3dx8dt.lib d3d8.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;dxerr8.lib;d3dx8dt.lib;d3d8.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/=Library/vorbisfile_static.lib;$(SolutionDir)/=Library/ogg_static.lib;$(SolutionDir)/=Library/dbghelp.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib,;libc.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/$(ProjectName)R_Read.exe</OutputFile>

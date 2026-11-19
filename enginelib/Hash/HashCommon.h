@@ -10,12 +10,12 @@
  *
  * \par license
  *
- * http://www.codeproject.com/cpp/chash.asp ÀÇ ÄÚµå¸¦ ¾à°£ ¼öÁ¤Çß´Ù. 
+ * http://www.codeproject.com/cpp/chash.asp ï¿½ï¿½ ï¿½Úµå¸¦ ï¿½à°£ ï¿½ï¿½ï¿½ï¿½ï¿½ß´ï¿½. 
  *
  */
 #ifndef _QWORD_DEFINED
 #define _QWORD_DEFINED
-typedef __int64 QWORD, *LPQWORD;
+typedef unsigned __int64 QWORD, *LPQWORD;
 #endif
 
 #define MAKEQWORD(a, b)	\

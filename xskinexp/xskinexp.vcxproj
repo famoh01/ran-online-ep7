@@ -125,7 +125,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>odbc32.lib odbccp32.lib comctl32.lib "$(SolutionDir)/=DX_Lib/x86/d3dxof.lib" "$(SolutionDir)/=DX_Lib/x86/dxguid.lib" "$(SolutionDir)/=DX_Lib/x86/d3d9.lib" "$(SolutionDir)/=DX_Lib/x86/d3dx9.lib" "$(SolutionDir)/=MAX8.0SDK/lib/core.lib" "$(SolutionDir)/=MAX8.0SDK/lib/geom.lib" "$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib" "$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib" "$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;comctl32.lib;$(SolutionDir)/=DX_Lib/x86/d3dxof.lib;$(SolutionDir)/=DX_Lib/x86/dxguid.lib;$(SolutionDir)/=DX_Lib/x86/d3d9.lib;$(SolutionDir)/=DX_Lib/x86/d3dx9.lib;$(SolutionDir)/=MAX8.0SDK/lib/core.lib;$(SolutionDir)/=MAX8.0SDK/lib/geom.lib;$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib;$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib;$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib;$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib;$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>D:\My;Documents\smtm\=max6.0sdk\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OutputFile>..\_DLib\XSkinExpD.dle</OutputFile>
@@ -159,7 +159,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>odbc32.lib odbccp32.lib comctl32.lib "$(SolutionDir)/=DX_Lib/x86/d3dxof.lib" "$(SolutionDir)/=DX_Lib/x86/dxguid.lib" "$(SolutionDir)/=DX_Lib/x86/d3d9.lib" "$(SolutionDir)/=DX_Lib/x86/d3dx9.lib" "$(SolutionDir)/=MAX8.0SDK/lib/core.lib" "$(SolutionDir)/=MAX8.0SDK/lib/geom.lib" "$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib" "$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib" "$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;comctl32.lib;$(SolutionDir)/=DX_Lib/x86/d3dxof.lib;$(SolutionDir)/=DX_Lib/x86/dxguid.lib;$(SolutionDir)/=DX_Lib/x86/d3d9.lib;$(SolutionDir)/=DX_Lib/x86/d3dx9.lib;$(SolutionDir)/=MAX8.0SDK/lib/core.lib;$(SolutionDir)/=MAX8.0SDK/lib/geom.lib;$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib;$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib;$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib;$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib;$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>D:\My;Documents\smtm\=max6.0sdk\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OutputFile>..\_RLib\XSkinExp6.dle</OutputFile>
@@ -192,7 +192,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>odbc32.lib odbccp32.lib comctl32.lib "$(SolutionDir)/=DX_Lib/x86/d3dxof.lib" "$(SolutionDir)/=DX_Lib/x86/dxguid.lib" "$(SolutionDir)/=DX_Lib/x86/d3d9.lib" "$(SolutionDir)/=DX_Lib/x86/d3dx9.lib" "$(SolutionDir)/=MAX8.0SDK/lib/core.lib" "$(SolutionDir)/=MAX8.0SDK/lib/geom.lib" "$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib" "$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib" "$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;comctl32.lib;$(SolutionDir)/=DX_Lib/x86/d3dxof.lib;$(SolutionDir)/=DX_Lib/x86/dxguid.lib;$(SolutionDir)/=DX_Lib/x86/d3d9.lib;$(SolutionDir)/=DX_Lib/x86/d3dx9.lib;$(SolutionDir)/=MAX8.0SDK/lib/core.lib;$(SolutionDir)/=MAX8.0SDK/lib/geom.lib;$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib;$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib;$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib;$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib;$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>../=max6.0sdk/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OutputFile>..\_RDLib\XSkinExpD6.dle</OutputFile>
@@ -225,7 +225,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>odbc32.lib odbccp32.lib comctl32.lib "$(SolutionDir)/=DX_Lib/x86/d3dxof.lib" "$(SolutionDir)/=DX_Lib/x86/dxguid.lib" "$(SolutionDir)/=DX_Lib/x86/d3d9.lib" "$(SolutionDir)/=DX_Lib/x86/d3dx9.lib" "$(SolutionDir)/=MAX8.0SDK/lib/core.lib" "$(SolutionDir)/=MAX8.0SDK/lib/geom.lib" "$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib" "$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib" "$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;comctl32.lib;$(SolutionDir)/=DX_Lib/x86/d3dxof.lib;$(SolutionDir)/=DX_Lib/x86/dxguid.lib;$(SolutionDir)/=DX_Lib/x86/d3d9.lib;$(SolutionDir)/=DX_Lib/x86/d3dx9.lib;$(SolutionDir)/=MAX8.0SDK/lib/core.lib;$(SolutionDir)/=MAX8.0SDK/lib/geom.lib;$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib;$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib;$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib;$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib;$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\=max7.0sdk\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OutputFile>..\_RLib\XSkinExp7.dle</OutputFile>
@@ -258,7 +258,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>odbc32.lib odbccp32.lib comctl32.lib "$(SolutionDir)/=DX_Lib/x86/d3dxof.lib" "$(SolutionDir)/=DX_Lib/x86/dxguid.lib" "$(SolutionDir)/=DX_Lib/x86/d3d9.lib" "$(SolutionDir)/=DX_Lib/x86/d3dx9.lib" "$(SolutionDir)/=MAX8.0SDK/lib/core.lib" "$(SolutionDir)/=MAX8.0SDK/lib/geom.lib" "$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib" "$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib" "$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;comctl32.lib;$(SolutionDir)/=DX_Lib/x86/d3dxof.lib;$(SolutionDir)/=DX_Lib/x86/dxguid.lib;$(SolutionDir)/=DX_Lib/x86/d3d9.lib;$(SolutionDir)/=DX_Lib/x86/d3dx9.lib;$(SolutionDir)/=MAX8.0SDK/lib/core.lib;$(SolutionDir)/=MAX8.0SDK/lib/geom.lib;$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib;$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib;$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib;$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib;$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>../=max7.0sdk/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OutputFile>..\_RDLib\XSkinExpD7.dle</OutputFile>
@@ -291,7 +291,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>odbc32.lib odbccp32.lib comctl32.lib "$(SolutionDir)/=DX_Lib/x86/d3dxof.lib" "$(SolutionDir)/=DX_Lib/x86/dxguid.lib" "$(SolutionDir)/=DX_Lib/x86/d3d9.lib" "$(SolutionDir)/=DX_Lib/x86/d3dx9.lib" "$(SolutionDir)/=MAX8.0SDK/lib/core.lib" "$(SolutionDir)/=MAX8.0SDK/lib/geom.lib" "$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib" "$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib" "$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;comctl32.lib;$(SolutionDir)/=DX_Lib/x86/d3dxof.lib;$(SolutionDir)/=DX_Lib/x86/dxguid.lib;$(SolutionDir)/=DX_Lib/x86/d3d9.lib;$(SolutionDir)/=DX_Lib/x86/d3dx9.lib;$(SolutionDir)/=MAX8.0SDK/lib/core.lib;$(SolutionDir)/=MAX8.0SDK/lib/geom.lib;$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib;$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib;$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib;$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib;$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\=max8.0sdk\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OutputFile>..\_RLib\XSkinExp8.dle</OutputFile>
@@ -324,7 +324,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>odbc32.lib odbccp32.lib comctl32.lib "$(SolutionDir)/=DX_Lib/x86/d3dxof.lib" "$(SolutionDir)/=DX_Lib/x86/dxguid.lib" "$(SolutionDir)/=DX_Lib/x86/d3d9.lib" "$(SolutionDir)/=DX_Lib/x86/d3dx9.lib" "$(SolutionDir)/=MAX8.0SDK/lib/core.lib" "$(SolutionDir)/=MAX8.0SDK/lib/geom.lib" "$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib" "$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib" "$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;comctl32.lib;$(SolutionDir)/=DX_Lib/x86/d3dxof.lib;$(SolutionDir)/=DX_Lib/x86/dxguid.lib;$(SolutionDir)/=DX_Lib/x86/d3d9.lib;$(SolutionDir)/=DX_Lib/x86/d3dx9.lib;$(SolutionDir)/=MAX8.0SDK/lib/core.lib;$(SolutionDir)/=MAX8.0SDK/lib/geom.lib;$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib;$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib;$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib;$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib;$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>../=max8.0sdk/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OutputFile>..\_RDLib\XSkinExpD8.dle</OutputFile>
@@ -357,7 +357,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>odbc32.lib odbccp32.lib comctl32.lib "$(SolutionDir)/=DX_Lib/x86/d3dxof.lib" "$(SolutionDir)/=DX_Lib/x86/dxguid.lib" "$(SolutionDir)/=DX_Lib/x86/d3d9.lib" "$(SolutionDir)/=DX_Lib/x86/d3dx9.lib" "$(SolutionDir)/=MAX9.0SDK/lib/core.lib" "$(SolutionDir)/=MAX9.0SDK/lib/geom.lib" "$(SolutionDir)/=MAX9.0SDK/lib/gfx.lib" "$(SolutionDir)/=MAX9.0SDK/lib/mesh.lib" "$(SolutionDir)/=MAX9.0SDK/lib/maxutil.lib" "$(SolutionDir)/=MAX9.0SDK/lib/maxscrpt.lib" "$(SolutionDir)/=MAX9.0SDK/lib/paramblk2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;comctl32.lib;$(SolutionDir)/=DX_Lib/x86/d3dxof.lib;$(SolutionDir)/=DX_Lib/x86/dxguid.lib;$(SolutionDir)/=DX_Lib/x86/d3d9.lib;$(SolutionDir)/=DX_Lib/x86/d3dx9.lib;$(SolutionDir)/=MAX9.0SDK/lib/core.lib;$(SolutionDir)/=MAX9.0SDK/lib/geom.lib;$(SolutionDir)/=MAX9.0SDK/lib/gfx.lib;$(SolutionDir)/=MAX9.0SDK/lib/mesh.lib;$(SolutionDir)/=MAX9.0SDK/lib/maxutil.lib;$(SolutionDir)/=MAX9.0SDK/lib/maxscrpt.lib;$(SolutionDir)/=MAX9.0SDK/lib/paramblk2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\=max9.0sdk\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OutputFile>..\_RLib\XSkinExp9.dle</OutputFile>

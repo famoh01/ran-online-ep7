@@ -390,8 +390,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/GameD.exe</OutputFile>
@@ -426,8 +426,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/Game.exe</OutputFile>
@@ -464,8 +464,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/GameR.exe</OutputFile>
@@ -501,8 +501,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/RanOnline.exe</OutputFile>
@@ -540,8 +540,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/RanOnlineR.exe</OutputFile>
@@ -577,8 +577,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/Game.exe</OutputFile>
@@ -615,8 +615,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/GameR.exe</OutputFile>
@@ -651,8 +651,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/Game.exe</OutputFile>
@@ -689,8 +689,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/GameR.exe</OutputFile>
@@ -725,8 +725,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/Game.exe</OutputFile>
@@ -763,8 +763,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/GameR.exe</OutputFile>
@@ -799,8 +799,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/Game.exe</OutputFile>
@@ -837,8 +837,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/GameR.exe</OutputFile>
@@ -873,8 +873,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/Game.exe</OutputFile>
@@ -911,8 +911,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/GameR.exe</OutputFile>
@@ -947,8 +947,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/game.exe</OutputFile>
@@ -984,8 +984,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/Game.exe</OutputFile>
@@ -1021,8 +1021,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/Game.exe</OutputFile>
@@ -1059,8 +1059,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/GameR.exe</OutputFile>
@@ -1095,8 +1095,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/Game.exe</OutputFile>
@@ -1133,8 +1133,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/GameR.exe</OutputFile>
@@ -1170,8 +1170,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/GameR.exe</OutputFile>
@@ -1207,8 +1207,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/GameR.exe</OutputFile>
@@ -1244,8 +1244,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/RanOnlineR.exe</OutputFile>
@@ -1280,8 +1280,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/RanOnline.exe</OutputFile>
@@ -1317,8 +1317,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/Game.exe</OutputFile>
@@ -1355,8 +1355,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/GameR.exe</OutputFile>
@@ -1392,8 +1392,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/GameR.exe</OutputFile>
@@ -1430,8 +1430,8 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib ws2_32.lib ../=Library/strsafe.lib ../=Library/vorbisfile_static.lib ../=Library/ogg_static.lib ../=Library/dbghelp.lib ../=Library/NPGameLib_MTDLL.lib "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib" Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dsound.lib;dinput8.lib;dxerr9.lib;d3dx9.lib;d3d9.lib;d3dxof.lib;dxguid.lib;winmm.lib;imm32.lib;ws2_32.lib;../=Library/strsafe.lib;../=Library/vorbisfile_static.lib;../=Library/ogg_static.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\../=Library/NPGameLib_MTDLL.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/lzo2.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/Game.exe</OutputFile>
