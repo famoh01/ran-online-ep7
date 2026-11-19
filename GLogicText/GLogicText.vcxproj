@@ -51,7 +51,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>../=Library/dbghelp.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=Library\lzo2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../=Library/dbghelp.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=Library\lzo2.lib;$(SolutionDir)=Library\ggsrvlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(SolutionDir)/_Bin/GLogicTextD.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -81,7 +81,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>../=Library/dbghelp.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=Library\lzo2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../=Library/dbghelp.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=Library\lzo2.lib;$(SolutionDir)=Library\ggsrvlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(SolutionDir)/_Bin/GLogicText.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
