@@ -37,14 +37,14 @@ void CClubUnion::CreateSubControl ()
 {
 	CD3DFontPar* pFont = DxFontMan::GetInstance().LoadDxFont ( _DEFAULT_FONT, 9, _DEFAULT_FONT_FLAG );
 
-	{	//	µÞ ¹è°æ
+	{	//	ï¿½ï¿½ ï¿½ï¿½ï¿½
 		CBasicLineBox* pBasicLineBox = new CBasicLineBox;
 		pBasicLineBox->CreateSub ( this, "BASIC_LINE_BOX_QUEST_LIST", UI_FLAG_XSIZE | UI_FLAG_YSIZE );
 		pBasicLineBox->CreateBaseBoxQuestList ( "CLUB_LIST_LINEBOX" );
 		RegisterControl ( pBasicLineBox );		
 	}
 
-	//	ÅØ½ºÆ® ¹Ú½º
+	//	ï¿½Ø½ï¿½Æ® ï¿½Ú½ï¿½
 	{
 		CBasicTextBoxEx* pTextBox = new CBasicTextBoxEx;
 		pTextBox->CreateSub ( this, "CLUB_UNION_LIST_TEXTBOX", UI_FLAG_DEFAULT, CLUB_LIST_TEXTBOX );
@@ -55,7 +55,7 @@ void CClubUnion::CreateSubControl ()
 
 		int nTotalLine = pTextBox->GetVisibleLine ();
 
-		//	½ºÅ©·Ñ¹Ù
+		//	ï¿½ï¿½Å©ï¿½Ñ¹ï¿½
 		CBasicScrollBarEx* pScrollBar = new CBasicScrollBarEx;
 		pScrollBar->CreateSub ( this, "BASIC_SCROLLBAR", UI_FLAG_RIGHT | UI_FLAG_YSIZE, CLUB_LIST_SCROLLBAR );
 		pScrollBar->CreateBaseScrollBar ( "CLUB_LIST_SCROLLBAR" );
@@ -124,7 +124,7 @@ void CClubUnion::TranslateUIMessage( UIGUID ControlID, DWORD dwMsg )
 
 					for ( ; iter != iter_end; ++iter )
 					{
-						GLCLUBALLIANCE& sClubAlliance = *iter;
+						const GLCLUBALLIANCE& sClubAlliance = *iter;
 
 						if ( sClubAlliance.m_dwID == dwGaeaID )
 						{
@@ -151,7 +151,7 @@ void CClubUnion::SetVisibleSingle( BOOL bVisible )
 
 void CClubUnion::LoadUnionMemberList()
 {
-	m_pTextBox->ClearText (); // ÅØ½ºÆ®¸¦ ¸ðµÎ Áö¿î´Ù.
+	m_pTextBox->ClearText (); // ï¿½Ø½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½.
 
 	GLCLUB& sCLUB = GLGaeaClient::GetInstance().GetCharacter()->m_sCLUB;
 	if ( sCLUB.m_dwID==CLUB_NULL ) return ;
@@ -170,7 +170,7 @@ void CClubUnion::LoadUnionMemberList()
 		{
 			strCombine = "[M]";
 		}
-		else // ÀÏ¹Ý
+		else // ï¿½Ï¹ï¿½
 		{
 			strCombine = "[C]";
 		}

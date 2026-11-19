@@ -139,12 +139,16 @@
     <ClCompile Include="Dlg.cpp" />
     <ClCompile Include="FontSize.cpp" />
     <ClCompile Include="FormatNumberForLocale.cpp" />
-    <ClCompile Include="GetFilePart.cpp" />
+    <ClCompile Include="GetFilePart.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="GetFileSizeAsString.cpp" />
     <ClCompile Include="IsAsciiFile.cpp" />
     <ClCompile Include="MiniVersion.cpp" />
     <ClCompile Include="ROEdit.cpp" />
-    <ClCompile Include="SendEmail.cpp" />
+    <ClCompile Include="SendEmail.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="StdAfx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -156,8 +160,12 @@
     <ClCompile Include="XHeaderCtrl.cpp" />
     <ClCompile Include="XHyperLink.cpp" />
     <ClCompile Include="XListCtrl.cpp" />
-    <ClCompile Include="XZip.cpp" />
-    <ClCompile Include="strcvt.cpp" />
+    <ClCompile Include="XZip.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="strcvt.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include=".\CConsoleMessage.h" />

@@ -3,8 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "DxSkinMesh9.h"
 #include "SMeshContainer.h"
+#include "DxSkinMesh9.h"
 
 #define __FRAMEROOT ("__ROOT")
 

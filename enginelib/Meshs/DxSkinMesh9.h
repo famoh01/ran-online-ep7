@@ -2,6 +2,7 @@
 
 #include <d3d9.h>
 #include <d3dx9.h>
+// SMeshContainer.h is included by DxSkinMesh.h before this header
 
 class CSerialFile;
 class DxMaterialHLSL;
@@ -9,19 +10,9 @@ class DxMaterialHLSL;
 
 
 // enum for various skinning modes possible
-enum METHOD
-{
-    D3DNONINDEXED,
-    D3DINDEXED,
-    SOFTWARE,
-    D3DINDEXEDVS,
-    D3DINDEXEDHLSLVS,
-    NONE
-};
+// METHOD is defined in SMeshContainer.h (included by DxSkinMesh.h)
 
-struct SMeshContainer;
 struct DxSkeleton;
-struct SVERTEXINFLU;
 struct SMATERIAL_PIECE;
 struct DXMATERIAL_CHAR_EFF;
 

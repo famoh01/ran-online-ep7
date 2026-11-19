@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include ".\uieditbox_dx9.h"
-#include "DxResponseMan.h"
+#include "../DxResponseMan.h"
 
 CUIEditBox_Dx9::CUIEditBox_Dx9(void)
 	: m_fElapsedTime(0)
@@ -41,7 +41,7 @@ HRESULT CUIEditBox_Dx9::RestoreDeviceObjects( LPDIRECT3DDEVICE9 pd3dDevice )
 
 	V_RETURN( CUIControl::RestoreDeviceObjects( pd3dDevice ) ); 
 
-	// ¿¡µðÅÍ ¹Ú½ºÀÇ À§Ä¡¸¦ Á¶Á¤ÇØÁØ´Ù.
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ú½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø´ï¿½.
 	m_EditUI.SetLocation( 0, 0 );
 	m_EditUI.SetSize( DxResponseMan::GetInstance().GetD3DSurfaceDesc()->Width, 
 						DxResponseMan::GetInstance().GetD3DSurfaceDesc()->Height );
@@ -63,7 +63,7 @@ HRESULT CUIEditBox_Dx9::SetFont( UINT index, LPCWSTR strFaceName, LONG height, L
 	HRESULT hr;
 
 	//V_RETURN( m_EditUI.SetFont( index, strFaceName, height, weight ) );
-	m_EditUI.SetFont( 1, L"µ¸¿òÃ¼", 24, FW_NORMAL );
+	m_EditUI.SetFont( 1, L"ï¿½ï¿½ï¿½ï¿½Ã¼", 24, FW_NORMAL );
 	m_EditUI.SetFont( 2, L"Courier New", 16, FW_NORMAL );
 
 	return S_OK;

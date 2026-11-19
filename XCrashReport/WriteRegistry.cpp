@@ -54,7 +54,7 @@ bool WriteRegistryTreeToFile(const TCHAR *key, const TCHAR *filename)
 
 	TRACE(_T("key=<%s>  filename=<%s>\n"), key, filename);
 
-	TCHAR *cp = _tcschr(key, _T('\\'));
+	LPCTSTR cp = _tcschr(key, _T('\\'));
 	if (cp == NULL) 
 	{
 		TRACE(_T("ERROR - bad registry key %s\n"), key);

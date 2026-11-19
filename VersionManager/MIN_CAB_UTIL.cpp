@@ -607,7 +607,7 @@ namespace CAB_UTIL_MIN
 	{
 		char	*p;
 
-		p = strrchr(filename, '\\');
+		p = (char*)strrchr(filename, '\\');
 
 		if (p == NULL)
 			strcpy(stripped_name, filename);
