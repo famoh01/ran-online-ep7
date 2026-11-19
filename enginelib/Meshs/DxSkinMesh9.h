@@ -3,6 +3,8 @@
 #include <d3d9.h>
 #include <d3dx9.h>
 // SMeshContainer.h is included by DxSkinMesh.h before this header
+struct SMeshContainer;
+struct SVERTEXINFLU;
 
 class CSerialFile;
 class DxMaterialHLSL;

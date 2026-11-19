@@ -557,9 +557,9 @@ public:
 	stdstring read();						///< reads the value from the registry
 	void	write();					///< writes the value to the registry
 		
-	operator stdstring();
+	// operator stdstring() removed: ambiguous on modern MSVC
 	CRegStdString& operator=(stdstring s);
-	CRegStdString& operator+=(stdstring s) { return *this = (stdstring)*this + s; }
+	CRegStdString& operator+=(stdstring s);
 	operator LPCTSTR();
 	
 	

@@ -19,7 +19,7 @@
 
 TCHAR * GetFilePart(LPCTSTR lpszFile)
 {
-	TCHAR *result = _tcsrchr(lpszFile, _T('\\'));
+	LPCTSTR result = _tcsrchr(lpszFile, _T('\\'));
 	if (result)
 		result++;
 	else

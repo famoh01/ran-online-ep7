@@ -96,6 +96,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <AdditionalDependencies>ws2_32.lib;comctl32.lib;shlwapi.lib;version.lib;wininet.lib;../=ZLIB/zlibSTAT.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib</IgnoreSpecificDefaultLibraries>
@@ -133,6 +134,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <AdditionalDependencies>ws2_32.lib;comctl32.lib;shlwapi.lib;version.lib;wininet.lib;../=ZLIB/zlibSTAT.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib</IgnoreSpecificDefaultLibraries>
