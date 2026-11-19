@@ -259,7 +259,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../LegacyInclude";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -288,7 +288,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../LegacyInclude";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -322,7 +322,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../LegacyInclude";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_RELEASED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -356,7 +356,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Korea|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../LegacyInclude";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;KR_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -391,7 +391,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Japan|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../LegacyInclude";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;JP_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -426,7 +426,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Japan|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../LegacyInclude";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_RELEASED;JP_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -460,7 +460,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_China|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../LegacyInclude";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CH_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -495,7 +495,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Korea|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../LegacyInclude";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_RELEASED;KR_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -529,7 +529,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_China|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../LegacyInclude";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_RELEASED;CH_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -563,7 +563,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Philippines|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../LegacyInclude";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;PH_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -598,7 +598,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Philippines|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../LegacyInclude";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_RELEASED;PH_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -632,7 +632,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Vietnam|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../LegacyInclude";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;VN_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -667,7 +667,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Vietnam|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../LegacyInclude";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_RELEASED;VN_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -701,7 +701,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Taiwan|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../LegacyInclude";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_RELEASED;TW_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -735,7 +735,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Taiwan|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../LegacyInclude";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;TW_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -770,7 +770,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_HongKong|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../LegacyInclude";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_RELEASED;HK_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -804,7 +804,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_HongKong|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../LegacyInclude";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;HK_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -839,7 +839,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Global|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../LegacyInclude";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_RELEASED;GS_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -873,7 +873,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Global|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../=Include";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../netclientlib;../netserverlib;../MfcExLib/ExLibs/;../enginelib/Common;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/Dxframe;"../LegacyInclude";"../=Library";"../enginelib/G-Logic";../MfcExLib/;../enginelib/DxSound;../MfcExLib/DaumParam/;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;GS_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>

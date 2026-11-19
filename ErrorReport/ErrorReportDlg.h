@@ -1,4 +1,4 @@
-// ErrorReportDlg.h : Çì´õ ÆÄÀÏ
+// ErrorReportDlg.h : ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 //
 
 #pragma once
@@ -12,18 +12,18 @@
 class CBaseProcessor;
 
 
-// CErrorReportDlg ´ëÈ­ »óÀÚ
+// CErrorReportDlg ï¿½ï¿½È­ ï¿½ï¿½ï¿½ï¿½
 class CErrorReportDlg : public CDialog
 {
-// »ý¼º
+// ï¿½ï¿½ï¿½ï¿½
 public:
-	CErrorReportDlg(CWnd* pParent = NULL);	// Ç¥ÁØ »ý¼ºÀÚ
+	CErrorReportDlg(CWnd* pParent = NULL);	// Ç¥ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-// ´ëÈ­ »óÀÚ µ¥ÀÌÅÍ
+// ï¿½ï¿½È­ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	enum { IDD = IDD_ERRORREPORT_DIALOG };
 
 	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV Áö¿ø
+	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV ï¿½ï¿½ï¿½ï¿½
 
 public:
 	BOOL OpenFolderDialog( CString& strFolderPath );
@@ -55,7 +55,7 @@ public:
 	typedef std::map<CString, boost::shared_ptr<CBaseProcessor> > CModuleMap;
 	
 	std::list<CStackEntry> m_stackList;
-	boost::regex m_rxFunctionName;	
+	std::regex m_rxFunctionName;	
 	CModuleMap m_mapModules;	
 	boost::shared_ptr<CBaseProcessor> m_pPdbProcessor;
 
@@ -64,11 +64,11 @@ public:
 	HTREEITEM		m_TreeRoot;
 
 
-// ±¸Çö
+// ï¿½ï¿½ï¿½ï¿½
 protected:
 	HICON m_hIcon;
 
-	// ¸Þ½ÃÁö ¸Ê ÇÔ¼ö¸¦ »ý¼ºÇß½À´Ï´Ù.
+	// ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ô¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½.
 	virtual BOOL OnInitDialog();
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();

@@ -1,4 +1,4 @@
-// ErrorReportDlg.cpp : ±¸Çö ÆÄÀÏ
+// ErrorReportDlg.cpp : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 //
 
 #include "stdafx.h"
@@ -19,7 +19,7 @@
 const TCHAR szLOGFILE[MAX_PATH] = { "errorlog.xml" };
 
 
-// CErrorReportDlg ´ëÈ­ »óÀÚ
+// CErrorReportDlg ï¿½ï¿½È­ ï¿½ï¿½ï¿½ï¿½
 
 
 
@@ -46,38 +46,38 @@ BEGIN_MESSAGE_MAP(CErrorReportDlg, CDialog)
 END_MESSAGE_MAP()
 
 
-// CErrorReportDlg ¸Þ½ÃÁö Ã³¸®±â
+// CErrorReportDlg ï¿½Þ½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½
 
 BOOL CErrorReportDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	// ÀÌ ´ëÈ­ »óÀÚÀÇ ¾ÆÀÌÄÜÀ» ¼³Á¤ÇÕ´Ï´Ù. ÀÀ¿ë ÇÁ·Î±×·¥ÀÇ ÁÖ Ã¢ÀÌ ´ëÈ­ »óÀÚ°¡ ¾Æ´Ò °æ¿ì¿¡´Â
-	// ÇÁ·¹ÀÓ¿öÅ©°¡ ÀÌ ÀÛ¾÷À» ÀÚµ¿À¸·Î ¼öÇàÇÕ´Ï´Ù.
-	SetIcon(m_hIcon, TRUE);			// Å« ¾ÆÀÌÄÜÀ» ¼³Á¤ÇÕ´Ï´Ù.
-	SetIcon(m_hIcon, FALSE);		// ÀÛÀº ¾ÆÀÌÄÜÀ» ¼³Á¤ÇÕ´Ï´Ù.
+	// ï¿½ï¿½ ï¿½ï¿½È­ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½. ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Î±×·ï¿½ï¿½ï¿½ ï¿½ï¿½ Ã¢ï¿½ï¿½ ï¿½ï¿½È­ ï¿½ï¿½ï¿½Ú°ï¿½ ï¿½Æ´ï¿½ ï¿½ï¿½ì¿¡ï¿½ï¿½
+	// ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½Å©ï¿½ï¿½ ï¿½ï¿½ ï¿½Û¾ï¿½ï¿½ï¿½ ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
+	SetIcon(m_hIcon, TRUE);			// Å« ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
+	SetIcon(m_hIcon, FALSE);		// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
 
 	ClearTree();
 	m_rxFunctionName.assign("([0-9A-Za-z_:]+)\\(.*\\)");
 
-	// TODO: ¿©±â¿¡ Ãß°¡ ÃÊ±âÈ­ ÀÛ¾÷À» Ãß°¡ÇÕ´Ï´Ù.
+	// TODO: ï¿½ï¿½ï¿½â¿¡ ï¿½ß°ï¿½ ï¿½Ê±ï¿½È­ ï¿½Û¾ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ï¿½Õ´Ï´ï¿½.
 	
-	return TRUE;  // ÄÁÆ®·Ñ¿¡ ´ëÇÑ Æ÷Ä¿½º¸¦ ¼³Á¤ÇÏÁö ¾ÊÀ» °æ¿ì TRUE¸¦ ¹ÝÈ¯ÇÕ´Ï´Ù.
+	return TRUE;  // ï¿½ï¿½Æ®ï¿½Ñ¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ TRUEï¿½ï¿½ ï¿½ï¿½È¯ï¿½Õ´Ï´ï¿½.
 }
 
-// ´ëÈ­ »óÀÚ¿¡ ÃÖ¼ÒÈ­ ´ÜÃß¸¦ Ãß°¡ÇÒ °æ¿ì ¾ÆÀÌÄÜÀ» ±×¸®·Á¸é 
-// ¾Æ·¡ ÄÚµå°¡ ÇÊ¿äÇÕ´Ï´Ù. ¹®¼­/ºä ¸ðµ¨À» »ç¿ëÇÏ´Â MFC ÀÀ¿ë ÇÁ·Î±×·¥ÀÇ °æ¿ì¿¡´Â
-// ÇÁ·¹ÀÓ¿öÅ©¿¡¼­ ÀÌ ÀÛ¾÷À» ÀÚµ¿À¸·Î ¼öÇàÇÕ´Ï´Ù.
+// ï¿½ï¿½È­ ï¿½ï¿½ï¿½Ú¿ï¿½ ï¿½Ö¼ï¿½È­ ï¿½ï¿½ï¿½ß¸ï¿½ ï¿½ß°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½ï¿½ï¿½ 
+// ï¿½Æ·ï¿½ ï¿½Úµå°¡ ï¿½Ê¿ï¿½ï¿½Õ´Ï´ï¿½. ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ MFC ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Î±×·ï¿½ï¿½ï¿½ ï¿½ï¿½ì¿¡ï¿½ï¿½
+// ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½Å©ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Û¾ï¿½ï¿½ï¿½ ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
 
 void CErrorReportDlg::OnPaint() 
 {
 	if (IsIconic())
 	{
-		CPaintDC dc(this); // ±×¸®±â¸¦ À§ÇÑ µð¹ÙÀÌ½º ÄÁÅØ½ºÆ®
+		CPaintDC dc(this); // ï¿½×¸ï¿½ï¿½â¸¦ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ì½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½Æ®
 
 		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
 
-		// Å¬¶óÀÌ¾ðÆ® »ç°¢Çü¿¡¼­ ¾ÆÀÌÄÜÀ» °¡¿îµ¥¿¡ ¸ÂÃä´Ï´Ù.
+		// Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½ç°¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½îµ¥ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.
 		int cxIcon = GetSystemMetrics(SM_CXICON);
 		int cyIcon = GetSystemMetrics(SM_CYICON);
 		CRect rect;
@@ -85,7 +85,7 @@ void CErrorReportDlg::OnPaint()
 		int x = (rect.Width() - cxIcon + 1) / 2;
 		int y = (rect.Height() - cyIcon + 1) / 2;
 
-		// ¾ÆÀÌÄÜÀ» ±×¸³´Ï´Ù.
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½Ï´ï¿½.
 		dc.DrawIcon(x, y, m_hIcon);
 	}
 	else
@@ -94,8 +94,8 @@ void CErrorReportDlg::OnPaint()
 	}
 }
 
-// »ç¿ëÀÚ°¡ ÃÖ¼ÒÈ­µÈ Ã¢À» ²ô´Â µ¿¾È¿¡ Ä¿¼­°¡ Ç¥½ÃµÇµµ·Ï ½Ã½ºÅÛ¿¡¼­
-//  ÀÌ ÇÔ¼ö¸¦ È£ÃâÇÕ´Ï´Ù. 
+// ï¿½ï¿½ï¿½ï¿½Ú°ï¿½ ï¿½Ö¼ï¿½È­ï¿½ï¿½ Ã¢ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½È¿ï¿½ Ä¿ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ÃµÇµï¿½ï¿½ï¿½ ï¿½Ã½ï¿½ï¿½Û¿ï¿½ï¿½ï¿½
+//  ï¿½ï¿½ ï¿½Ô¼ï¿½ï¿½ï¿½ È£ï¿½ï¿½ï¿½Õ´Ï´ï¿½. 
 HCURSOR CErrorReportDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
@@ -103,7 +103,7 @@ HCURSOR CErrorReportDlg::OnQueryDragIcon()
 
 void CErrorReportDlg::OnBnClickedButton1()
 {
-	// TODO: ¿©±â¿¡ ÄÁÆ®·Ñ ¾Ë¸² Ã³¸®±â ÄÚµå¸¦ Ãß°¡ÇÕ´Ï´Ù.
+	// TODO: ï¿½ï¿½ï¿½â¿¡ ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ë¸ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½ ï¿½Úµå¸¦ ï¿½ß°ï¿½ï¿½Õ´Ï´ï¿½.
 
 	CString strFolderPath;
 	
@@ -117,7 +117,7 @@ void CErrorReportDlg::OnBnClickedButton1()
 
 void CErrorReportDlg::OnBnClickedButton2()
 {
-	// TODO: ¿©±â¿¡ ÄÁÆ®·Ñ ¾Ë¸² Ã³¸®±â ÄÚµå¸¦ Ãß°¡ÇÕ´Ï´Ù.
+	// TODO: ï¿½ï¿½ï¿½â¿¡ ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ë¸ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½ ï¿½Úµå¸¦ ï¿½ß°ï¿½ï¿½Õ´Ï´ï¿½.
 
 	CString strFolderPath;
 	
@@ -132,10 +132,10 @@ BOOL CErrorReportDlg::OpenFolderDialog( CString& strFolderPath )
 {
 	BROWSEINFO bi;
 	ZeroMemory(&bi, sizeof(BROWSEINFO));
-	bi.hwndOwner = this->m_hWnd; // ÇöÀç ÇÚµé
-	bi.lpszTitle = "Æú´õ ¼±ÅÃ"; // Æú´õ¼±ÅÃÃ¢ ¿­¾úÀ»¶§ º¸¿©Áö´Â ¹®±¸
+	bi.hwndOwner = this->m_hWnd; // ï¿½ï¿½ï¿½ï¿½ ï¿½Úµï¿½
+	bi.lpszTitle = "ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½"; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¢ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	bi.pidlRoot = NULL;
-	bi.lpfn = BrowseCallbackProc; // ÄÝ¹éÇÔ¼ö
+	bi.lpfn = BrowseCallbackProc; // ï¿½Ý¹ï¿½ï¿½Ô¼ï¿½
 	bi.lParam = 0;
 	bi.ulFlags = BIF_DONTGOBELOWDOMAIN | BIF_NEWDIALOGSTYLE | BIF_EDITBOX | BIF_NONEWFOLDERBUTTON | BIF_RETURNFSANCESTORS | BIF_RETURNONLYFSDIRS;
 
@@ -171,7 +171,7 @@ int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM dwDa
 
 void CErrorReportDlg::OnBnClickedOk()
 {
-	// TODO: ¿©±â¿¡ ÄÁÆ®·Ñ ¾Ë¸² Ã³¸®±â ÄÚµå¸¦ Ãß°¡ÇÕ´Ï´Ù.
+	// TODO: ï¿½ï¿½ï¿½â¿¡ ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ë¸ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½ ï¿½Úµå¸¦ ï¿½ß°ï¿½ï¿½Õ´Ï´ï¿½.
 	CString strDumpPath;
 	GetDlgItemText( IDC_FOLDER_EDIT , strDumpPath );
 
@@ -189,7 +189,7 @@ void CErrorReportDlg::OnBnClickedOk()
 		return;
 	}
 
-	// Åë°è³»±â
+	// ï¿½ï¿½è³»ï¿½ï¿½
 	ReportResearch( strDumpPath, strMapPdbFolder );
 
 	MessageBox ( "ReportResearch Complate","", MB_OK );
@@ -264,7 +264,7 @@ BOOL CErrorReportDlg::LoadXmlDocument( CString& strLogFile )
 		return FALSE;
 	}
 	
-	// Version È®ÀÎ
+	// Version È®ï¿½ï¿½
 	nodeElem = m_XmlDoc.FirstChildElement("report");
 	if ( !nodeElem )
 	{
@@ -279,7 +279,7 @@ BOOL CErrorReportDlg::LoadXmlDocument( CString& strLogFile )
 		return FALSE;
 	}
 	
-	// ÇÃ·§Æû È®ÀÎ
+	// ï¿½Ã·ï¿½ï¿½ï¿½ È®ï¿½ï¿½
 	nodeElem = GetChildElement( nodeElem, CString("platform") );
 	if ( !nodeElem )
 	{
@@ -400,7 +400,7 @@ void CErrorReportDlg::AddTree()
 		hChildItem = GetTreeChildItem( hParentItem, sStackEntry.m_strFunctionName );
 		if ( hChildItem ) 
 		{
-			// È½¼ö Ãß°¡
+			// È½ï¿½ï¿½ ï¿½ß°ï¿½
 			nCnt = m_ctrTree.GetItemData( hChildItem );
 			nCnt++;
 			strItemText.Format( "%s(%d)", sStackEntry.m_strFunctionName , nCnt );
@@ -500,8 +500,8 @@ void CErrorReportDlg::UpdateStackEntryFromMap(CStackEntry& rStackEntry)
 				if (pBaseProcessor->FindFunctionInfo(ptrAddress, pFnInfo, dwDisplacement64))
 				{
 					std::string strFunctionName(pFnInfo->GetName());
-					boost::match_results<std::string::const_iterator> what;
-					if (boost::regex_search(strFunctionName, what, m_rxFunctionName))
+					std::smatch what;
+					if (std::regex_search(strFunctionName, what, m_rxFunctionName))
 						rStackEntry.m_strFunctionName = CA2CT(what[1].str().c_str());
 					else
 						rStackEntry.m_strFunctionName = CA2CT(strFunctionName.c_str());
@@ -601,11 +601,11 @@ boost::shared_ptr<CBaseProcessor> CErrorReportDlg::GetModuleInfo(const CString& 
 	return pBaseProcessor;
 }
 
-// Element °ªÀ» °¡Á®¿Â´Ù.
-// strChildPath ÀÔ·Â ¹æ¹ý
-// Root¸¦ Á¦¿ÜÇÑ °æ·Î ÀÔ·Â child1/child2/child3
-// Æ¯Á¤°ªÀ» °¡Áø Child¸¦ Ã£À»°æ¿ì [] Command »ç¿ë
-// child1/child2[stats=ok]/child3 ->child2 ³ëµå Áß¿¡ ÇÏÀ§³ëµåÀÎ stats °ªÀÌ OKÀÎ child2 ³ëµå¸¦ ¼±ÅÃ
+// Element ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Â´ï¿½.
+// strChildPath ï¿½Ô·ï¿½ ï¿½ï¿½ï¿½
+// Rootï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ô·ï¿½ child1/child2/child3
+// Æ¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Childï¿½ï¿½ Ã£ï¿½ï¿½ï¿½ï¿½ï¿½ [] Command ï¿½ï¿½ï¿½
+// child1/child2[stats=ok]/child3 ->child2 ï¿½ï¿½ï¿½ ï¿½ß¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ stats ï¿½ï¿½ï¿½ï¿½ OKï¿½ï¿½ child2 ï¿½ï¿½å¸¦ ï¿½ï¿½ï¿½ï¿½
 TiXmlElement* CErrorReportDlg::GetChildElement( TiXmlElement* rootElem, CString& strChildPath )
 {
 	CString resTokenChild;

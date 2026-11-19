@@ -95,8 +95,8 @@ FNWRITE(file_write)
 		*g_pProgressCur += (ULONGLONG)nWritten;
 
 	//	NOTE
-	//	°­Á¦ Á¾·á½Ã¿¡ -1À» ¸®ÅÏÇÔÀ¸·Î½á,
-	//	¾²±â¿¡ ½ÇÆÐÇÑ °ÍÀ¸·Î Ã³¸®ÇÑ´Ù.
+	//	ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ã¿ï¿½ -1ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î½ï¿½,
+	//	ï¿½ï¿½ï¿½â¿¡ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ï¿½Ñ´ï¿½.
 	if ( g_pbForceTerminate && *g_pbForceTerminate ) return -1;
 		
 	return nWritten;
@@ -314,7 +314,7 @@ BOOL test_fdi( const char *cabinet_fullpath)
 	ERF				erf;
 	FDICABINETINFO	fdici;
 	int				hf;
-	char			*p;
+	char			*p = NULL;
 	char			cabinet_name[MAX_PATH]  = {0};
 	char			cabinet_path[MAX_PATH]  = {0};
 
@@ -405,7 +405,7 @@ BOOL test_fdi( const char *cabinet_fullpath)
 		//);
 	}
 
-	p = strrchr(cabinet_fullpath, '\\');
+	p = (char*)strrchr(cabinet_fullpath, '\\');
 
 	if (p == NULL)
 	{

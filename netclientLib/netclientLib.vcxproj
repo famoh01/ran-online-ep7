@@ -1067,9 +1067,9 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\=Include\des.cpp" />
-    <ClCompile Include="..\=Include\dhkey.cpp" />
-    <ClCompile Include="..\=Include\gamecode.cpp" />
+    <ClCompile Include="..\LegacyInclude\des.cpp" />
+    <ClCompile Include="..\LegacyInclude\dhkey.cpp" />
+    <ClCompile Include="..\LegacyInclude\gamecode.cpp" />
     <ClCompile Include="..\netserverLib\minTea.cpp" />
     <ClCompile Include=".\MinLzo.cpp" />
     <ClCompile Include=".\RcvMsgBuffer.cpp" />
@@ -1119,9 +1119,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\=Include\des.h" />
-    <ClInclude Include="..\=Include\dhkey.h" />
-    <ClInclude Include="..\=Include\gamecode.h" />
+    <ClInclude Include="..\LegacyInclude\des.h" />
+    <ClInclude Include="..\LegacyInclude\dhkey.h" />
+    <ClInclude Include="..\LegacyInclude\gamecode.h" />
     <ClInclude Include="..\netserverLib\minTea.h" />
     <ClInclude Include=".\MinLzo.h" />
     <ClInclude Include=".\RcvMsgBuffer.h" />

@@ -389,7 +389,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -417,7 +417,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,_DEBUG,_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -439,7 +439,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,_LIB,_RELEASED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -464,7 +464,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Korea_Test|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_LIB,KRT_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -492,7 +492,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Korea|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_LIB,KR_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -520,7 +520,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Korea|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,_LIB,_RELEASED,KR_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -545,7 +545,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Korea_Test|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,_LIB,_RELEASED,KRT_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -570,7 +570,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_China|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,_LIB,_RELEASED,CH_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -595,7 +595,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_China|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_LIB,CH_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -623,7 +623,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Thailand|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_LIB,TH_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -651,7 +651,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Thailand|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,_LIB,_RELEASED,TH_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -676,7 +676,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Philippines|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_LIB,PH_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -704,7 +704,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Philippines|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,_LIB,_RELEASED,PH_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -729,7 +729,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Taiwan|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_LIB,TW_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -757,7 +757,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Taiwan|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,_LIB,_RELEASED,TW_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -782,7 +782,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Indonesia|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,_LIB,_RELEASED,ID_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -807,7 +807,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Indonesia|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_LIB,ID_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -835,7 +835,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Malaysia|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,_LIB,_RELEASED,MY_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -860,7 +860,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Malaysia_En|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,_LIB,_RELEASED,MYE_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -885,7 +885,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Japan|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,_LIB,_RELEASED,JP_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -910,7 +910,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Vietnam|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,_LIB,_RELEASED,VN_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -935,7 +935,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Malaysia|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_LIB,MY_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -963,7 +963,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Malaysia_En|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_LIB,MYE_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -991,7 +991,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Japan|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_LIB,JP_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -1019,7 +1019,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Vietnam|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_LIB,VN_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -1047,7 +1047,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_HongKong|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,_LIB,_RELEASED,HK_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -1072,7 +1072,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_HongKong|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_LIB,HK_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -1100,7 +1100,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Global|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,_LIB,_RELEASED,GS_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -1125,7 +1125,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Global|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;./Common;./Meshs;./Workspace;./Dxframe;./DxCommon;./DxCommon9;./DxOctree;./DxEffect;./DxEffect/Single;./GUInterface;"./G-Logic";./NaviMesh;../EngineSoundLib/DxSound;./DxEffect/Char;./DxEffect/EffAni;./DxEffect/EffProj;./DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../LegacyInclude";"../=ZLIB";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32,NDEBUG,_LIB,GS_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
