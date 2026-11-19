@@ -129,7 +129,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;SERVER_MESSANGER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -152,7 +152,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;SERVER_MESSANGER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
@@ -175,7 +175,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Thailand|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;SERVER_MESSANGER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
@@ -198,7 +198,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Korea_Test|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;SERVER_MESSANGER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
@@ -221,7 +221,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Korea|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;SERVER_MESSANGER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -244,7 +244,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Korea_Test|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;SERVER_MESSANGER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -267,7 +267,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Japan|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;SERVER_MESSANGER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -290,7 +290,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Taiwan|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;SERVER_MESSANGER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
@@ -313,7 +313,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Malaysia|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;$(SolutionDir)LegacyInclude;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;$(SolutionDir)LegacyInclude;$(SolutionDir)LegacyDX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;SERVER_MESSANGER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
