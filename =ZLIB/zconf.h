@@ -174,7 +174,7 @@
 #  endif
 #  ifdef WIN32
      /* In Win32, vsnprintf is available as the "non-ANSI" _vsnprintf. */
-#    if !defined(vsnprintf) && !defined(__TURBOC__)
+#    if !defined(vsnprintf) && !defined(__TURBOC__) && (!defined(_MSC_VER) || _MSC_VER < 1900)
 #      define vsnprintf _vsnprintf
 #    endif
 #  endif

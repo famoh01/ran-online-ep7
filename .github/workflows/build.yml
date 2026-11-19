@@ -25,6 +25,16 @@ jobs:
       - name: Setup MSBuild (VS2022)
         uses: microsoft/setup-msbuild@v2
 
+      - name: Install MFC/ATL components (required by legacy projects)
+        shell: pwsh
+        run: |
+          $vsPath = & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          Write-Host "VS at: $vsPath"
+          Start-Process -FilePath "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe" `
+            -ArgumentList "modify --installPath `"$vsPath`" --add Microsoft.VisualStudio.Component.VC.ATLMFC --quiet --wait --norestart" `
+            -Wait -NoNewWindow
+          Write-Host "MFC component install done"
+
       - name: Create missing sql/include (ODBC headers from Windows SDK)
         shell: pwsh
         run: |
