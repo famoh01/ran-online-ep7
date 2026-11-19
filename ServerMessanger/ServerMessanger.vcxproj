@@ -49,7 +49,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)\_DBuildData\ServerMessanger\</OutDir>
     <IntDir>$(SolutionDir)\_DBuildData\ServerMessanger\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -58,7 +58,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)\_RBuildData\ServerMessanger\</OutDir>
     <IntDir>$(SolutionDir)\_RBuildData\ServerMessanger\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -67,7 +67,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)\_RBuildData\ServerMessanger_Thailand\</OutDir>
     <IntDir>$(SolutionDir)\_RBuildData\ServerMessanger_Thailand\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -76,7 +76,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
     <IntDir>$(ConfigurationName)\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -85,7 +85,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
     <IntDir>$(ConfigurationName)\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -94,7 +94,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
     <IntDir>$(ConfigurationName)\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -103,7 +103,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
     <IntDir>$(ConfigurationName)\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -112,7 +112,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
     <IntDir>$(ConfigurationName)\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -121,7 +121,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
     <IntDir>$(ConfigurationName)\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>

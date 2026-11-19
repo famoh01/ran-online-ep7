@@ -49,7 +49,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)\_DBuildData\GameServer\</OutDir>
     <IntDir>$(SolutionDir)\_DBuildData\GameServer\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -58,7 +58,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)\_RBuildData\GameServer\</OutDir>
     <IntDir>$(SolutionDir)\_RBuildData\GameServer\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -67,7 +67,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)\_RDBuildData\GameServer\</OutDir>
     <IntDir>$(SolutionDir)\_RDBuildData\GameServer\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -76,7 +76,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
     <IntDir>$(ConfigurationName)\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -85,7 +85,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
     <IntDir>$(ConfigurationName)\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -94,7 +94,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
     <IntDir>$(ConfigurationName)\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -103,7 +103,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
     <IntDir>$(ConfigurationName)\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -112,7 +112,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
     <IntDir>$(ConfigurationName)\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -121,7 +121,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
     <IntDir>$(ConfigurationName)\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -130,7 +130,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)sql/include";"$(SolutionDir)=DaumCrypt";"$(SolutionDir)RanClientLib/NpcTalk";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_WIN32_WINNT=0x0500;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
@@ -277,7 +277,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Korea_Test|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)sql/include";"$(SolutionDir)=DaumCrypt";"$(SolutionDir)RanClientLib/NpcTalk";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_WIN32_WINNT=0x0500;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>

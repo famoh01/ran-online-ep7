@@ -25,7 +25,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)\_DBuildData\XCrashReport\</OutDir>
     <IntDir>$(SolutionDir)\_DBuildData\XCrashReport\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -34,7 +34,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)\_RBuildData\XCrashReport\</OutDir>
     <IntDir>$(SolutionDir)\_RBuildData\XCrashReport\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -43,7 +43,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)\_RBuildData\XCrashReport_China\</OutDir>
     <IntDir>$(SolutionDir)\_RBuildData\XCrashReport_China\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -55,7 +55,8 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level4</WarningLevel>
-      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -80,7 +81,8 @@
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
@@ -106,7 +108,8 @@
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
@@ -142,7 +145,11 @@
     <ClCompile Include="MiniVersion.cpp" />
     <ClCompile Include="ROEdit.cpp" />
     <ClCompile Include="SendEmail.cpp" />
-    <ClCompile Include="StdAfx.cpp" />
+    <ClCompile Include="StdAfx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release_China|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="WriteRegistry.cpp" />
     <ClCompile Include="XColorStatic.cpp" />
     <ClCompile Include="XCrashReport.cpp" />

@@ -25,7 +25,7 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)\_DBuildData\EngineSoundLib\$(ConfigurationName)\</OutDir>
     <IntDir>$(SolutionDir)\_DBuildData\EngineSoundLib\$(ConfigurationName)\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -34,7 +34,7 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)\_RBuildData\EngineSoundLib\$(ConfigurationName)\</OutDir>
     <IntDir>$(SolutionDir)\_RBuildData\EngineSoundLib\$(ConfigurationName)\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -43,7 +43,7 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)\_RDBuildData\EngineSoundLib\$(ConfigurationName)\</OutDir>
     <IntDir>$(SolutionDir)\_RDBuildData\EngineSoundLib\$(ConfigurationName)\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>

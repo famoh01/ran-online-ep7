@@ -25,7 +25,7 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)\_DBuildData\EngineUILib\$(ConfigurationName)\</OutDir>
     <IntDir>$(SolutionDir)\_DBuildData\EngineUILib\$(ConfigurationName)\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -34,7 +34,7 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)\_RBuildData\EngineUILib\$(ConfigurationName)\</OutDir>
     <IntDir>$(SolutionDir)\_RBuildData\EngineUILib\$(ConfigurationName)\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
@@ -43,7 +43,7 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <OutDir>$(SolutionDir)\_RDBuildData\EngineUILib\$(ConfigurationName)\</OutDir>
     <IntDir>$(SolutionDir)\_RDBuildData\EngineUILib\$(ConfigurationName)\</IntDir>
     <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
