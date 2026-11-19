@@ -202,7 +202,9 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include=".\XCrashReport_CH.rc" />
-    <ResourceCompile Include="XCrashReport.rc" />
+    <ResourceCompile Include="XCrashReport.rc">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="XCrashReport.ico" />

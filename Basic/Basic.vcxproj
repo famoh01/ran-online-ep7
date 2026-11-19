@@ -1464,9 +1464,15 @@
     <ClInclude Include=".\resrc1.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include=".\Basic.rc" />
-    <ResourceCompile Include=".\Basic_CH.rc" />
-    <ResourceCompile Include=".\Basic_TW.rc" />
+    <ResourceCompile Include=".\Basic.rc">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ResourceCompile>
+    <ResourceCompile Include=".\Basic_CH.rc">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ResourceCompile>
+    <ResourceCompile Include=".\Basic_TW.rc">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include=".\res\Basic.ico" />

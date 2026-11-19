@@ -121,8 +121,10 @@
     <ResourceCompile Include=".\MinWebLauncher.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Midl Include=".\MinWebLauncher.idl" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include=".\MinWebLauncher.def" />
-    <None Include=".\MinWebLauncher.idl" />
     <None Include=".\MinWebLauncherCtrl.bmp" />
     <None Include=".\ReadMe.txt" />
   </ItemGroup>

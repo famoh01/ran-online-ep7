@@ -124,7 +124,7 @@ void CClubUnion::TranslateUIMessage( UIGUID ControlID, DWORD dwMsg )
 
 					for ( ; iter != iter_end; ++iter )
 					{
-						const GLCLUBALLIANCE& sClubAlliance = *iter;
+						const const GLCLUBALLIANCE& sClubAlliance = *iter;
 
 						if ( sClubAlliance.m_dwID == dwGaeaID )
 						{

@@ -349,7 +349,9 @@
     <ClCompile Include=".\ExLibs\ReportCtrl.cpp" />
     <ClCompile Include=".\ExLibs\ToolBarEx.cpp" />
     <ClCompile Include=".\ExLibs\memdc.cpp" />
-    <ClCompile Include=".\ExceptionHandler.cpp" />
+    <ClCompile Include=".\ExceptionHandler.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include=".\GetWinVer.cpp" />
     <ClCompile Include=".\HPro.cpp" />
     <ClCompile Include=".\MinBugTrap.cpp" />

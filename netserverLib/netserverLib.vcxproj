@@ -1000,8 +1000,12 @@
     <ClCompile Include="..\netclientLib\s_CBit.cpp" />
     <ClCompile Include="..\netclientLib\s_NetGlobal.cpp" />
     <ClCompile Include=".\ApexCloseList.cpp" />
-    <ClCompile Include=".\DbExecuter.cpp" />
-    <ClCompile Include=".\EventThread.cpp" />
+    <ClCompile Include=".\DbExecuter.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include=".\EventThread.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include=".\minTea.cpp" />
     <ClCompile Include=".\s_CAddressChecker.cpp" />
     <ClCompile Include=".\s_CAgentServerApex.cpp" />
@@ -1115,8 +1119,12 @@
     <ClInclude Include="..\netclientLib\s_CBit.h" />
     <ClInclude Include="..\netclientLib\s_NetGlobal.h" />
     <ClInclude Include=".\ApexCloseList.h" />
-    <ClInclude Include=".\DbExecuter.h" />
-    <ClInclude Include=".\EventThread.h" />
+    <ClInclude Include=".\DbExecuter.h">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include=".\EventThread.h">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include=".\minTea.h" />
     <ClInclude Include=".\s_CAddressChecker.h" />
     <ClInclude Include=".\s_CAgentServerApex.h" />

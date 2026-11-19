@@ -1153,7 +1153,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include=".\Common\BaseString.cpp" />
-    <ClCompile Include=".\Common\BitSet.cpp" />
+    <ClCompile Include=".\Common\BitSet.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include=".\Common\BugTrapStr.cpp" />
     <ClCompile Include=".\Common\CommonWeb.cpp" />
     <ClCompile Include=".\Common\DoubleBuffering.cpp" />
@@ -1171,13 +1173,27 @@
     <ClCompile Include=".\Common\creportfiles.cpp" />
     <ClCompile Include=".\Common\gassert.cpp" />
     <ClCompile Include=".\Common\gltexfile.cpp" />
-    <ClCompile Include=".\DxCommon9\DXUT.cpp" />
-    <ClCompile Include=".\DxCommon9\DXUTMesh.cpp" />
-    <ClCompile Include=".\DxCommon9\DXUTenum.cpp" />
-    <ClCompile Include=".\DxCommon9\DXUTgui.cpp" />
-    <ClCompile Include=".\DxCommon9\DXUTmisc.cpp" />
-    <ClCompile Include=".\DxCommon9\dxstdafx.cpp" />
-    <ClCompile Include=".\DxCommon9\getdxver.cpp" />
+    <ClCompile Include=".\DxCommon9\DXUT.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include=".\DxCommon9\DXUTMesh.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include=".\DxCommon9\DXUTenum.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include=".\DxCommon9\DXUTgui.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include=".\DxCommon9\DXUTmisc.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include=".\DxCommon9\dxstdafx.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include=".\DxCommon9\getdxver.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include=".\DxCommon\Collision.cpp" />
     <ClCompile Include=".\DxCommon\DebugSet.cpp" />
     <ClCompile Include=".\DxCommon\DxBackUpRendTarget.cpp" />
@@ -1340,15 +1356,21 @@
     <ClCompile Include=".\Meshs\DxSkinAniControl.cpp" />
     <ClCompile Include=".\Meshs\DxSkinAniManSaveLoad.cpp" />
     <ClCompile Include=".\Meshs\DxSkinAniManThread.cpp" />
-    <ClCompile Include=".\Meshs\DxSkinMesh.cpp" />
+    <ClCompile Include=".\Meshs\DxSkinMesh.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include=".\Meshs\DxSkinMesh9.cpp" />
     <ClCompile Include=".\Meshs\DxSkinMesh9_CPU.cpp" />
     <ClCompile Include=".\Meshs\DxSkinMesh9_HLSL.cpp" />
     <ClCompile Include=".\Meshs\DxSkinMesh9_NORMAL.cpp" />
     <ClCompile Include=".\Meshs\DxSkinMeshCartoon.cpp" />
     <ClCompile Include=".\Meshs\DxSkinMeshContainer9.cpp" />
-    <ClCompile Include=".\Meshs\DxSkinMeshDraw.cpp" />
-    <ClCompile Include=".\Meshs\DxSkinMeshLoad.cpp" />
+    <ClCompile Include=".\Meshs\DxSkinMeshDraw.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include=".\Meshs\DxSkinMeshLoad.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include=".\Meshs\DxSkinVB_ATT.cpp" />
     <ClCompile Include=".\Meshs\NsSMeshSceneGraph.cpp" />
     <ClCompile Include=".\Meshs\SAnimation.cpp" />
@@ -1366,13 +1388,19 @@
     <ClCompile Include=".\dxframe\d3dapp.cpp" />
     <ClCompile Include=".\dxframe\dxutil.cpp" />
     <ClCompile Include=".\dxframe\xrmxftmpl.cpp" />
-    <ClCompile Include="Common\BinTree.cpp" />
+    <ClCompile Include="Common\BinTree.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Common\ByteStream.cpp" />
     <ClCompile Include="Common\CFileFind.cpp" />
-    <ClCompile Include="Common\CSpreadSheet.cpp" />
+    <ClCompile Include="Common\CSpreadSheet.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Common\CompByte.cpp" />
     <ClCompile Include="Common\DXInputString.cpp" />
-    <ClCompile Include="Common\OutPutStream.cpp" />
+    <ClCompile Include="Common\OutPutStream.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Common\SUBPATH.cpp" />
     <ClCompile Include="Common\StringFile.cpp" />
     <ClCompile Include="Common\StringUtils.cpp" />
@@ -1496,7 +1524,9 @@
     <ClCompile Include="Meshs\DxSkinMeshMan.cpp" />
     <ClCompile Include="Meshs\DxSkinObject.cpp" />
     <ClCompile Include="Meshs\DxSkinPieceContainer.cpp" />
-    <ClCompile Include="Meshs\SMeshContainer.cpp" />
+    <ClCompile Include="Meshs\SMeshContainer.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="NaviMesh\NavigationSaveLoad.cpp" />
     <ClCompile Include="NaviMesh\actor.cpp" />
     <ClCompile Include="NaviMesh\navagationtree.cpp" />
@@ -1506,11 +1536,19 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include=".\Common\BaseString.h" />
-    <ClInclude Include=".\Common\BitSet.h" />
+    <ClInclude Include=".\Common\BitSet.h">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include=".\Common\BugTrapStr.h" />
-    <ClInclude Include=".\Common\CBitArray.h" />
-    <ClInclude Include=".\Common\CBitArray2d.h" />
-    <ClInclude Include=".\Common\CTwoBitArray.h" />
+    <ClInclude Include=".\Common\CBitArray.h">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include=".\Common\CBitArray2d.h">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include=".\Common\CTwoBitArray.h">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include=".\Common\CommonWeb.h" />
     <ClInclude Include=".\Common\DoubleBuffering.h" />
     <ClInclude Include=".\Common\IMEEdit.h" />
@@ -1523,7 +1561,9 @@
     <ClInclude Include=".\Common\SerialMemory.h" />
     <ClInclude Include=".\Common\StringMemory.h" />
     <ClInclude Include=".\Common\Unzipper.h" />
-    <ClInclude Include=".\Common\VMemPool.h" />
+    <ClInclude Include=".\Common\VMemPool.h">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include=".\Common\charset.h" />
     <ClInclude Include=".\Common\creportfiles.h" />
     <ClInclude Include=".\Common\gassert.h" />
@@ -1658,7 +1698,9 @@
     <ClInclude Include=".\Meshs\DxSkinAniControl.h" />
     <ClInclude Include=".\Meshs\DxSkinDefine.h" />
     <ClInclude Include=".\Meshs\DxSkinEffResult.h" />
-    <ClInclude Include=".\Meshs\DxSkinMesh.h" />
+    <ClInclude Include=".\Meshs\DxSkinMesh.h">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include=".\Meshs\DxSkinMesh9.h" />
     <ClInclude Include=".\Meshs\DxSkinMesh9_CPU.h" />
     <ClInclude Include=".\Meshs\DxSkinMesh9_HLSL.h" />
@@ -1680,17 +1722,27 @@
     <ClInclude Include=".\dxframe\d3dapp.h" />
     <ClInclude Include=".\dxframe\dxutil.h" />
     <ClInclude Include=".\dxframe\xrmxftmpl.h" />
-    <ClInclude Include="Common\BinTree.h" />
+    <ClInclude Include="Common\BinTree.h">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Common\ByteStream.h" />
     <ClInclude Include="Common\CFileFind.h" />
-    <ClInclude Include="Common\CHeap.h" />
+    <ClInclude Include="Common\CHeap.h">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Common\CList.h" />
-    <ClInclude Include="Common\CListEx.h" />
+    <ClInclude Include="Common\CListEx.h">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Common\CMemPool.h" />
-    <ClInclude Include="Common\CSpreadSheet.h" />
+    <ClInclude Include="Common\CSpreadSheet.h">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Common\CompByte.h" />
     <ClInclude Include="Common\DXInputString.h" />
-    <ClInclude Include="Common\OutPutStream.h" />
+    <ClInclude Include="Common\OutPutStream.h">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Common\SUBPATH.h" />
     <ClInclude Include="Common\StlFunctions.h" />
     <ClInclude Include="Common\StringFile.h" />
@@ -1803,7 +1855,9 @@
     <ClInclude Include="Meshs\DxSkinMeshMan.h" />
     <ClInclude Include="Meshs\DxSkinObject.h" />
     <ClInclude Include="Meshs\DxSkinPieceContainer.h" />
-    <ClInclude Include="Meshs\SMeshContainer.h" />
+    <ClInclude Include="Meshs\SMeshContainer.h">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="NaviMesh\actor.h" />
     <ClInclude Include="NaviMesh\line2d.h" />
     <ClInclude Include="NaviMesh\navigationcell.h" />

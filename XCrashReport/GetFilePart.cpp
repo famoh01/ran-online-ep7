@@ -24,5 +24,5 @@ TCHAR * GetFilePart(LPCTSTR lpszFile)
 		result++;
 	else
 		result = (TCHAR *) lpszFile;
-	return result;
+	return (TCHAR*)result;
 }

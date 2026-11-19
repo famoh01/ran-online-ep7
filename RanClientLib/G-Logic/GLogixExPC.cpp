@@ -951,7 +951,7 @@ DWORD GLCHARLOGIC::CALCDAMAGE(
 	const GLSKILL* pSkill,
 	const DWORD dwskill_lev,
 	const DWORD dwWeatherFlag,
-	const DWORD dwDivCount)
+	const int dwDivCount)
 {
 #if defined(KRT_PARAM) || defined(KR_PARAM) || defined(CH_PARAM) || defined(TH_PARAM) || defined(ID_PARAM) || defined(JP_PARAM) || defined(MY_PARAM) || defined(MYE_PARAM) || defined(PH_PARAM) || defined ( GS_PARAM ) || defined(_RELEASED)
 	return CALCDAMAGE_20060328(
@@ -985,7 +985,7 @@ DWORD GLCHARLOGIC::CALCDAMAGE_20060328(
 	const GLSKILL* pSkill,
 	const DWORD dwskill_lev,
 	const DWORD dwWeatherFlag,
-	const DWORD dwDivCount)
+	const int dwDivCount)
 {
 	GLACTOR *pActor = GLGaeaServer::GetInstance().GetTarget ( pLandMan, cTargetID );
 	if ( !pActor )	return DAMAGE_TYPE_NONE;
@@ -1275,7 +1275,7 @@ DWORD GLCHARLOGIC::CALCDAMAGE_2004(
 	const GLSKILL* pSkill,
 	const DWORD dwskill_lev,
 	const DWORD dwWeatherFlag,
-	const DWORD dwDivCount)
+	const int dwDivCount)
 {
 	GLACTOR *pActor = GLGaeaServer::GetInstance().GetTarget ( pLandMan, cTargetID );
 	if ( !pActor )	return DAMAGE_TYPE_NONE;

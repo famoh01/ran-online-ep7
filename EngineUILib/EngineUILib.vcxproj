@@ -140,9 +140,13 @@
     <ClCompile Include=".\GUInterface\UIControlUpdate.cpp" />
     <ClCompile Include=".\GUInterface\UIDebugSet.cpp" />
     <ClCompile Include=".\GUInterface\UIEditBox.cpp" />
-    <ClCompile Include=".\GUInterface\UIEditBoxIME_Dx9.cpp" />
+    <ClCompile Include=".\GUInterface\UIEditBoxIME_Dx9.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include=".\GUInterface\UIEditBoxMan.cpp" />
-    <ClCompile Include=".\GUInterface\UIEditBox_Dx9.cpp" />
+    <ClCompile Include=".\GUInterface\UIEditBox_Dx9.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include=".\GUInterface\UIFocusContainer.cpp" />
     <ClCompile Include=".\GUInterface\UIGroup.cpp" />
     <ClCompile Include=".\GUInterface\UIGroupBasic.cpp" />
@@ -188,9 +192,13 @@
     <ClInclude Include=".\GUInterface\UIDataType.h" />
     <ClInclude Include=".\GUInterface\UIDebugSet.h" />
     <ClInclude Include=".\GUInterface\UIEditBox.h" />
-    <ClInclude Include=".\GUInterface\UIEditBoxIME_Dx9.h" />
+    <ClInclude Include=".\GUInterface\UIEditBoxIME_Dx9.h">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include=".\GUInterface\UIEditBoxMan.h" />
-    <ClInclude Include=".\GUInterface\UIEditBox_Dx9.h" />
+    <ClInclude Include=".\GUInterface\UIEditBox_Dx9.h">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include=".\GUInterface\UIFocusContainer.h" />
     <ClInclude Include=".\GUInterface\UIGroup.h" />
     <ClInclude Include=".\GUInterface\UIKeyCheck.h" />

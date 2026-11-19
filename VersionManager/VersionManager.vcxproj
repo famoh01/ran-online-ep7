@@ -65,8 +65,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
-      <AdditionalDependencies>odbc32.lib;../=Library/Fci.lib;../=Library/Fdi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>odbc32.lib;Fci.lib;Fdi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(SolutionDir)/_Bin/VersionManagerD.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -90,8 +89,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
-      <AdditionalDependencies>odbc32.lib;../=Library/Fci.lib;../=Library/Fdi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>odbc32.lib;Fci.lib;Fdi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(SolutionDir)/_Bin/VersionManager.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -118,8 +116,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
-      <AdditionalDependencies>odbc32.lib;../=Library/Fci.lib;../=Library/Fdi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>odbc32.lib;Fci.lib;Fdi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(SolutionDir)/_Bin/VersionManager_China.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>

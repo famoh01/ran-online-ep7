@@ -985,8 +985,12 @@
     <ResourceCompile Include="AutoPatchMan.rc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include=".\res\icon1.ch.ico" />
-    <None Include=".\res\icon1.my.ico" />
+    <None Include=".\res\icon1.ch.ico">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include=".\res\icon1.my.ico">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
     <None Include=".\res\icon1.tw.ico" />
     <None Include=".\res\manifest.bin" />
     <None Include="ReadMe.txt" />

@@ -1,21 +1,24 @@
 #pragma once
 
-#include <d3d9.h>
-#include <d3dx9.h>
-#include "SMeshContainer.h"
-// forward decls below let DxSkinMesh9.h work even if SMeshContainer.h was already included (e.g. via DxSkinMesh.h)
-struct SMeshContainer;
-struct SVERTEXINFLU;
-
 class CSerialFile;
 class DxMaterialHLSL;
 
 
 
 // enum for various skinning modes possible
-// METHOD is defined in SMeshContainer.h (included by DxSkinMesh.h)
+enum METHOD
+{
+    D3DNONINDEXED,
+    D3DINDEXED,
+    SOFTWARE,
+    D3DINDEXEDVS,
+    D3DINDEXEDHLSLVS,
+    NONE
+};
 
+struct SMeshContainer;
 struct DxSkeleton;
+struct SVERTEXINFLU;
 struct SMATERIAL_PIECE;
 struct DXMATERIAL_CHAR_EFF;
 
@@ -77,7 +80,7 @@ struct SFrame : public D3DXFRAME
 enum RENDER_OPT
 {
 	CTOP_BASE	= 0,
-    CTOP_SHADOW = 1,	// Toon - ï¿½ï¿½ï¿½ï¿½.
+    CTOP_SHADOW = 1,	// Toon - À½¿µ.
     CTOP_EDGE	= 2,	// Toon - Edge
 	CTOP_NEWTEX = 3,	// New Textuer
 };
@@ -98,8 +101,8 @@ public:
 	static DWORD	m_dwBehaviorFlags;	// Behavior flags of the 3D device
 	
 protected:
-	char			m_szName[MAX_PATH];				//	ï¿½ï¿½ï¿½ï¿½ xFile ï¿½Ì¸ï¿½.
-	char			m_szSkeleton[MAX_PATH];			//	Skeleton xFile ï¿½Ì¸ï¿½.
+	char			m_szName[MAX_PATH];				//	Çü»ó xFile ÀÌ¸§.
+	char			m_szSkeleton[MAX_PATH];			//	Skeleton xFile ÀÌ¸§.
 
 protected:
 	DWORD			m_dwRefCount;
@@ -160,9 +163,9 @@ public:
 	virtual void DrawMeshNORMALMAP( IDirect3DDevice9 *pd3dDevice, LPD3DXMESHCONTAINER pMeshContainerBase, SMATERIAL_PIECE *pmtrlPieceNULL, 
 							DxMaterialHLSL* pMaterialHLSL, BOOL bWorldIdentity=FALSE ) = 0;
 
-	// Note	: ï¿½Ï¹Ý¸Þ½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ì´ï¿½ ï¿½ï¿½.
-	// Parameters : pMatrixï¿½ï¿½ NULL ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ÈµÈ´ï¿½.  
-	//				ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+	// Note	: ÀÏ¹Ý¸Þ½¬¸¦ ·»´õ¸µ ÇÒ °æ¿ì ¾²ÀÌ´Â °Í.
+	// Parameters : pMatrix´Â NULL ÀÌ ¿À¸é Àý´ë ¾ÈµÈ´Ù.  
+	//				¿¡·¯¸¦ À¯¹ßÇÑ´Ù.
 	void DrawFrameMesh( IDirect3DDevice9 *pd3dDevice, SMeshContainer* pMeshContainer, SMATERIAL_PIECE* pmtrlPiece, LPD3DXMATRIX pMatrix );
 
 	void UpdateSkinningMethod ( LPD3DXFRAME pFrameBase );

@@ -7,10 +7,12 @@
       <AdditionalOptions>/Zc:forScope- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(MSBuildThisFileDirectory)=DX_Lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(MSBuildThisFileDirectory)=DX_Lib\x86;$(MSBuildThisFileDirectory)=Library;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <!-- legacy .lib files (zlibSTAT, Fci/Fdi) were built without /SAFESEH -->
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>$(MSBuildThisFileDirectory)=DX_Lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(MSBuildThisFileDirectory)=DX_Lib\x86;$(MSBuildThisFileDirectory)=Library;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)=DX_Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
