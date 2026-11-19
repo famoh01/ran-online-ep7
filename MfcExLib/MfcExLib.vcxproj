@@ -169,7 +169,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Lib>
-      <OutputFile>../_RLib/MfcExLib.lib</OutputFile>
+      <OutputFile>$(SolutionDir)_RLib\MfcExLib.lib</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </Lib>
   </ItemDefinitionGroup>

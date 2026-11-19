@@ -44,7 +44,7 @@
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level4</WarningLevel>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>$(SolutionDir)/_DBuildData/SuperPad/$(TargetName).pch;stdafx.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <ObjectFileName>$(SolutionDir)/_DBuildData/SuperPad/</ObjectFileName>
       <ProgramDataBaseFileName>$(SolutionDir)/_DBuildData/SuperPad/vc70.pdb</ProgramDataBaseFileName>
@@ -73,7 +73,7 @@
       <Optimization>MaxSpeed</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>$(SolutionDir)/_DBuildData/SuperPad/$(TargetName).pch;stdafx.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ObjectFileName>$(SolutionDir)/_DBuildData/SuperPad/</ObjectFileName>
       <ProgramDataBaseFileName>$(SolutionDir)/_DBuildData/SuperPad/vc70.pdb</ProgramDataBaseFileName>

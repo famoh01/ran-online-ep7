@@ -1,4 +1,4 @@
-// ServerManagerDlg.cpp : ±¸Çö ÆÄÀÏ
+// ServerManagerDlg.cpp : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 //
 
 #include "stdafx.h"
@@ -127,7 +127,7 @@ void CServerManagerDlg::SMS_ServerDown(NET_MSG_GENERIC* nmg)
     CString strMsg;
     NET_SERVER_INFO* nsi = reinterpret_cast<NET_SERVER_INFO*> (nmg);    
 #if defined ( KRT_PARAM ) || defined ( KR_PARAM ) 
-    strMsg.Format(_T("(%s)¶õ %d ¼­¹ö¿¡ ÀÌ»óÀÌ ¹ß°ßµÇ¾ú½À´Ï´Ù"), nsi->gsi.szServerIP, nsi->gsi.nServerGroup);
+    strMsg.Format(_T("(%s)ï¿½ï¿½ %d ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì»ï¿½ï¿½ï¿½ ï¿½ß°ßµÇ¾ï¿½ï¿½ï¿½ï¿½Ï´ï¿½"), nsi->gsi.szServerIP, nsi->gsi.nServerGroup);
 #endif
 #if defined ( TW_PARAM ) || defined(HK_PARAM) 
     strMsg.Format(_T("(%s)RAN %d SERVER ERROR DETECTED"), nsi->gsi.szServerIP, nsi->gsi.nServerGroup);
@@ -148,9 +148,19 @@ void CServerManagerDlg::SMS_ServerCloseClient(NET_MSG_GENERIC* nmg)
 	NET_SERVER_INFO* nsi = reinterpret_cast<NET_SERVER_INFO*> (nmg);    
 
 #if defined ( KRT_PARAM ) || defined ( KR_PARAM ) 
-	strMsg.Format(_T("(%s)¶õ %d ¼­¹ö°¡ Á¾·á µÇ¾ú½À´Ï´Ù."), nsi->gsi.szServerIP, nsi->gsi.nServerGroup);
+	strMsg.Format(_T("(%s)ï¿½ï¿½ %d ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ç¾ï¿½ï¿½ï¿½ï¿½Ï´ï¿½."), nsi->gsi.szServerIP, nsi->gsi.nServerGroup);
 #endif
 
 	CClientConsoleMessage::GetInstance()->WriteWithTime(strMsg.GetString());
 	SendAllSMS(strMsg);
 }
+
+#if !defined(KRT_PARAM) && !defined(KR_PARAM) && !defined(TEST) && !defined(_RELEASED) \
+	&& !defined(JP_PARAM) && !defined(MY_PARAM) && !defined(MYE_PARAM) && !defined(PH_PARAM) \
+	&& !defined(ID_PARAM) && !defined(VN_PARAM) && !defined(TW_PARAM) && !defined(HK_PARAM) \
+	&& !defined(GS_PARAM) && !defined(CH_PARAM) && !defined(TH_PARAM)
+void CServerManagerDlg::SendSMS(CString strHP, CString strText)
+{
+	// fallback stub: no region macro defined in this build configuration
+}
+#endif
