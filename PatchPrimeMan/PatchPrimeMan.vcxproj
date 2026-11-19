@@ -1,0 +1,453 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD|Win32">
+      <Configuration>ReleaseD</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Korea|Win32">
+      <Configuration>Release_Korea</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_Korea|Win32">
+      <Configuration>ReleaseD_Korea</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Japan|Win32">
+      <Configuration>Release_Japan</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_Japan|Win32">
+      <Configuration>ReleaseD_Japan</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_Global|Win32">
+      <Configuration>ReleaseD_Global</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Global|Win32">
+      <Configuration>Release_Global</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{4DF418D8-5A7A-4B88-9115-315E6217970D}</ProjectGuid>
+    <RootNamespace>PatchPrimeMan</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_DBuildData\PatchPrimeMan\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_DBuildData\PatchPrimeMan\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\PatchPrimeMan\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\PatchPrimeMan\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\PatchPrimeMan\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\PatchPrimeMan\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Korea|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\PatchPrimeMan\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\PatchPrimeMan\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Korea|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\PatchPrimeMan\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\PatchPrimeMan\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Japan|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\PatchPrimeMan\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\PatchPrimeMan\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Japan|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\PatchPrimeMan\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\PatchPrimeMan\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Global|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\PatchPrimeMan\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\PatchPrimeMan\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Global|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\PatchPrimeMan\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\PatchPrimeMan\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon9";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)MfcExLib";"$(SolutionDir)MfcExLib/ExLibs";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <MinimalRebuild>true</MinimalRebuild>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>d3dx9.lib d3d9.lib d3dxof.lib dsound.lib dxerr9.lib Version.lib dxguid.lib dinput8.lib imm32.lib "$(SolutionDir)/=Library/fdi.lib" "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/lzo2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/LauncherPatchD.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>true</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon9";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)MfcExLib";"$(SolutionDir)MfcExLib/ExLibs";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <MinimalRebuild>false</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>d3dx9.lib d3d9.lib d3dxof.lib dsound.lib dxerr9.lib Version.lib dxguid.lib dinput8.lib imm32.lib "$(SolutionDir)/=Library/fdi.lib" "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/lzo2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/LauncherPatch.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>false</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon9";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)MfcExLib";"$(SolutionDir)MfcExLib/ExLibs";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <MinimalRebuild>false</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>d3dx9.lib d3d9.lib d3dxof.lib dsound.lib dxerr9.lib Version.lib dxguid.lib dinput8.lib imm32.lib "$(SolutionDir)/=Library/fdi.lib" "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/lzo2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/LauncherPatchR.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>false</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Korea|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon9";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)MfcExLib";"$(SolutionDir)MfcExLib/ExLibs";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;DAUMPARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <MinimalRebuild>false</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>d3dx9.lib d3d9.lib d3dxof.lib dsound.lib dxerr9.lib Version.lib dxguid.lib dinput8.lib imm32.lib "$(SolutionDir)/=Library/fdi.lib" "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/lzo2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/LauncherPatch.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>false</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Korea|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon9";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)MfcExLib";"$(SolutionDir)MfcExLib/ExLibs";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;DAUMPARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <MinimalRebuild>false</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>d3dx9.lib d3d9.lib d3dxof.lib dsound.lib dxerr9.lib Version.lib dxguid.lib dinput8.lib imm32.lib "$(SolutionDir)/=Library/fdi.lib" "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/lzo2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/LauncherPatchR.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>false</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Japan|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon9";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)MfcExLib";"$(SolutionDir)MfcExLib/ExLibs";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;EXCITEPARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <MinimalRebuild>false</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>d3dx9.lib d3d9.lib d3dxof.lib dsound.lib dxerr9.lib Version.lib dxguid.lib dinput8.lib imm32.lib "$(SolutionDir)/=Library/fdi.lib" "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/lzo2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/LauncherPatch.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>false</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Japan|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon9";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)MfcExLib";"$(SolutionDir)MfcExLib/ExLibs";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;EXCITEPARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <MinimalRebuild>false</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>d3dx9.lib d3d9.lib d3dxof.lib dsound.lib dxerr9.lib Version.lib dxguid.lib dinput8.lib imm32.lib "$(SolutionDir)/=Library/fdi.lib" "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/lzo2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/LauncherPatchR.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>false</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Global|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon9";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)MfcExLib";"$(SolutionDir)MfcExLib/ExLibs";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;GS_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <MinimalRebuild>false</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>d3dx9.lib d3d9.lib d3dxof.lib dsound.lib dxerr9.lib Version.lib dxguid.lib dinput8.lib imm32.lib "$(SolutionDir)/=Library/fdi.lib" "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/lzo2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/LauncherPatchR.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>false</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Global|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon9";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)MfcExLib";"$(SolutionDir)MfcExLib/ExLibs";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;GS_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <MinimalRebuild>false</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>d3dx9.lib d3d9.lib d3dxof.lib dsound.lib dxerr9.lib Version.lib dxguid.lib dinput8.lib imm32.lib "$(SolutionDir)/=Library/fdi.lib" "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/lzo2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/LauncherPatch.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>false</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include=".\ExceptionAttacher.cpp" />
+    <ClCompile Include=".\GlobalVariable.cpp" />
+    <ClCompile Include=".\HttpPatchThread.cpp" />
+    <ClCompile Include=".\LPatchThread.cpp" />
+    <ClCompile Include=".\LogControl.cpp" />
+    <ClCompile Include=".\PatchPrimeManTimer.cpp" />
+    <ClCompile Include="PatchPrimeMan.cpp" />
+    <ClCompile Include="PatchPrimeManDlg.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include=".\GlobalVariable.h" />
+    <ClInclude Include=".\HttpPatchThread.h" />
+    <ClInclude Include=".\LPatchThread.h" />
+    <ClInclude Include=".\LogControl.h" />
+    <ClInclude Include="PatchPrimeMan.h" />
+    <ClInclude Include="PatchPrimeManDlg.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="stdafx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="PatchPrimeMan.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+    <None Include="res\PatchPrimeMan.ico" />
+    <None Include="res\PatchPrimeMan.manifest" />
+    <None Include="res\PatchPrimeMan.rc2" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

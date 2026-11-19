@@ -1,0 +1,1177 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD|Win32">
+      <Configuration>ReleaseD</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_HongKong|Win32">
+      <Configuration>ReleaseD_HongKong</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_HongKong|Win32">
+      <Configuration>Release_HongKong</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Korea_Test|Win32">
+      <Configuration>Release_Korea_Test</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_Korea_Test|Win32">
+      <Configuration>ReleaseD_Korea_Test</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Korea|Win32">
+      <Configuration>Release_Korea</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Japan|Win32">
+      <Configuration>Release_Japan</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_Korea|Win32">
+      <Configuration>ReleaseD_Korea</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_Japan|Win32">
+      <Configuration>ReleaseD_Japan</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_China|Win32">
+      <Configuration>Release_China</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_China|Win32">
+      <Configuration>ReleaseD_China</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Taiwan|Win32">
+      <Configuration>Release_Taiwan</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_Taiwan|Win32">
+      <Configuration>ReleaseD_Taiwan</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Thailand|Win32">
+      <Configuration>Release_Thailand</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_Thailand|Win32">
+      <Configuration>ReleaseD_Thailand</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_Indonesia|Win32">
+      <Configuration>ReleaseD_Indonesia</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Indonesia|Win32">
+      <Configuration>Release_Indonesia</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Philippines|Win32">
+      <Configuration>Release_Philippines</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Malaysia_En|Win32">
+      <Configuration>Release_Malaysia_En</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Malaysia|Win32">
+      <Configuration>Release_Malaysia</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Vietnam|Win32">
+      <Configuration>Release_Vietnam</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_Vietnam|Win32">
+      <Configuration>ReleaseD_Vietnam</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_Global|Win32">
+      <Configuration>ReleaseD_Global</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Global|Win32">
+      <Configuration>Release_Global</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{36F1AF73-B733-41ED-9DC2-F35DA5A1D073}</ProjectGuid>
+    <RootNamespace>RanClientLib</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_DBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_DBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_HongKong|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_HongKong|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Korea_Test|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Korea_Test|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Korea|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Japan|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Korea|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Japan|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_China|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_China|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Taiwan|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Taiwan|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Thailand|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Thailand|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Indonesia|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Indonesia|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Philippines|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Malaysia_En|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Malaysia|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Vietnam|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
+    <IntDir>$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Vietnam|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
+    <IntDir>$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Global|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Global|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\RanClientLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <MinimalRebuild>true</MinimalRebuild>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_DLib\RanClientLibD.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RLib\RanClientLib.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_LIB;_RELEASED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <OmitFramePointers>false</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RDLib\RanClientLibR.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_HongKong|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_LIB;_RELEASED;HK_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <OmitFramePointers>false</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RDLib\RanClientLibR_HongKong.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_HongKong|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;HK_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RLib\RanClientLib_HongKong.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Korea_Test|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;KRT_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RLib\RanClientLib_KoreaTest.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Korea_Test|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_LIB;_RELEASED;KRT_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <OmitFramePointers>false</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RDLib\RanClientLibR_KoreaTest.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Korea|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;KR_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RLib\RanClientLib_Korea.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Japan|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;JP_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RLib\RanClientLib_Japan.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Korea|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_LIB;_RELEASED;KR_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <OmitFramePointers>false</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RDLib\RanClientLibR_Korea.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Japan|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_LIB;_RELEASED;JP_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <OmitFramePointers>false</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RDLib\RanClientLibR_Japan.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_China|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;CH_PARAM;CH_PARAM_USEGAIN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RLib\RanClientLib_China.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_China|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_LIB;_RELEASED;CH_PARAM;CH_PARAM_USEGAIN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <OmitFramePointers>false</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RDLib\RanClientLibR_China.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Taiwan|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;TW_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RLib\RanClientLib_Taiwan.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Taiwan|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_LIB;_RELEASED;TW_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <OmitFramePointers>false</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RDLib\RanClientLibR_Taiwan.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Thailand|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;TH_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RLib\RanClientLib.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Thailand|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_LIB;_RELEASED;TH_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <OmitFramePointers>false</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RDLib\RanClientLibR.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Indonesia|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_LIB;_RELEASED;ID_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <OmitFramePointers>false</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RDLib\RanClientLibR.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Indonesia|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;ID_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RLib\RanClientLib.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Philippines|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;PH_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RLib\RanClientLib.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Malaysia_En|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;MYE_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RLib\RanClientLib.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Malaysia|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;MY_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RLib\RanClientLib.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Vietnam|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;VN_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RLib\RanClientLib.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Vietnam|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_LIB;_RELEASED;VN_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <OmitFramePointers>false</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RDLib\RanClientLibR.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Global|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_LIB;_RELEASED;GS_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <OmitFramePointers>false</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RDLib\RanClientLibR_Korea.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Global|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)RanClientLib";"$(SolutionDir)RanClientLib/Interface";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)netclientLib";"$(SolutionDir)netserverLib";"$(SolutionDir)enginelib/";"$(SolutionDir)enginelib/DxEffect/Single/";"$(SolutionDir)enginelib/Common";"$(SolutionDir)enginelib/Meshs";"$(SolutionDir)enginelib/Workspace";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)enginelib/DxCommon9";"$(SolutionDir)enginelib/DxCommon";"$(SolutionDir)enginelib/DxOctree";"$(SolutionDir)enginelib/DxEffect";"$(SolutionDir)enginelib/DxEffect/EffAni";"$(SolutionDir)enginelib/G-Logic";"$(SolutionDir)enginelib/NaviMesh";"$(SolutionDir)EngineSoundLib/";"$(SolutionDir)EngineSoundLib/DxSound";"$(SolutionDir)=Include";../enginelib/DxEffect/EffProj;"$(SolutionDir)MfcExLib/";../enginelib/DxEffect/Char;../enginelib/DxEffect/EffKeep;../Vorbislib;../SQL/Include;./NpcTalk;"$(SolutionDir)=DaumCrypt";"../=zlib";"$(SolutionDir)MfcExLib/ExLibs";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;GS_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RLib\RanClientLib_Korea.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include=".\ClientApex.cpp" />
+    <ClCompile Include=".\DbActionLogic.cpp" />
+    <ClCompile Include=".\DbActionLogicClub.cpp" />
+    <ClCompile Include=".\DbActionLogicLog.cpp" />
+    <ClCompile Include=".\DbActionLogicPet.cpp" />
+    <ClCompile Include=".\DbActionLogicSMS.cpp" />
+    <ClCompile Include=".\DbActionLogicShop.cpp" />
+    <ClCompile Include=".\DbActionLogicVehicle.cpp" />
+    <ClCompile Include=".\G-Logic\Emoticon.cpp" />
+    <ClCompile Include=".\G-Logic\GLAGLandMan.cpp" />
+    <ClCompile Include=".\G-Logic\GLAgentServer.cpp" />
+    <ClCompile Include=".\G-Logic\GLAgentServerMsg.cpp" />
+    <ClCompile Include=".\G-Logic\GLAutoLevel.cpp" />
+    <ClCompile Include=".\G-Logic\GLAutoLevelMan.cpp" />
+    <ClCompile Include=".\G-Logic\GLBusList.cpp" />
+    <ClCompile Include=".\G-Logic\GLBusStation.cpp" />
+    <ClCompile Include=".\G-Logic\GLCharAG.cpp" />
+    <ClCompile Include=".\G-Logic\GLCharAGClub.cpp" />
+    <ClCompile Include=".\G-Logic\GLCharClubMsg.cpp" />
+    <ClCompile Include=".\G-Logic\GLCharEx.cpp" />
+    <ClCompile Include=".\G-Logic\GLCharInvenMsg.cpp" />
+    <ClCompile Include=".\G-Logic\GLCharPMarketMsg.cpp" />
+    <ClCompile Include=".\G-Logic\GLCharQuest.cpp" />
+    <ClCompile Include=".\G-Logic\GLCharQuestMsg.cpp" />
+    <ClCompile Include=".\G-Logic\GLCharSkillMsg.cpp" />
+    <ClCompile Include=".\G-Logic\GLCharStorageMsg.cpp" />
+    <ClCompile Include=".\G-Logic\GLCharacterAllianceMsg.cpp" />
+    <ClCompile Include=".\G-Logic\GLCharacterClubBattleMsg.cpp" />
+    <ClCompile Include=".\G-Logic\GLCharacterClubMsg.cpp" />
+    <ClCompile Include=".\G-Logic\GLCharacterConfrontMsg.cpp" />
+    <ClCompile Include=".\G-Logic\GLCharacterMiniGameMsg.cpp" />
+    <ClCompile Include=".\G-Logic\GLCharacterQuestMsg.cpp" />
+    <ClCompile Include=".\G-Logic\GLCharacterSkillTarget.cpp" />
+    <ClCompile Include=".\G-Logic\GLCharactorReq.cpp" />
+    <ClCompile Include=".\G-Logic\GLClubDeathMatch.cpp" />
+    <ClCompile Include=".\G-Logic\GLClubMan.cpp" />
+    <ClCompile Include=".\G-Logic\GLCommentFile.cpp" />
+    <ClCompile Include=".\G-Logic\GLContrlPcMsg.cpp" />
+    <ClCompile Include=".\G-Logic\GLCrowGenerateReward.cpp" />
+    <ClCompile Include=".\G-Logic\GLCrowReAction.cpp" />
+    <ClCompile Include=".\G-Logic\GLCrowSkill.cpp" />
+    <ClCompile Include=".\G-Logic\GLCrowSkillTarget.cpp" />
+    <ClCompile Include=".\G-Logic\GLEventProc.cpp" />
+    <ClCompile Include=".\G-Logic\GLFreePK.cpp" />
+    <ClCompile Include=".\G-Logic\GLFriendClient.cpp" />
+    <ClCompile Include=".\G-Logic\GLGaeaServerMsg.cpp" />
+    <ClCompile Include=".\G-Logic\GLGuidance.cpp" />
+    <ClCompile Include=".\G-Logic\GLITEMLMT.cpp" />
+    <ClCompile Include=".\G-Logic\GLItemMixMan.cpp" />
+    <ClCompile Include=".\G-Logic\GLLandMark.cpp" />
+    <ClCompile Include=".\G-Logic\GLLevelFile.cpp" />
+    <ClCompile Include=".\G-Logic\GLMapAxisInfo.cpp" />
+    <ClCompile Include=".\G-Logic\GLMaterial.cpp" />
+    <ClCompile Include=".\G-Logic\GLMaterialClient.cpp" />
+    <ClCompile Include=".\G-Logic\GLMoney.cpp" />
+    <ClCompile Include=".\G-Logic\GLParty.cpp" />
+    <ClCompile Include=".\G-Logic\GLPartyClient.cpp" />
+    <ClCompile Include=".\G-Logic\GLPartyField.cpp" />
+    <ClCompile Include=".\G-Logic\GLPartyFieldMan.cpp" />
+    <ClCompile Include=".\G-Logic\GLPartyMan.cpp" />
+    <ClCompile Include=".\G-Logic\GLPet.cpp" />
+    <ClCompile Include=".\G-Logic\GLPetClient.cpp" />
+    <ClCompile Include=".\G-Logic\GLPetClientMsg.cpp" />
+    <ClCompile Include=".\G-Logic\GLPetClientReq.cpp" />
+    <ClCompile Include=".\G-Logic\GLPetField.cpp" />
+    <ClCompile Include=".\G-Logic\GLPetFieldMsg.cpp" />
+    <ClCompile Include=".\G-Logic\GLPrivateMarket.cpp" />
+    <ClCompile Include=".\G-Logic\GLQuest.cpp" />
+    <ClCompile Include=".\G-Logic\GLQuestMan.cpp" />
+    <ClCompile Include=".\G-Logic\GLQuestPlay.cpp" />
+    <ClCompile Include=".\G-Logic\GLSchoolFreePK.cpp" />
+    <ClCompile Include=".\G-Logic\GLStringTable.cpp" />
+    <ClCompile Include=".\G-Logic\GLSummon.cpp" />
+    <ClCompile Include=".\G-Logic\GLSummonClient.cpp" />
+    <ClCompile Include=".\G-Logic\GLSummonClientMsg.cpp" />
+    <ClCompile Include=".\G-Logic\GLSummonField.cpp" />
+    <ClCompile Include=".\G-Logic\GLSummonFieldMsg.cpp" />
+    <ClCompile Include=".\G-Logic\GLTaxiStation.cpp" />
+    <ClCompile Include=".\G-Logic\GLTrade.cpp" />
+    <ClCompile Include=".\G-Logic\GLTradeClient.cpp" />
+    <ClCompile Include=".\G-Logic\GLVEHICLE.cpp" />
+    <ClCompile Include=".\GLAnyPet.cpp" />
+    <ClCompile Include=".\GLAnySummon.cpp" />
+    <ClCompile Include=".\GLAnySummonMsg.cpp" />
+    <ClCompile Include=".\GLBusData.cpp" />
+    <ClCompile Include=".\GLFactEffect.cpp" />
+    <ClCompile Include=".\GLSummonSkill.cpp" />
+    <ClCompile Include=".\NpcTalk\NpcDialogue.cpp" />
+    <ClCompile Include=".\NpcTalk\NpcDialogueCase.cpp" />
+    <ClCompile Include=".\NpcTalk\NpcDialogueSet.cpp" />
+    <ClCompile Include=".\NpcTalk\NpcTalk.cpp" />
+    <ClCompile Include=".\NpcTalk\NpcTalkCondition.cpp" />
+    <ClCompile Include=".\NpcTalk\NpcTalkControl.cpp" />
+    <ClCompile Include=".\dxincommand.cpp" />
+    <ClCompile Include="DxCharSham.cpp" />
+    <ClCompile Include="DxGameStage.cpp" />
+    <ClCompile Include="DxGlobalStage.cpp" />
+    <ClCompile Include="DxLobyStage.cpp" />
+    <ClCompile Include="DxParamSet.cpp" />
+    <ClCompile Include="DxServerInstance.cpp" />
+    <ClCompile Include="G-Logic\GLARoundSlot.cpp" />
+    <ClCompile Include="G-Logic\GLChar.cpp" />
+    <ClCompile Include="G-Logic\GLCharClient.cpp" />
+    <ClCompile Include="G-Logic\GLCharData.cpp" />
+    <ClCompile Include="G-Logic\GLCharDataLoad.cpp" />
+    <ClCompile Include="G-Logic\GLCharMsg.cpp" />
+    <ClCompile Include="G-Logic\GLCharacter.cpp" />
+    <ClCompile Include="G-Logic\GLCharacterMsg.cpp" />
+    <ClCompile Include="G-Logic\GLCharacterSkill.cpp" />
+    <ClCompile Include="G-Logic\GLCrow.cpp" />
+    <ClCompile Include="G-Logic\GLCrowClient.cpp" />
+    <ClCompile Include="G-Logic\GLCrowData.cpp" />
+    <ClCompile Include="G-Logic\GLCrowDataLoad.cpp" />
+    <ClCompile Include="G-Logic\GLCrowRenList.cpp" />
+    <ClCompile Include="G-Logic\GLGaeaClient.cpp" />
+    <ClCompile Include="G-Logic\GLGaeaServer.cpp" />
+    <ClCompile Include="G-Logic\GLInventory.cpp" />
+    <ClCompile Include="G-Logic\GLItem.cpp" />
+    <ClCompile Include="G-Logic\GLItemDef.cpp" />
+    <ClCompile Include="G-Logic\GLItemMan.cpp" />
+    <ClCompile Include="G-Logic\GLLandMan.cpp" />
+    <ClCompile Include="G-Logic\GLLandManClient.cpp" />
+    <ClCompile Include="G-Logic\GLLandManSet.cpp" />
+    <ClCompile Include="G-Logic\GLMapList.cpp" />
+    <ClCompile Include="G-Logic\GLMobSchedule.cpp" />
+    <ClCompile Include="G-Logic\GLSkill.cpp" />
+    <ClCompile Include="G-Logic\GLogicData.cpp" />
+    <ClCompile Include="G-Logic\GLogicDataLoad.cpp" />
+    <ClCompile Include="G-Logic\GLogicEx.cpp" />
+    <ClCompile Include="G-Logic\GLogicExNPC.cpp" />
+    <ClCompile Include="G-Logic\GLogixExPC.cpp" />
+    <ClCompile Include="G-Logic\stl_Func.cpp" />
+    <ClCompile Include="GLCharDefine.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include=".\ClientApex.h" />
+    <ClInclude Include=".\DbActionLogic.h" />
+    <ClInclude Include=".\G-Logic\Emoticon.h" />
+    <ClInclude Include=".\G-Logic\GLAGLandMan.h" />
+    <ClInclude Include=".\G-Logic\GLAgentServer.h" />
+    <ClInclude Include=".\G-Logic\GLAutoLevel.h" />
+    <ClInclude Include=".\G-Logic\GLAutoLevelMan.h" />
+    <ClInclude Include=".\G-Logic\GLBusData.h" />
+    <ClInclude Include=".\G-Logic\GLBusList.h" />
+    <ClInclude Include=".\G-Logic\GLBusStation.h" />
+    <ClInclude Include=".\G-Logic\GLCDMDefine.h" />
+    <ClInclude Include=".\G-Logic\GLCharAG.h" />
+    <ClInclude Include=".\G-Logic\GLClubDeathMatch.h" />
+    <ClInclude Include=".\G-Logic\GLClubMan.h" />
+    <ClInclude Include=".\G-Logic\GLCommentFile.h" />
+    <ClInclude Include=".\G-Logic\GLContrlBaseMsg.h" />
+    <ClInclude Include=".\G-Logic\GLContrlCharJoinMsg.h" />
+    <ClInclude Include=".\G-Logic\GLContrlClubMsg.h" />
+    <ClInclude Include=".\G-Logic\GLContrlConflictMsg.h" />
+    <ClInclude Include=".\G-Logic\GLContrlCrowMsg.h" />
+    <ClInclude Include=".\G-Logic\GLContrlFriendMsg.h" />
+    <ClInclude Include=".\G-Logic\GLContrlInDunMsg.h" />
+    <ClInclude Include=".\G-Logic\GLContrlInvenMsg.h" />
+    <ClInclude Include=".\G-Logic\GLContrlNpcMsg.h" />
+    <ClInclude Include=".\G-Logic\GLContrlPartyMsg.h" />
+    <ClInclude Include=".\G-Logic\GLContrlPcMsg.h" />
+    <ClInclude Include=".\G-Logic\GLContrlPetMsg.h" />
+    <ClInclude Include=".\G-Logic\GLContrlPrivateMarket.h" />
+    <ClInclude Include=".\G-Logic\GLContrlQuestMsg.h" />
+    <ClInclude Include=".\G-Logic\GLContrlServerMsg.h" />
+    <ClInclude Include=".\G-Logic\GLContrlSkillMsg.h" />
+    <ClInclude Include=".\G-Logic\GLContrlSummonMsg.h" />
+    <ClInclude Include=".\G-Logic\GLContrlTradeMsg.h" />
+    <ClInclude Include=".\G-Logic\GLEventProc.h" />
+    <ClInclude Include=".\G-Logic\GLFactEffect.h" />
+    <ClInclude Include=".\G-Logic\GLFreePK.h" />
+    <ClInclude Include=".\G-Logic\GLFriendClient.h" />
+    <ClInclude Include=".\G-Logic\GLGuidance.h" />
+    <ClInclude Include=".\G-Logic\GLITEMLMT.h" />
+    <ClInclude Include=".\G-Logic\GLItemMixMan.h" />
+    <ClInclude Include=".\G-Logic\GLLandMark.h" />
+    <ClInclude Include=".\G-Logic\GLLevelFile.h" />
+    <ClInclude Include=".\G-Logic\GLMapAxisInfo.h" />
+    <ClInclude Include=".\G-Logic\GLMaterial.h" />
+    <ClInclude Include=".\G-Logic\GLMaterialClient.h" />
+    <ClInclude Include=".\G-Logic\GLParty.h" />
+    <ClInclude Include=".\G-Logic\GLPartyClient.h" />
+    <ClInclude Include=".\G-Logic\GLPartyField.h" />
+    <ClInclude Include=".\G-Logic\GLPartyFieldMan.h" />
+    <ClInclude Include=".\G-Logic\GLPartyMan.h" />
+    <ClInclude Include=".\G-Logic\GLPet.h" />
+    <ClInclude Include=".\G-Logic\GLPetClient.h" />
+    <ClInclude Include=".\G-Logic\GLPetField.h" />
+    <ClInclude Include=".\G-Logic\GLPrivateMarket.h" />
+    <ClInclude Include=".\G-Logic\GLQuest.h" />
+    <ClInclude Include=".\G-Logic\GLQuestMan.h" />
+    <ClInclude Include=".\G-Logic\GLQuestPlay.h" />
+    <ClInclude Include=".\G-Logic\GLSchoolFreePK.h" />
+    <ClInclude Include=".\G-Logic\GLStringTable.h" />
+    <ClInclude Include=".\G-Logic\GLSummon.h" />
+    <ClInclude Include=".\G-Logic\GLSummonClient.h" />
+    <ClInclude Include=".\G-Logic\GLSummonField.h" />
+    <ClInclude Include=".\G-Logic\GLTaxiStation.h" />
+    <ClInclude Include=".\G-Logic\GLTrade.h" />
+    <ClInclude Include=".\G-Logic\GLTradeClient.h" />
+    <ClInclude Include=".\G-Logic\GLVEHICLE.h" />
+    <ClInclude Include=".\GLAnyPet.h" />
+    <ClInclude Include=".\GLAnySummon.h" />
+    <ClInclude Include=".\NpcTalk\NpcDialogue.h" />
+    <ClInclude Include=".\NpcTalk\NpcDialogueCase.h" />
+    <ClInclude Include=".\NpcTalk\NpcDialogueSet.h" />
+    <ClInclude Include=".\NpcTalk\NpcTalk.h" />
+    <ClInclude Include=".\NpcTalk\NpcTalkCondition.h" />
+    <ClInclude Include=".\NpcTalk\NpcTalkControl.h" />
+    <ClInclude Include=".\dxincommand.h" />
+    <ClInclude Include="DxCharSham.h" />
+    <ClInclude Include="DxGameStage.h" />
+    <ClInclude Include="DxGlobalStage.h" />
+    <ClInclude Include="DxLobyStage.h" />
+    <ClInclude Include="DxParamSet.h" />
+    <ClInclude Include="DxServerInstance.h" />
+    <ClInclude Include="DxStage.h" />
+    <ClInclude Include="G-Logic\GLACTOR.h" />
+    <ClInclude Include="G-Logic\GLARoundSlot.h" />
+    <ClInclude Include="G-Logic\GLCOPY.h" />
+    <ClInclude Include="G-Logic\GLChar.h" />
+    <ClInclude Include="G-Logic\GLCharClient.h" />
+    <ClInclude Include="G-Logic\GLCharData.h" />
+    <ClInclude Include="G-Logic\GLCharDefine.h" />
+    <ClInclude Include="G-Logic\GLCharacter.h" />
+    <ClInclude Include="G-Logic\GLContrlMsg.h" />
+    <ClInclude Include="G-Logic\GLCrow.h" />
+    <ClInclude Include="G-Logic\GLCrowClient.h" />
+    <ClInclude Include="G-Logic\GLCrowData.h" />
+    <ClInclude Include="G-Logic\GLCrowRenList.h" />
+    <ClInclude Include="G-Logic\GLGaeaClient.h" />
+    <ClInclude Include="G-Logic\GLGaeaServer.h" />
+    <ClInclude Include="G-Logic\GLInventory.h" />
+    <ClInclude Include="G-Logic\GLItem.h" />
+    <ClInclude Include="G-Logic\GLItemDef.h" />
+    <ClInclude Include="G-Logic\GLItemMan.h" />
+    <ClInclude Include="G-Logic\GLLandMan.h" />
+    <ClInclude Include="G-Logic\GLLandManClient.h" />
+    <ClInclude Include="G-Logic\GLMapList.h" />
+    <ClInclude Include="G-Logic\GLMobSchedule.h" />
+    <ClInclude Include="G-Logic\GLMoney.h" />
+    <ClInclude Include="G-Logic\GLSkill.h" />
+    <ClInclude Include="G-Logic\GLStrikeM.h" />
+    <ClInclude Include="G-Logic\GLogicData.h" />
+    <ClInclude Include="G-Logic\GLogicEx.h" />
+    <ClInclude Include="G-Logic\stl_Func.h" />
+    <ClInclude Include="stdafx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

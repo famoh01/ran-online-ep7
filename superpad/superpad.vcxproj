@@ -1,0 +1,139 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{E15A7173-27D2-4768-8BAB-0B5AA4638D73}</ProjectGuid>
+    <RootNamespace>RanEditor</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\SuperPad\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\SuperPad\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\SuperPad\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\SuperPad\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../enginelib/Common;../MfcExLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_AFXDLL;WIN32,_DEBUG,_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level4</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeaderFile>$(SolutionDir)/_DBuildData/SuperPad/$(TargetName).pch</PrecompiledHeaderFile>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <ObjectFileName>$(SolutionDir)/_DBuildData/SuperPad/</ObjectFileName>
+      <ProgramDataBaseFileName>$(SolutionDir)/_DBuildData/SuperPad/vc70.pdb</ProgramDataBaseFileName>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dinput8.lib dxerr8.lib d3dx8dt.lib d3d8.lib d3dxof.lib dxguid.lib imm32.lib ../=Library/dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>$(SolutionDir)/_Bin/REditorD.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(SolutionDir)/_DBuildData/SuperPad/$(ProjectName).pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>true</LinkIncremental>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../enginelib/Common;../MfcExLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_AFXDLL;WIN32,NDEBUG,_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeaderFile>$(SolutionDir)/_DBuildData/SuperPad/$(TargetName).pch</PrecompiledHeaderFile>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ObjectFileName>$(SolutionDir)/_DBuildData/SuperPad/</ObjectFileName>
+      <ProgramDataBaseFileName>$(SolutionDir)/_DBuildData/SuperPad/vc70.pdb</ProgramDataBaseFileName>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dinput8.lib dxerr8.lib d3dx8dt.lib d3d8.lib d3dxof.lib dxguid.lib imm32.lib ../=Library/dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>$(SolutionDir)/_Bin/REditor.exe</OutputFile>
+      <ProgramDatabaseFile>$(SolutionDir)/_DBuildData/SuperPad/$(ProjectName).pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>false</LinkIncremental>
+      <SuppressStartupBanner>false</SuppressStartupBanner>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include=".\aboutbox.cpp" />
+    <ClCompile Include=".\ipframe.cpp" />
+    <ClCompile Include=".\linkitem.cpp" />
+    <ClCompile Include=".\mainfrm.cpp" />
+    <ClCompile Include=".\paddoc.cpp" />
+    <ClCompile Include=".\padframe.cpp" />
+    <ClCompile Include=".\paditem.cpp" />
+    <ClCompile Include=".\padview.cpp" />
+    <ClCompile Include=".\pageset.cpp" />
+    <ClCompile Include=".\stdafx.cpp" />
+    <ClCompile Include=".\superpad.cpp" />
+    <ClCompile Include=".\tabstop.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include=".\aboutbox.h" />
+    <ClInclude Include=".\ipframe.h" />
+    <ClInclude Include=".\linkitem.h" />
+    <ClInclude Include=".\mainfrm.h" />
+    <ClInclude Include=".\paddoc.h" />
+    <ClInclude Include=".\padframe.h" />
+    <ClInclude Include=".\paditem.h" />
+    <ClInclude Include=".\padview.h" />
+    <ClInclude Include=".\pageset.h" />
+    <ClInclude Include=".\resource.h" />
+    <ClInclude Include=".\stdafx.h" />
+    <ClInclude Include=".\superpad.h" />
+    <ClInclude Include=".\tabstop.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include=".\superpad.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".\res\itoolbar.bmp" />
+    <None Include=".\res\paddoc.ico" />
+    <None Include=".\res\superpad.ico" />
+    <None Include=".\res\toolbar.bmp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

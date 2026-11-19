@@ -1,0 +1,393 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release6.0|Win32">
+      <Configuration>Release6.0</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD6.0|Win32">
+      <Configuration>ReleaseD6.0</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release7.0|Win32">
+      <Configuration>Release7.0</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD7.0|Win32">
+      <Configuration>ReleaseD7.0</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release8.0|Win32">
+      <Configuration>Release8.0</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD8.0|Win32">
+      <Configuration>ReleaseD8.0</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release9.0|Win32">
+      <Configuration>Release9.0</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{19F7142C-32E9-4868-9FBC-70DC7C7A7ED4}</ProjectGuid>
+    <RootNamespace>XSkinExp</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <OutDir>$(SolutionDir)\_DBuildData\XSkinExp\</OutDir>
+    <IntDir>$(SolutionDir)\_DBuildData\XSkinExp\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release6.0|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <OutDir>$(SolutionDir)\_RBuildData\XSkinExp6\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\XSkinExp6\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD6.0|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <OutDir>$(SolutionDir)\_RDBuildData\XSkinExp6\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\XSkinExp6\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release7.0|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <OutDir>$(SolutionDir)\_RBuildData\XSkinExp7\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\XSkinExp7\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD7.0|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <OutDir>$(SolutionDir)\_RDBuildData\XSkinExp7\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\XSkinExp7\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release8.0|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <OutDir>$(SolutionDir)\_RBuildData\XSkinExp8\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\XSkinExp8\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD8.0|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <OutDir>$(SolutionDir)\_RDBuildData\XSkinExp8\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\XSkinExp8\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release9.0|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
+    <IntDir>$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max6.0sdk/Include";"../=max6.0sdk/cssdk/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32,_DEBUG,_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>.\../_DBuildData/XSkinExp/xskinexp.pch</PrecompiledHeaderFile>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <ObjectFileName>.\../_DBuildData/XSkinExp/</ObjectFileName>
+      <ProgramDataBaseFileName>.\../_DBuildData/XSkinExp/</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>Default</CompileAs>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib odbccp32.lib comctl32.lib "$(SolutionDir)/=DX_Lib/x86/d3dxof.lib" "$(SolutionDir)/=DX_Lib/x86/dxguid.lib" "$(SolutionDir)/=DX_Lib/x86/d3d9.lib" "$(SolutionDir)/=DX_Lib/x86/d3dx9.lib" "$(SolutionDir)/=MAX8.0SDK/lib/core.lib" "$(SolutionDir)/=MAX8.0SDK/lib/geom.lib" "$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib" "$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib" "$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\My Documents\smtm\=max6.0sdk\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>..\_DLib\XSkinExpD.dle</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\../_DBuildData/XSkinExp/XSkinExp.pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <BaseAddress>0x105b0000</BaseAddress>
+      <ModuleDefinitionFile>.\XSkinExp.def</ModuleDefinitionFile>
+      <LinkIncremental>true</LinkIncremental>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release6.0|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max6.0sdk/Include";"../=max6.0sdk/cssdk/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32,NDEBUG,_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>.\../_RBuildData/XSkinExp/xskinexp.pch</PrecompiledHeaderFile>
+      <ObjectFileName>.\../_RBuildData/XSkinExp/</ObjectFileName>
+      <ProgramDataBaseFileName>.\../_RBuildData/XSkinExp/</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>Default</CompileAs>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib odbccp32.lib comctl32.lib "$(SolutionDir)/=DX_Lib/x86/d3dxof.lib" "$(SolutionDir)/=DX_Lib/x86/dxguid.lib" "$(SolutionDir)/=DX_Lib/x86/d3d9.lib" "$(SolutionDir)/=DX_Lib/x86/d3dx9.lib" "$(SolutionDir)/=MAX8.0SDK/lib/core.lib" "$(SolutionDir)/=MAX8.0SDK/lib/geom.lib" "$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib" "$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib" "$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\My Documents\smtm\=max6.0sdk\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>..\_RLib\XSkinExp6.dle</OutputFile>
+      <ProgramDatabaseFile>.\../_RBuildData/XSkinExp/XSkinExp.pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <BaseAddress>0x105b0000</BaseAddress>
+      <ModuleDefinitionFile>.\XSkinExp.def</ModuleDefinitionFile>
+      <LinkIncremental>false</LinkIncremental>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD6.0|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max6.0sdk/Include";"../=max6.0sdk/cssdk/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32,NDEBUG,_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>.\../_RBuildData/XSkinExp/xskinexp.pch</PrecompiledHeaderFile>
+      <ObjectFileName>.\../_RBuildData/XSkinExp/</ObjectFileName>
+      <ProgramDataBaseFileName>.\../_RBuildData/XSkinExp/</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>Default</CompileAs>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib odbccp32.lib comctl32.lib "$(SolutionDir)/=DX_Lib/x86/d3dxof.lib" "$(SolutionDir)/=DX_Lib/x86/dxguid.lib" "$(SolutionDir)/=DX_Lib/x86/d3d9.lib" "$(SolutionDir)/=DX_Lib/x86/d3dx9.lib" "$(SolutionDir)/=MAX8.0SDK/lib/core.lib" "$(SolutionDir)/=MAX8.0SDK/lib/geom.lib" "$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib" "$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib" "$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../=max6.0sdk/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>..\_RDLib\XSkinExpD6.dle</OutputFile>
+      <ProgramDatabaseFile>.\../_RBuildData/XSkinExp/XSkinExp.pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <BaseAddress>0x105b0000</BaseAddress>
+      <ModuleDefinitionFile>.\XSkinExp.def</ModuleDefinitionFile>
+      <LinkIncremental>false</LinkIncremental>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release7.0|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max7.0sdk/Include";"../=max7.0sdk/include/cs";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32,NDEBUG,_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>.\../_RBuildData/XSkinExp/xskinexp.pch</PrecompiledHeaderFile>
+      <ObjectFileName>.\../_RBuildData/XSkinExp/</ObjectFileName>
+      <ProgramDataBaseFileName>.\../_RBuildData/XSkinExp/</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>Default</CompileAs>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib odbccp32.lib comctl32.lib "$(SolutionDir)/=DX_Lib/x86/d3dxof.lib" "$(SolutionDir)/=DX_Lib/x86/dxguid.lib" "$(SolutionDir)/=DX_Lib/x86/d3d9.lib" "$(SolutionDir)/=DX_Lib/x86/d3dx9.lib" "$(SolutionDir)/=MAX8.0SDK/lib/core.lib" "$(SolutionDir)/=MAX8.0SDK/lib/geom.lib" "$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib" "$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib" "$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\=max7.0sdk\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>..\_RLib\XSkinExp7.dle</OutputFile>
+      <ProgramDatabaseFile>.\../_RBuildData/XSkinExp/XSkinExp.pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <BaseAddress>0x105b0000</BaseAddress>
+      <ModuleDefinitionFile>.\XSkinExp.def</ModuleDefinitionFile>
+      <LinkIncremental>false</LinkIncremental>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD7.0|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max7.0sdk/Include";"../=max7.0sdk/include/cs";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32,NDEBUG,_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>.\../_RBuildData/XSkinExp/xskinexp.pch</PrecompiledHeaderFile>
+      <ObjectFileName>.\../_RBuildData/XSkinExp/</ObjectFileName>
+      <ProgramDataBaseFileName>.\../_RBuildData/XSkinExp/</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>Default</CompileAs>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib odbccp32.lib comctl32.lib "$(SolutionDir)/=DX_Lib/x86/d3dxof.lib" "$(SolutionDir)/=DX_Lib/x86/dxguid.lib" "$(SolutionDir)/=DX_Lib/x86/d3d9.lib" "$(SolutionDir)/=DX_Lib/x86/d3dx9.lib" "$(SolutionDir)/=MAX8.0SDK/lib/core.lib" "$(SolutionDir)/=MAX8.0SDK/lib/geom.lib" "$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib" "$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib" "$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../=max7.0sdk/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>..\_RDLib\XSkinExpD7.dle</OutputFile>
+      <ProgramDatabaseFile>.\../_RBuildData/XSkinExp/XSkinExp.pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <BaseAddress>0x105b0000</BaseAddress>
+      <ModuleDefinitionFile>.\XSkinExp.def</ModuleDefinitionFile>
+      <LinkIncremental>false</LinkIncremental>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release8.0|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max8.0sdk/Include";"../=max8.0sdk/include/cs";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32,NDEBUG,_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>.\../_RBuildData/XSkinExp/xskinexp.pch</PrecompiledHeaderFile>
+      <ObjectFileName>.\../_RBuildData/XSkinExp/</ObjectFileName>
+      <ProgramDataBaseFileName>.\../_RBuildData/XSkinExp/</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>Default</CompileAs>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib odbccp32.lib comctl32.lib "$(SolutionDir)/=DX_Lib/x86/d3dxof.lib" "$(SolutionDir)/=DX_Lib/x86/dxguid.lib" "$(SolutionDir)/=DX_Lib/x86/d3d9.lib" "$(SolutionDir)/=DX_Lib/x86/d3dx9.lib" "$(SolutionDir)/=MAX8.0SDK/lib/core.lib" "$(SolutionDir)/=MAX8.0SDK/lib/geom.lib" "$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib" "$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib" "$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\=max8.0sdk\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>..\_RLib\XSkinExp8.dle</OutputFile>
+      <ProgramDatabaseFile>.\../_RBuildData/XSkinExp/XSkinExp.pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <BaseAddress>0x105b0000</BaseAddress>
+      <ModuleDefinitionFile>.\XSkinExp.def</ModuleDefinitionFile>
+      <LinkIncremental>false</LinkIncremental>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD8.0|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max8.0sdk/Include";"../=max8.0sdk/include/cs";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32,NDEBUG,_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>.\../_RBuildData/XSkinExp/xskinexp.pch</PrecompiledHeaderFile>
+      <ObjectFileName>.\../_RBuildData/XSkinExp/</ObjectFileName>
+      <ProgramDataBaseFileName>.\../_RBuildData/XSkinExp/</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>Default</CompileAs>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib odbccp32.lib comctl32.lib "$(SolutionDir)/=DX_Lib/x86/d3dxof.lib" "$(SolutionDir)/=DX_Lib/x86/dxguid.lib" "$(SolutionDir)/=DX_Lib/x86/d3d9.lib" "$(SolutionDir)/=DX_Lib/x86/d3dx9.lib" "$(SolutionDir)/=MAX8.0SDK/lib/core.lib" "$(SolutionDir)/=MAX8.0SDK/lib/geom.lib" "$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib" "$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib" "$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../=max8.0sdk/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>..\_RDLib\XSkinExpD8.dle</OutputFile>
+      <ProgramDatabaseFile>.\../_RBuildData/XSkinExp/XSkinExp.pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <BaseAddress>0x105b0000</BaseAddress>
+      <ModuleDefinitionFile>.\XSkinExp.def</ModuleDefinitionFile>
+      <LinkIncremental>false</LinkIncremental>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release9.0|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../common;../meshs;../workspace;./;../dxframe;../DxCommon;../DxOctree;../DxEffect;"../=max9.0sdk/Include";"../=max9.0sdk/include/cs";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32,NDEBUG,_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>.\../_RBuildData/XSkinExp/xskinexp.pch</PrecompiledHeaderFile>
+      <ObjectFileName>.\../_RBuildData/XSkinExp/</ObjectFileName>
+      <ProgramDataBaseFileName>.\../_RBuildData/XSkinExp/</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>Default</CompileAs>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib odbccp32.lib comctl32.lib "$(SolutionDir)/=DX_Lib/x86/d3dxof.lib" "$(SolutionDir)/=DX_Lib/x86/dxguid.lib" "$(SolutionDir)/=DX_Lib/x86/d3d9.lib" "$(SolutionDir)/=DX_Lib/x86/d3dx9.lib" "$(SolutionDir)/=MAX9.0SDK/lib/core.lib" "$(SolutionDir)/=MAX9.0SDK/lib/geom.lib" "$(SolutionDir)/=MAX9.0SDK/lib/gfx.lib" "$(SolutionDir)/=MAX9.0SDK/lib/mesh.lib" "$(SolutionDir)/=MAX9.0SDK/lib/maxutil.lib" "$(SolutionDir)/=MAX9.0SDK/lib/maxscrpt.lib" "$(SolutionDir)/=MAX9.0SDK/lib/paramblk2.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\=max9.0sdk\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>..\_RLib\XSkinExp9.dle</OutputFile>
+      <ProgramDatabaseFile>.\../_RBuildData/XSkinExp/XSkinExp.pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <BaseAddress>0x105b0000</BaseAddress>
+      <ModuleDefinitionFile>.\XSkinExp.def</ModuleDefinitionFile>
+      <LinkIncremental>false</LinkIncremental>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include=".\DllEntry.cpp" />
+    <ClCompile Include=".\ExportXFile.cpp" />
+    <ClCompile Include=".\XSkinExp.cpp" />
+    <ClCompile Include=".\meshdata.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include=".\XSkinExp.h" />
+    <ClInclude Include=".\meshdata.h" />
+    <ClInclude Include=".\pch.h" />
+    <ClInclude Include=".\resource.h" />
+    <ClInclude Include=".\xskinexptemplates.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include=".\XSkinExp.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".\XSkinExp.def" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

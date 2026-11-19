@@ -1,0 +1,140 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{6D601BD0-93C4-4C64-82AB-26A844E4B834}</ProjectGuid>
+    <RootNamespace>GLogicText</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <OutDir>$(SolutionDir)\_DBuildData\GLogicText\</OutDir>
+    <IntDir>$(SolutionDir)\_DBuildData\GLogicText\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <OutDir>$(SolutionDir)\_RBuildData\GLogicText\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\GLogicText\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../enginelib/Common;../MfcExLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>3</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <ObjectFileName>$(SolutionDir)/_DBuildData/GLogicText</ObjectFileName>
+      <ProgramDataBaseFileName>$(SolutionDir)/_DBuildData/GLogicText</ProgramDataBaseFileName>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>../=Library/dbghelp.lib dinput8.lib dxerr8.lib d3dx8dt.lib d3d8.lib d3dxof.lib dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>$(SolutionDir)/_Bin/GLogicTextD.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(SolutionDir)/_DBuildData/GLogicText/Sample.pdb</ProgramDatabaseFile>
+      <LinkIncremental>false</LinkIncremental>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../enginelib/Common;../MfcExLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>3</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ObjectFileName>.\Release/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Release/</ProgramDataBaseFileName>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>../=Library/dbghelp.lib dinput8.lib dxerr8.lib d3dx8dt.lib d3d8.lib d3dxof.lib dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>$(SolutionDir)/_Bin/GLogicText.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\Release/crysedit_demo.pdb</ProgramDatabaseFile>
+      <LinkIncremental>false</LinkIncremental>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include=".\ExceptionAttacher.cpp" />
+    <ClCompile Include="CCrystalEditView.cpp" />
+    <ClCompile Include="CCrystalTextBuffer.cpp" />
+    <ClCompile Include="CCrystalTextView.cpp" />
+    <ClCompile Include="CCrystalTextView2.cpp" />
+    <ClCompile Include="CEditReplaceDlg.cpp" />
+    <ClCompile Include="CFindTextDlg.cpp" />
+    <ClCompile Include="ChildFrm.cpp" />
+    <ClCompile Include="MainFrm.cpp" />
+    <ClCompile Include="Sample.cpp" />
+    <ClCompile Include="SampleDoc.cpp" />
+    <ClCompile Include="SampleView.cpp" />
+    <ClCompile Include="StdAfx.cpp" />
+    <ClCompile Include="cplusplus.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include=".\CCrystalEditView.inl" />
+    <ClInclude Include=".\CCrystalTextBuffer.inl" />
+    <ClInclude Include=".\CCrystalTextView.inl" />
+    <ClInclude Include=".\cedefs.h" />
+    <ClInclude Include="CCrystalEditView.h" />
+    <ClInclude Include="CCrystalTextBuffer.h" />
+    <ClInclude Include="CCrystalTextView.h" />
+    <ClInclude Include="CEditReplaceDlg.h" />
+    <ClInclude Include="CFindTextDlg.h" />
+    <ClInclude Include="ChildFrm.h" />
+    <ClInclude Include="MainFrm.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="Sample.h" />
+    <ClInclude Include="SampleDoc.h" />
+    <ClInclude Include="SampleView.h" />
+    <ClInclude Include="StdAfx.h" />
+    <ClInclude Include="editcmd.h" />
+    <ClInclude Include="editreg.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Sample.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".\res\mg_cur.cur" />
+    <None Include=".\res\mg_icons.bmp" />
+    <None Include="res\Sample.ico" />
+    <None Include="res\Sample.rc2" />
+    <None Include="res\SampleDoc.ico" />
+    <None Include="res\Toolbar.bmp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

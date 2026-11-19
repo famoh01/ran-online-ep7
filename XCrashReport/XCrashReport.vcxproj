@@ -1,0 +1,198 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_China|Win32">
+      <Configuration>Release_China</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{CFA5C1FB-35C3-4C98-81C8-08592CE07A95}</ProjectGuid>
+    <RootNamespace>XCrashReport</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_DBuildData\XCrashReport\</OutDir>
+    <IntDir>$(SolutionDir)\_DBuildData\XCrashReport\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\XCrashReport\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\XCrashReport\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_China|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\XCrashReport_China\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\XCrashReport_China\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level4</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>wininet.lib ws2_32.lib Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>$(SolutionDir)/_bin/XCrashReportD.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>false</LinkIncremental>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>wininet.lib ws2_32.lib Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>$(SolutionDir)/_bin/XCrashReport.exe</OutputFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>false</LinkIncremental>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_China|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>wininet.lib ws2_32.lib Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>$(SolutionDir)/_bin/XCrashReport.exe</OutputFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>false</LinkIncremental>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include=".\CConsoleMessage.cpp" />
+    <ClCompile Include=".\IMapi.cpp" />
+    <ClCompile Include=".\RanFtp.cpp" />
+    <ClCompile Include=".\Sntp.cpp" />
+    <ClCompile Include="BackupFile.cpp" />
+    <ClCompile Include="Details.cpp" />
+    <ClCompile Include="Dlg.cpp" />
+    <ClCompile Include="FontSize.cpp" />
+    <ClCompile Include="FormatNumberForLocale.cpp" />
+    <ClCompile Include="GetFilePart.cpp" />
+    <ClCompile Include="GetFileSizeAsString.cpp" />
+    <ClCompile Include="IsAsciiFile.cpp" />
+    <ClCompile Include="MiniVersion.cpp" />
+    <ClCompile Include="ROEdit.cpp" />
+    <ClCompile Include="SendEmail.cpp" />
+    <ClCompile Include="StdAfx.cpp" />
+    <ClCompile Include="WriteRegistry.cpp" />
+    <ClCompile Include="XColorStatic.cpp" />
+    <ClCompile Include="XCrashReport.cpp" />
+    <ClCompile Include="XHeaderCtrl.cpp" />
+    <ClCompile Include="XHyperLink.cpp" />
+    <ClCompile Include="XListCtrl.cpp" />
+    <ClCompile Include="XZip.cpp" />
+    <ClCompile Include="strcvt.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include=".\CConsoleMessage.h" />
+    <ClInclude Include=".\IMapi.h" />
+    <ClInclude Include=".\RanFtp.h" />
+    <ClInclude Include=".\Sntp.h" />
+    <ClInclude Include="BackupFile.h" />
+    <ClInclude Include="CrashFileNames.h" />
+    <ClInclude Include="Details.h" />
+    <ClInclude Include="Dlg.h" />
+    <ClInclude Include="EmailDefines.h" />
+    <ClInclude Include="FontSize.h" />
+    <ClInclude Include="FormatNumberForLocale.h" />
+    <ClInclude Include="GetFilePart.h" />
+    <ClInclude Include="GetFileSizeAsString.h" />
+    <ClInclude Include="IniDefines.h" />
+    <ClInclude Include="IsAsciiFile.h" />
+    <ClInclude Include="MemDC.h" />
+    <ClInclude Include="MiniVersion.h" />
+    <ClInclude Include="ROEdit.h" />
+    <ClInclude Include="RegistryDefines.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="SendEmail.h" />
+    <ClInclude Include="StdAfx.h" />
+    <ClInclude Include="WriteRegistry.h" />
+    <ClInclude Include="XColorStatic.h" />
+    <ClInclude Include="XCrashReport.h" />
+    <ClInclude Include="XHeaderCtrl.h" />
+    <ClInclude Include="XHyperLink.h" />
+    <ClInclude Include="XListCtrl.h" />
+    <ClInclude Include="XTrace.h" />
+    <ClInclude Include="XZip.h" />
+    <ClInclude Include="strcvt.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include=".\XCrashReport_CH.rc" />
+    <ResourceCompile Include="XCrashReport.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="XCrashReport.ico" />
+    <None Include="app.manifest" />
+    <None Include="checkboxes.bmp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

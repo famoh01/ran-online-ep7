@@ -1,0 +1,167 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD|Win32">
+      <Configuration>ReleaseD</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{C69DF8AC-CB70-412D-981A-9803C2556BBB}</ProjectGuid>
+    <RootNamespace>AgentServer</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_DBuildData\AgentServer\</OutDir>
+    <IntDir>$(SolutionDir)\_DBuildData\AgentServer\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\AgentServer\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\AgentServer\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\AgentServer\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\AgentServer\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon9";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)sql/include";../RanClientLib/NpcTalk;"../=DaumCrypt";../MfcExLib;"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_WIN32_WINNT=0x0500;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <MinimalRebuild>true</MinimalRebuild>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/AgentServerD.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(OutDir)/AgentServer.pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>true</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon9";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)sql/include";../RanClientLib/NpcTalk;"../=DaumCrypt";../MfcExLib;"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_WIN32_WINNT=0x0500;WIN32;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/server/AgentServer/AgentServer.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(SolutionDir)/_bin/map_pdb/AgentServer.pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>false</LinkIncremental>
+      <TargetMachine>0</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon9";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)sql/include";../RanClientLib/NpcTalk;"../=DaumCrypt";../MfcExLib;"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_WIN32_WINNT=0x0500;WIN32;_WINDOWS;_RELEASED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <StringPooling>false</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>"D:\smtm\=TbbLib\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/AgentServerR.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(OutDir)/$(ProjectName)R.pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>true</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include=".\ExceptionAttacher.cpp" />
+    <ClCompile Include="AgentServer.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\ServerController\ServerControllerMsgDefine.h" />
+    <ClInclude Include="AgentServer.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="stdafx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="AgentServer.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".\Basic.ico" />
+    <None Include=".\BasicSmall.ico" />
+    <None Include="ReadMe.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

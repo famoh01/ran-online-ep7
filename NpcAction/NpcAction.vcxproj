@@ -1,0 +1,272 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD|Win32">
+      <Configuration>ReleaseD</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Read|Win32">
+      <Configuration>Release_Read</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_Read|Win32">
+      <Configuration>ReleaseD_Read</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{51E0953A-983F-4C2F-BA4C-DEBAD030174E}</ProjectGuid>
+    <RootNamespace>NpcAction</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_DBuildData\NpcAction\</OutDir>
+    <IntDir>$(SolutionDir)\_DBuildData\NpcAction\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\NpcAction\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\NpcAction\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\NpcAction\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\NpcAction\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Read|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\NpcAction_Read\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\NpcAction_Read\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Read|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
+    <IntDir>$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../engineLib/dxcommon;../engineLib/dxframe/;../engineLib/dxcommon9;../engineLib/DxSound;../engineLib/Meshs;../engineLib/Common/;"../engineLib/G-Logic";../RanClientLib/NpcTalk;"../RanClientLib/G-Logic";../enginelib/DxOctree;../RanClientLib;../NetServerLib;../NetClientLib;../SQL/Include;"../=DaumCrypt";../MfcExLib/ExLibs;../MfcExLib/;"$(SolutionDir)/=include";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <MinimalRebuild>true</MinimalRebuild>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib dxerr8.lib d3dx8dt.lib d3d8.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib, libc.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/$(ProjectName)D.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>true</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../engineLib/dxcommon;../engineLib/dxframe/;../engineLib/dxcommon9;../engineLib/DxSound;../engineLib/Meshs;../engineLib/Common/;"../engineLib/G-Logic";../RanClientLib/NpcTalk;"../RanClientLib/G-Logic";../enginelib/DxOctree;../RanClientLib;../NetServerLib;../NetClientLib;../SQL/Include;"../=DaumCrypt";../MfcExLib/ExLibs;../MfcExLib/;"$(SolutionDir)/=include";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeaderFile>$(IntDir)/$(TargetName).pch</PrecompiledHeaderFile>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MinimalRebuild>false</MinimalRebuild>
+      <ObjectFileName>$(IntDir)/</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)/vc70.pdb</ProgramDataBaseFileName>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib dxerr8.lib d3dx8dt.lib d3d8.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib, libc.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/$(ProjectName).exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(SolutionDir)/_bin/map_pdb/NpcAction.pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>false</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../engineLib/dxcommon;../engineLib/dxframe/;../engineLib/dxcommon9;../engineLib/DxSound;../engineLib/Meshs;../engineLib/Common/;"../engineLib/G-Logic";../RanClientLib/NpcTalk;"../RanClientLib/G-Logic";../enginelib/DxOctree;../RanClientLib;../NetServerLib;../NetClientLib;../SQL/Include;"../=DaumCrypt";../MfcExLib/ExLibs;../MfcExLib/;"$(SolutionDir)/=include";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <MinimalRebuild>false</MinimalRebuild>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib dxerr8.lib d3dx8dt.lib d3d8.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib, libc.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/$(ProjectName)R.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>false</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Read|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../engineLib/dxcommon;../engineLib/dxframe/;../engineLib/dxcommon9;../engineLib/DxSound;../engineLib/Meshs;../engineLib/Common/;"../engineLib/G-Logic";../RanClientLib/NpcTalk;"../RanClientLib/G-Logic";../enginelib/DxOctree;../RanClientLib;../NetServerLib;../NetClientLib;../SQL/Include;"../=DaumCrypt";../MfcExLib/ExLibs;../MfcExLib/;"$(SolutionDir)/=include";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;READTOOL_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeaderFile>$(IntDir)/$(TargetName).pch</PrecompiledHeaderFile>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MinimalRebuild>false</MinimalRebuild>
+      <ObjectFileName>$(IntDir)/</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)/vc70.pdb</ProgramDataBaseFileName>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib dxerr8.lib d3dx8dt.lib d3d8.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib, libc.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/$(ProjectName)_Read.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(SolutionDir)/_bin/map_pdb/NpcActionR_Read.pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>false</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Read|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../engineLib/dxcommon;../engineLib/dxframe/;../engineLib/dxcommon9;../engineLib/DxSound;../engineLib/Meshs;../engineLib/Common/;"../engineLib/G-Logic";../RanClientLib/NpcTalk;"../RanClientLib/G-Logic";../enginelib/DxOctree;../RanClientLib;../NetServerLib;../NetClientLib;../SQL/Include;"../=DaumCrypt";../MfcExLib/ExLibs;../MfcExLib/;"$(SolutionDir)/=include";"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;READTOOL_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <MinimalRebuild>false</MinimalRebuild>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib dxerr8.lib d3dx8dt.lib d3d8.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib, libc.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/$(ProjectName)R_Read.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(OutDir)/$(ProjectName)R_Read.pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>false</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include=".\DlgNpcTalk.cpp" />
+    <ClCompile Include=".\DlgQuest.cpp" />
+    <ClCompile Include=".\ExceptionAttacher.cpp" />
+    <ClCompile Include=".\FindItem.cpp" />
+    <ClCompile Include=".\HaveItemDialog.cpp" />
+    <ClCompile Include=".\LearnSkillDialog.cpp" />
+    <ClCompile Include=".\NpcAction.cpp" />
+    <ClCompile Include=".\NpcActionAnswer.cpp" />
+    <ClCompile Include=".\NpcActionCondition.cpp" />
+    <ClCompile Include=".\NpcActionDlg.cpp" />
+    <ClCompile Include=".\NpcActionPage.cpp" />
+    <ClCompile Include=".\NpcActionPageEx.cpp" />
+    <ClCompile Include=".\NpcActionTable.cpp" />
+    <ClCompile Include=".\SheetWithTab.cpp" />
+    <ClCompile Include=".\SimpleEdit.cpp" />
+    <ClCompile Include=".\TalkPage.cpp" />
+    <ClCompile Include=".\stdafx.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include=".\DlgNpcTalk.h" />
+    <ClInclude Include=".\DlgQuest.h" />
+    <ClInclude Include=".\FindItem.h" />
+    <ClInclude Include=".\HaveItemDialog.h" />
+    <ClInclude Include=".\LearnSkillDialog.h" />
+    <ClInclude Include=".\NpcAction.h" />
+    <ClInclude Include=".\NpcActionAnswer.h" />
+    <ClInclude Include=".\NpcActionCondition.h" />
+    <ClInclude Include=".\NpcActionDlg.h" />
+    <ClInclude Include=".\NpcActionPage.h" />
+    <ClInclude Include=".\NpcActionTable.h" />
+    <ClInclude Include=".\Resource.h" />
+    <ClInclude Include=".\SheetWithTab.h" />
+    <ClInclude Include=".\SimpleEdit.h" />
+    <ClInclude Include=".\TalkPage.h" />
+    <ClInclude Include=".\stdafx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include=".\NpcAction.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".\ReadMe.txt" />
+    <None Include=".\res\NpcAction.ico" />
+    <None Include=".\res\NpcAction.manifest" />
+    <None Include=".\res\NpcAction.rc2" />
+    <None Include=".\res\toolbar2.bmp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

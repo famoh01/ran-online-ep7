@@ -1,0 +1,66 @@
+name: build
+
+on:
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: 'Solution configuration'
+        required: true
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - ReleaseD
+          - Debug
+          - Release_Thailand
+          - Release_Global
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MSBuild (VS2022)
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Create missing sql/include (ODBC headers from Windows SDK)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "sql/include" | Out-Null
+          $sdkRoot = "C:\Program Files (x86)\Windows Kits\10\Include"
+          $sdk = Get-ChildItem $sdkRoot -Directory |
+                 Where-Object { $_.Name -match '^10\.\d' } |
+                 Sort-Object Name -Descending | Select-Object -First 1
+          Write-Host "Using SDK: $($sdk.FullName)"
+          Copy-Item "$($sdk.FullName)\um\sql.h"      sql/include\ -ErrorAction SilentlyContinue
+          Copy-Item "$($sdk.FullName)\um\sqlext.h"   sql/include\ -ErrorAction SilentlyContinue
+          Copy-Item "$($sdk.FullName)\um\sqltypes.h" sql/include\ -ErrorAction SilentlyContinue
+          Copy-Item "$($sdk.FullName)\um\sqlucode.h" sql/include\ -ErrorAction SilentlyContinue
+          Copy-Item "$($sdk.FullName)\um\odbcinst.h" sql/include\ -ErrorAction SilentlyContinue
+          Get-ChildItem sql/include
+
+      - name: Build solution (Win32 / ${{ github.event.inputs.configuration || 'Release' }})
+        run: |
+          msbuild Smtm2022.sln /m /v:m /p:Configuration=${{ github.event.inputs.configuration || 'Release' }} /p:Platform=Win32
+
+      - name: Collect executables
+        if: always()
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          Get-ChildItem -Recurse -Filter *.exe |
+            Where-Object { $_.FullName -notmatch '\\(obj|ipch|\.git|artifacts)\\' } |
+            ForEach-Object {
+              Write-Host "found: $($_.FullName)"
+              Copy-Item $_.FullName artifacts\
+            }
+          Get-ChildItem artifacts
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ran-ep7-binaries
+          path: artifacts/

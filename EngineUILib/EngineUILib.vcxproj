@@ -1,0 +1,214 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD|Win32">
+      <Configuration>ReleaseD</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{06500F3B-6B55-42FC-B009-4E525C25B404}</ProjectGuid>
+    <RootNamespace>EngineUILib</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_DBuildData\EngineUILib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_DBuildData\EngineUILib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\EngineUILib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\EngineUILib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\EngineUILib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\EngineUILib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>./;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/DxOctree;../enginelib/DxEffect;../enginelib/DxEffect/Single;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/DxEffect/Char;../enginelib/DxEffect/EffAni;../enginelib/DxEffect/EffProj;../enginelib/DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <MinimalRebuild>false</MinimalRebuild>
+      <CompileAs>Default</CompileAs>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_DLib\EngineUILibD.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>./;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/DxOctree;../enginelib/DxEffect;../enginelib/DxEffect/Single;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/DxEffect/Char;../enginelib/DxEffect/EffAni;../enginelib/DxEffect/EffProj;../enginelib/DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RLib\EngineUILib.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>./;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon;../enginelib/DxCommon9;../enginelib/DxOctree;../enginelib/DxEffect;../enginelib/DxEffect/Single;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/DxEffect/Char;../enginelib/DxEffect/EffAni;../enginelib/DxEffect/EffProj;../enginelib/DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32,_LIB,_RELEASED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RDLib\EngineUILibR.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include=".\GUInterface\BasicButton.cpp" />
+    <ClCompile Include=".\GUInterface\BasicCarrat.cpp" />
+    <ClCompile Include=".\GUInterface\BasicProgressBar.cpp" />
+    <ClCompile Include=".\GUInterface\BasicScrollBar.cpp" />
+    <ClCompile Include=".\GUInterface\BasicScrollThumb.cpp" />
+    <ClCompile Include=".\GUInterface\BasicScrollThumbFrame.cpp" />
+    <ClCompile Include=".\GUInterface\BasicScrollThumbFrameUpdate.cpp" />
+    <ClCompile Include=".\GUInterface\BasicTextBox.cpp" />
+    <ClCompile Include=".\GUInterface\BasicTextBoxSimple.cpp" />
+    <ClCompile Include=".\GUInterface\BasicTree.cpp" />
+    <ClCompile Include=".\GUInterface\BasicTreeNode.cpp" />
+    <ClCompile Include=".\GUInterface\Cursor.cpp" />
+    <ClCompile Include=".\GUInterface\GameTextLoader.cpp" />
+    <ClCompile Include=".\GUInterface\InterfaceCfg.cpp" />
+    <ClCompile Include=".\GUInterface\InterfaceCfgXml.cpp" />
+    <ClCompile Include=".\GUInterface\PositionKeeper.cpp" />
+    <ClCompile Include=".\GUInterface\RanXML.cpp" />
+    <ClCompile Include=".\GUInterface\RanXMLParser.cpp" />
+    <ClCompile Include=".\GUInterface\UIControl.cpp" />
+    <ClCompile Include=".\GUInterface\UIControlContainer.cpp" />
+    <ClCompile Include=".\GUInterface\UIControlDefine.cpp" />
+    <ClCompile Include=".\GUInterface\UIControlEx.cpp" />
+    <ClCompile Include=".\GUInterface\UIControlMessage.cpp" />
+    <ClCompile Include=".\GUInterface\UIControlUpdate.cpp" />
+    <ClCompile Include=".\GUInterface\UIDebugSet.cpp" />
+    <ClCompile Include=".\GUInterface\UIEditBox.cpp" />
+    <ClCompile Include=".\GUInterface\UIEditBoxIME_Dx9.cpp" />
+    <ClCompile Include=".\GUInterface\UIEditBoxMan.cpp" />
+    <ClCompile Include=".\GUInterface\UIEditBox_Dx9.cpp" />
+    <ClCompile Include=".\GUInterface\UIFocusContainer.cpp" />
+    <ClCompile Include=".\GUInterface\UIGroup.cpp" />
+    <ClCompile Include=".\GUInterface\UIGroupBasic.cpp" />
+    <ClCompile Include=".\GUInterface\UIGroupParentFunc.cpp" />
+    <ClCompile Include=".\GUInterface\UIKeyCheck.cpp" />
+    <ClCompile Include=".\GUInterface\UIMan.cpp" />
+    <ClCompile Include=".\GUInterface\UIManBasic.cpp" />
+    <ClCompile Include=".\GUInterface\UIMessageQueue.cpp" />
+    <ClCompile Include=".\GUInterface\UIModal.cpp" />
+    <ClCompile Include=".\GUInterface\UIMultiEditBox.cpp" />
+    <ClCompile Include=".\GUInterface\UIRenderQueue.cpp" />
+    <ClCompile Include=".\GUInterface\UITextUtil.cpp" />
+    <ClCompile Include=".\GUInterface\UIWindow.cpp" />
+    <ClCompile Include=".\GUInterface\UIWindowBody.cpp" />
+    <ClCompile Include=".\GUInterface\UIWindowTitle.cpp" />
+    <ClCompile Include=".\GUInterface\tinyxml.cpp" />
+    <ClCompile Include=".\GUInterface\tinyxmlerror.cpp" />
+    <ClCompile Include=".\GUInterface\tinyxmlparser.cpp" />
+    <ClCompile Include=".\guinterface\BasicAnimationBox.cpp" />
+    <ClCompile Include=".\stdafx.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include=".\GUInterface\BasicButton.h" />
+    <ClInclude Include=".\GUInterface\BasicCarrat.h" />
+    <ClInclude Include=".\GUInterface\BasicProgressBar.h" />
+    <ClInclude Include=".\GUInterface\BasicScrollBar.h" />
+    <ClInclude Include=".\GUInterface\BasicScrollThumb.h" />
+    <ClInclude Include=".\GUInterface\BasicScrollThumbFrame.h" />
+    <ClInclude Include=".\GUInterface\BasicTextBox.h" />
+    <ClInclude Include=".\GUInterface\BasicTree.h" />
+    <ClInclude Include=".\GUInterface\BasicTreeNode.h" />
+    <ClInclude Include=".\GUInterface\Cursor.h" />
+    <ClInclude Include=".\GUInterface\GameTextLoader.h" />
+    <ClInclude Include=".\GUInterface\InterfaceCfg.h" />
+    <ClInclude Include=".\GUInterface\InterfaceCfgXml.h" />
+    <ClInclude Include=".\GUInterface\PositionKeeper.h" />
+    <ClInclude Include=".\GUInterface\RanXML.h" />
+    <ClInclude Include=".\GUInterface\RanXMLParser.h" />
+    <ClInclude Include=".\GUInterface\UIControl.h" />
+    <ClInclude Include=".\GUInterface\UIControlContainer.h" />
+    <ClInclude Include=".\GUInterface\UIControlDefine.h" />
+    <ClInclude Include=".\GUInterface\UIControlMessage.h" />
+    <ClInclude Include=".\GUInterface\UIDataType.h" />
+    <ClInclude Include=".\GUInterface\UIDebugSet.h" />
+    <ClInclude Include=".\GUInterface\UIEditBox.h" />
+    <ClInclude Include=".\GUInterface\UIEditBoxIME_Dx9.h" />
+    <ClInclude Include=".\GUInterface\UIEditBoxMan.h" />
+    <ClInclude Include=".\GUInterface\UIEditBox_Dx9.h" />
+    <ClInclude Include=".\GUInterface\UIFocusContainer.h" />
+    <ClInclude Include=".\GUInterface\UIGroup.h" />
+    <ClInclude Include=".\GUInterface\UIKeyCheck.h" />
+    <ClInclude Include=".\GUInterface\UIMan.h" />
+    <ClInclude Include=".\GUInterface\UIMessageQueue.h" />
+    <ClInclude Include=".\GUInterface\UIModal.h" />
+    <ClInclude Include=".\GUInterface\UIMultiEditBox.h" />
+    <ClInclude Include=".\GUInterface\UIRenderQueue.h" />
+    <ClInclude Include=".\GUInterface\UITextUtil.h" />
+    <ClInclude Include=".\GUInterface\UIWindow.h" />
+    <ClInclude Include=".\GUInterface\UIWindowBody.h" />
+    <ClInclude Include=".\GUInterface\UIWindowTitle.h" />
+    <ClInclude Include=".\GUInterface\tinyxml.h" />
+    <ClInclude Include=".\guinterface\BasicAnimationBox.h" />
+    <ClInclude Include=".\stdafx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".\ReadMe.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

@@ -1,0 +1,321 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Korea_Test|Win32">
+      <Configuration>Release_Korea_Test</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_Korea|Win32">
+      <Configuration>ReleaseD_Korea</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_Korea_Test|Win32">
+      <Configuration>ReleaseD_Korea_Test</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_Japan|Win32">
+      <Configuration>ReleaseD_Japan</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_Taiwan|Win32">
+      <Configuration>ReleaseD_Taiwan</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_Malaysia|Win32">
+      <Configuration>ReleaseD_Malaysia</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{B3AF78AE-B754-43C3-B10C-094889AA6C7F}</ProjectGuid>
+    <RootNamespace>BoardServer</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_DBuildData\BoardServer\</OutDir>
+    <IntDir>$(SolutionDir)\_DBuildData\BoardServer\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\BoardServer\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\BoardServer\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Korea_Test|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
+    <IntDir>$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Korea|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
+    <IntDir>$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Korea_Test|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
+    <IntDir>$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Japan|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
+    <IntDir>$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Taiwan|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
+    <IntDir>$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Malaysia|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)$(ConfigurationName)\</OutDir>
+    <IntDir>$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)sql/include";"$(SolutionDir)RanClientLib/NpcTalk";"$(SolutionDir)=DaumCrypt";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>3</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <MinimalRebuild>true</MinimalRebuild>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dsound.lib dinput8.lib dxerr8.lib d3dx8dt.lib d3d8.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/SQL/Lib/ntwdblib.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/server/BoardServer/BoardServerD.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(OutDir)/BoardServer.pdb</ProgramDatabaseFile>
+      <LinkIncremental>true</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)sql/include";"$(SolutionDir)RanClientLib/NpcTalk";"$(SolutionDir)=DaumCrypt";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>4</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>3</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dsound.lib dinput8.lib dxerr8.lib d3dx8dt.lib d3d8.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/SQL/Lib/ntwdblib.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/server/BoardServer/BoardServer.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <LinkIncremental>false</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Korea_Test|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)sql/include";"$(SolutionDir)RanClientLib/NpcTalk";"$(SolutionDir)=DaumCrypt";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>4</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>3</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dsound.lib dinput8.lib dxerr8.lib d3dx8dt.lib d3d8.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/SQL/Lib/ntwdblib.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/server/BoardServer/BoardServer.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <LinkIncremental>false</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Korea|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)sql/include";"$(SolutionDir)RanClientLib/NpcTalk";"$(SolutionDir)=DaumCrypt";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>3</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <MinimalRebuild>true</MinimalRebuild>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dsound.lib dinput8.lib dxerr8.lib d3dx8dt.lib d3d8.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/SQL/Lib/ntwdblib.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/server/BoardServer/BoardServerD.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(OutDir)/BoardServer.pdb</ProgramDatabaseFile>
+      <LinkIncremental>true</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Korea_Test|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)sql/include";"$(SolutionDir)RanClientLib/NpcTalk";"$(SolutionDir)=DaumCrypt";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>3</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <MinimalRebuild>true</MinimalRebuild>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dsound.lib dinput8.lib dxerr8.lib d3dx8dt.lib d3d8.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/SQL/Lib/ntwdblib.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/server/BoardServer/BoardServerD.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(OutDir)/BoardServer.pdb</ProgramDatabaseFile>
+      <LinkIncremental>true</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Japan|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)sql/include";"$(SolutionDir)RanClientLib/NpcTalk";"$(SolutionDir)=DaumCrypt";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>4</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>3</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dsound.lib dinput8.lib dxerr8.lib d3dx8dt.lib d3d8.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/SQL/Lib/ntwdblib.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/server/BoardServer/BoardServer.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <LinkIncremental>false</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Taiwan|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)sql/include";"$(SolutionDir)RanClientLib/NpcTalk";"$(SolutionDir)=DaumCrypt";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>4</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>3</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dsound.lib dinput8.lib dxerr8.lib d3dx8dt.lib d3d8.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/SQL/Lib/ntwdblib.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/server/BoardServer/BoardServer.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <LinkIncremental>false</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Malaysia|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>"$(SolutionDir)/netserverLib";"$(SolutionDir)/netclientLib";"$(SolutionDir)=Include";"$(SolutionDir)RanClientLib/G-Logic";"$(SolutionDir)engineLib/G-Logic";"$(SolutionDir)engineLib/DxOctree";"$(SolutionDir)engineLib/Common";"$(SolutionDir)enginelib/Dxframe";"$(SolutionDir)engineLib/DxCommon";"$(SolutionDir)engineLib/Meshs";"$(SolutionDir)engineLib/DxSound";"$(SolutionDir)sql/include";"$(SolutionDir)RanClientLib/NpcTalk";"$(SolutionDir)=DaumCrypt";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>4</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>3</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dsound.lib dinput8.lib dxerr8.lib d3dx8dt.lib d3d8.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib "$(SolutionDir)/=Library/strsafe.lib" "$(SolutionDir)/SQL/Lib/ntwdblib.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/server/BoardServer/BoardServer.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <LinkIncremental>false</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include=".\BoardServer.cpp" />
+    <ClCompile Include=".\stdafx.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include=".\BoardServer.h" />
+    <ClInclude Include=".\Resource.h" />
+    <ClInclude Include=".\stdafx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include=".\BoardServer.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".\Basic.ico" />
+    <None Include=".\BoardServer.ico" />
+    <None Include=".\ReadMe.txt" />
+    <None Include=".\small.ico" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

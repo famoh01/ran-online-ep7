@@ -1,0 +1,419 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD|Win32">
+      <Configuration>ReleaseD</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Korea|Win32">
+      <Configuration>Release_Korea</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_Korea|Win32">
+      <Configuration>ReleaseD_Korea</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_China|Win32">
+      <Configuration>Release_China</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_China|Win32">
+      <Configuration>ReleaseD_China</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD_Global|Win32">
+      <Configuration>ReleaseD_Global</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Global|Win32">
+      <Configuration>Release_Global</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{D94E8461-50B9-46AC-A08F-EFA6811CE2F5}</ProjectGuid>
+    <RootNamespace>MfcExLib</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_DBuildData\MfcExLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_DBuildData\MfcExLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\MfcExLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\MfcExLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\MfcExLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\MfcExLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Korea|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\MfcExLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\MfcExLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Korea|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\MfcExLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\MfcExLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_China|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\MfcExLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\MfcExLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_China|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\MfcExLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\MfcExLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Global|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\MfcExLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\MfcExLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Global|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\MfcExLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\MfcExLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;"$(SolutionDir)=Include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>../_DLib/MfcExLibD.lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;"$(SolutionDir)=Include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>../_RLib/MfcExLib.lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;"$(SolutionDir)=Include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>../_RDLib/MfcExLibR.lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Korea|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;"$(SolutionDir)=Include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;KR_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>../_RLib/MfcExLib_Korea.lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Korea|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;"$(SolutionDir)=Include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;KR_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>../_RDLib/MfcExLibR_Korea.lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_China|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;"$(SolutionDir)=Include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;CH_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>../_RLib/MfcExLib_China.lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_China|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;"$(SolutionDir)=Include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;CH_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>../_RDLib/MfcExLibR_China.lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Global|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;"$(SolutionDir)=Include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;GS_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>../_RDLib/MfcExLibR_Korea.lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Global|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;"$(SolutionDir)=Include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;GS_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>../_RLib/MfcExLib_Korea.lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include=".\BlockProg.cpp" />
+    <ClCompile Include=".\DaumParam\DaumGameParameter.cpp" />
+    <ClCompile Include=".\ExLibs\CoolDialogBar.cpp" />
+    <ClCompile Include=".\ExLibs\DIB.cpp" />
+    <ClCompile Include=".\ExLibs\EtcFunction.cpp" />
+    <ClCompile Include=".\ExLibs\HyperlinkStatic.cpp" />
+    <ClCompile Include=".\ExLibs\ReportCtrl.cpp" />
+    <ClCompile Include=".\ExLibs\ToolBarEx.cpp" />
+    <ClCompile Include=".\ExLibs\memdc.cpp" />
+    <ClCompile Include=".\ExceptionHandler.cpp" />
+    <ClCompile Include=".\GetWinVer.cpp" />
+    <ClCompile Include=".\HPro.cpp" />
+    <ClCompile Include=".\MinBugTrap.cpp" />
+    <ClCompile Include=".\MiniVersion.cpp" />
+    <ClCompile Include=".\RanFilter.cpp" />
+    <ClCompile Include=".\RegFunction.cpp" />
+    <ClCompile Include=".\SimpleProcessAPI.cpp" />
+    <ClCompile Include=".\Slangfilter.cpp" />
+    <ClCompile Include=".\StdAfx.cpp" />
+    <ClCompile Include=".\StopWatch.cpp" />
+    <ClCompile Include=".\rol_clipboard.cpp" />
+    <ClCompile Include="ExLibs\BmpButton.cpp" />
+    <ClCompile Include="ExLibs\Bubble.cpp" />
+    <ClCompile Include="ExLibs\CJFlatComboBox.cpp" />
+    <ClCompile Include="ExLibs\CheckListBoxLog.cpp" />
+    <ClCompile Include="ExLibs\CompactFdi.Cpp" />
+    <ClCompile Include="ExLibs\DxControlFunc.cpp" />
+    <ClCompile Include="ExLibs\GetDxVer.cpp" />
+    <ClCompile Include="ExLibs\MacButtons.cpp" />
+    <ClCompile Include="ExLibs\MacProgressCtrl.cpp" />
+    <ClCompile Include="ExLibs\MultiSlider.cpp" />
+    <ClCompile Include="ExLibs\Separator.cpp" />
+    <ClCompile Include="ExLibs\SoundSourceMan.cpp" />
+    <ClCompile Include="ExLibs\StColor.cpp" />
+    <ClCompile Include="ExLibs\WusDV_Util.cpp" />
+    <ClCompile Include="ExLibs\flatedit.cpp" />
+    <ClCompile Include="ExLibs\webbrowser2.cpp" />
+    <ClCompile Include="RANPARAM.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include=".\BlockProg.h" />
+    <ClInclude Include=".\CrashFileNames.h" />
+    <ClInclude Include=".\DaumParam\DaumGameParameter.h" />
+    <ClInclude Include=".\ExLibs\CoolDialogBar.h" />
+    <ClInclude Include=".\ExLibs\DIB.h" />
+    <ClInclude Include=".\ExLibs\HyperlinkStatic.h" />
+    <ClInclude Include=".\ExLibs\ReportCtrl.h" />
+    <ClInclude Include=".\ExLibs\ToolBarEx.h" />
+    <ClInclude Include=".\ExLibs\memdc.h" />
+    <ClInclude Include=".\ExceptionHandler.h" />
+    <ClInclude Include=".\GetWinVer.h" />
+    <ClInclude Include=".\HPro.h" />
+    <ClInclude Include=".\MinBugTrap.h" />
+    <ClInclude Include=".\MiniVersion.h" />
+    <ClInclude Include=".\RanFilter.h" />
+    <ClInclude Include=".\RegFunction.h" />
+    <ClInclude Include=".\SimpleProcessAPI.h" />
+    <ClInclude Include=".\Slangfilter.h" />
+    <ClInclude Include=".\StdAfx.h" />
+    <ClInclude Include=".\StopWatch.h" />
+    <ClInclude Include=".\rol_clipboard.h" />
+    <ClInclude Include="ExLibs\BmpButton.h" />
+    <ClInclude Include="ExLibs\Bubble.h" />
+    <ClInclude Include="ExLibs\CJFlatComboBox.h" />
+    <ClInclude Include="ExLibs\CheckListBoxLog.h" />
+    <ClInclude Include="ExLibs\CompactFdi.h" />
+    <ClInclude Include="ExLibs\DxControlFunc.h" />
+    <ClInclude Include="ExLibs\EtcFunction.h" />
+    <ClInclude Include="ExLibs\Fdi.h" />
+    <ClInclude Include="ExLibs\GetDxVer.h" />
+    <ClInclude Include="ExLibs\MacButtons.h" />
+    <ClInclude Include="ExLibs\MacProgressCtrl.h" />
+    <ClInclude Include="ExLibs\MultiSlider.h" />
+    <ClInclude Include="ExLibs\Separator.h" />
+    <ClInclude Include="ExLibs\SoundSourceMan.h" />
+    <ClInclude Include="ExLibs\StColor.h" />
+    <ClInclude Include="ExLibs\WusDV_Util.h" />
+    <ClInclude Include="ExLibs\flatedit.h" />
+    <ClInclude Include="ExLibs\webbrowser2.h" />
+    <ClInclude Include="RANPARAM.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".\Readme.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

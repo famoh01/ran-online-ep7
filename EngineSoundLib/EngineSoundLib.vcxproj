@@ -1,0 +1,144 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD|Win32">
+      <Configuration>ReleaseD</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{DD642AD2-FD38-4171-9432-3EFE08EC7CAD}</ProjectGuid>
+    <RootNamespace>EngineSoundLib</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_DBuildData\EngineSoundLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_DBuildData\EngineSoundLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\EngineSoundLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\EngineSoundLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\EngineSoundLib\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\EngineSoundLib\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>./;./DxSound;../EngineLib/Common;../EngineLib/Meshs;../EngineLib/Workspace;../EngineLib/Dxframe;../EngineLib/DxCommon;../EngineLib/DxCommon9;../EngineLib/DxOctree;../EngineLib/DxEffect;../EngineLib/DxEffect/Single;../EngineLib/GUInterface;"../EngineLib/G-Logic";../EngineLib/NaviMesh;../EngineLib/DxEffect/Char;../EngineLib/DxEffect/EffAni;../EngineLib/DxEffect/EffProj;../EngineLib/DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32,_DEBUG,_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <MinimalRebuild>false</MinimalRebuild>
+      <CompileAs>Default</CompileAs>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_DLib\EngineSoundLibD.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>./;./DxSound;../EngineLib/Common;../EngineLib/Meshs;../EngineLib/Workspace;../EngineLib/Dxframe;../EngineLib/DxCommon;../EngineLib/DxCommon9;../EngineLib/DxOctree;../EngineLib/DxEffect;../EngineLib/DxEffect/Single;../EngineLib/GUInterface;"../EngineLib/G-Logic";../EngineLib/NaviMesh;../EngineLib/DxEffect/Char;../EngineLib/DxEffect/EffAni;../EngineLib/DxEffect/EffProj;../EngineLib/DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32,NDEBUG,_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <CompileAs>Default</CompileAs>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RLib\EngineSoundLib.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>./;./DxSound;../EngineLib/Common;../EngineLib/Meshs;../EngineLib/Workspace;../EngineLib/Dxframe;../EngineLib/DxCommon;../EngineLib/DxCommon9;../EngineLib/DxOctree;../EngineLib/DxEffect;../EngineLib/DxEffect/Single;../EngineLib/GUInterface;"../EngineLib/G-Logic";../EngineLib/NaviMesh;../EngineLib/DxEffect/Char;../EngineLib/DxEffect/EffAni;../EngineLib/DxEffect/EffProj;../EngineLib/DxEffect/EffKeep;../RanClientLib/Interface;../Vorbislib;"../=Include";"../=zlib";"../RanClientLib/G-Logic";../netclientLib;../MfcExLib;../MfcExLib/ExLibs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32,_LIB,_RELEASED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+      <StringPooling>true</StringPooling>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Lib>
+      <OutputFile>..\_RDLib\EngineSoundLibR.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include=".\DxSound\BgmSound.cpp" />
+    <ClCompile Include=".\DxSound\BgmSoundData.cpp" />
+    <ClCompile Include=".\DxSound\BgmSoundEx.cpp" />
+    <ClCompile Include=".\DxSound\CharacterSound.cpp" />
+    <ClCompile Include=".\DxSound\DxSoundLib.cpp" />
+    <ClCompile Include=".\DxSound\DxSoundMan.cpp" />
+    <ClCompile Include=".\DxSound\MovableSound.cpp" />
+    <ClCompile Include=".\DxSound\StaticSoundMan.cpp" />
+    <ClCompile Include=".\DxSound\StaticSoundManEx.cpp" />
+    <ClCompile Include=".\DxSound\SuperSound.cpp" />
+    <ClCompile Include=".\stdafx.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include=".\DxSound\BgmSound.h" />
+    <ClInclude Include=".\DxSound\BgmSoundData.h" />
+    <ClInclude Include=".\DxSound\CharacterSound.h" />
+    <ClInclude Include=".\DxSound\DxSoundLib.h" />
+    <ClInclude Include=".\DxSound\DxSoundMan.h" />
+    <ClInclude Include=".\DxSound\MovableSound.h" />
+    <ClInclude Include=".\DxSound\StaticSoundMan.h" />
+    <ClInclude Include=".\DxSound\SuperSound.h" />
+    <ClInclude Include=".\DxSound\ogg\ogg.h" />
+    <ClInclude Include=".\DxSound\ogg\os_types.h" />
+    <ClInclude Include=".\DxSound\vorbis\codec.h" />
+    <ClInclude Include=".\DxSound\vorbis\vorbisenc.h" />
+    <ClInclude Include=".\DxSound\vorbis\vorbisfile.h" />
+    <ClInclude Include=".\stdafx.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

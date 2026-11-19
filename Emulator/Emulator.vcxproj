@@ -1,0 +1,177 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseD|Win32">
+      <Configuration>ReleaseD</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{ABDFE1DD-5722-49A8-BD1C-AD572EDE73CD}</ProjectGuid>
+    <RootNamespace>Emulator</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_DBuildData\Emulator\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_DBuildData\Emulator\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RBuildData\Emulator\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RBuildData\Emulator\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <OutDir>$(SolutionDir)\_RDBuildData\Emulator\$(ConfigurationName)\</OutDir>
+    <IntDir>$(SolutionDir)\_RDBuildData\Emulator\$(ConfigurationName)\</IntDir>
+    <_ProjectFileVersion>17.0.0.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;../enginelib/DxEffect/Char;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;"$(SolutionDir)enginelib/DxEffect/EffAni";../RanClientLib/NpcTalk;"$(SolutionDir)=DaumCrypt";../engineLib/DxEffect/EffKeep;"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <MinimalRebuild>true</MinimalRebuild>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/EmulatorD.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>true</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>0</EnableCOMDATFolding>
+      <OptimizeReferences>0</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;../enginelib/DxEffect/Char;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;"$(SolutionDir)enginelib/DxEffect/EffAni";../RanClientLib/NpcTalk;"$(SolutionDir)=DaumCrypt";../engineLib/DxEffect/EffKeep;"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MinimalRebuild>false</MinimalRebuild>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/Emulator.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(SolutionDir)/_bin/map_pdb/Emulator.pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>false</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../RanClientLib;../RanClientLib/Interface;../netclientLib;../netserverLib;../enginelib/;../enginelib/DxEffect/Single/;../enginelib/Common;../enginelib/Meshs;../enginelib/Workspace;../enginelib/Dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;../enginelib/DxOctree;../enginelib/DxEffect;"../enginelib/G-Logic";../enginelib/NaviMesh;../enginelib/GUInterface;../enginelib/DxSound;../enginelib/DxEffect/Char;"../=Include";"../RanClientLib/G-Logic";../MfcExLib/;../MfcExLib/ExLibs;../SQL/Include;"$(SolutionDir)enginelib/DxEffect/EffAni";../RanClientLib/NpcTalk;"$(SolutionDir)=DaumCrypt";../engineLib/DxEffect/EffKeep;"$(SolutionDir)/=TbbLib/include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_RELEASED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <MinimalRebuild>false</MinimalRebuild>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib winmm.lib imm32.lib "$(SolutionDir)/=Library/vorbisfile_static.lib" "$(SolutionDir)/=Library/ogg_static.lib" "$(SolutionDir)/=Library/dbghelp.lib" "$(SolutionDir)/=Library/ggsrvlib.lib" "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=TbbLib/lib/tbb.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <OutputFile>$(SolutionDir)/_Bin/EmulatorR.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(OutDir)/$(ProjectName)R.pdb</ProgramDatabaseFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LinkIncremental>false</LinkIncremental>
+      <TargetMachine>MachineX86</TargetMachine>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include=".\ExceptionAttacher.cpp" />
+    <ClCompile Include="Emulator.cpp" />
+    <ClCompile Include="EmulatorDoc.cpp" />
+    <ClCompile Include="EmulatorView.cpp" />
+    <ClCompile Include="EmulatorViewD3d.cpp" />
+    <ClCompile Include="MainFrm.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Emulator.h" />
+    <ClInclude Include="EmulatorDoc.h" />
+    <ClInclude Include="EmulatorView.h" />
+    <ClInclude Include="MainFrm.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="stdafx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Emulator.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+    <None Include="res\Emulator.ico" />
+    <None Include="res\Emulator.manifest" />
+    <None Include="res\Emulator.rc2" />
+    <None Include="res\EmulatorDoc.ico" />
+    <None Include="res\Toolbar.bmp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>
