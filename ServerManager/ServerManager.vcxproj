@@ -1134,5 +1134,14 @@
     <None Include="res\pin4.bmp" />
     <None Include="res\state.bmp" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- injected project references -->
+    <ProjectReference Include="..\netserverLib\netserverLib.vcxproj">
+      <Project>{0D444AD2-DAA6-405D-B28D-656AAF5093D5}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\netclientLib\netclientLib.vcxproj">
+      <Project>{B0D7D4D5-5245-463D-8F76-9822AC752E71}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

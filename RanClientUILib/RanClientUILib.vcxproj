@@ -1409,5 +1409,11 @@
     <None Include="..\_bin\Data\Gui\uiinnercfg03.xml" />
     <None Include=".\ReadMe.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- injected project references -->
+    <ProjectReference Include="..\MfcExLib\MfcExLib.vcxproj">
+      <Project>{D94E8461-50B9-46AC-A08F-EFA6811CE2F5}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

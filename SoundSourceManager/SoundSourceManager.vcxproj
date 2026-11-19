@@ -178,5 +178,17 @@
     <None Include="res\Toolbar.bmp" />
     <None Include="res\state.bmp" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- injected project references -->
+    <ProjectReference Include="..\enginelib\enginelib.vcxproj">
+      <Project>{1B7E9F95-3027-4194-BCA6-DE1D940C12E9}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\MfcExLib\MfcExLib.vcxproj">
+      <Project>{D94E8461-50B9-46AC-A08F-EFA6811CE2F5}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\BugTrap\BugTrap.vcxproj">
+      <Project>{E8CF1ADA-264A-4127-86C2-FD7057D3792C}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

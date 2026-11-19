@@ -468,5 +468,29 @@
     <None Include="res\PatchPrimeMan.manifest" />
     <None Include="res\PatchPrimeMan.rc2" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- injected project references -->
+    <ProjectReference Include="..\EngineUILib\EngineUILib.vcxproj">
+      <Project>{06500F3B-6B55-42FC-B009-4E525C25B404}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\enginelib\enginelib.vcxproj">
+      <Project>{1B7E9F95-3027-4194-BCA6-DE1D940C12E9}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\RanClientLib\RanClientLib.vcxproj">
+      <Project>{36F1AF73-B733-41ED-9DC2-F35DA5A1D073}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\netclientLib\netclientLib.vcxproj">
+      <Project>{B0D7D4D5-5245-463D-8F76-9822AC752E71}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\MfcExLib\MfcExLib.vcxproj">
+      <Project>{D94E8461-50B9-46AC-A08F-EFA6811CE2F5}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\EngineSoundLib\EngineSoundLib.vcxproj">
+      <Project>{DD642AD2-FD38-4171-9432-3EFE08EC7CAD}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\BugTrap\BugTrap.vcxproj">
+      <Project>{E8CF1ADA-264A-4127-86C2-FD7057D3792C}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

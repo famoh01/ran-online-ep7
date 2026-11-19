@@ -114,5 +114,11 @@
     <None Include="res\FileSystem.manifest" />
     <None Include="res\FileSystem.rc2" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- injected project references -->
+    <ProjectReference Include="..\enginelib\enginelib.vcxproj">
+      <Project>{1B7E9F95-3027-4194-BCA6-DE1D940C12E9}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

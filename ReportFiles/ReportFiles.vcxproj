@@ -182,5 +182,17 @@
   <ItemGroup>
     <None Include=".\ReadMe.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- injected project references -->
+    <ProjectReference Include="..\EngineUILib\EngineUILib.vcxproj">
+      <Project>{06500F3B-6B55-42FC-B009-4E525C25B404}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\enginelib\enginelib.vcxproj">
+      <Project>{1B7E9F95-3027-4194-BCA6-DE1D940C12E9}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\EngineSoundLib\EngineSoundLib.vcxproj">
+      <Project>{DD642AD2-FD38-4171-9432-3EFE08EC7CAD}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
