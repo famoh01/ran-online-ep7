@@ -16,7 +16,7 @@
 
 #include "AlexfStaticHistogram.h"
 #include <Winuser.h>
-// #include "../=DX_Include/multimon.h"
+// #include "../LegacyDX_Include/multimon.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

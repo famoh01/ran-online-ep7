@@ -17,7 +17,7 @@
 #include "ApexCloseList.h"
 #include "s_CWhiteRock.h"
 
-#include "../=include/ApexProxy.h"
+#include "../LegacyInclude/ApexProxy.h"
 #include "s_CAgentServerApex.h"
 
 #include "../MfcExLib/ExceptionHandler.h"
@@ -80,8 +80,8 @@ public :
 
 protected :
 	// SOCKET m_sSession; ///< Socket for session server
-	CClientAgent* m_pClientManager; ///< Client °ü¸®¿ë
-	int m_ChannelUser[MAX_CHANNEL_NUMBER]; ///< Ã¤³Îº° »ç¿ëÀÚ ¼ýÀÚ °ü¸®
+	CClientAgent* m_pClientManager; ///< Client ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	int m_ChannelUser[MAX_CHANNEL_NUMBER]; ///< Ã¤ï¿½Îºï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	
 	CDaumGameAuth m_DaumAuth; ///< Daum Game Decrypt Module
 	SERVER_UTIL::CMinMd5 m_MinMd5; ///< Excite Japan MD5
@@ -99,7 +99,7 @@ protected :
 	ApexCloseList m_ApexClose;
 	// APEX_CLOSE_LIST m_listApexClose;
 
-	// INFO:Reached Max Client Number ¸Þ½ÃÁö°¡ ¶ã¶§ UpdateProc°¡ Á¦´ë·Î ÀÛµ¿ÇÏ´ÂÁö¸¦ ¾Ë¾Æº¸±â À§ÇÑ º¯¼ö
+	// INFO:Reached Max Client Number ï¿½Þ½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ã¶§ UpdateProcï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ûµï¿½ï¿½Ï´ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ë¾Æºï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	bool m_bReachedMAX;
 
 
@@ -143,12 +143,12 @@ public:
 	
 	virtual int SendAgent ( DWORD dwClient, LPVOID pBuffer )
 				{ 
-					assert(0&&"¿¡ÀÌÁ¯Æ®¿¡¼­´Â SendAgent()¸¦ È£ÃâÇÒ¼ö ¾ø½À´Ï´Ù."); 
+					assert(0&&"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ SendAgent()ï¿½ï¿½ È£ï¿½ï¿½ï¿½Ò¼ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½."); 
 					return 0; 
 				}
 	virtual int SendAgent ( LPVOID pBuffer )		                 
 				{ 
-					assert(0&&"¿¡ÀÌÁ¯Æ®¿¡¼­´Â SendAgent()¸¦ È£ÃâÇÒ¼ö ¾ø½À´Ï´Ù."); 
+					assert(0&&"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ SendAgent()ï¿½ï¿½ È£ï¿½ï¿½ï¿½Ò¼ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½."); 
 					return 0; 
 				}	
 	virtual int SendClient ( DWORD dwClient, LPVOID pBuffer );
@@ -195,18 +195,18 @@ public:
 	void	MsgSndChaBasicInfo  (DWORD dwClient, int nChaNum);
 	void	MsgSndChaBasicInfoBack(GLMSG::SNETLOBBY_CHARINFO* snci, DWORD dwClient, const char* szUserIP, USHORT uPort=0);	
 	
-	void	MsgSndChaDelInfo( MSG_LIST* pMsg ); // Agent->Client:Ä³¸¯ÅÍ »èÁ¦ °á°ú Àü¼Û	
+	void	MsgSndChaDelInfo( MSG_LIST* pMsg ); // Agent->Client:Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½	
 	void	MsgSndChaDelInfoBack( int nChaNum, 
 		                          int nUserNum, 
 								  int nResult, 
 								  DWORD dwClient, 
 								  const TCHAR* szUserIP, 
-								  USHORT uPort=0 ); // °ÔÀÓ¼­¹ö->Å¬¶óÀÌ¾ðÆ® : Ä³¸¯ÅÍ »èÁ¦ °á°ú Àü¼Û	
+								  USHORT uPort=0 ); // ï¿½ï¿½ï¿½Ó¼ï¿½ï¿½ï¿½->Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® : Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½	
 
-	//! Agent->Client:Ä³¸¯ÅÍ »èÁ¦
+	//! Agent->Client:Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	void DaumMsgSndChaDelInfo(MSG_LIST* pMsg);
 
-	//! Agent->Client:Ä³¸¯ÅÍ »èÁ¦ °á°ú Àü¼Û
+	//! Agent->Client:Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	void DaumMsgSndChaDelInfoBack(int nChaNum, 
 		                          int nUserNum, 
 		                          int nResult, 
@@ -215,19 +215,19 @@ public:
 								  USHORT uPort=0);
 
 	/**
-	* Client->Agent:Ä³¸¯ÅÍ »èÁ¦¿äÃ»
+	* Client->Agent:Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»
 	* \param pMsg 
 	*/
 	void TerraMsgSndChaDelInfo( MSG_LIST* pMsg );
 
 	/**
-	* Client->Agent:Ä³¸¯ÅÍ »èÁ¦¿äÃ»
+	* Client->Agent:Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»
 	* \param pMsg 
 	*/
 	void GspMsgSndChaDelInfo( MSG_LIST* pMsg );
 
 	/**
-	* Client->Agent:Ä³¸¯ÅÍ »èÁ¦¿äÃ»
+	* Client->Agent:Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»
 	* \param pMsg 
 	*/
 	void ExciteMsgSndChaDelInfo(MSG_LIST* pMsg);
@@ -249,7 +249,7 @@ public:
 								    USHORT uPort=0);
 
 	/**
-	* Client->Agent:Ä³¸¯ÅÍ »èÁ¦¿äÃ»
+	* Client->Agent:Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»
 	* \param pMsg 
 	*/
 	void JapanMsgSndChaDelInfo(MSG_LIST* pMsg);
@@ -271,11 +271,11 @@ public:
 								    USHORT uPort=0);
 
 	/**
-	* Agent->Client:Ä³¸¯ÅÍ »èÁ¦°á°úÀü¼Û
-	* \param nChaNum Ä³¸¯ÅÍ¹øÈ£
-	* \param nUserNum À¯Àú¹øÈ£
-	* \param nResult °á°ú
-	* \param dwClient Å¬¶óÀÌ¾ðÆ®¹øÈ£
+	* Agent->Client:Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	* \param nChaNum Ä³ï¿½ï¿½ï¿½Í¹ï¿½È£
+	* \param nUserNum ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È£
+	* \param nResult ï¿½ï¿½ï¿½
+	* \param dwClient Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½È£
 	* \param szUserIP IP
 	* \param uPort PORT
 	*/
@@ -287,11 +287,11 @@ public:
 								   USHORT uPort=0);
 
 	/**
-	* Agent->Client:Ä³¸¯ÅÍ »èÁ¦°á°úÀü¼Û
-	* \param nChaNum Ä³¸¯ÅÍ¹øÈ£
-	* \param nUserNum À¯Àú¹øÈ£
-	* \param nResult °á°ú
-	* \param dwClient Å¬¶óÀÌ¾ðÆ®¹øÈ£
+	* Agent->Client:Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	* \param nChaNum Ä³ï¿½ï¿½ï¿½Í¹ï¿½È£
+	* \param nUserNum ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È£
+	* \param nResult ï¿½ï¿½ï¿½
+	* \param dwClient Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½È£
 	* \param szUserIP IP
 	* \param uPort PORT
 	*/
@@ -305,17 +305,17 @@ public:
 
 
 	/**
-	* Client->Agent:Ä³¸¯ÅÍ »èÁ¦¿äÃ»
+	* Client->Agent:Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»
 	* \param pMsg 
 	*/
-	void	GsMsgSndChaDelInfo( MSG_LIST* pMsg ); // Agent->Client:Ä³¸¯ÅÍ »èÁ¦ °á°ú Àü¼Û	
+	void	GsMsgSndChaDelInfo( MSG_LIST* pMsg ); // Agent->Client:Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½	
 
 	/**
-	* Agent->Client:Ä³¸¯ÅÍ »èÁ¦°á°úÀü¼Û
-	* \param nChaNum Ä³¸¯ÅÍ¹øÈ£
-	* \param nUserNum À¯Àú¹øÈ£
-	* \param nResult °á°ú
-	* \param dwClient Å¬¶óÀÌ¾ðÆ®¹øÈ£
+	* Agent->Client:Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	* \param nChaNum Ä³ï¿½ï¿½ï¿½Í¹ï¿½È£
+	* \param nUserNum ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È£
+	* \param nResult ï¿½ï¿½ï¿½
+	* \param dwClient Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½È£
 	* \param szUserIP IP
 	* \param uPort PORT
 	*/
@@ -324,14 +324,14 @@ public:
 								  int nResult, 
 								  DWORD dwClient, 
 								  const TCHAR* szUserIP, 
-								  USHORT uPort=0 ); // °ÔÀÓ¼­¹ö->Å¬¶óÀÌ¾ðÆ® : Ä³¸¯ÅÍ »èÁ¦ °á°ú Àü¼Û	
+								  USHORT uPort=0 ); // ï¿½ï¿½ï¿½Ó¼ï¿½ï¿½ï¿½->Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® : Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½	
 	
-	//! Å¬¶óÀÌ¾ðÆ®->¿¡ÀÌÁ¯Æ®¼­¹ö : Ä³¸¯ÅÍ ¼±ÅÃÈÄ DB¿¡¼­ ÀÐ¾î¿À±â ¿äÃ».
+	//! Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®->ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ : Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ DBï¿½ï¿½ï¿½ï¿½ ï¿½Ð¾ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã».
 	void MsgGameJoin(MSG_LIST* pMsg); 
-	//! DB ½º·¹µå->¿¡ÀÌÁ¯Æ®¼­¹ö : DB¿¡¼­ ÀÐ¾îÁø Á¤º¸·Î ÄÉ¸¯ÅÍ Á¢¼Ó ½Ãµµ.
+	//! DB ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½->ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ : DBï¿½ï¿½ï¿½ï¿½ ï¿½Ð¾ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½É¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ãµï¿½.
 	void MsgAgentReqJoin(MSG_LIST* pMsg);
 	//void MsgAgentReqJoin( DWORD dwClientID, GLCHARAG_DATA * pCHAR_DATA );
-	//! ÇÊµå¼­¹ö->¿¡ÀÌÀüÆ®¼­¹ö : Ä³¸¯ÅÍ°¡ °ÔÀÓ¿¡ Á¶ÀÎÇßÀ½
+	//! ï¿½Êµå¼­ï¿½ï¿½->ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ : Ä³ï¿½ï¿½ï¿½Í°ï¿½ ï¿½ï¿½ï¿½Ó¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	int MsgLobbyCharJoinField(MSG_LIST* pMsg);
 
 	void MsgFieldSvrOutFb ( NET_MSG_GENERIC* nmg, DWORD dwClientID, DWORD dwGaeaID );
@@ -344,7 +344,7 @@ public:
 	void SetUserInfo(DWORD nClient, const char* strUserId, const char* strPassword); 	
 
 	//! Execute Command Text
-	//! @param strCmd ÄÄ¸àµå
+	//! @param strCmd ï¿½Ä¸ï¿½ï¿½
 	int	ExecuteCommand(char* strCmd);
 
 	///////////////////////////////////////////////////////////////////////////
@@ -379,30 +379,30 @@ public:
 	// bool CheckFieldConnection();
 
 	///////////////////////////////////////////////////////////////////////////
-	/// ¸Þ½ÃÁö Ã³¸® °ü·Ã ÇÔ¼öµé
+	/// ï¿½Þ½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½ï¿½ï¿½
 	///////////////////////////////////////////////////////////////////////////	
-	//! Local Message process function ( gaeaserver·Î Á÷Á¢ ³»ºÎ ¸Þ½ÃÁö Àü¼Û. )
+	//! Local Message process function ( gaeaserverï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½. )
 	int	InsertMsg(int nClient, void* pMsg);
-	//! ¸ðµç ¸Þ½ÃÁö´Â ÀÏ´Ü ÀÌ°÷À» °ÅÄ£´Ù.
+	//! ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ï´ï¿½ ï¿½Ì°ï¿½ï¿½ï¿½ ï¿½ï¿½Ä£ï¿½ï¿½.
 	int	MsgProcess(MSG_LIST* pMsg);
-	//! ¼­¹ö³¢¸®ÀÇ Åë½ÅÀÏ¶§´Â ÀÌ°÷À» °ÅÄ£´Ù.
+	//! ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï¶ï¿½ï¿½ï¿½ ï¿½Ì°ï¿½ï¿½ï¿½ ï¿½ï¿½Ä£ï¿½ï¿½.
 	void ServerMsgProcess(MSG_LIST* pMsg);
-	//! ¼­¹ö³¢¸®ÀÇ Åë½ÅÁß session ¼­¹ö°¡ ¾Æ´Ò¶§´Â ÀÌ°÷À» °ÅÄ£´Ù.
+	//! ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ session ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Æ´Ò¶ï¿½ï¿½ï¿½ ï¿½Ì°ï¿½ï¿½ï¿½ ï¿½ï¿½Ä£ï¿½ï¿½.
 	void OtherMsgProcess(MSG_LIST* pMsg);	
 
-	// ¹ÞÀº ¸Þ½ÃÁöµéÀ» Ã³¸®ÇÑ´Ù.
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ï¿½Ñ´ï¿½.
 	void RecvMsgProcess();
-	// ÇÏÆ®ºñÆ® Ã¼Å©¸¦ ÇÑ´Ù.
+	// ï¿½ï¿½Æ®ï¿½ï¿½Æ® Ã¼Å©ï¿½ï¿½ ï¿½Ñ´ï¿½.
 	void AgentSrvHeartBeatCheck( DWORD dwUdpateTime );
-	// ¼­¹ö ¾÷µ¥ÀÌÆ® 
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® 
 	void UpdateClientState();
-	// ÇöÀç ¼­¹öÀÇ »óÅÂ¸¦ ÇÁ¸°Æ® ÇÑ´Ù.
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â¸ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Ñ´ï¿½.
 	void PrintDebugMsg( DWORD dwUdpateTime );
-	// UpdateThread Á¾·á
+	// UpdateThread ï¿½ï¿½ï¿½ï¿½
 	void EndUpdateThread();
 
 	///////////////////////////////////////////////////////////////////////////
-	/// Ã¤³Î °ü·Ã ÇÔ¼öµé
+	/// Ã¤ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½ï¿½ï¿½
 	///////////////////////////////////////////////////////////////////////////
 	int  IncreaseChannelUser(int nChannel);
 	int  DecreaseChannelUser(int nChannel);
@@ -412,85 +412,85 @@ public:
 	virtual void SendAllChannel( LPVOID pBuffer );
 
 	///////////////////////////////////////////////////////////////////////////
-	/// ·Î±×ÀÎ °ü·Ã ÇÔ¼öµé
+	/// ï¿½Î±ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½ï¿½ï¿½
 	///////////////////////////////////////////////////////////////////////////	
-	//! ·Î±×ÀÎ message ( ´ë¸¸, È«Äá, ³»ºÎ ) 
+	//! ï¿½Î±ï¿½ï¿½ï¿½ message ( ï¿½ë¸¸, È«ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ) 
 	void MsgLogIn( MSG_LIST* pMsg );
 	void MsgLogInBack( NET_LOGIN_FEEDBACK_DATA2* nlfd2 );
 
-	//! China ·Î±×ÀÎ ¸Þ½ÃÁö ( Áß±¹ ) 
+	//! China ï¿½Î±ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ ( ï¿½ß±ï¿½ ) 
 	void ChinaMsgLogin( MSG_LIST* pMsg );
 	void ChinaMsgLoginBack( NET_LOGIN_FEEDBACK_DATA2* nlfd2 );
 
-	//! Daum ·Î±×ÀÎ ¸Þ½ÃÁö ( ÇÑ±¹ ) 
+	//! Daum ï¿½Î±ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ ( ï¿½Ñ±ï¿½ ) 
 	void DaumMsgLogin(MSG_LIST* pMsg);
 	void DaumMsgLoginBack(DAUM_NET_LOGIN_FEEDBACK_DATA2* nlfd2);
 
-	//! Daum ÆÐ½º¿öµå Ã¼Å© ¸Þ½ÃÁö
+	//! Daum ï¿½Ð½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã¼Å© ï¿½Þ½ï¿½ï¿½ï¿½
 	void DaumMsgPassCheck(MSG_LIST* pMsg);
 	void DaumMsgPassCheckBack(DAUM_NET_PASSCHECK_FEEDBACK_DATA2* nlfd2);
 
-	//! GSP ·Î±×ÀÎ ¸Þ½ÃÁö
+	//! GSP ï¿½Î±ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½
 	void GspMsgLogin( MSG_LIST* pMsg );
 	void GspMsgLoginBack( GSP_NET_LOGIN_FEEDBACK_DATA2* nlfd2 );
 
-	//! Terra ·Î±×ÀÎ ¸Þ½ÃÁö ( ¸»·¹ÀÌ½Ã¾Æ, ÇÊ¸®ÇÉ, º£Æ®³² )
+	//! Terra ï¿½Î±ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ ( ï¿½ï¿½ï¿½ï¿½ï¿½Ì½Ã¾ï¿½, ï¿½Ê¸ï¿½ï¿½ï¿½, ï¿½ï¿½Æ®ï¿½ï¿½ )
 	void TerraMsgLogin( MSG_LIST* pMsg );
 	void TerraMsgLoginBack( TERRA_NET_LOGIN_FEEDBACK_DATA2* nlfd2 );
 
-	//! Terra ÆÐ½º¿öµå Ã¼Å© ¸Þ½ÃÁö
+	//! Terra ï¿½Ð½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã¼Å© ï¿½Þ½ï¿½ï¿½ï¿½
 	void TerraMsgPassCheck( MSG_LIST* pMsg );
 	void TerraMsgPassCheckBack( TERRA_NET_PASSCHECK_FEEDBACK_DATA2* nlfd2 );
 
-	//! Excite Japan ·Î±×ÀÎ ¸Þ½ÃÁö ( ÀÏº» )
+	//! Excite Japan ï¿½Î±ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ ( ï¿½Ïºï¿½ )
 	void ExciteMsgLogin(MSG_LIST* pMsg);
 	void ExciteMsgLoginBack(EXCITE_NET_LOGIN_FEEDBACK_DATA2* nlfd2);
 
-	//! Excite Japna ÆÐ½º¿öµå Ã¼Å© ¸Þ½ÃÁö
+	//! Excite Japna ï¿½Ð½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã¼Å© ï¿½Þ½ï¿½ï¿½ï¿½
 	void ExciteMsgPassCheck( MSG_LIST* pMsg );
 	void ExciteMsgPassCheckBack( EXCITE_NET_PASSCHECK_FEEDBACK_DATA2* nlfd2 );
 
-	//! ÀÏº» Gonzo Japan ·Î±×ÀÎ ¸Þ½ÃÁö
+	//! ï¿½Ïºï¿½ Gonzo Japan ï¿½Î±ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½
 	void JapanMsgLogin(MSG_LIST* pMsg);
 	void JapanMsgLoginBack(JAPAN_NET_LOGIN_FEEDBACK_DATA2* nlfd2);
 
-	// ÀÏº» Gonzo Japan ·Î±×ÀÎ °ü·Ã ÇÔ¼ö
+	// ï¿½Ïºï¿½ Gonzo Japan ï¿½Î±ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½
 	void JapanWRFailed( DWORD dwClient, int nResult );
 	void JapanWRSuccess( DWORD dwClient, CString strUserID,
 									int nServerGroup, int nServerNum, CString strUUID, int nUserNum );
 
-	//! ·Î±×ÀÎ ¸Þ½ÃÁö (Thailand) ( ÅÂ±¹ ) 
+	//! ï¿½Î±ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ (Thailand) ( ï¿½Â±ï¿½ ) 
 	//! \param pMsg 
 	void ThaiMsgLogin(MSG_LIST* pMsg);
 	void ThaiMsgLogInBack(NET_LOGIN_FEEDBACK_DATA2* nlfd2);	
 
-    //! Encoding µÈ TID ¿¡¼­ Decoding µÈ TID ¸¦ ¾ò´Â´Ù.
-	//! @param szEncodedTID Encoding µÈ TID
-	//! @param szDecodedTID Decoding µÈ TID
+    //! Encoding ï¿½ï¿½ TID ï¿½ï¿½ï¿½ï¿½ Decoding ï¿½ï¿½ TID ï¿½ï¿½ ï¿½ï¿½Â´ï¿½.
+	//! @param szEncodedTID Encoding ï¿½ï¿½ TID
+	//! @param szDecodedTID Decoding ï¿½ï¿½ TID
 	//! @return	
 	int TerraGetDecodedTID(char* szEncodedTID, char* szDecodedTID);
 
-	//! ·Î±×ÀÎ message ( ±Û·Î¹ú ¼­ºñ½º ) 
+	//! ï¿½Î±ï¿½ï¿½ï¿½ message ( ï¿½Û·Î¹ï¿½ ï¿½ï¿½ï¿½ï¿½ ) 
 	void GsMsgLogin( MSG_LIST* pMsg );
 	void GsMsgLoginBack( GS_NET_LOGIN_FEEDBACK_DATA2* nlfd2 );
 
-	//! ·£´ý ¾ÏÈ£¸¦ À§ÇÑ ¹øÈ£¸¦ º¸³½´Ù.
+	//! ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È£ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È£ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 	void MsgSndRandomNumber(DWORD dwClient);
 
-	//! Apex Data ¸Þ¼¼Áö	// Apex Àû¿ë
+	//! Apex Data ï¿½Þ¼ï¿½ï¿½ï¿½	// Apex ï¿½ï¿½ï¿½ï¿½
 	void MsgApexData( MSG_LIST* pMsg );
-	void MsgApexReturn( MSG_LIST* pMsg );	// Apex Àû¿ë( È«Äá )
+	void MsgApexReturn( MSG_LIST* pMsg );	// Apex ï¿½ï¿½ï¿½ï¿½( È«ï¿½ï¿½ )
 
-	//! Apex °¡ »ç¿ëÀÚ¸¦ ºí·° ½ÃÅ³¶§ È£ÃâµÊ Block
+	//! Apex ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ú¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å³ï¿½ï¿½ È£ï¿½ï¿½ï¿½ Block
 	void ApexUserBlock( DWORD dwClient, WORD dwHour );
 
-	//! Apex °¡ »ç¿ëÀÚ Ã¤ÆÃÀ» ±ÝÁö ½ÃÅ³¶§ È£ÃâµÊ 
+	//! Apex ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ Ã¤ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å³ï¿½ï¿½ È£ï¿½ï¿½ï¿½ 
 	void ApexUserChatBlock( DWORD dwClient, WORD dwHour );
 
-	//! Apex °¡ »ç¿ëÀÚ ·Î±×¸¦ ³²±æ¶§ È£ÃâµÊ
+	//! Apex ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Î±×¸ï¿½ ï¿½ï¿½ï¿½æ¶§ È£ï¿½ï¿½ï¿½
 	void ApexUserHackLog( DWORD dwClient, TCHAR* szComment );
 
-	//! Apex °¡ °æ°í¸Þ½ÃÁö¸¦ Å¬¶óÀÌ¾ðÆ®¿¡°Ô º¸³½´Ù.
+	//! Apex ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Þ½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 	void ApexSendMessageToClient( DWORD dwClient, WORD wAction, WORD wHour );
 
 	void ApexCloseClient( DWORD dwClient );
@@ -498,50 +498,50 @@ public:
 	void ApexCloseClientFinal();
 
 	///////////////////////////////////////////////////////////////////////////
-	/// nPortect °ü·Ã ÇÔ¼öµé
+	/// nPortect ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½ï¿½ï¿½
 	///////////////////////////////////////////////////////////////////////////	
 	
-	//! nProtect ÀÎÁõ¿ë ¸Þ½ÃÁö Àü¼Û
+	//! nProtect ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	void MsgSndGameGuard( DWORD dwClient, NET_GAMEGUARD_AUTH& nga );
 
-	//! nProtect Å¬¶óÀÌ¾ðÆ® ÀÎÁõ First
+	//! nProtect Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ First
 	void MsgSndGameGuardFirstCheck( DWORD dwClient );
 
-	//! nProtect Å¬¶óÀÌ¾ðÆ® ÀÎÁõ Second
+	//! nProtect Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ Second
 	void MsgSndGameGuardSecondCheck( DWORD dwClient );
 
-	//! nProtect ÀÎÁõ¿ë ¸Þ¼¼Áö °á°ú
+	//! nProtect ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 	void MsgGameGuardAnswer( MSG_LIST* pMsg );
 
-	//! nProtect ÀÎÁõ¿ë ¸Þ¼¼Áö °á°ú
+	//! nProtect ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 	void MsgGameGuardAnswerFirst( MSG_LIST* pMsg );
 
-	//! nProtect ÀÎÁõ¿ë ¸Þ¼¼Áö °á°ú
+	//! nProtect ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 	void MsgGameGuardAnswerSecond( MSG_LIST* pMsg );
 
-	//! ÇÊµå¼­¹ö¿Í Å¬¶óÀÌ¾ðÆ®¿¡¼­ ¹ÞÀº ÃßÀû ·Î±×¸¦ Âï´Â´Ù.
+	//! ï¿½Êµå¼­ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Î±×¸ï¿½ ï¿½ï¿½Â´ï¿½.
 	void MsgTracingLogPrint( MSG_LIST* pMsg );
 
 
-	// ÃßÀû IDÀÎÁö ¾Æ´ÑÁö Ã¼Å©
+	// ï¿½ï¿½ï¿½ï¿½ IDï¿½ï¿½ï¿½ï¿½ ï¿½Æ´ï¿½ï¿½ï¿½ Ã¼Å©
 	int CheckTracingUser( const char *pUserAccount, const int nUserNum );
 
 
 	///////////////////////////////////////////////////////////////////////////
-	/// °ÔÀÓ³» ÀÌº¥Æ®¿ë ÇÔ¼öµé
+	/// ï¿½ï¿½ï¿½Ó³ï¿½ ï¿½Ìºï¿½Æ®ï¿½ï¿½ ï¿½Ô¼ï¿½ï¿½ï¿½
 	///////////////////////////////////////////////////////////////////////////	
-	//! ¿©¸§¹æÇÐ PC ¹æ ÇÁ·Î¸ð¼Ç ¾ÆÀÌÅÛ 'ÆãÆã' ÀÌº¥Æ®
+	//! ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ PC ï¿½ï¿½ ï¿½ï¿½ï¿½Î¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 'ï¿½ï¿½ï¿½ï¿½' ï¿½Ìºï¿½Æ®
 	void MsgLogPungPungCheckBack(int nResult, DWORD dwClient, const char* szUserIP, USHORT uPort=0);
-    //! ¶õ ¼±¹°ÆãÆã!! ÀÌº¥Æ® 
+    //! ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½!! ï¿½Ìºï¿½Æ® 
 	void MsgLogLotteryBack(int nResult, DWORD dwClient, const char* szUserIP, USHORT uPort=0);
 
 	///////////////////////////////////////////////////////////////////////////
-	/// GM ¸í·É¿ë ¸Þ½ÃÁö ÇÔ¼öµé
+	/// GM ï¿½ï¿½ï¿½É¿ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½ï¿½ï¿½
 	///////////////////////////////////////////////////////////////////////////	
 	void MsgGmPkMode ( NET_MSG_GENERIC* nmg, DWORD dwClientID, DWORD dwGaeaID );
 	void MsgGmwherePcMap ( NET_MSG_GENERIC* nmg, DWORD dwClientID, DWORD dwGaeaID );
 
-	// º£Æ®³² Å¸ÀÓ ¸®¼Â ÀÓ½Ã ÇÔ¼ö
+	// ï¿½ï¿½Æ®ï¿½ï¿½ Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ó½ï¿½ ï¿½Ô¼ï¿½
 	void MsgVietTimeReset ( NET_MSG_GENERIC* nmg, DWORD dwClientID, DWORD dwGaeaID ); //vietnamtest%%% && vietnamtest2
 
     ///////////////////////////////////////////////////////////////////////////
@@ -556,11 +556,11 @@ public:
 			int nPort );
 
 	/**
-	* Session ¼­¹ö¿Í Åë½ÅÀ» Ã¼Å©ÇÏ°í ÀÌ»óÀÌ ÀÖÀ¸¸é ´Ù½Ã ¿¬°áÇÑ´Ù.
+	* Session ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ Ã¼Å©ï¿½Ï°ï¿½ ï¿½Ì»ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ù½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 	*/
 	int SessionReconnect();
 	
-	//! Session ¼­¹ö¿¡ Á¢¼ÓÇÏ°í ¼­¹öÀÇ Á¤º¸¸¦ Àü¼ÛÇÑ´Ù.
+	//! Session ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 	int SessionConnectSndSvrInfo(const char* szServerIP, int nPort);
 	int SessionConnectSndSvrInfo();
 
@@ -570,28 +570,28 @@ public:
 
 	void SessionMsgHeartbeatServerAns();
 	
-	//! ¼¼¼Ç¼­¹ö->°ÔÀÓ¼­¹ö : Ã¤ÆÃ¸Þ½ÃÁö
+	//! ï¿½ï¿½ï¿½Ç¼ï¿½ï¿½ï¿½->ï¿½ï¿½ï¿½Ó¼ï¿½ï¿½ï¿½ : Ã¤ï¿½Ã¸Þ½ï¿½ï¿½ï¿½
 	void SessionMsgChatProcess(NET_MSG_GENERIC* nmg);
 	void SessionMsgSvrCmd(NET_MSG_GENERIC* nmg);
 
-	//  ·Î±×ÀÎ Å°
+	//  ï¿½Î±ï¿½ï¿½ï¿½ Å°
 	void SessionMsgEncryptKey( NET_MSG_GENERIC* nmg );
 	
 	//! Ping Answer	
 	void SessionMsgPingAnswer(NET_MSG_GENERIC* nmg);
 	//! Send ping
 	// void SessionSndPing();
-	//! Agent->Session:¼­¹öÀÇ ¸ðµç Á¤º¸¸¦ º¸³½´Ù.
+	//! Agent->Session:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 	int SessionSndSvrInfo();
 	//! Send Heartbeat
     void SessionSndHeartbeat(); 
-	//! Agent->Session:¼­¹öÀÇ ÇöÀç »óÅÂ¸¦ º¸³½´Ù.
+	//! Agent->Session:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 	int SessionSndSvrCurState();
-	//! Agent->Session:¼­¹öÀÇ ÇöÀç Ã¤³Î »óÅÂ¸¦ º¸³½´Ù.
+	//! Agent->Session:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã¤ï¿½ï¿½ ï¿½ï¿½ï¿½Â¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 	int SessionSndChannelState(int nChannel);	
 
-	//! ¼­¹ö ´Ù¿î½Ã UserLoginState°ªÀÌ Á¦´ë·Î ÃÊ±âÈ­ µÇÁö ¾Ê´Â ¹®Á¦°¡ ÀÖ´Ù.
-	//! Agent°¡ Ã³À½ ½ÃÀÛÇÒ ¶§ UserDBÀÇ UserLoginState°ªÀ» 0À¸·Î ÃÊ±âÈ­ ½ÃÄÑÁØ´Ù.
+	//! ï¿½ï¿½ï¿½ï¿½ ï¿½Ù¿ï¿½ï¿½ UserLoginStateï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½.
+	//! Agentï¿½ï¿½ Ã³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ UserDBï¿½ï¿½ UserLoginStateï¿½ï¿½ï¿½ï¿½ 0ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­ ï¿½ï¿½ï¿½ï¿½ï¿½Ø´ï¿½.
 	void InitUserLoginState();
 
 	int SessionSndCreateCharacter(int nUserNum);

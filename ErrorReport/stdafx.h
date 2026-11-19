@@ -46,6 +46,7 @@
 
 #include <dbghelp.h>
 #include <list>
+#include <map>
 #include "resource.h"
 
 #include <regex>

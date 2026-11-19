@@ -2,10 +2,10 @@
 
 #include <string>
 #include "dxgraputils.h"
-#include "../../=Include/ijl.h"
+#include "../../LegacyInclude/ijl.h"
 #include "../../MfcExLib/RANPARAM.h"
 
-#pragma comment(lib, "../=Library/ijl15.lib") // lib ÆÄÀÏÀ» µî·ÏÇØ¾ß ÇÕ´Ï´Ù.
+#pragma comment(lib, "../=Library/ijl15.lib") // lib ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ø¾ï¿½ ï¿½Õ´Ï´ï¿½.
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -17,15 +17,15 @@ namespace DxGrapUtils
 
 	BOOL ValidDirectory ( LPCTSTR szPath )
 	{
-		//	Note : Á¾Àü È°¼º µð·ºÅä¸® °æ·Î ¹é¾÷.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ È°ï¿½ï¿½ ï¿½ï¿½ï¿½ä¸® ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 		DWORD dwOldLenth = 0;
 		char szOldPath[MAX_PATH] = "";
 		dwOldLenth = ::GetCurrentDirectory ( MAX_PATH, szOldPath );
 
-		//	Note : °æ·Î À¯È¿¼º °Ë»ç.
+		//	Note : ï¿½ï¿½ï¿½ ï¿½ï¿½È¿ï¿½ï¿½ ï¿½Ë»ï¿½.
 		BOOL bValid = ::SetCurrentDirectory ( szPath );
 		
-		//	Note : È°¼º µð·ºÅä¸® °æ·Î µÇµ¹¸².
+		//	Note : È°ï¿½ï¿½ ï¿½ï¿½ï¿½ä¸® ï¿½ï¿½ï¿½ ï¿½Çµï¿½ï¿½ï¿½.
 		if ( dwOldLenth )	::SetCurrentDirectory ( szOldPath );
 
 		return bValid;
@@ -74,11 +74,11 @@ namespace DxGrapUtils
 		{
 			if( RANPARAM::emSERVICE_TYPE == EMSERVICE_CHINA )
 			{
-				StrPathName.Format ( "%s%s%s%03d.jpg", strCapturePath.c_str(), "Á÷ÐÇ»¨Ô°", szTime, i );
+				StrPathName.Format ( "%s%s%s%03d.jpg", strCapturePath.c_str(), "ï¿½ï¿½ï¿½Ç»ï¿½Ô°", szTime, i );
 			}
 			else if ( RANPARAM::emSERVICE_TYPE == EMSERVICE_FEYA )
 			{
-				StrPathName.Format ( "%s%s%s%03d.jpg", strCapturePath.c_str(), "«i online", szTime, i );
+				StrPathName.Format ( "%s%s%s%03d.jpg", strCapturePath.c_str(), "ï¿½i online", szTime, i );
 			}
 			else
 			{
@@ -101,20 +101,20 @@ namespace DxGrapUtils
 	{
 		CBitmap csBitmap;
 		BITMAP  stBitmap;
-		bool bRes = true; // ¸®ÅÏ°ª
+		bool bRes = true; // ï¿½ï¿½ï¿½Ï°ï¿½
 
-		// ºñÆ®¸Ê ·Îµå
+		// ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Îµï¿½
 		csBitmap.m_hObject = LoadImage(NULL, lpszPathName, IMAGE_BITMAP, NULL, NULL,
 			LR_LOADFROMFILE|LR_CREATEDIBSECTION);
 
-		csBitmap.GetBitmap(&stBitmap); // ºñÆ®¸Ê Á¤º¸¸¦ ¾ò´Â´Ù.
+		csBitmap.GetBitmap(&stBitmap); // ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Â´ï¿½.
 
 		IJLERR jerr;
 		DWORD dib_pad_bytes;
 
 		// Allocate the IJL JPEG_CORE_PROPERTIES structure.
 		JPEG_CORE_PROPERTIES jcprops;
-		BYTE * imageData; // ÀÌ¹ÌÁö ÇÈ¼¿ Á¤º¸
+		BYTE * imageData; // ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½È¼ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 		while(true)
 		{
@@ -123,7 +123,7 @@ namespace DxGrapUtils
 
 			if(IJL_OK != jerr)
 			{
-				TRACE0("JCP ÃÊ±âÈ­¿¡ ½ÇÆÐÇß½À´Ï´Ù.\n");
+				TRACE0("JCP ï¿½Ê±ï¿½È­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½.\n");
 				bRes = false;
 				break;
 			}
@@ -131,7 +131,7 @@ namespace DxGrapUtils
 			int nDIBChannels = 3;
 			if ( stBitmap.bmBitsPixel != 24 && stBitmap.bmBitsPixel != 32 )
 			{
-				TRACE0("24ºñÆ®, 32ºñÆ® ºñÆ®¸ÊÀÌ ¾Æ´Õ´Ï´Ù.");
+				TRACE0("24ï¿½ï¿½Æ®, 32ï¿½ï¿½Æ® ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½Æ´Õ´Ï´ï¿½.");
 				bRes = false;
 				break;
 			}
@@ -149,19 +149,19 @@ namespace DxGrapUtils
 
 			int imageSize = (stBitmap.bmWidth*stBitmap.bmBitsPixel/8+dib_pad_bytes) * stBitmap.bmHeight;
 
-			imageData = new BYTE[imageSize]; // ÀÌ¹ÌÁö »çÀÌÁî ¸¸Å­ µ¥¾îÅÍ¸¦ ÃÊ±âÈ­
+			imageData = new BYTE[imageSize]; // ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å­ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½Ê±ï¿½È­
 			if ( imageData==NULL )
 			{
-				TRACE( "ÀÌ¹ÌÁö¸¦ À§ÇÑ ¸Þ¸ð¸® ÇÒ´ç¿¡ ½ÇÆÐÇß½À´Ï´Ù.\n" );
+				TRACE( "ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Þ¸ï¿½ ï¿½Ò´ç¿¡ ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½.\n" );
 				AfxThrowUserException();
 				bRes = false;
 				break;
 			}
 
-			DWORD dwRead = csBitmap.GetBitmapBits ( imageSize , imageData); // ºñÆ®¸Ê ÀÌÁö¹Ì Á¤º¸¸¦ ¾ò´Â´Ù.
+			DWORD dwRead = csBitmap.GetBitmapBits ( imageSize , imageData); // ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Â´ï¿½.
 			if ( dwRead==0 )
 			{
-				TRACE( "GetBitmapBits() dib ÀÐ±â¿¡ ½ÇÆÐÇÏ¿´½À´Ï´Ù.\n" );
+				TRACE( "GetBitmapBits() dib ï¿½Ð±â¿¡ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.\n" );
 				AfxThrowUserException();
 				bRes = false;
 				break;
@@ -196,29 +196,29 @@ namespace DxGrapUtils
 			jcprops.JPGChannels     = 3;
 			jcprops.JPGColor        = IJL_YCBCR;
 			jcprops.JPGSubsampling  = IJL_411; // 4:1:1 subsampling.
-			jcprops.jquality        = 90; // ÀÌ¹ÌÁöÀÇ È­Áú, º¸ÅëÀº 75, ÃÖ°í 100
+			jcprops.jquality        = 90; // ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ È­ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 75, ï¿½Ö°ï¿½ 100
 
 			// Write the actual JPEG image from the pixel buffer.
 			jerr = ijlWrite(&jcprops,IJL_JFILE_WRITEWHOLEIMAGE);
 
 			if(IJL_OK != jerr)
 			{
-				TRACE0("ÀÌ¹ÌÁö¸¦ ÆÄÀÏ¿¡ ÀúÀåÇÏ´Âµ¥ ½ÇÆÐÇß½À´Ï´Ù.\n");
+				TRACE0("ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´Âµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½.\n");
 				bRes = false;
 				break;
 			}
 
-			break; // while ·çÇÁ¸¦ ºüÁ®³ª¿É´Ï´Ù.
+			break; // while ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É´Ï´ï¿½.
 		}
 
 		// Clean up the IntelR JPEG Library.
 		ijlFree(&jcprops);
 
-		if( bBitmapDelete == TRUE )		// ¸¸¾à ÇÃ·¡±×°¡ trueÀÌ¸é
-			DeleteFile(lpszPathName);	// ºñÆ®¸Ê ÆÄÀÏÀ» »èÁ¦ÇÕ´Ï´Ù.
+		if( bBitmapDelete == TRUE )		// ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½×°ï¿½ trueï¿½Ì¸ï¿½
+			DeleteFile(lpszPathName);	// ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
 
 		if ( imageData )
-			delete [] imageData; // µ¿ÀûÀ¸·Î ÇÒ´çµÈ ¸Þ¸ð¸® ÇØÁ¦
+			delete [] imageData; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ò´ï¿½ï¿½ ï¿½Þ¸ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 		return bRes;
 	}

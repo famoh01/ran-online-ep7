@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "./ClientApex.h"
 #include "./DxGlobalStage.h"
-#include "../=Include/ApexClient.h"
+#include "../LegacyInclude/ApexClient.h"
 
 #ifdef	CH_PARAM 
 #pragma comment(lib, "../=Library_CH/AHClientInterface.lib")
@@ -16,7 +16,7 @@ _FUNC_C_REC pfRec = NULL;
 #define new DEBUG_NEW
 #endif
 
-// Apex Àû¿ë
+// Apex ï¿½ï¿½ï¿½ï¿½
 namespace APEX_CLIENT
 {
 	long NetSendToGameServer( const char * pBuffer,int nLen )

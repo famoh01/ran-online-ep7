@@ -14,7 +14,7 @@
 
 #include "resource.h"		// main symbols
 
-#if !defined(MY_PARAM) && !defined(MYE_PARAM) && !defined(PH_PARAM) //&& !defined( VN_PARAM ) //&& !defined(TH_PARAM) && !defined ( HK_PARAM ) && !defined(TW_PARAM) // Nprotect Á¤ÀÇ
+#if !defined(MY_PARAM) && !defined(MYE_PARAM) && !defined(PH_PARAM) //&& !defined( VN_PARAM ) //&& !defined(TH_PARAM) && !defined ( HK_PARAM ) && !defined(TW_PARAM) // Nprotect ï¿½ï¿½ï¿½ï¿½
 #define NO_GAMEGUARD
 #endif
 
@@ -25,7 +25,7 @@
 #if defined( TH_PARAM ) 
 #include "../=include_th/NPGameLib.h"
 #else
-#include "../=include/NPGameLib.h"
+#include "../LegacyInclude/NPGameLib.h"
 #endif
 
 extern CNPGameLib npgl;
