@@ -185,6 +185,7 @@
     </ProjectReference>
     <ProjectReference Include="..\MfcExLib\MfcExLib.vcxproj">
       <Project>{D94E8461-50B9-46AC-A08F-EFA6811CE2F5}</Project>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <ProjectReference Include="..\BugTrap\BugTrap.vcxproj">
       <Project>{E8CF1ADA-264A-4127-86C2-FD7057D3792C}</Project>

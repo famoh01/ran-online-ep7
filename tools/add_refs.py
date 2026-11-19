@@ -51,8 +51,14 @@ def main():
         s = re.sub(r'\s*<ItemGroup>\s*<!-- injected project references -->.*?</ItemGroup>', '', s, flags=re.S)
         items = ['  <ItemGroup>\n    <!-- injected project references -->']
         for drel, dg in refs:
+            extra = ''
+            # MfcExLib is build-order only: it outputs to $(SolutionDir)_RLib\
+            # and consumers link that path explicitly; auto-linking the project
+            # output would reference the wrong path.
+            if dg.upper() == '{D94E8461-50B9-46AC-A08F-EFA6811CE2F5}':
+                extra = '\n      <LinkLibraryDependencies>false</LinkLibraryDependencies>'
             items.append(f'    <ProjectReference Include="..\\{drel}">\n'
-                         f'      <Project>{dg}</Project>\n    </ProjectReference>')
+                         f'      <Project>{dg}</Project>{extra}\n    </ProjectReference>')
         items.append('  </ItemGroup>')
         block = "\n".join(items) + "\n"
         marker = '  <Import Project="$(VCTargetsPath)\\Microsoft.Cpp.targets" />'

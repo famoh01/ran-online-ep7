@@ -36,5 +36,22 @@ for name in DROP:
     else:
         print('NOT FOUND in sln:', name)
 
+
+# MfcExLib had no config mappings in the original sln (was built manually and
+# shipped as _RLib\\MfcExLib.lib). Add mappings so CI builds it.
+MFC_GUID = '{D94E8461-50B9-46AC-A08F-EFA6811CE2F5}'
+if MFC_GUID + '.Release|Win32.ActiveCfg' not in src:
+    marker = '\tGlobalSection(ProjectConfigurationPlatforms) = postSolution\n'
+    assert marker in src
+    inject = ''
+    import re as _re
+    cfgnames = sorted(set(_re.findall(r'\t\t\{[0-9A-Fa-f\-]+\}\.([^\.]+)\.ActiveCfg', src)))
+    for cfg in cfgnames:
+        inject += '\t\t%s.%s.ActiveCfg = Release|Win32\n' % (MFC_GUID, cfg)
+        if cfg == 'Release|Win32':
+            inject += '\t\t%s.%s.Build.0 = Release|Win32\n' % (MFC_GUID, cfg)
+    src = src.replace(marker, marker + inject)
+    print('added MfcExLib config mappings for', len(cfgnames), 'configs')
+
 open('Smtm2022.sln', 'w', encoding='utf-8').write(src)
 print('Smtm2022.sln written, projects:', src.count('Project("'))

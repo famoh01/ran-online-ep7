@@ -145,7 +145,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;Version.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;imm32.lib;$(SolutionDir)/=Library/fdi.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/=Library/dbghelp.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/vorbisfile_static.lib;$(SolutionDir)/=Library/ogg_static.lib;$(SolutionDir)/=Library/lzo2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;Version.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;imm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/LauncherPatchD.exe</OutputFile>
@@ -177,7 +177,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;Version.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;imm32.lib;$(SolutionDir)/=Library/fdi.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/=Library/dbghelp.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/vorbisfile_static.lib;$(SolutionDir)/=Library/ogg_static.lib;$(SolutionDir)/=Library/lzo2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;Version.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;imm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/LauncherPatch.exe</OutputFile>
@@ -211,7 +211,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;Version.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;imm32.lib;$(SolutionDir)/=Library/fdi.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/=Library/dbghelp.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/vorbisfile_static.lib;$(SolutionDir)/=Library/ogg_static.lib;$(SolutionDir)/=Library/lzo2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;Version.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;imm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/LauncherPatchR.exe</OutputFile>
@@ -245,7 +245,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;Version.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;imm32.lib;$(SolutionDir)/=Library/fdi.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/=Library/dbghelp.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/vorbisfile_static.lib;$(SolutionDir)/=Library/ogg_static.lib;$(SolutionDir)/=Library/lzo2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;Version.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;imm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/LauncherPatch.exe</OutputFile>
@@ -279,7 +279,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;Version.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;imm32.lib;$(SolutionDir)/=Library/fdi.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/=Library/dbghelp.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/vorbisfile_static.lib;$(SolutionDir)/=Library/ogg_static.lib;$(SolutionDir)/=Library/lzo2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;Version.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;imm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/LauncherPatchR.exe</OutputFile>
@@ -313,7 +313,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;Version.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;imm32.lib;$(SolutionDir)/=Library/fdi.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/=Library/dbghelp.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/vorbisfile_static.lib;$(SolutionDir)/=Library/ogg_static.lib;$(SolutionDir)/=Library/lzo2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;Version.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;imm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/LauncherPatch.exe</OutputFile>
@@ -347,7 +347,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;Version.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;imm32.lib;$(SolutionDir)/=Library/fdi.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/=Library/dbghelp.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/vorbisfile_static.lib;$(SolutionDir)/=Library/ogg_static.lib;$(SolutionDir)/=Library/lzo2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;Version.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;imm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/LauncherPatchR.exe</OutputFile>
@@ -381,7 +381,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;Version.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;imm32.lib;$(SolutionDir)/=Library/fdi.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/=Library/dbghelp.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/vorbisfile_static.lib;$(SolutionDir)/=Library/ogg_static.lib;$(SolutionDir)/=Library/lzo2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;Version.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;imm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/LauncherPatchR.exe</OutputFile>
@@ -415,7 +415,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;Version.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;imm32.lib;$(SolutionDir)/=Library/fdi.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/=Library/dbghelp.lib;$(SolutionDir)/=Library/ggsrvlib.lib;$(SolutionDir)/=Library/vorbisfile_static.lib;$(SolutionDir)/=Library/ogg_static.lib;$(SolutionDir)/=Library/lzo2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;Version.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;imm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/LauncherPatch.exe</OutputFile>
@@ -484,6 +484,7 @@
     </ProjectReference>
     <ProjectReference Include="..\MfcExLib\MfcExLib.vcxproj">
       <Project>{D94E8461-50B9-46AC-A08F-EFA6811CE2F5}</Project>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <ProjectReference Include="..\EngineSoundLib\EngineSoundLib.vcxproj">
       <Project>{DD642AD2-FD38-4171-9432-3EFE08EC7CAD}</Project>

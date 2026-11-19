@@ -223,6 +223,9 @@ Global
 		ReleaseD8.0|Win32 = ReleaseD8.0|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1EFC0DF1-5A35-41BD-8C99-6072B6384EA7}.Release|Win32.Build.0 = Release|Win32
+		{AD074562-90AA-4AD3-B363-3A237D748620}.Release|Win32.Build.0 = Release|Win32
+		{D94E8461-50B9-46AC-A08F-EFA6811CE2F5}.Release|Win32.Build.0 = Release|Win32
 		{D94E8461-50B9-46AC-A08F-EFA6811CE2F5}.Debug|Win32.ActiveCfg = Debug|Win32
 		{D94E8461-50B9-46AC-A08F-EFA6811CE2F5}.Release_China|Win32.ActiveCfg = Release_China|Win32
 		{D94E8461-50B9-46AC-A08F-EFA6811CE2F5}.Release_Global|Win32.ActiveCfg = Release_Global|Win32

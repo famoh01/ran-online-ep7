@@ -124,7 +124,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;d3dx8dt.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/SQL/Lib/ntwdblib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/SQL/Lib/ntwdblib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/server/BoardServer/BoardServerD.exe</OutputFile>
@@ -146,7 +146,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;d3dx8dt.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/SQL/Lib/ntwdblib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/SQL/Lib/ntwdblib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/server/BoardServer/BoardServer.exe</OutputFile>
@@ -169,7 +169,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;d3dx8dt.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/SQL/Lib/ntwdblib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/SQL/Lib/ntwdblib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/server/BoardServer/BoardServer.exe</OutputFile>
@@ -195,7 +195,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;d3dx8dt.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/SQL/Lib/ntwdblib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/SQL/Lib/ntwdblib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/server/BoardServer/BoardServerD.exe</OutputFile>
@@ -220,7 +220,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;d3dx8dt.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/SQL/Lib/ntwdblib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/SQL/Lib/ntwdblib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/server/BoardServer/BoardServerD.exe</OutputFile>
@@ -242,7 +242,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;d3dx8dt.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/SQL/Lib/ntwdblib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/SQL/Lib/ntwdblib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/server/BoardServer/BoardServer.exe</OutputFile>
@@ -265,7 +265,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;d3dx8dt.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/SQL/Lib/ntwdblib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/SQL/Lib/ntwdblib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/server/BoardServer/BoardServer.exe</OutputFile>
@@ -288,7 +288,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;d3dx8dt.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/=Library/strsafe.lib;$(SolutionDir)/SQL/Lib/ntwdblib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/SQL/Lib/ntwdblib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/server/BoardServer/BoardServer.exe</OutputFile>

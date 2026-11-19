@@ -43,7 +43,6 @@ CL_ATTRS = {
     "Optimization": ("Optimization", OPT),
     "WarningLevel": ("WarningLevel", WARNLEVEL),
     "UsePrecompiledHeader": ("PrecompiledHeader", PCH),
-    "PrecompiledHeaderFile": ("PrecompiledHeaderFile", None),
     "PrecompiledHeaderThrough": ("PrecompiledHeaderFile", None),
     "DebugInformationFormat": ("DebugInformationFormat", DBGFMT),
     "ExceptionHandling": ("ExceptionHandling", EXC),
@@ -132,6 +131,11 @@ EQLIB_NAMES = {
 
 # bundled DirectX Dec 2005 SDK import libs (the versions this code was built
 # against); bare references get rewritten to $(SolutionDir)=DX_Lib\x86\...
+# libs that must not be passed to the linker at all: d3dx8dt.lib is not
+# shipped; strsafe.lib (old import lib) conflicts with modern SDK strsafe
+# (source-level compat handled via ServerManager/strsafe.h shim).
+DROP_LIB_NAMES = {"d3dx8dt.lib", "strsafe.lib"}
+
 DXLIB_NAMES = {
     "d3d8.lib", "d3d9.lib", "d3dx9.lib", "d3dx9d.lib", "d3dxof.lib",
     "ddraw.lib", "dinput.lib", "dinput8.lib", "dplayx.lib", "dsetup.lib",
@@ -147,9 +151,12 @@ def fix_eqlib_deps(val):
             continue
         base = tt.replace("/", "\\").split("\\")[-1].lower()
         if "\\" not in tt and "$" not in tt:
-            if base in EQLIB_NAMES:
-                out.append("$(SolutionDir)=Library\\" + tt)
+            if base in DROP_LIB_NAMES:
                 continue
+            if base in EQLIB_NAMES:
+                continue
+            if False:
+                pass
             if base in DXLIB_NAMES:
                 out.append("$(SolutionDir)=DX_Lib\\x86\\" + tt)
                 continue
