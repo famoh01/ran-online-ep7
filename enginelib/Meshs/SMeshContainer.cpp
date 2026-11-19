@@ -5,8 +5,8 @@
 #include "COLLISION.h"
 #include "SerialFile.h"
 #include "../DxCommon/TextureManager.h"
-#include "SMeshContainer.h"
 #include "DxSkinPieceContainer.h"
+#include "SMeshContainer.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

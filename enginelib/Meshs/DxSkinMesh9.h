@@ -2,7 +2,8 @@
 
 #include <d3d9.h>
 #include <d3dx9.h>
-// SMeshContainer.h is included by DxSkinMesh.h before this header
+#include "SMeshContainer.h"
+// forward decls below let DxSkinMesh9.h work even if SMeshContainer.h was already included (e.g. via DxSkinMesh.h)
 struct SMeshContainer;
 struct SVERTEXINFLU;
 

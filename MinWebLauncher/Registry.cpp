@@ -508,15 +508,7 @@ CRegStdString::operator LPCTSTR()
 		return read().c_str();
 }
 
-CRegStdString::operator stdstring()
-{
-	if ((m_read)&&(!m_force))
-		return m_value;
-	else
-	{
-		return read();
-	}
-}
+// operator stdstring() removed: ambiguous on modern MSVC
 
 CRegStdString& CRegStdString::operator =(stdstring s)
 {
