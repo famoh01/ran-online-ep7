@@ -51,7 +51,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>../=Library/dbghelp.lib dinput8.lib dxerr8.lib d3dx8dt.lib d3d8.lib d3dxof.lib dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../=Library/dbghelp.lib;dinput8.lib;dxerr8.lib;d3dx8dt.lib;d3d8.lib;d3dxof.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(SolutionDir)/_Bin/GLogicTextD.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -81,7 +81,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>../=Library/dbghelp.lib dinput8.lib dxerr8.lib d3dx8dt.lib d3d8.lib d3dxof.lib dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../=Library/dbghelp.lib;dinput8.lib;dxerr8.lib;d3dx8dt.lib;d3d8.lib;d3dxof.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(SolutionDir)/_Bin/GLogicText.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>

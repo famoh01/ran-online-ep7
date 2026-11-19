@@ -126,7 +126,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>odbc32.lib odbccp32.lib comctl32.lib "$(SolutionDir)/=DX_Lib/x86/d3dxof.lib" "$(SolutionDir)/=DX_Lib/x86/dxguid.lib" "$(SolutionDir)/=DX_Lib/x86/d3d9.lib" "$(SolutionDir)/=DX_Lib/x86/d3dx9.lib" "$(SolutionDir)/=MAX8.0SDK/lib/core.lib" "$(SolutionDir)/=MAX8.0SDK/lib/geom.lib" "$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib" "$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib" "$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib";%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>D:\My Documents\smtm\=max6.0sdk\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\My;Documents\smtm\=max6.0sdk\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OutputFile>..\_DLib\XSkinExpD.dle</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -160,7 +160,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>odbc32.lib odbccp32.lib comctl32.lib "$(SolutionDir)/=DX_Lib/x86/d3dxof.lib" "$(SolutionDir)/=DX_Lib/x86/dxguid.lib" "$(SolutionDir)/=DX_Lib/x86/d3d9.lib" "$(SolutionDir)/=DX_Lib/x86/d3dx9.lib" "$(SolutionDir)/=MAX8.0SDK/lib/core.lib" "$(SolutionDir)/=MAX8.0SDK/lib/geom.lib" "$(SolutionDir)/=MAX8.0SDK/lib/gfx.lib" "$(SolutionDir)/=MAX8.0SDK/lib/mesh.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxutil.lib" "$(SolutionDir)/=MAX8.0SDK/lib/maxscrpt.lib" "$(SolutionDir)/=MAX8.0SDK/lib/paramblk2.lib";%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>D:\My Documents\smtm\=max6.0sdk\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\My;Documents\smtm\=max6.0sdk\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OutputFile>..\_RLib\XSkinExp6.dle</OutputFile>
       <ProgramDatabaseFile>.\../_RBuildData/XSkinExp/XSkinExp.pdb</ProgramDatabaseFile>

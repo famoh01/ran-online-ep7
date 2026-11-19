@@ -3,7 +3,7 @@
 
 #include "StdAfx.h"
 #include <Urlmon.h>
-#include <afxisapi.h>
+// #include <afxisapi.h>  // removed: header gone from modern MFC; no ISAPI symbols used
 
 // Must Install Platform SDK
 // Visit and install http://www.microsoft.com/msdownload/platformsdk/sdkupdate/
@@ -43,7 +43,7 @@ int	CHttpPatch::SetBaseURL(CString strBaseURL)
 {
 	if (!::AfxParseURL(strBaseURL, m_dwServerType, m_strServer, m_strObject, m_nPort))
 	{
-		// Àß¸øµÈ URL
+		// ìž˜ëª»ëœ URL
 		StringCchCopy(m_szError, ERROR_MSG_LENGTH, _T("AfxParserURL ERROR"));
 		return NET_ERROR;
 	}
@@ -153,7 +153,7 @@ int	CHttpPatch::GetFile2(CString szURL, CString strLocalFile)
 		UINT nRead = remotefile->Read(szBuff, RECEIVE_BUF_LENGTH);
 		while (nRead > 0)
 		{
-			//	°­Á¦ Á¾·á
+			//	ê°•ì œ ì¢…ë£Œ
 			if ( m_pbForceTerminate && *m_pbForceTerminate )
 			{
 				::CloseHandle(hFile);

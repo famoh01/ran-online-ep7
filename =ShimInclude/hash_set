@@ -1,9 +1,9 @@
 #pragma once
 /* Shim: VS2003-era <hash_set> removed from modern MSVC. */
-#include <unordered_set>
+#include <set>
 namespace stdext {
 template <class K, class... Rest>
-using hash_set = std::unordered_set<K>;
+using hash_set = std::set<K>;
 template <class K, class... Rest>
-using hash_multiset = std::unordered_multiset<K>;
+using hash_multiset = std::multiset<K>;
 }

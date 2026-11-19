@@ -53,7 +53,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dinput8.lib dxerr8.lib d3dx8dt.lib d3d8.lib d3dxof.lib dxguid.lib imm32.lib ../=Library/dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dinput8.lib;dxerr8.lib;d3dx8dt.lib;d3d8.lib;d3dxof.lib;dxguid.lib;imm32.lib;../=Library/dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(SolutionDir)/_Bin/REditorD.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -86,7 +86,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dinput8.lib dxerr8.lib d3dx8dt.lib d3d8.lib d3dxof.lib dxguid.lib imm32.lib ../=Library/dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dinput8.lib;dxerr8.lib;d3dx8dt.lib;d3d8.lib;d3dxof.lib;dxguid.lib;imm32.lib;../=Library/dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(SolutionDir)/_Bin/REditor.exe</OutputFile>
       <ProgramDatabaseFile>$(SolutionDir)/_DBuildData/SuperPad/$(ProjectName).pdb</ProgramDatabaseFile>

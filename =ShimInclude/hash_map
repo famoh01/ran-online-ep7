@@ -1,13 +1,15 @@
 #pragma once
 /* Shim: VS2003-era <hash_map> removed from modern MSVC.
-   Maps stdext::hash_map/hash_multimap onto std::unordered_*. Extra legacy
-   template args (hash_compare, allocator) are accepted and ignored. */
-#include <unordered_map>
+   Maps stdext::hash_map/hash_multimap onto ordered std::map/multimap
+   (unordered_* lacks reverse_iterator which the legacy code uses).
+   Extra legacy template args (hash_compare, allocator) are accepted
+   and ignored. */
+#include <map>
 namespace stdext {
 template <class K, class V, class... Rest>
-using hash_map = std::unordered_map<K, V>;
+using hash_map = std::map<K, V>;
 template <class K, class V, class... Rest>
-using hash_multimap = std::unordered_multimap<K, V>;
+using hash_multimap = std::multimap<K, V>;
 template <class K>
 struct hash_compare {
     size_t operator()(const K& k) const { return std::hash<K>()(k); }

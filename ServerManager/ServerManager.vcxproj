@@ -328,7 +328,7 @@
     <Link>
       <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=Library/ggsrvlib.lib";%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
-      <IgnoreSpecificDefaultLibraries>mfc71.lib, mfcs71.lib, msvcrt.lib</IgnoreSpecificDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>mfc71.lib,;mfcs71.lib,;msvcrt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/ServerManagerD.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
@@ -643,7 +643,7 @@
     <Link>
       <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=Library/ggsrvlib.lib";%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
-      <IgnoreSpecificDefaultLibraries>mfc71.lib, mfcs71.lib, msvcrt.lib</IgnoreSpecificDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>mfc71.lib,;mfcs71.lib,;msvcrt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/ServerManagerD.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
@@ -671,7 +671,7 @@
     <Link>
       <AdditionalDependencies>dsound.lib dinput8.lib dxerr9.lib d3dx9.lib d3d9.lib d3dxof.lib dxguid.lib "$(SolutionDir)/=Library/lzo2.lib" "$(SolutionDir)/=Library/ggsrvlib.lib";%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
-      <IgnoreSpecificDefaultLibraries>mfc71.lib, mfcs71.lib, msvcrt.lib</IgnoreSpecificDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>mfc71.lib,;mfcs71.lib,;msvcrt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/ServerManagerD.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
