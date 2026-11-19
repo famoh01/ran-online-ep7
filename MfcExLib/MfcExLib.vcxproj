@@ -129,7 +129,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;"$(SolutionDir)=Include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -149,7 +149,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;"$(SolutionDir)=Include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -175,7 +175,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;"$(SolutionDir)=Include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -197,7 +197,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Korea|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;"$(SolutionDir)=Include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;KR_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -223,7 +223,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Korea|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;"$(SolutionDir)=Include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;KR_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -245,7 +245,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_China|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;"$(SolutionDir)=Include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;CH_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
@@ -271,7 +271,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_China|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;"$(SolutionDir)=Include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;CH_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -293,7 +293,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseD_Global|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;"$(SolutionDir)=Include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;GS_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
@@ -315,7 +315,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Global|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;"$(SolutionDir)=Include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../enginelib;../enginelib/Common;../enginelib/dxframe;../enginelib/DxCommon9;../enginelib/DxCommon;"../enginelib/g-logic";"../RanClientLib/G-Logic";../netclientLib;../enginelib/DxOctree;../enginelib/Meshs;../enginelib/DxSound;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;GS_PARAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
