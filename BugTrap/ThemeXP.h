@@ -30,7 +30,11 @@
 #pragma once
 
 #include <uxtheme.h>
-#include <tmschema.h>
+#if defined(_MSC_VER) && _MSC_VER >= 1900
+#  include <vssym32.h>
+#else
+#  include <tmschema.h>
+#endif
 
 #pragma warning(push)
 #pragma warning(disable:4100) // unreferenced formal parameter

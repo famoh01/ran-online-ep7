@@ -14,6 +14,10 @@
 
 #pragma once
 
+#if defined(_MSC_VER) && _MSC_VER >= 1900
+/* modern MSVC: placement new/delete come from <new> */
+#  include <new>
+#else
 #ifndef _NEW_
 
 /**
@@ -39,3 +43,5 @@ inline void operator delete(void* ptr1, void* ptr2)
 }
 
 #endif
+
+#endif /* _MSC_VER >= 1900 */

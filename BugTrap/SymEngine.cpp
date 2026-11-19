@@ -385,7 +385,7 @@ BOOL CSymEngine::CScreenShot::WriteScreenShot(PCTSTR pszFileName)
 
 BOOL CSymEngine::WriteDxDialog(PCTSTR pszFileName)
 {
-	STARTUPINFO si;
+	STARTUPINFOA si;
 	PROCESS_INFORMATION pi;
 
 	ZeroMemory( &si, sizeof(si) );
@@ -393,10 +393,10 @@ BOOL CSymEngine::WriteDxDialog(PCTSTR pszFileName)
 	ZeroMemory( &pi, sizeof(pi) );
 
 	char szCmdLine[2048]={0};
-	wsprintf(szCmdLine, "dxdiag.exe /t %s", pszFileName );
+	wsprintfA(szCmdLine, "dxdiag.exe /t %s", pszFileName );
 
 	// Start the child process. 
-	if( !CreateProcess( NULL, // No module name (use command line). 
+	if( !CreateProcessA( NULL, // No module name (use command line). 
 		szCmdLine,		  // Command line. 
 		NULL,             // Process handle not inheritable. 
 		NULL,             // Thread handle not inheritable. 
@@ -409,7 +409,7 @@ BOOL CSymEngine::WriteDxDialog(PCTSTR pszFileName)
 		) 
 	{
 		//ErrorExit( "CreateProcess failed." );
-		// UPX ½ÇÇà ½ÇÆÐ
+		// UPX ì‹¤í–‰ ì‹¤íŒ¨
 		return FALSE;
 	}
 
