@@ -66,7 +66,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;$(SolutionDir)=DX_Lib\x86\d3dx9d.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;../=Library/dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;$(SolutionDir)=DX_Lib\x86\d3dx9d.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\lzo2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(SolutionDir)/_Bin/SSMD.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -96,7 +96,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;$(SolutionDir)=DX_Lib\x86\d3dx9d.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;../=Library/dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;$(SolutionDir)=DX_Lib\x86\d3dx9d.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\lzo2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(SolutionDir)/_Bin/SSM.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -128,7 +128,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;$(SolutionDir)=DX_Lib\x86\d3dx9d.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;../=Library/dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;$(SolutionDir)=DX_Lib\x86\d3dx9d.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\lzo2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(SolutionDir)/_Bin/SSMR.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -185,7 +185,6 @@
     </ProjectReference>
     <ProjectReference Include="..\MfcExLib\MfcExLib.vcxproj">
       <Project>{D94E8461-50B9-46AC-A08F-EFA6811CE2F5}</Project>
-      <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <ProjectReference Include="..\BugTrap\BugTrap.vcxproj">
       <Project>{E8CF1ADA-264A-4127-86C2-FD7057D3792C}</Project>

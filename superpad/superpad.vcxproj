@@ -53,7 +53,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;imm32.lib;../=Library/dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;imm32.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\lzo2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(SolutionDir)/_Bin/REditorD.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -86,7 +86,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;imm32.lib;../=Library/dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr8.lib;$(SolutionDir)=DX_Lib\x86\d3d8.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;imm32.lib;../=Library/dbghelp.lib;$(SolutionDir)=Library\lzo2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(SolutionDir)/_Bin/REditor.exe</OutputFile>
       <ProgramDatabaseFile>$(SolutionDir)/_DBuildData/SuperPad/$(ProjectName).pdb</ProgramDatabaseFile>

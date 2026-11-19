@@ -69,9 +69,9 @@ PVOID CMapProcessor::GetPreferredBaseAddress() const
 {
 	if (m_ptrPreferredBaseAddress == NULL && ! m_strMapText.empty())
 	{
-		boost::regex expression("Preferred load address is ([[:xdigit:]]+)");
-		boost::match_results<std::string::const_iterator> what;
-		if (boost::regex_search(m_strMapText, what, expression))
+		std::regex expression("Preferred load address is ([[:xdigit:]]+)");
+		std::smatch what;
+		if (std::regex_search(m_strMapText, what, expression))
 		{
 			std::string strPreferredBaseAddress(what[1]);
 			m_ptrPreferredBaseAddress = (PVOID)_strtoui64(strPreferredBaseAddress.c_str(), NULL, 16);
@@ -88,16 +88,16 @@ boost::shared_ptr< std::list<CMapFnInfo> > CMapProcessor::GetPublicFunctions() c
 	if (! m_plstPubFns && ! m_strMapText.empty())
 	{
 		m_plstPubFns.reset(new std::list<CMapFnInfo>);
-		boost::match_results<std::string::const_iterator> what;
+		std::smatch what;
 		std::string::const_iterator end = m_strMapText.end();
 		/* 0001:00019df3 Function 1001adf3 f Library:File.obj */
-		boost::regex expressionEntry("\\A *([[:xdigit:]]+):([[:xdigit:]]+) +(\\S+) +([[:xdigit:]]+)(?: f)?(?: i)? +(?:(\\S+):)?(\\S+)\r\n");
+		std::regex expressionEntry("\\A *([[:xdigit:]]+):([[:xdigit:]]+) +(\\S+) +([[:xdigit:]]+)(?: f)?(?: i)? +(?:(\\S+):)?(\\S+)\r\n");
 
-		boost::regex expressionGlobals("Address +Publics by Value +Rva\\+Base +Lib:Object\r\n\r\n");
-		if (boost::regex_search(m_strMapText, what, expressionGlobals))
+		std::regex expressionGlobals("Address +Publics by Value +Rva\\+Base +Lib:Object\r\n\r\n");
+		if (std::regex_search(m_strMapText, what, expressionGlobals))
 		{
 			std::string::const_iterator start = what[0].second;
-			while (boost::regex_search(start, end, what, expressionEntry))
+			while (std::regex_search(start, end, what, expressionEntry))
 			{
 				UINT uSection = strtoul(what[1].str().c_str(), NULL, 16);
 				PVOID ptrOffset = (PVOID)_strtoui64(what[2].str().c_str(), NULL, 16);
@@ -112,11 +112,11 @@ boost::shared_ptr< std::list<CMapFnInfo> > CMapProcessor::GetPublicFunctions() c
 			}
 		}
 
-		boost::regex expressionStatic("Static symbols\r\n\r\n");
-		if (boost::regex_search(m_strMapText, what, expressionStatic))
+		std::regex expressionStatic("Static symbols\r\n\r\n");
+		if (std::regex_search(m_strMapText, what, expressionStatic))
 		{
 			std::string::const_iterator start = what[0].second;
-			while (boost::regex_search(start, end, what, expressionEntry))
+			while (std::regex_search(start, end, what, expressionEntry))
 			{
 				UINT uSection = strtoul(what[1].str().c_str(), NULL, 16);
 				PVOID ptrOffset = (PVOID)_strtoui64(what[2].str().c_str(), NULL, 16);
@@ -173,20 +173,20 @@ boost::shared_ptr< std::list<CMapFileData> > CMapProcessor::GetFilesList() const
 	if (! m_plstFilesList && ! m_strMapText.empty())
 	{
 		m_plstFilesList.reset(new std::list<CMapFileData>);
-		boost::match_results<std::string::const_iterator> what;
+		std::smatch what;
 		std::string::const_iterator start = m_strMapText.begin();
 		std::string::const_iterator end = m_strMapText.end();
 		/* 140 0001:00010788   141 0001:0001078b   142 0001:00010798   143 0001:0001079b */
-		boost::regex expressionLine("\\A *(\\d+) ([[:xdigit:]]+):([[:xdigit:]]+)\\s+");
+		std::regex expressionLine("\\A *(\\d+) ([[:xdigit:]]+):([[:xdigit:]]+)\\s+");
 		/* Line numbers for C:\Path1\Library.lib(D:\Path2\File.c) segment .text */
-		boost::regex expressionFile("Line numbers for ([^\\(]+)\\(([^\\)]+)\\) segment (\\S+)\r\n\r\n");
-		while (boost::regex_search(start, end, what, expressionFile))
+		std::regex expressionFile("Line numbers for ([^\\(]+)\\(([^\\)]+)\\) segment (\\S+)\r\n\r\n");
+		while (std::regex_search(start, end, what, expressionFile))
 		{
 			CMapFileInfo fileInfo(what[1].str(), what[2].str(), what[3].str());
 			m_plstFilesList->push_back(fileInfo);
 			std::list<CMapLineInfo>& rLinesInfo = m_plstFilesList->back().GetLines();
 			start = what[0].second;
-			while (boost::regex_search(start, end, what, expressionLine))
+			while (std::regex_search(start, end, what, expressionLine))
 			{
 				UINT uLineNumber = atol(what[1].str().c_str());
 				UINT uSection = strtoul(what[2].str().c_str(), NULL, 16);

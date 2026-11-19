@@ -66,7 +66,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;$(SolutionDir)=Library\lzo2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>../_dlib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
@@ -99,7 +99,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;$(SolutionDir)=Library\lzo2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
       <OutputFile>$(SolutionDir)/_Bin/server/FieldServer/FieldServer.exe</OutputFile>
@@ -131,7 +131,7 @@
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)=DX_Lib\x86\dsound.lib;$(SolutionDir)=DX_Lib\x86\dinput8.lib;$(SolutionDir)=DX_Lib\x86\dxerr9.lib;$(SolutionDir)=DX_Lib\x86\d3dx9.lib;$(SolutionDir)=DX_Lib\x86\d3d9.lib;$(SolutionDir)=DX_Lib\x86\d3dxof.lib;$(SolutionDir)=DX_Lib\x86\dxguid.lib;winmm.lib;imm32.lib;$(SolutionDir)/=TbbLib/lib/tbb.lib;$(SolutionDir)=Library\lzo2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>D:\smtm\=TbbLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libci.lib;libc.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
