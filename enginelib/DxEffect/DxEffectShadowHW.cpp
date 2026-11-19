@@ -19,7 +19,7 @@ static char THIS_FILE[] = __FILE__;
 
 const DWORD					DxEffectShadowHW::VERTEX::FVF			= D3DFVF_XYZ|D3DFVF_TEX1;
 const float					DxEffectShadowHW::m_fRange				= 5.f;
-LPDIRECT3DVERTEXBUFFER8		DxEffectShadowHW::m_pShadowVB			= NULL;
+LPDIRECT3DVERTEXBUFFER9		DxEffectShadowHW::m_pShadowVB			= NULL;
 DWORD						DxEffectShadowHW::m_dwSavedStateBlock	= NULL;
 DWORD						DxEffectShadowHW::m_dwEffectStateBlock	= NULL;
 
@@ -30,7 +30,7 @@ DWORD						DxEffectShadowHW::m_dwEffectStateBlock	= NULL;
 
 DxEffectShadowHW::DxEffectShadowHW() :
 	m_fDistanceRate(4.0f),
-	m_fHeight(0.0f),			// ±×¸²ÀÚ°¡ ¹Ù´Ú¿¡ µå¸®¿ï °÷ÀÇ ¹Ù´Ú Æò±Õ ³ôÀÌ
+	m_fHeight(0.0f),			// ï¿½×¸ï¿½ï¿½Ú°ï¿½ ï¿½Ù´Ú¿ï¿½ ï¿½å¸®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ù´ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	m_vShadowPos(D3DXVECTOR3(0.f,0.f,0.f))
 {
 }

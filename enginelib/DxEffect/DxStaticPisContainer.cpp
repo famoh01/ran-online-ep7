@@ -50,19 +50,19 @@ void DxStaticPis::CleanUp()
 	m_szFrameName = "";
 }
 
-HRESULT DxStaticPis::NewFrameMesh ( LPDIRECT3DDEVICE8 pd3dDevice, const char* szName )
+HRESULT DxStaticPis::NewFrameMesh ( LPDIRECT3DDEVICE9 pd3dDevice, const char* szName )
 {
 	HRESULT hr = S_OK;
 
 	SAFE_DELETE ( m_pFrameMesh );
 	m_pFrameMesh = new DxFrameMesh;
 
-	//	Note : ÀÐÀ» xÆÄÀÏ°ú ¹öÅØ½º ±¸Á¶ Á¤º¸ ( FVF ) ¸¦ ÁØ´Ù.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ xï¿½ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ( FVF ) ï¿½ï¿½ ï¿½Ø´ï¿½.
 	m_szFrameName = szName;
 	m_pFrameMesh->SetFile ( szName );
 	m_pFrameMesh->SetFVF ( D3DFVF_XYZ|D3DFVF_NORMAL|D3DFVF_TEX1 );
 
-	//	Note : ÃÊ±âÈ­ ÇÑ´Ù.
+	//	Note : ï¿½Ê±ï¿½È­ ï¿½Ñ´ï¿½.
 	hr = m_pFrameMesh->Create ( pd3dDevice );
 	if ( FAILED(hr) )	return hr;
 
@@ -74,17 +74,17 @@ HRESULT DxStaticPis::NewFrameMesh ( LPDIRECT3DDEVICE8 pd3dDevice, const char* sz
 	return S_OK;
 }
 
-void DxStaticPis::MakeStaticMesh ( LPDIRECT3DDEVICE8 pd3dDevice )
+void DxStaticPis::MakeStaticMesh ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	if ( !m_pFrameMesh )	return;
 
-	// Note : AABB_Octree »ý¼º
+	// Note : AABB_Octree ï¿½ï¿½ï¿½ï¿½
 	SAFE_DELETE ( m_pStaticMesh );
 	m_pStaticMesh = new DxStaticMesh;
 	m_pStaticMesh->MakeAABBOCTree ( pd3dDevice, m_pFrameMesh );
 }
 
-void DxStaticPis::Render ( const LPDIRECT3DDEVICE8 pd3dDevice, const CLIPVOLUME &_sCV, const D3DXMATRIX& matWorld )
+void DxStaticPis::Render ( const LPDIRECT3DDEVICE9 pd3dDevice, const CLIPVOLUME &_sCV, const D3DXMATRIX& matWorld )
 {
 	if ( !m_pStaticMesh )					return;
 
@@ -101,7 +101,7 @@ void DxStaticPis::Render ( const LPDIRECT3DDEVICE8 pd3dDevice, const CLIPVOLUME 
 	}
 }
 
-void DxStaticPis::Render ( const LPDIRECT3DDEVICE8 pd3dDevice, const CLIPVOLUME &_sCV, const D3DXMATRIX& matWorld, const char* szName )
+void DxStaticPis::Render ( const LPDIRECT3DDEVICE9 pd3dDevice, const CLIPVOLUME &_sCV, const D3DXMATRIX& matWorld, const char* szName )
 {
 	if ( !m_pStaticMesh )				return;
 
@@ -178,9 +178,9 @@ void DxStaticPis::Save ( char* szName )
 	if ( m_pStaticMesh )	m_pStaticMesh->Save( SFile );
 }
 
-HRESULT DxStaticPis::Load ( LPDIRECT3DDEVICE8 pd3dDevice, const char* szName, BOOL bEdit )
+HRESULT DxStaticPis::Load ( LPDIRECT3DDEVICE9 pd3dDevice, const char* szName, BOOL bEdit )
 {
-	CleanUp();		// ÃÊ±âÈ­
+	CleanUp();		// ï¿½Ê±ï¿½È­
 
 	if ( !strcmp(szName,"") )	return E_FAIL;
 	
@@ -210,7 +210,7 @@ HRESULT DxStaticPis::Load ( LPDIRECT3DDEVICE8 pd3dDevice, const char* szName, BO
 		SFile.SetOffSet( dwCur+dwBufferSize );
 	}
 
-	// Note : m_pStaticMesh ³»ºÎ¿¡¼­ Version Ã¼Å©°¡ ÀÏ¾î³­´Ù.
+	// Note : m_pStaticMesh ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ Version Ã¼Å©ï¿½ï¿½ ï¿½Ï¾î³­ï¿½ï¿½.
 	BOOL bExist;
 	SFile >> bExist;
 	if ( bExist )
@@ -220,7 +220,7 @@ HRESULT DxStaticPis::Load ( LPDIRECT3DDEVICE8 pd3dDevice, const char* szName, BO
 	}
 
 
-	// EDIT ½Ã¿¡¸¸ FrameMesh¸¦ ·ÎµåÇÑ´Ù.
+	// EDIT ï¿½Ã¿ï¿½ï¿½ï¿½ FrameMeshï¿½ï¿½ ï¿½Îµï¿½ï¿½Ñ´ï¿½.
 	if ( bEdit )	NewFrameMesh ( pd3dDevice, m_szFrameName.c_str() );
 
 	return S_OK;
@@ -252,7 +252,7 @@ DxStaticPis* DxStaticPisContainer::FindPiece ( const char *szFile )
 	return NULL;
 }
 
-DxStaticPis* DxStaticPisContainer::LoadPiece ( LPDIRECT3DDEVICE8 pd3dDevice, const char *szFile, const char *szDir )
+DxStaticPis* DxStaticPisContainer::LoadPiece ( LPDIRECT3DDEVICE9 pd3dDevice, const char *szFile, const char *szDir )
 {
 	HRESULT hr=S_OK;
 
@@ -278,7 +278,7 @@ DxStaticPis* DxStaticPisContainer::LoadPiece ( LPDIRECT3DDEVICE8 pd3dDevice, con
 
 	pNewPiece->m_nRefCount++;
 
-	//	Note : ¸®½ºÆ®¿¡ µî·Ï.
+	//	Note : ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½.
 	//
 	m_mapStaticPis.insert ( std::make_pair(szFile,pNewPiece) );
 

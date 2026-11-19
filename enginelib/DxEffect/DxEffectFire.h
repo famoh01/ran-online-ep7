@@ -17,7 +17,7 @@ struct FIRE_PROPERTY
 {
 	DWORD		m_dwNumFaces;
 
-	float		m_fPosX;		// ºÒ ³ªÅ¸³¾ À§Ä¡
+	float		m_fPosX;		// ï¿½ï¿½ ï¿½ï¿½Å¸ï¿½ï¿½ ï¿½ï¿½Ä¡
 	float		m_fPosY;
 	float		m_fPosZ;
 
@@ -25,9 +25,9 @@ struct FIRE_PROPERTY
 	int			m_iRow;
 	float		m_fAniTime;
 
-	float		m_fUpLong;		// À§ºÎºÐ ±æÀÌ
-	float		m_fDownLong;	// ¾Æ·¡ ºÎºÐ ±æÀÌ
-	float		m_fHeight;		// ³ôÀÌ
+	float		m_fUpLong;		// ï¿½ï¿½ï¿½Îºï¿½ ï¿½ï¿½ï¿½ï¿½
+	float		m_fDownLong;	// ï¿½Æ·ï¿½ ï¿½Îºï¿½ ï¿½ï¿½ï¿½ï¿½
+	float		m_fHeight;		// ï¿½ï¿½ï¿½ï¿½
 	
 	char		m_szTexture[MAX_PATH];
 };
@@ -35,7 +35,7 @@ struct FIRE_PROPERTY
 
 class DxEffectFire : public DxEffectBase
 {
-	//	Note : ÀÌÆåÆ® Å¸ÀÔ Á¤ÀÇ.
+	//	Note : ï¿½ï¿½ï¿½ï¿½Æ® Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 public:
 	const static DWORD	TYPEID;
@@ -51,13 +51,13 @@ public:
 	virtual void GetProperty ( PBYTE &pProp, DWORD &dwSize, DWORD &dwVer );
 	virtual void SetProperty ( PBYTE &pProp, DWORD &dwSize, DWORD dwVer );
 	
-	//	Note : ½¦ÀÌ´õ.
+	//	Note : ï¿½ï¿½ï¿½Ì´ï¿½.
 	//
 protected:	
 	static DWORD			m_dwSavedStateBlock;
 	static DWORD			m_dwEffectStateBlock;
 
-	//	Note : ¼Ó¼º.
+	//	Note : ï¿½Ó¼ï¿½.
 	//
 protected:
 	union
@@ -99,10 +99,10 @@ protected:
 
 	int		m_iNowSprite;
 
-	LPDIRECT3DVERTEXBUFFER8		m_pVB;
-	LPDIRECT3DINDEXBUFFER8		m_pIB;
+	LPDIRECT3DVERTEXBUFFER9		m_pVB;
+	LPDIRECT3DINDEXBUFFER9		m_pIB;
 
-	LPDIRECT3DTEXTURE8	m_pddsTexture;
+	LPDIRECT3DTEXTURE9	m_pddsTexture;
 
 	struct FIREVERTEX
 	{
@@ -121,27 +121,27 @@ protected:
 	};
 
 public:
-	static HRESULT CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice );
-	static HRESULT ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice );
+	static HRESULT CreateDevice ( LPDIRECT3DDEVICE9 pd3dDevice );
+	static HRESULT ReleaseDevice ( LPDIRECT3DDEVICE9 pd3dDevice );
 
 protected:
-	HRESULT AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice );
 
 public:
-	HRESULT AdaptToDxFrame ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT AdaptToDxFrame ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice );
 
 	//	Note : 
 	//
 public:
-	virtual HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice );
+	virtual HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice );
 	virtual HRESULT DeleteDeviceObjects ();
 
 public:
 	HRESULT FrameMove ( float fTime, float fElapsedTime );	
-	HRESULT Render ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT Render ( DxFrame *pFrame, LPDIRECT3DDEVICE9 pd3dDevice );
 
 protected:
-	HRESULT CreateFireMesh ( LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMESH m_pLocalMesh );
+	HRESULT CreateFireMesh ( LPDIRECT3DDEVICE9 pd3dDevice, LPD3DXMESH m_pLocalMesh );
 
 public:
 	DxEffectFire();

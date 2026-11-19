@@ -5,29 +5,29 @@
 #include "TextureManager.h"
 #include "DxMethods.h"
 
-#define	USEIN			0x0001	// ¾È »ç¿ë
-#define	USEOUT			0x0002	// ¹Û »ç¿ë
-#define	USESTART		0x0010	// ½ÃÀÛ ¸ðÀÓ
-#define	USEEND			0x0020	// ³¡ ¸ðÀÓ
+#define	USEIN			0x0001	// ï¿½ï¿½ ï¿½ï¿½ï¿½
+#define	USEOUT			0x0002	// ï¿½ï¿½ ï¿½ï¿½ï¿½
+#define	USESTART		0x0010	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+#define	USEEND			0x0020	// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 struct EFFCHAR_PROPERTY_ELECTRICITY : public EFFCHAR_PROPERTY
 {
 	BOOL			m_bUse;
 	int				m_nBlend;
-	char			m_szTraceUP[STRACE_NSIZE];		//	ÃßÀû Æ÷ÀÎÅÍ ÀÎµ¦½º.
-	char			m_szTraceDOWN[STRACE_NSIZE];	//	ÃßÀû Æ÷ÀÎÅÍ ÀÎµ¦½º.
+	char			m_szTraceUP[STRACE_NSIZE];		//	ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½.
+	char			m_szTraceDOWN[STRACE_NSIZE];	//	ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½.
 
 	DWORD			m_dwFlag;
 
-	DWORD			m_dwLightning;	// Àü±â °¹¼ö
+	DWORD			m_dwLightning;	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
-	DWORD			m_dwDivision;	// ºÐÇÒ °¹¼ö.
+	DWORD			m_dwDivision;	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 
 	float			m_fWidth_In;
 	float			m_fWidth_Out;
 
-	DWORD			m_dwMaxLenth;	// Out ÈÖµµ·Ï
-	DWORD			m_dwVelocity;	// In ÈÖµµ·Ï
+	DWORD			m_dwMaxLenth;	// Out ï¿½Öµï¿½ï¿½ï¿½
+	DWORD			m_dwVelocity;	// In ï¿½Öµï¿½ï¿½ï¿½
 
 	float			m_fAlphaRate1;
 	float			m_fAlphaRate2;
@@ -47,15 +47,15 @@ struct EFFCHAR_PROPERTY_ELECTRICITY : public EFFCHAR_PROPERTY
 		m_bUse(TRUE),
 		m_nBlend(1),
 
-		m_dwDivision(7),		// ºÐÇÒ.!
+		m_dwDivision(7),		// ï¿½ï¿½ï¿½ï¿½.!
 
 		m_dwLightning(2),
 
 		m_fWidth_In(1.f),
 		m_fWidth_Out(0.2f),
 
-		m_dwMaxLenth(3),		// °¢°¢.. ÈÖµµ·Ï
-		m_dwVelocity(2),		// ÀüÃ¼.. ÈÖµµ·Ï
+		m_dwMaxLenth(3),		// ï¿½ï¿½ï¿½ï¿½.. ï¿½Öµï¿½ï¿½ï¿½
+		m_dwVelocity(2),		// ï¿½ï¿½Ã¼.. ï¿½Öµï¿½ï¿½ï¿½
 
 		m_fAlphaRate1(25.0f),
 		m_fAlphaRate2(75.0f),
@@ -100,20 +100,20 @@ protected:
 		{
 			BOOL			m_bUse;
 			int				m_nBlend;
-			char			m_szTraceUP[STRACE_NSIZE];		//	ÃßÀû Æ÷ÀÎÅÍ ÀÎµ¦½º.
-			char			m_szTraceDOWN[STRACE_NSIZE];	//	ÃßÀû Æ÷ÀÎÅÍ ÀÎµ¦½º.
+			char			m_szTraceUP[STRACE_NSIZE];		//	ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½.
+			char			m_szTraceDOWN[STRACE_NSIZE];	//	ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½.
 
 			DWORD			m_dwFlag;
 
-			DWORD			m_dwLightning;	// Àü±â °¹¼ö
+			DWORD			m_dwLightning;	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
-			DWORD			m_dwDivision;	// ºÐÇÒ °¹¼ö.
+			DWORD			m_dwDivision;	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 
 			float			m_fWidth_In;
 			float			m_fWidth_Out;
 
-			DWORD			m_dwMaxLenth;	// Out ÈÖµµ·Ï
-			DWORD			m_dwVelocity;	// In ÈÖµµ·Ï
+			DWORD			m_dwMaxLenth;	// Out ï¿½Öµï¿½ï¿½ï¿½
+			DWORD			m_dwVelocity;	// In ï¿½Öµï¿½ï¿½ï¿½
 
 			float			m_fAlphaRate1;
 			float			m_fAlphaRate2;
@@ -146,13 +146,13 @@ protected:
 	static DWORD	m_dwSavedStateBlock;
 	static DWORD	m_dwEffectStateBlock;
 
-	LPDIRECT3DDEVICE8 m_pd3dDevice;
+	LPDIRECT3DDEVICE9 m_pd3dDevice;
 
 protected:
-	D3DXVECTOR3			m_vTransUP;				//	À§Ä¡.
-	D3DXVECTOR3			m_vTransDOWN;			//	À§Ä¡.
-	D3DXVECTOR3			m_vPrevUP;				//	À§Ä¡.
-	D3DXVECTOR3			m_vPrevDOWN;			//	À§Ä¡.
+	D3DXVECTOR3			m_vTransUP;				//	ï¿½ï¿½Ä¡.
+	D3DXVECTOR3			m_vTransDOWN;			//	ï¿½ï¿½Ä¡.
+	D3DXVECTOR3			m_vPrevUP;				//	ï¿½ï¿½Ä¡.
+	D3DXVECTOR3			m_vPrevDOWN;			//	ï¿½ï¿½Ä¡.
 
 protected:
 	struct D3DVERTEX
@@ -174,7 +174,7 @@ protected:
 	//};
 
 	//POSITION*			m_pTargetPos;
-	//int					m_nDivide;		// ºÐÇÒ °¹¼ö - ±âº» 1 , 2¸é ¼Óµµ 1/2, 5¸é ¼Óµµ 1/5	/// ÀúÀå »ðÀÔ¿¡ ÇÊ¿äÇÒ²¨ °°´Ù.
+	//int					m_nDivide;		// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ - ï¿½âº» 1 , 2ï¿½ï¿½ ï¿½Óµï¿½ 1/2, 5ï¿½ï¿½ ï¿½Óµï¿½ 1/5	/// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ô¿ï¿½ ï¿½Ê¿ï¿½ï¿½Ò²ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//int					m_nRoop;
 
 	struct D3DROOT
@@ -188,11 +188,11 @@ protected:
 	D3DXVECTOR3		DirectSum ( D3DROOT* pPos, int i, int End );
 	void			UpdatePos ();
 	void			UpdatePos_Out ();
-	HRESULT			CreateBlurVB( LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT			CreateBlurVB( LPDIRECT3DDEVICE9 pd3dDevice );
 
 public:
-	LPDIRECT3DTEXTURE8		m_pTexture_In;
-	LPDIRECT3DTEXTURE8		m_pTexture_Out;
+	LPDIRECT3DTEXTURE9		m_pTexture_In;
+	LPDIRECT3DTEXTURE9		m_pTexture_Out;
 
 public:
 	int						m_nVertexNum;
@@ -215,25 +215,25 @@ public:
 	float					m_fElapsedTime;
 
 public:
-	static HRESULT CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice );
-	static HRESULT ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice );
+	static HRESULT CreateDevice ( LPDIRECT3DDEVICE9 pd3dDevice );
+	static HRESULT ReleaseDevice ( LPDIRECT3DDEVICE9 pd3dDevice );
 
 public:
 	virtual HRESULT OneTimeSceneInit ();
-	virtual HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice );
-	virtual HRESULT RestoreDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice );
+	virtual HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice );
+	virtual HRESULT RestoreDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice );
 	virtual HRESULT InvalidateDeviceObjects ();
 	virtual HRESULT DeleteDeviceObjects ();
 	virtual HRESULT FinalCleanup ();
 
 public:
 	virtual HRESULT FrameMove ( float fTime, float fElapsedTime );
-	virtual HRESULT	Render ( LPDIRECT3DDEVICE8 pd3dDevice );
+	virtual HRESULT	Render ( LPDIRECT3DDEVICE9 pd3dDevice );
 
 public:
-	virtual DxEffChar* CloneInstance ( LPDIRECT3DDEVICE8 pd3dDevice, DxCharPart* pCharPart, DxSkinPiece* pSkinPiece );
+	virtual DxEffChar* CloneInstance ( LPDIRECT3DDEVICE9 pd3dDevice, DxCharPart* pCharPart, DxSkinPiece* pSkinPiece );
 
-	virtual HRESULT LoadFile ( basestream &SFile, LPDIRECT3DDEVICE8 pd3dDevice );
+	virtual HRESULT LoadFile ( basestream &SFile, LPDIRECT3DDEVICE9 pd3dDevice );
 	virtual HRESULT SaveFile ( basestream &SFile );
 
 public:

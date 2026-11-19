@@ -13,7 +13,7 @@
 #include "DxViewPort.h"
 #include "DxSoundMan.h"
 
-BOOL SANIMCONINFO::LoadFile ( char *szFileName, LPDIRECT3DDEVICE8 pd3dDevice )
+BOOL SANIMCONINFO::LoadFile ( char *szFileName, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	char szFilePath[MAX_PATH];
 	strcpy ( szFilePath, DxSkinAniMan::Instance.GetPath() );
@@ -172,7 +172,7 @@ BOOL SANIMCONINFO::LoadFile ( char *szFileName, LPDIRECT3DDEVICE8 pd3dDevice )
 	}
 	else
 	{
-		MessageBox ( NULL, "SANIMCONINFO::LoadFile() Áö¿øµÇÁö¾Ê´Â ¹öÀüÀÇ ÆÄÀÏÀÔ´Ï´Ù.", szFileName, MB_OK );
+		MessageBox ( NULL, "SANIMCONINFO::LoadFile() ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ô´Ï´ï¿½.", szFileName, MB_OK );
 	}
 
 	return TRUE;

@@ -38,8 +38,8 @@ public:
 	DxStaticMesh*		GetStaticMesh()		{ return m_pStaticMesh; }
 
 public:
-	HRESULT	NewFrameMesh ( LPDIRECT3DDEVICE8 pd3dDevice, const char* szName );
-	void	MakeStaticMesh ( LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT	NewFrameMesh ( LPDIRECT3DDEVICE9 pd3dDevice, const char* szName );
+	void	MakeStaticMesh ( LPDIRECT3DDEVICE9 pd3dDevice );
 
 public:
 	DxFrame*	GetFrameRoot ()
@@ -52,13 +52,13 @@ public:
 	BOOL IsCollisionLine ( const D3DXVECTOR3& vP1, const D3DXVECTOR3& vP2, D3DXVECTOR3 &vColl, D3DXVECTOR3 &vNor, D3DXMATRIX& matWorld );	
 
 public:
-	void Render ( const LPDIRECT3DDEVICE8 pd3dDevice, const CLIPVOLUME &_sCV, const D3DXMATRIX& matWorld );
-	void Render ( const LPDIRECT3DDEVICE8 pd3dDevice, const CLIPVOLUME &_sCV, const D3DXMATRIX& matWorld, const char* szName );
+	void Render ( const LPDIRECT3DDEVICE9 pd3dDevice, const CLIPVOLUME &_sCV, const D3DXMATRIX& matWorld );
+	void Render ( const LPDIRECT3DDEVICE9 pd3dDevice, const CLIPVOLUME &_sCV, const D3DXMATRIX& matWorld, const char* szName );
 	void CleanUp();
 
 public:
 	void Save ( char* szName );
-	HRESULT Load ( LPDIRECT3DDEVICE8 pd3dDevice, const char* szName, BOOL bEdit=FALSE );
+	HRESULT Load ( LPDIRECT3DDEVICE9 pd3dDevice, const char* szName, BOOL bEdit=FALSE );
 
 public:
 	DxStaticPis();
@@ -73,7 +73,7 @@ public:
 	MAPSTATICPIS	m_mapStaticPis;
 
 public:
-	DxStaticPis* LoadPiece ( LPDIRECT3DDEVICE8 pd3dDevice, const char *szFile, const char *szDir=NULL );
+	DxStaticPis* LoadPiece ( LPDIRECT3DDEVICE9 pd3dDevice, const char *szFile, const char *szDir=NULL );
 	void ReleasePiece ( const char *szFile );
 
 //	DxSingleMesh* GetSingleMesh ( const char *szPis, const char *szMaterial );

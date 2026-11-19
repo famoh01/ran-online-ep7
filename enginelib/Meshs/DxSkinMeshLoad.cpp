@@ -12,15 +12,15 @@
 #endif
 
 
-//	Note : ¸ðµç ÇÁ·¹ÀÓÀÇ ¹öÅØ½º ¹éÅÍ °ªµéÀ» ÇÕ»ê.
-//		Àç±ÍÀû È£Ãâ·Î ¸ðµç ÇÁ·¹ÀÓÀ» ÇÕ»ê.
-//		( ÀÌ °³Ã¼ÀÇ ±¸½ÉÁ¡À» Ã£±â À§ÇØ »ç¿ëµÊ. )
+//	Note : ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Õ»ï¿½.
+//		ï¿½ï¿½ï¿½ï¿½ï¿½ È£ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Õ»ï¿½.
+//		( ï¿½ï¿½ ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½. )
 //
 HRESULT CalculateSum (
-					SFrame *pframe,			//	°è»êÇÒ ÇöÁ¦ ÇÁ·¹ÀÓ.
-					D3DXMATRIX *pmatCur,	//	ºÎ¸ð ÇÁ·¹ÀÓÀÇ Æ®·»½ºÆû ¸ÞÆ®¸¯½º.
-					D3DXVECTOR3 *pvCenter,	//	¿©±â¿¡ ¹éÅÍ °ªÀ» ÇÕ»ê.
-					UINT *pcVertices )		//	ÇÕ»êµÈ ¹éÅÍÀÇ °¹¼ö ÃøÁ¤.
+					SFrame *pframe,			//	ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
+					D3DXMATRIX *pmatCur,	//	ï¿½Î¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½.
+					D3DXVECTOR3 *pvCenter,	//	ï¿½ï¿½ï¿½â¿¡ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Õ»ï¿½.
+					UINT *pcVertices )		//	ï¿½Õ»ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 {
 	HRESULT hr = S_OK;
 	PBYTE pbPoints = NULL;
@@ -34,7 +34,7 @@ HRESULT CalculateSum (
 	UINT cVertices;
 	D3DXMATRIXA16 matLocal;
     
-	//	Note : ÇöÁ¦ ÇÁ·¹ÀÓÀÇ Æ®·»½ºÆû ¸ÞÆ®¸¯½º.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½.
 	//
 	//D3DXMatrixMultiply ( &matLocal, &pframe->matRot, pmatCur );
 	D3DXMatrixMultiply_MM ( matLocal, pframe->matRot, *pmatCur );
@@ -42,7 +42,7 @@ HRESULT CalculateSum (
 	pmcCur = pframe->pmcMesh;
 	while (pmcCur != NULL)
 	{
-		//	Note : ¹öÅØ½ºÀÇ ¼ººÐÀ» ºÐ¼®ÇØ ¸Þ¸ð¸® ÇÒ´ç·®À» °è»ê.
+		//	Note : ï¿½ï¿½ï¿½Ø½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð¼ï¿½ï¿½ï¿½ ï¿½Þ¸ï¿½ ï¿½Ò´ç·®ï¿½ï¿½ ï¿½ï¿½ï¿½.
 		//
 		DWORD fvfsize = D3DXGetFVFVertexSize ( pmcCur->m_pMesh->GetFVF() );
         
@@ -60,7 +60,7 @@ HRESULT CalculateSum (
 			{
 				cVerticesLocal++;
                 
-				//	Note : ¹éÅÍ¸¦ Æ®·»½ºÆû ÇÑÈÄ¿¡ ÇÕ»ê.
+				//	Note : ï¿½ï¿½ï¿½Í¸ï¿½ Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ä¿ï¿½ ï¿½Õ»ï¿½.
 				//
 				D3DXVec3TransformCoord ( &vTransformedCur, pvCur, &matLocal );
                 
@@ -76,11 +76,11 @@ HRESULT CalculateSum (
 		pmcCur = pmcCur->m_pmcNext;
 	}
     
-	//	Note : ÀÌ ÇÁ·¹ÀÓ¿¡¼­ ÇÕ»êµÈ ¹éÅÍ¼ö¸¦ ´õÇÔ.
+	//	Note : ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½ï¿½ï¿½ ï¿½Õ»ï¿½ï¿½ ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	*pcVertices += cVerticesLocal;
     
-	//	Note : ÀÚ½Ä ÇÁ·¹ÀÓÀ» Á¦±ÍÈ£Ãâ·Î °¢°¢ ¹éÅÍ °ªÀ» ÇÕ»ê.
+	//	Note : ï¿½Ú½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È£ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Õ»ï¿½.
 	//
 	pframeCur = pframe->pframeFirstChild;
 	while ( pframeCur != NULL )
@@ -93,7 +93,7 @@ HRESULT CalculateSum (
 	}
     
 e_Exit:
-	//	Note : ¿¡·¯ ¹ß»ý½Ã¿¡ ¹öÅØ½º ¹öÆÛ lockÀÌ µÇ¾î ÀÖÀ» ¶§¸¦ ´ëºñ.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ß»ï¿½ï¿½Ã¿ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½ï¿½ lockï¿½ï¿½ ï¿½Ç¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 	//
 	if ( pbPoints != NULL )
 	{
@@ -104,13 +104,13 @@ e_Exit:
 }
 
 
-//	Note : °³Ã¼ÀÇ ¹Ý°æÀ» ±¸ÇÔ.
+//	Note : ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½Ý°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 //
 HRESULT CalculateRadius ( 
-						SFrame *pframe,			//	°è»êÇÒ ÇÁ·¹ÀÓ.
-						D3DXMATRIX *pmatCur,	//	ºÎ¸ð ÇÁ·¹ÀÓÀÇ Æ®·»½ºÆû ¸ÞÆ®¸¯½º.
-						D3DXVECTOR3 *pvCenter,	//	°³Ã¼ÀÇ Áß½ÉÁ¡.
-                        float *pfRadiusSq)		//	¹Ý°æ.
+						SFrame *pframe,			//	ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
+						D3DXMATRIX *pmatCur,	//	ï¿½Î¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½.
+						D3DXVECTOR3 *pvCenter,	//	ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½ß½ï¿½ï¿½ï¿½.
+                        float *pfRadiusSq)		//	ï¿½Ý°ï¿½.
 {
 	HRESULT hr = S_OK;
 	PBYTE pbPoints = NULL;
@@ -125,16 +125,16 @@ HRESULT CalculateRadius (
 	float fDistSq;
 	D3DXMATRIXA16 matLocal;
     
-	//	Note : ÇöÁ¦ ÇÁ·¹ÀÓÀÇ Æ®·»½ºÆû ¸ÞÆ®¸¯½º.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½.
 	//
 	//D3DXMatrixMultiply ( &matLocal, &pframe->matRot, pmatCur );
 	D3DXMatrixMultiply_MM ( matLocal, pframe->matRot, *pmatCur );
     
 	pmcCur = pframe->pmcMesh;
-	fRadiusLocalSq = *pfRadiusSq;	//	Á¾Àü ¹Ý°æÀ¸·Î ¼¼ÆÃ.
+	fRadiusLocalSq = *pfRadiusSq;	//	ï¿½ï¿½ï¿½ï¿½ ï¿½Ý°ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	while ( pmcCur != NULL )
 	{
-		//	Note : ¹öÅØ½ºÀÇ ¼ººÐÀ» ºÐ¼®ÇØ ¸Þ¸ð¸® ÇÒ´ç·®À» °è»ê.
+		//	Note : ï¿½ï¿½ï¿½Ø½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð¼ï¿½ï¿½ï¿½ ï¿½Þ¸ï¿½ ï¿½Ò´ç·®ï¿½ï¿½ ï¿½ï¿½ï¿½.
 		//
 		DWORD fvfsize = D3DXGetFVFVertexSize ( pmcCur->m_pMesh->GetFVF() );
         
@@ -151,7 +151,7 @@ HRESULT CalculateRadius (
 			if ( (pvCur->x == 0.0) && (pvCur->y == 0.0) && (pvCur->z == 0.0) )
 				continue;
             
-			//	Note : ¹éÅÍ¸¦ Æ®·»½ºÆû ÇÑÈÄ¿¡ °³Ã¼ Áß½ÉÁ¡¿¡¼­ÀÇ ¸Ö¸® ¶³¾îÁ® ÀÖ´Ù¸é ¹Ý°æ°ªÀ» °»½Å.
+			//	Note : ï¿½ï¿½ï¿½Í¸ï¿½ Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ä¿ï¿½ ï¿½ï¿½Ã¼ ï¿½ß½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´Ù¸ï¿½ ï¿½Ý°æ°ªï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 			//
 			D3DXVec3TransformCoord ( &vDist, pvCur, &matLocal );
             
@@ -170,11 +170,11 @@ HRESULT CalculateRadius (
 		pmcCur = pmcCur->m_pmcNext;
 	}
     
-	//	Note : »õ·ÎÀÌ Ã£Àº ¹Ý°æÀ¸·Î.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½ ï¿½Ý°ï¿½ï¿½ï¿½ï¿½ï¿½.
 	//
 	*pfRadiusSq = fRadiusLocalSq;
     
-	//	Note : ÀÚ½Ä ÇÁ·¹ÀÓÀ» Á¦±ÍÈ£Ãâ·Î ¹Ý°æ°ªÀ» Ã£À½.
+	//	Note : ï¿½Ú½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È£ï¿½ï¿½ï¿½ ï¿½Ý°æ°ªï¿½ï¿½ Ã£ï¿½ï¿½.
 	//
 	pframeCur = pframe->pframeFirstChild;
 	while ( pframeCur != NULL )
@@ -187,7 +187,7 @@ HRESULT CalculateRadius (
 	}
     
 e_Exit:
-	//	Note : ¿¡·¯ ¹ß»ý½Ã¿¡ ¹öÅØ½º ¹öÆÛ lockÀÌ µÇ¾î ÀÖÀ» ¶§¸¦ ´ëºñ.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ß»ï¿½ï¿½Ã¿ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½ï¿½ lockï¿½ï¿½ ï¿½Ç¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 	//
 	if (pbPoints != NULL)
 	{
@@ -197,7 +197,7 @@ e_Exit:
 	return hr;
 }
 
-//	Note : °³Ã¼ÀÇ °æ°è±¸ °è»ê.
+//	Note : ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½ï¿½è±¸ ï¿½ï¿½ï¿½.
 //
 HRESULT DxSkinMesh::CalculateBoundingSphere ()
 {
@@ -207,7 +207,7 @@ HRESULT DxSkinMesh::CalculateBoundingSphere ()
 	float fRadiusSq = 0;
 	D3DXMATRIXA16 matCur;
     
-	//	Note : Áß½ÉÁ¡À» Ã£±â À§ÇØ ¸ðµç ¹éÅÍ¸¦ ÇÕ»ê. 
+	//	Note : ï¿½ß½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½Õ»ï¿½. 
 	//
 	D3DXMatrixIdentity (&matCur);
 	hr = CalculateSum ( pframeRoot, &matCur, &vCenter, &cVertices );
@@ -215,25 +215,25 @@ HRESULT DxSkinMesh::CalculateBoundingSphere ()
     
 	if (cVertices > 0)
 	{
-		//	Note : Áß½ÉÁ¡ °ªÀ¸·Î.
+		//	Note : ï¿½ß½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 		//
 		vCenter /= (float)cVertices;
         
-		//	Note : ÁÜ½ÉÁ¡¿¡¼­ ÃÖ´ë °Å¸®¿¡ ÀÖ´Â ¹éÅÍ¸¦ Ã£¾Æ ¹Ý°æ °ªÀ» °¡Á®¿Â´Ù.
+		//	Note : ï¿½Ü½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½Å¸ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½Í¸ï¿½ Ã£ï¿½ï¿½ ï¿½Ý°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Â´ï¿½.
 		//
 		D3DXMatrixIdentity (&matCur);
 		hr = CalculateRadius ( pframeRoot, &matCur, &vCenter, &fRadiusSq );
 		if (FAILED(hr))			goto e_Exit;
 	}
     
-	fRadius = (float)sqrt((double)fRadiusSq); // square °ªÀÌ¹Ç·Î.
+	fRadius = (float)sqrt((double)fRadiusSq); // square ï¿½ï¿½ï¿½Ì¹Ç·ï¿½.
 	vCenter = vCenter;
 
 e_Exit:
 	return hr;
 }
 
-HRESULT DxSkinMesh::CalculateBoundingBox ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshContainer* pmcMesh, D3DXVECTOR3 &vMax, D3DXVECTOR3 &vMin )
+HRESULT DxSkinMesh::CalculateBoundingBox ( LPDIRECT3DDEVICE9 pd3dDevice, SMeshContainer* pmcMesh, D3DXVECTOR3 &vMax, D3DXVECTOR3 &vMin )
 {
 	HRESULT hr(S_OK);
 	if ( !pmcMesh->m_pSkinMesh )	return E_FAIL;
@@ -257,8 +257,8 @@ HRESULT DxSkinMesh::CalculateBoundingBox ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshCo
 	return hr;
 }
 
-//	Note : °³Ã¼ ÇÁ·¹ÀÓµé¿¡¼­ ½ºÅ²¸Þ½¬¸¦ °¡Áö°í ÀÖ´Ù¸é
-//		ÇØ´ç ¸Þ½¬¿¡ ÀÛ¿ëÇÏ´Â ¸ÞÆ®¸¯½º Æ÷ÀÎÅÍ¸¦ º¸°ü.
+//	Note : ï¿½ï¿½Ã¼ ï¿½ï¿½ï¿½ï¿½ï¿½Óµé¿¡ï¿½ï¿½ ï¿½ï¿½Å²ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´Ù¸ï¿½
+//		ï¿½Ø´ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½Û¿ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½.
 //
 HRESULT DxSkinMesh::FindBones ( SFrame *pframeCur )
 {
@@ -271,10 +271,10 @@ HRESULT DxSkinMesh::FindBones ( SFrame *pframeCur )
     {
 		if ( pmcMesh->m_pSkinMesh && !pmcMesh->m_szBoneNames.empty() )
 		{
-			//	Note : ÀÌ ¸Þ½¬ ÄÜÅ×ÀÌ³Ê¿¡ ¿¬°áµÈ 'º» ÀÌ¸§' °¡Á®¿È.
+			//	Note : ï¿½ï¿½ ï¿½Þ½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ì³Ê¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ 'ï¿½ï¿½ ï¿½Ì¸ï¿½' ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 			//
 
-			//	NEED : ¿¬°áµÈ º»À» Ã£¾Æ¼­ ÇØ´ç ¸ÞÆ®¸¯½º Æ÷ÀÎÅÍ¸¦ º¸°ü.
+			//	NEED : ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½Æ¼ï¿½ ï¿½Ø´ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½.
 			//
 			for ( DWORD i = 0; i < pmcMesh->m_pSkinMesh->GetNumBones(); ++i )
 			{
@@ -287,7 +287,7 @@ HRESULT DxSkinMesh::FindBones ( SFrame *pframeCur )
 		pmcMesh = pmcMesh->m_pmcNext;
 	}
     
-	//	Note : ÀÚ½ÄµéÀ» Àç±ÍÀûÀ¸·Î ¸ðµÎ Å½»ö.
+	//	Note : ï¿½Ú½Äµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ Å½ï¿½ï¿½.
 	//
 	pframeChild = pframeCur->pframeFirstChild;
 	while (pframeChild != NULL)
@@ -302,9 +302,9 @@ HRESULT DxSkinMesh::FindBones ( SFrame *pframeCur )
 	return S_OK;
 }
 
-//	Note : xFileÀ» ¿­¾î¼­ ½ºÅ²¸Þ½¬¸¦ »ý¼º.
+//	Note : xFileï¿½ï¿½ ï¿½ï¿½ï¿½î¼­ ï¿½ï¿½Å²ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 //
-HRESULT DxSkinMesh::LoadMeshHierarchy ( char *szFile, char *szSkeletonFile, LPDIRECT3DDEVICE8 pd3dDevice, const BOOL bThread )
+HRESULT DxSkinMesh::LoadMeshHierarchy ( char *szFile, char *szSkeletonFile, LPDIRECT3DDEVICE9 pd3dDevice, const BOOL bThread )
 {
 	GASSERT(szFile);
 	GASSERT(szSkeletonFile);
@@ -327,7 +327,7 @@ HRESULT DxSkinMesh::LoadMeshHierarchy ( char *szFile, char *szSkeletonFile, LPDI
 
 	if (pszFile == NULL)	return E_INVALIDARG;
     
-	//	Note : ·çÆ® ¸¸µë.
+	//	Note : ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½.
 	//
 	pframeRoot = new SFrame();
 	if ( pframeRoot == NULL )
@@ -342,7 +342,7 @@ HRESULT DxSkinMesh::LoadMeshHierarchy ( char *szFile, char *szSkeletonFile, LPDI
 
 	dwOptions = 0;
   
-	//	Note : xFile ¿­±â.
+	//	Note : xFile ï¿½ï¿½ï¿½ï¿½.
 	//
 	cchFileName = strlen(pszFile);
 	if (cchFileName < 2)
@@ -351,11 +351,11 @@ HRESULT DxSkinMesh::LoadMeshHierarchy ( char *szFile, char *szSkeletonFile, LPDI
 		goto e_Exit;
 	}
     
-	//	xFile °³Ã¼¸¦ ¸¸µë.
+	//	xFile ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	hr = DirectXFileCreate(&pxofapi);
 	if (FAILED(hr))	goto e_Exit;
     
-    //	xFile ÅÛÇÃ¸®Æ® µî·Ï.
+    //	xFile ï¿½ï¿½ï¿½Ã¸ï¿½Æ® ï¿½ï¿½ï¿½.
 	hr = pxofapi->RegisterTemplates((LPVOID)D3DRM_XTEMPLATES,
 		D3DRM_XTEMPLATE_BYTES);
 	if (FAILED(hr))	goto e_Exit;
@@ -364,14 +364,14 @@ HRESULT DxSkinMesh::LoadMeshHierarchy ( char *szFile, char *szSkeletonFile, LPDI
 	StringCchCopy( szPathName, MAX_PATH, DxSkinMeshMan::GetInstance().GetPath() );
 	StringCchCat( szPathName, MAX_PATH, pszFile );
 
-    //	½ÇÁ¦ xFileÀ» ¿­À½.
+    //	ï¿½ï¿½ï¿½ï¿½ xFileï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	hr = pxofapi->CreateEnumObject((LPVOID)szPathName,
 		DXFILELOAD_FROMFILE,
 		&pxofenum);
 	if (FAILED(hr))	goto e_Exit;
     
     
-	//	Note : ÃÖ»óÀ§ ¿ÀºêÁ§Æ®¸¦ ÀÐ¾î¿È.
+	//	Note : ï¿½Ö»ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ð¾ï¿½ï¿½.
 	//
 	while (SUCCEEDED(pxofenum->GetNextDataObject(&pxofobjCur)))
 	{
@@ -382,18 +382,18 @@ HRESULT DxSkinMesh::LoadMeshHierarchy ( char *szFile, char *szSkeletonFile, LPDI
 		if (FAILED(hr))	goto e_Exit;
 	}
 
-    //	Note : ½ºÅ²¸Þ½¬¿¡ ¿¬°áµÈ º»µéÀ» Ã£À½.
+    //	Note : ï¿½ï¿½Å²ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½.
 	//
 	hr = FindBones ( pframeRoot );
 	if (FAILED(hr))	goto e_Exit;
     
-	//	Note : °³Ã¼ÀÇ °æ°è±¸ ¼³Á¤.
+	//	Note : ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½ï¿½è±¸ ï¿½ï¿½ï¿½ï¿½.
 	//
     hr = CalculateBoundingSphere();
     if (FAILED(hr))	goto e_Exit;
     
-	//	Note : º»ÀÇ Æ®·£½ºÆû ¸ÞÆ®¸¯½º °ªÀ» »ç¿ëÇÒ ¹è¿­ »ý¼º.
-	//		( METHOD::SOFTWARE ), ÀÏ °æ¿ì¿¡.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½è¿­ ï¿½ï¿½ï¿½ï¿½.
+	//		( METHOD::SOFTWARE ), ï¿½ï¿½ ï¿½ï¿½ì¿¡.
 	//
 	SAFE_DELETE_ARRAY(m_pBoneMatrices);
 	m_pBoneMatrices = new D3DXMATRIX[m_maxBones];
@@ -411,12 +411,12 @@ e_Exit:
     return hr;
 }
 
-//	Note : ¸Þ½¬¸¦ ÀÐÀ½.
+//	Note : ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 //
 HRESULT DxSkinMesh::LoadMesh ( LPDIRECTXFILEDATA pxofobjCur,
 								DWORD options,
 								DWORD fvf,
-								LPDIRECT3DDEVICE8 pD3DDevice,
+								LPDIRECT3DDEVICE9 pD3DDevice,
                                 SFrame *pframeParent, const BOOL bThread )
 {
 	HRESULT hr = S_OK;
@@ -426,10 +426,10 @@ HRESULT DxSkinMesh::LoadMesh ( LPDIRECTXFILEDATA pxofobjCur,
 	DWORD cchName;
 	UINT cFaces;
 	UINT iMaterial;
-	LPDIRECT3DDEVICE8 m_pDevice = pD3DDevice;
+	LPDIRECT3DDEVICE9 m_pDevice = pD3DDevice;
 	LPDWORD pAdjacencyIn;
 
-	//	Note : ¸Þ½¬ ÄÜµ¥ÀÌ³Ê »ý¼º.
+	//	Note : ï¿½Þ½ï¿½ ï¿½Üµï¿½ï¿½Ì³ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//	
 	pmcMesh = new SMeshContainer();
 	if (pmcMesh == NULL)
@@ -438,7 +438,7 @@ HRESULT DxSkinMesh::LoadMesh ( LPDIRECTXFILEDATA pxofobjCur,
 		goto e_Exit;
 	}
 
-	//	Note : ÀÌ¸§ °¡Á®¿È.
+	//	Note : ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 	//
 	hr = pxofobjCur->GetName(NULL, &cchName);
 	if (FAILED(hr))
@@ -464,7 +464,7 @@ HRESULT DxSkinMesh::LoadMesh ( LPDIRECTXFILEDATA pxofobjCur,
 		StringCchCopy( pmcMesh->m_szName, cchName, pframeParent->szName );
 	}
 
-	//	Note : ½ºÅ²¸Þ½¬ ÀÐÀ½.
+	//	Note : ï¿½ï¿½Å²ï¿½Þ½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	LPD3DXBUFFER pBoneNamesBuf;
 
@@ -493,11 +493,11 @@ HRESULT DxSkinMesh::LoadMesh ( LPDIRECTXFILEDATA pxofobjCur,
 		GXRELEASE(pBoneNamesBuf);
 	}
 
-	//	Note : ÆäÀÌ½º °¹¼ö.
+	//	Note : ï¿½ï¿½ï¿½Ì½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	cFaces = pmcMesh->m_pSkinMesh->GetNumFaces();
 
-	//	Note : ÆäÀÌ½º ÀÎµ¦½º.
+	//	Note : ï¿½ï¿½ï¿½Ì½ï¿½ ï¿½Îµï¿½ï¿½ï¿½.
 	//
 	pAdjacencyIn = static_cast<LPDWORD> ( pbufAdjacency->GetBufferPointer() );
 
@@ -513,24 +513,24 @@ HRESULT DxSkinMesh::LoadMesh ( LPDIRECTXFILEDATA pxofobjCur,
 	memcpy(pmcMesh->m_rgiAdjacency, pAdjacencyIn, cFaces * 3 * sizeof(DWORD));
 
 
-	//	Note : ÀÌ ½ºÅ² ¸Þ½¬¿¡ »ç¿ëµÈ º»ÀÇ °¹¼ö.
+	//	Note : ï¿½ï¿½ ï¿½ï¿½Å² ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	DWORD dwMeshNumBones = pmcMesh->m_pSkinMesh->GetNumBones();
 	if ( dwMeshNumBones )
 	{
-		//	Note : ¸Þ½¬´ç º»ÀÇ °¹¼öÁß °¡Àå Å«°ÍÀ» ÃøÁ¤.
+		//	Note : ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Å«ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 		//
 		m_maxBones = max(dwMeshNumBones, m_maxBones);
 	    
-		//	Note : º» ¸ÞÆ®¸¯½º ÁöÁ¤. ¸Þ¸ð¸® ¹è¿­¸¸ ÇÒ´çÇÑµÚ ¸ðµÎ ·ÎµåÇÑ ´ÙÀ½ FindBones ()À¸·Î ¸ÞÆ®¸¯½º
-		//		Æ÷ÀÎÅÍ¸¦ Ã£¾Æ³½´Ù.
+		//	Note : ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½. ï¿½Þ¸ï¿½ ï¿½è¿­ï¿½ï¿½ ï¿½Ò´ï¿½ï¿½Ñµï¿½ ï¿½ï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ FindBones ()ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½
+		//		ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ Ã£ï¿½Æ³ï¿½ï¿½ï¿½.
 		//
 		pmcMesh->m_pBoneMatrix = new D3DXMATRIX*[dwMeshNumBones];
 		if (pmcMesh->m_pBoneMatrix == NULL)		goto e_Exit;
 
 		pmcMesh->m_pBoneOffsetMat = reinterpret_cast<D3DXMATRIX*>(pmcMesh->m_pBoneOffsetBuf->GetBufferPointer());
 	    
-		//// Normal °ªÀ» ´ÜÀ§º¤ÅÍ·Î À¯Áö½ÃÅ°±â À§ÇÑ ÀÛ¾÷
+		//// Normal ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Û¾ï¿½
 		//float fLength	= 1.f;
 		//D3DXVECTOR3	vDir(1.f,0.f,0.f);
 		//D3DXVECTOR3	vScale(1.f,0.f,0.f);
@@ -552,7 +552,7 @@ HRESULT DxSkinMesh::LoadMesh ( LPDIRECTXFILEDATA pxofobjCur,
 	}
 	else
 	{
-		//	Note : ½ºÅ²¸Þ½¬°¡ ¾Æ´Ò °æ¿ì ÀÏ¹Ý ¸Þ½¬·Î.
+		//	Note : ï¿½ï¿½Å²ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½Æ´ï¿½ ï¿½ï¿½ï¿½ ï¿½Ï¹ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½.
 		//
 		pmcMesh->m_pSkinMesh->GetOriginalMesh(&(pmcMesh->m_pMesh));
 		pmcMesh->m_pSkinMesh->Release();
@@ -565,7 +565,7 @@ HRESULT DxSkinMesh::LoadMesh ( LPDIRECTXFILEDATA pxofobjCur,
 		if (FAILED(hr))		goto e_Exit;
 	}
 
-	//	Note : ¸ÞÅÍ¸®¾ó°ªÀÌ ¾ø´Ù¸é ±âº» ¸ÞÅÍ¸®¾ó ÁöÁ¤.
+	//	Note : ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ù¸ï¿½ ï¿½âº» ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	if ((pbufMaterials == NULL) || (pmcMesh->m_cMaterials == 0))
 	{
@@ -582,11 +582,11 @@ HRESULT DxSkinMesh::LoadMesh ( LPDIRECTXFILEDATA pxofobjCur,
 		pmcMesh->m_pMaterials[0].d3dMaterial.Diffuse.g = 0.5f;
 		pmcMesh->m_pMaterials[0].d3dMaterial.Diffuse.b = 0.5f;
 		pmcMesh->m_pMaterials[0].d3dMaterial.Specular = pmcMesh->m_pMaterials[0].d3dMaterial.Diffuse;
-		pmcMesh->m_pMaterials[0].d3dMaterial.Power = 14.f;	// 30.f - µðÆúÆ®
+		pmcMesh->m_pMaterials[0].d3dMaterial.Power = 14.f;	// 30.f - ï¿½ï¿½ï¿½ï¿½Æ®
 
 		pmcMesh->m_pMaterials[0].pTexture = NULL;
 	}
-	//	Note : ¸ÞÅÍ¸®¾ó °ªÀÌ ÀÖÀ» °æ¿ì.
+	//	Note : ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 	//
 	else
 	{
@@ -602,15 +602,15 @@ HRESULT DxSkinMesh::LoadMesh ( LPDIRECTXFILEDATA pxofobjCur,
 	    
 		for (iMaterial = 0; iMaterial < pmcMesh->m_cMaterials; ++iMaterial)
 		{
-			//	Note : ¸ÞÅÍ¸®¾ó °ª ÁöÁ¤.
+			//	Note : ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 			//
 			pmcMesh->m_pMaterials[iMaterial].d3dMaterial = pMaterials[iMaterial].MatD3D;
-			pmcMesh->m_pMaterials[iMaterial].d3dMaterial.Power = 14.f;	// 30.f - µðÆúÆ®
+			pmcMesh->m_pMaterials[iMaterial].d3dMaterial.Power = 14.f;	// 30.f - ï¿½ï¿½ï¿½ï¿½Æ®
 
-			//	Note : Ambient °ªÀ» Diffuse °ª°ú °°°Ô ÇØÁØ´Ù.
+			//	Note : Ambient ï¿½ï¿½ï¿½ï¿½ Diffuse ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø´ï¿½.
 			pmcMesh->m_pMaterials[iMaterial].d3dMaterial.Ambient = pmcMesh->m_pMaterials[iMaterial].d3dMaterial.Diffuse;
 	        
-			//	Note : ÅØ½ºÃÄ ·Îµå.
+			//	Note : ï¿½Ø½ï¿½ï¿½ï¿½ ï¿½Îµï¿½.
 			//
 			pmcMesh->m_pMaterials[iMaterial].pTexture = NULL;
 			if (pMaterials[iMaterial].pTextureFilename != NULL)
@@ -627,7 +627,7 @@ HRESULT DxSkinMesh::LoadMesh ( LPDIRECTXFILEDATA pxofobjCur,
 
 				if( pmcMesh->m_pMaterials[iMaterial].pTexture )
 				{
-					//	Note : ÅØ½ºÃÄ ÀÐ±â¿¡ ¼º°ø½Ã¿¡ ÀÌ ¸ÞÅÍ¸®¾óÀÇ ÃÊ±â °ªÀ» °áÁ¤.
+					//	Note : ï¿½Ø½ï¿½ï¿½ï¿½ ï¿½Ð±â¿¡ ï¿½ï¿½ï¿½ï¿½ï¿½Ã¿ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 					//
 					TextureManager::EM_TEXTYPE emType = TextureManager::GetTexType( pMaterials[iMaterial].pTextureFilename );
 
@@ -640,10 +640,10 @@ HRESULT DxSkinMesh::LoadMesh ( LPDIRECTXFILEDATA pxofobjCur,
 		}
 	}
 
-	//	Note : »õ·Î¿î ¸Þ½¬ ÄÜÅ×ÀÌ³Ê¸¦ »ðÀÔ.
+	//	Note : ï¿½ï¿½ï¿½Î¿ï¿½ ï¿½Þ½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ì³Ê¸ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
-	pframeParent->AddMesh (pmcMesh );	//	SFrame¿¡ µî·Ï.
-	AddMeshGlobal ( pmcMesh );			//	DxSkinMesh¿¡ µî·Ï.
+	pframeParent->AddMesh (pmcMesh );	//	SFrameï¿½ï¿½ ï¿½ï¿½ï¿½.
+	AddMeshGlobal ( pmcMesh );			//	DxSkinMeshï¿½ï¿½ ï¿½ï¿½ï¿½.
 	pmcMesh = NULL;
    
 e_Exit:
@@ -656,12 +656,12 @@ e_Exit:
 }
 
 
-//	Note : Frame ( ¸Þ½¬, Æ®·»½ºÆû, ¿¡´Ï¸ÞÀÌ¼Ç ) À» ÀÐÀ½.
+//	Note : Frame ( ï¿½Þ½ï¿½, Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ ) ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 //
 HRESULT DxSkinMesh::LoadFrames ( LPDIRECTXFILEDATA pxofobjCur,
 								DWORD options,
 								DWORD fvf,
-								LPDIRECT3DDEVICE8 pD3DDevice,
+								LPDIRECT3DDEVICE9 pD3DDevice,
                                 SFrame *pframeParent, const BOOL bThread )
 {
     HRESULT hr = S_OK;
@@ -673,13 +673,13 @@ HRESULT DxSkinMesh::LoadFrames ( LPDIRECTXFILEDATA pxofobjCur,
     SFrame *pframeCur;
     DWORD cchName;
     
-    //	Note : ¿ÀºêÁ§Æ®ÀÇ Å¸ÀÔ.
+    //	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ Å¸ï¿½ï¿½.
 	//
     hr = pxofobjCur->GetType(&type);
     if (FAILED(hr))
         goto e_Exit;
     
-    //	Note : ¸Þ½¬.
+    //	Note : ï¿½Þ½ï¿½.
 	//
     if (*type == TID_D3DRMMesh)
     {
@@ -704,14 +704,14 @@ HRESULT DxSkinMesh::LoadFrames ( LPDIRECTXFILEDATA pxofobjCur,
 
 		if ( pframe )
 		{
-			//	Note : ÀÌ°ÍÀº MAX ¿¡¼­ Ã³·³.
-			//		Æ®·£½ºÆû ÇÁ·¡ÀÓ°ú ¸Þ½¬°¡ µé¾î ÀÖ´Â ÇÁ·¡ÀÓÀÌ ½ÖÀ¸·Î ÀÖÀ»¶§¿¡ À¯È¿ÇÏ°Ô ¸¸µé¾îÁø
-			//		ÄÚµåÀÌ´Ù.
-			//		¸¸¾à, ´Ù¸£°Ô ±¸¼ºµÇ¾î ÀÖ´Â°Ô »ç¿ëµÇ¸é ¿¡·¯°¡ ¹ß»ýÇÒ ¼ö ÀÖ´Ù.
+			//	Note : ï¿½Ì°ï¿½ï¿½ï¿½ MAX ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½.
+			//		Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ó°ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¿ï¿½Ï°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+			//		ï¿½Úµï¿½ï¿½Ì´ï¿½.
+			//		ï¿½ï¿½ï¿½ï¿½, ï¿½Ù¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ç¾ï¿½ ï¿½Ö´Â°ï¿½ ï¿½ï¿½ï¿½Ç¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß»ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ö´ï¿½.
 			//
 			//	m_pmcMesh->m_szBoneNames[0];	//	[LOCAL]
 			//	m_pmcMesh->m_szBoneNames[1];	//	[LOCAL]
-			//	m_pmcMesh->m_szBoneNames[2];	//	[COMBINED] <-- ÀÌ°Í¸¸ ½ÇÁ¦·Î BONE¿¡¼­ ¿µÇâÀ» ¹Þ´Â°Í.
+			//	m_pmcMesh->m_szBoneNames[2];	//	[COMBINED] <-- ï¿½Ì°Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ BONEï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ´Â°ï¿½.
 
 			GASSERT(pframeParent);
 			if ( pframeParent->pmcMesh && !pframeParent->pmcMesh->m_pSkinMesh )
@@ -739,7 +739,7 @@ HRESULT DxSkinMesh::LoadFrames ( LPDIRECTXFILEDATA pxofobjCur,
 			}
 		}
 	}
-    //	Note : Æ®·»½ºÆû.
+    //	Note : Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 	//
     else if (*type == TID_D3DRMFrameTransformMatrix)
     {
@@ -751,13 +751,13 @@ HRESULT DxSkinMesh::LoadFrames ( LPDIRECTXFILEDATA pxofobjCur,
         pframeParent->matRot = *pmatNew;
         pframeParent->matRotOrig = *pmatNew;
     }
-	//	Note : ÇÏÀ§ ÇÁ·¹ÀÓ.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 	//
     else if (*type == TID_D3DRMFrame)
     {
 		char *szframeName = NULL;
         
-		//	Note : ÇÁ·¹ÀÓÀÇ ÀÌ¸§ °¡Á®¿È.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 		//
         hr = pxofobjCur->GetName(NULL, &cchName);
         if (FAILED(hr))
@@ -781,14 +781,14 @@ HRESULT DxSkinMesh::LoadFrames ( LPDIRECTXFILEDATA pxofobjCur,
 		{
 			pframeCur = pframeParent;
 
-			//	Note : __FRAMEROOT ÀÌ¸§À» Á¦°ÅÇÏ°í ÇöÁ¦ ÇÁ·¹ÀÓ ÀÌ¸§À» ÁöÁ¤.
+			//	Note : __FRAMEROOT ï¿½Ì¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 			//
 			delete[] pframeCur->szName;
 			pframeCur->szName = szframeName;
 		}
 		else
 		{
-       		//	Note : »õ ÇÁ·¹ÀÓ ¸¸µë.
+       		//	Note : ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 			//
 			pframeCur = new SFrame();
 			if (pframeCur == NULL)
@@ -802,8 +802,8 @@ HRESULT DxSkinMesh::LoadFrames ( LPDIRECTXFILEDATA pxofobjCur,
 			pframeParent->AddFrame(pframeCur);
 		}
         
-		//	Note : ¼øÂ÷ÀûÀ¸·Î Å½»öÇÏ¸é¼­ ¿¡´Ï¸ÞÀÌ¼ÇÀ» ÀÐ¾î¿Â´Ù.
-		//		QueryInterface()¸¦ »ç¿ëÇÏ¿© ¿ÀºêÁ§Æ®ÀÇ Å¸ÀÔÀ» È®ÀÎÇÔ.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å½ï¿½ï¿½ï¿½Ï¸é¼­ ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ï¿½ï¿½ ï¿½Ð¾ï¿½Â´ï¿½.
+		//		QueryInterface()ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½ï¿½ï¿½.
 		//
         while ( SUCCEEDED(pxofobjCur->GetNextObject(&pxofChild)) )
         {

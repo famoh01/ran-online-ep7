@@ -13,18 +13,18 @@
 #endif
 
 
-//	Note : FrameMove - ½Ã°£ °æ°ú¸¦ Àû¿ëÇÑ´Ù.
+//	Note : FrameMove - ï¿½Ã°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 //
 HRESULT DxSkinMesh::FrameMove ( float fElapsedTime )
 {
 	return S_OK;
 }
 
-HRESULT DxSkinMesh::Render ( D3DXMATRIX matRot, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxSkinMesh::Render ( D3DXMATRIX matRot, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	if ( !pframeRoot ) return S_OK;
 
-	// Note : ·£´õ ÁöÁ¡ ¼³Á¤.
+	// Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	pframeRoot->matRot = matRot;
     
@@ -35,12 +35,12 @@ HRESULT DxSkinMesh::Render ( D3DXMATRIX matRot, LPDIRECT3DDEVICE8 pd3dDevice )
 
 	D3DXMatrixIdentity ( &mCur );
 
-	//	Note : ¸ÞÆ®¸¯½º °è»ê.
+	//	Note : ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 	//
 	hr = UpdateFrames ( pframeRoot, mCur );
 	if (FAILED(hr))		return hr;
 
-	//	Note : ¸Þ½¬ ±×¸®±â ¼öÇà.
+	//	Note : ï¿½Þ½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	hr = DrawFrames ( pd3dDevice, pframeRoot, cTriangles );
 	if (FAILED(hr))		return hr;
@@ -58,7 +58,7 @@ void DxSkinMesh::SetDrawState ( BOOL bOriginDraw, BOOL bAlpha, BOOL bShadow, BOO
 	m_fHeight		= fHeight;
 }
 
-HRESULT DxSkinMesh::DrawMeshContainer ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshContainer *pmcMesh,
+HRESULT DxSkinMesh::DrawMeshContainer ( LPDIRECT3DDEVICE9 pd3dDevice, SMeshContainer *pmcMesh,
 									   SMATERIAL_PIECE *pmtrlPiece, DXMATERIAL_CHAR_EFF* pmtrlSpecular )
 {
 	UINT ipattr;
@@ -116,8 +116,8 @@ HRESULT DxSkinMesh::DrawMeshContainer ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshConta
 					AttribIdPrev = dwThisAttribId;
 				}
 
-				//	Note :	bOriginDraw = TRUE - Á¶°ÇÀÌ ¾È ¸Â´õ¶óµµ ÃÖ¼Ò ÇÑ¹øÀº »Ñ¸°´Ù.
-				//			bOriginDraw = FALSE - Á¶°ÇÀÌ ¾È ¸ÂÀ¸¸é »Ñ¸®Áö ¾Ê´Â´Ù.
+				//	Note :	bOriginDraw = TRUE - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Â´ï¿½ï¿½ï¿½ ï¿½Ö¼ï¿½ ï¿½Ñ¹ï¿½ï¿½ï¿½ ï¿½Ñ¸ï¿½ï¿½ï¿½.
+				//			bOriginDraw = FALSE - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ¸ï¿½ï¿½ï¿½ ï¿½Ê´Â´ï¿½.
 				//
 				BOOL bDraw = m_bOriginDraw || ( pmtrlSpecular && pmtrlSpecular[dwThisAttribId].bEffUse );
 				if ( bDraw )
@@ -168,8 +168,8 @@ HRESULT DxSkinMesh::DrawMeshContainer ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshConta
 						AttribIdPrev = pBoneComb[ipattr].AttribId;
 					}
 
-					//	Note :	bOriginDraw = TRUE - Á¶°ÇÀÌ ¾È ¸Â´õ¶óµµ ÃÖ¼Ò ÇÑ¹øÀº »Ñ¸°´Ù.
-					//			bOriginDraw = FALSE - Á¶°ÇÀÌ ¾È ¸ÂÀ¸¸é »Ñ¸®Áö ¾Ê´Â´Ù.
+					//	Note :	bOriginDraw = TRUE - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Â´ï¿½ï¿½ï¿½ ï¿½Ö¼ï¿½ ï¿½Ñ¹ï¿½ï¿½ï¿½ ï¿½Ñ¸ï¿½ï¿½ï¿½.
+					//			bOriginDraw = FALSE - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ¸ï¿½ï¿½ï¿½ ï¿½Ê´Â´ï¿½.
 					//
 					BOOL bDraw = m_bOriginDraw || ( pmtrlSpecular && pmtrlSpecular[dwThisAttribId].bEffUse );
 					if ( bDraw )
@@ -231,7 +231,7 @@ HRESULT DxSkinMesh::DrawMeshContainer ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshConta
 		m_pd3dDevice->SetVertexShaderConstant(0, &vConst, 1);
 		m_pd3dDevice->SetVertexShaderConstant(1, &vLightVector, 1);
 
-		//m_pd3dDevice->SetVertexShaderConstant(1, &vDir, 1);		// Å×½ºÆ® ¿ëÀÌ´Ù.
+		//m_pd3dDevice->SetVertexShaderConstant(1, &vDir, 1);		// ï¿½×½ï¿½Æ® ï¿½ï¿½ï¿½Ì´ï¿½.
 		
 		//D3DXMatrixTranspose( &matVP, &matProj);
 		D3DXMatrixMultiplyTranspose ( &matVP, &matView, &matProj );
@@ -241,7 +241,7 @@ HRESULT DxSkinMesh::DrawMeshContainer ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshConta
 		m_pd3dDevice->SetVertexShaderConstant(8, &vDiffuse, 1);
 		m_pd3dDevice->SetVertexShaderConstant(9, &D3DXVECTOR4(0.25f, 0.5f, 1.f, -1.f), 1);
 
-		//	Note : ½ºÆåÅ§·¯ Ä«¸Þ¶ó¿¡ °íÁ¤ À§ÇØ¼­
+		//	Note : ï¿½ï¿½ï¿½ï¿½Å§ï¿½ï¿½ Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø¼ï¿½
 		//
 		m_pd3dDevice->SetPixelShaderConstant ( 3, &D3DXVECTOR4(0.25f, 0.5f, 1.f, -1.f), 1 );
 		//vLightVector.x = 0.f;
@@ -274,8 +274,8 @@ HRESULT DxSkinMesh::DrawMeshContainer ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshConta
 			m_pd3dDevice->SetVertexShaderConstant(i*2+9, &vPointDiff, 1);
 		}
 
-		LPDIRECT3DVERTEXBUFFER8 pVB;
-        LPDIRECT3DINDEXBUFFER8 pIB;
+		LPDIRECT3DVERTEXBUFFER9 pVB;
+        LPDIRECT3DINDEXBUFFER9 pIB;
 
         if (pmcMesh->m_bUseSW)
         {
@@ -316,8 +316,8 @@ HRESULT DxSkinMesh::DrawMeshContainer ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshConta
 
 			DWORD dwThisAttribId = pBoneComb[ipattr].AttribId;
 
-			//	Note :	bOriginDraw = TRUE - Á¶°ÇÀÌ ¾È ¸Â´õ¶óµµ ÃÖ¼Ò ÇÑ¹øÀº »Ñ¸°´Ù.
-			//			bOriginDraw = FALSE - Á¶°ÇÀÌ ¾È ¸ÂÀ¸¸é »Ñ¸®Áö ¾Ê´Â´Ù.
+			//	Note :	bOriginDraw = TRUE - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Â´ï¿½ï¿½ï¿½ ï¿½Ö¼ï¿½ ï¿½Ñ¹ï¿½ï¿½ï¿½ ï¿½Ñ¸ï¿½ï¿½ï¿½.
+			//			bOriginDraw = FALSE - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ¸ï¿½ï¿½ï¿½ ï¿½Ê´Â´ï¿½.
 			//
 			BOOL bDraw = m_bOriginDraw || ( pmtrlSpecular && pmtrlSpecular[dwThisAttribId].bEffUse );
 			if ( bDraw )
@@ -508,7 +508,7 @@ HRESULT DxSkinMesh::DrawMeshContainer ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshConta
 
 	return S_OK;
 
-	//	Note : ID3DXMesh ·Î ·£´õ¸µÇÏ±â.
+	//	Note : ID3DXMesh ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½.
 	//
 _RETURN:
 	if ( pmcMesh->m_numBoneComb == 3 && pmcMesh->m_pBoneMatrix )
@@ -523,7 +523,7 @@ _RETURN:
 		}
 
 		matCombined._42 += m_fHeight;
-		m_matWorld = matCombined;		// ´Üµ¶ Eff ¿¡¼­ ¾²ÀÏ °ÍÀÌ´Ù.
+		m_matWorld = matCombined;		// ï¿½Üµï¿½ Eff ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ì´ï¿½.
 
 		hr = pd3dDevice->SetTransform ( D3DTS_WORLD, &matCombined );
 		if (FAILED(hr))	return hr;
@@ -547,7 +547,7 @@ _RETURN:
 	return S_OK;
 }
 
-HRESULT DxSkinMesh::RenderDefault ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshContainer *pmcMesh, int ipattr, DWORD dwThisAttribId,
+HRESULT DxSkinMesh::RenderDefault ( LPDIRECT3DDEVICE9 pd3dDevice, SMeshContainer *pmcMesh, int ipattr, DWORD dwThisAttribId,
 								   SMATERIAL_PIECE *pmtrlPiece, DXMATERIAL_CHAR_EFF* pmtrlSpecular )
 {
 	HRESULT	hr = S_OK;
@@ -573,9 +573,9 @@ HRESULT DxSkinMesh::RenderDefault ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshContainer
 		pd3dDevice->SetTextureStageState ( 0, D3DTSS_ALPHAOP,	D3DTOP_MODULATE );
 	}
 
-	if ( m_bLevel )			// ·¾Á¦°¡ µÈ´Ù¸é ÀÌ·¸°Ô ÇÏ´Â °ÍÀÌ ºÎÇÏ¸¦ ÁÙÀÌ°Ô ÇØ ÁØ´Ù.
+	if ( m_bLevel )			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½È´Ù¸ï¿½ ï¿½Ì·ï¿½ï¿½ï¿½ ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï¸ï¿½ ï¿½ï¿½ï¿½Ì°ï¿½ ï¿½ï¿½ ï¿½Ø´ï¿½.
 	{
-		LPDIRECT3DTEXTURE8 pTexture = NULL;
+		LPDIRECT3DTEXTURE9 pTexture = NULL;
 
 		if ( pmtrlPiece )
 		{
@@ -594,7 +594,7 @@ HRESULT DxSkinMesh::RenderDefault ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshContainer
 
 	pmcMesh->m_pMesh->DrawSubset ( ipattr );
 
-	if ( m_bLevel )			// ·¾Á¦°¡ µÈ´Ù¸é ÀÌ·¸°Ô ÇÏ´Â °ÍÀÌ ºÎÇÏ¸¦ ÁÙÀÌ°Ô ÇØ ÁØ´Ù.
+	if ( m_bLevel )			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½È´Ù¸ï¿½ ï¿½Ì·ï¿½ï¿½ï¿½ ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï¸ï¿½ ï¿½ï¿½ï¿½Ì°ï¿½ ï¿½ï¿½ ï¿½Ø´ï¿½.
 	{
 		pd3dDevice->SetTexture ( 1, NULL );
 	}
@@ -617,7 +617,7 @@ HRESULT DxSkinMesh::RenderDefault ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshContainer
 	return hr;
 }
 
-HRESULT DxSkinMesh::RenderVS ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshContainer *pmcMesh, LPD3DXBONECOMBINATION pBoneComb, int ipattr, 
+HRESULT DxSkinMesh::RenderVS ( LPDIRECT3DDEVICE9 pd3dDevice, SMeshContainer *pmcMesh, LPD3DXBONECOMBINATION pBoneComb, int ipattr, 
 							  DWORD dwThisAttribId, SMATERIAL_PIECE *pmtrlPiece, DXMATERIAL_CHAR_EFF* pmtrlSpecular )
 {
 	HRESULT	hr = S_OK;
@@ -682,13 +682,13 @@ HRESULT DxSkinMesh::UpdateFrames ( SFrame *pframeCur, D3DXMATRIX &matCur )
 {
 	HRESULT hr = S_OK;
 
-	//	Note : pframeCurÀÇ ¸ÞÆ®¸¯½º¸¦ °è»ê. matCombined = matRot * matParent * matTrans
+	//	Note : pframeCurï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½. matCombined = matRot * matParent * matTrans
 	//
 	//pframeCur->matCombined = matCur;
 	//D3DXMatrixMultiply ( &pframeCur->matCombined, &pframeCur->matRot, &matCur );
 	D3DXMatrixMultiply_MM( pframeCur->matCombined, pframeCur->matRot, matCur );
 
-	//	Note : ÀÚ½Ä ÇÁ·¹ÀÓÀÇ ¸ÞÆ®¸¯½º ¸ðµÎ °è»ê.
+	//	Note : ï¿½Ú½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 	//
 	SFrame *pframeChild = pframeCur->pframeFirstChild;
 	while ( pframeChild != NULL )
@@ -704,13 +704,13 @@ HRESULT DxSkinMesh::UpdateFrames ( SFrame *pframeCur, D3DXMATRIX &matCur )
 }
 
 
-HRESULT DxSkinMesh::DrawFrames ( LPDIRECT3DDEVICE8 pd3dDevice, SFrame *pframeCur, UINT &cTriangles )
+HRESULT DxSkinMesh::DrawFrames ( LPDIRECT3DDEVICE9 pd3dDevice, SFrame *pframeCur, UINT &cTriangles )
 {
 	HRESULT hr = S_OK;
 	SMeshContainer *pmcMesh;
 	SFrame *pframeChild;
 
-	//	Note : Æ®·»½ºÆû ¼³Á¤.
+	//	Note : Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	if ( pframeCur->pmcMesh != NULL )
 	{
@@ -718,7 +718,7 @@ HRESULT DxSkinMesh::DrawFrames ( LPDIRECT3DDEVICE8 pd3dDevice, SFrame *pframeCur
 		if (FAILED(hr))	return hr;
 	}
 
-	//	Note : ¸Þ½¬ ±×¸®±â.
+	//	Note : ï¿½Þ½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½.
 	//
 	pmcMesh = pframeCur->pmcMesh;
 	while ( pmcMesh != NULL )
@@ -732,7 +732,7 @@ HRESULT DxSkinMesh::DrawFrames ( LPDIRECT3DDEVICE8 pd3dDevice, SFrame *pframeCur
 		pmcMesh = pmcMesh->m_pmcNext;
 	}
 
-	//	Note : ÀÚ½Ä ÇÁ·¹ÀÓ ±×¸®±â.
+	//	Note : ï¿½Ú½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½.
 	//
 	pframeChild = pframeCur->pframeFirstChild;
 	while ( pframeChild != NULL )
@@ -747,11 +747,11 @@ HRESULT DxSkinMesh::DrawFrames ( LPDIRECT3DDEVICE8 pd3dDevice, SFrame *pframeCur
 	return S_OK;
 }
 
-HRESULT DxSkinMesh::DrawMeshClobal ( LPDIRECT3DDEVICE8 pd3dDevice, UINT &cTriangles )
+HRESULT DxSkinMesh::DrawMeshClobal ( LPDIRECT3DDEVICE9 pd3dDevice, UINT &cTriangles )
 {
 	HRESULT hr;
 
-	//	Note : ¸Þ½¬ ±×¸®±â.
+	//	Note : ï¿½Þ½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½.
 	//
 	SMeshContainer *pmcMesh = pMeshGlobalHead;
 	while ( pmcMesh != NULL )
@@ -766,12 +766,12 @@ HRESULT DxSkinMesh::DrawMeshClobal ( LPDIRECT3DDEVICE8 pd3dDevice, UINT &cTriang
 	return S_OK;
 }
 
-HRESULT DxSkinMesh::UpdateEffMesh ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshContainer* pmcMesh )
+HRESULT DxSkinMesh::UpdateEffMesh ( LPDIRECT3DDEVICE9 pd3dDevice, SMeshContainer* pmcMesh )
 {
 	HRESULT hr = S_OK;
 	if ( !pmcMesh->m_pSkinMesh )	return E_FAIL;
 
-	//	Note : ÇöÁ¦ ÀÌÆåÆ® ¸Þ½¬°¡ ÁØºñµÇ¾ú´Â°¡ °Ë»çÈÄ »ý¼º.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½Øºï¿½Ç¾ï¿½ï¿½Â°ï¿½ ï¿½Ë»ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	if ( !pmcMesh->IsEffMesh() )
 	{

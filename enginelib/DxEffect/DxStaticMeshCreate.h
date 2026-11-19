@@ -1,6 +1,6 @@
 // DxStaticMeshCreate.h: interface for the CCollision class.
 //
-//	class DxStaticMesh : FrameMesh µ¥ÀÌÅ¸¸¦ ³ÖÀ¸¸é AABB Æ®¸® Àû¿ëÇÏ°í Octree·Î ¼¼¼¼ÇÏ°í ³ª´«´Ù.
+//	class DxStaticMesh : FrameMesh ï¿½ï¿½ï¿½ï¿½Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ AABB Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ Octreeï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 //
 //	Name : Sung-Hwan Han
 //	Begin :2004/10/21
@@ -24,12 +24,12 @@ protected:
 	OBJAABBNode* m_pMeshAlphaTree;
 
 public:
-	void MakeAABBOCTree ( LPDIRECT3DDEVICE8 pd3dDevice, DxFrameMesh* pFrameMesh );
+	void MakeAABBOCTree ( LPDIRECT3DDEVICE9 pd3dDevice, DxFrameMesh* pFrameMesh );
 
 public:
 	void FrameMove ( float fTime, float fElapsedTime );
-	void Render( LPDIRECT3DDEVICE8 pd3dDevice, CLIPVOLUME *pCV );
-	void RenderAlpha( LPDIRECT3DDEVICE8 pd3dDevice, CLIPVOLUME *pCV );
+	void Render( LPDIRECT3DDEVICE9 pd3dDevice, CLIPVOLUME *pCV );
+	void RenderAlpha( LPDIRECT3DDEVICE9 pd3dDevice, CLIPVOLUME *pCV );
 
 protected:
 	void CleanUp();
@@ -60,5 +60,5 @@ namespace NSSTATICMESH
 	typedef std::map<std::string,STATICDATA*>			MAPSTATICDATA;
 	typedef std::map<std::string,STATICDATA*>::iterator	MAPSTATICDATA_ITER;
 
-	void ExportMaterialList ( LPDIRECT3DDEVICE8 pd3dDevice, DxFrameMesh* pFrameMesh, DxStaticMesh* pStaticMesh );
+	void ExportMaterialList ( LPDIRECT3DDEVICE9 pd3dDevice, DxFrameMesh* pFrameMesh, DxStaticMesh* pStaticMesh );
 };

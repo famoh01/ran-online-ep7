@@ -39,22 +39,22 @@ void DxSBEMesh::CleanUp()
 	SAFE_DELETE ( m_pAABBCollision );
 }
 
-void DxSBEMesh::MakeStaticMesh ( LPDIRECT3DDEVICE8 pd3dDevice )
+void DxSBEMesh::MakeStaticMesh ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	//NSSTATICMESH::ExportXOPTtoSBE ( pd3dDevice, &m_sFrameMesh, &m_sStaticMesh, &m_sBspTree );
 
-	// Note : AABB_Octree »ý¼º
+	// Note : AABB_Octree ï¿½ï¿½ï¿½ï¿½
 	SAFE_DELETE ( m_pStaticMesh );
 	m_pStaticMesh = new DxStaticMesh;
 	m_pStaticMesh->MakeAABBOCTree ( pd3dDevice, m_pFrameMesh );
 
-	// Note : AABB_COLLISION »ý¼º
+	// Note : AABB_COLLISION ï¿½ï¿½ï¿½ï¿½
 	SAFE_DELETE ( m_pAABBCollision );
 	m_pAABBCollision = new DxAABBCollision;
 	m_pAABBCollision->MakeAABBCollision( m_pFrameMesh );
 }
 
-void DxSBEMesh::Render ( LPDIRECT3DDEVICE8 pd3dDevice, CLIPVOLUME *pCV )
+void DxSBEMesh::Render ( LPDIRECT3DDEVICE9 pd3dDevice, CLIPVOLUME *pCV )
 {
 	if ( m_pStaticMesh )	m_pStaticMesh->Render( pd3dDevice, pCV );
 }

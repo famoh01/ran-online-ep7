@@ -19,7 +19,7 @@ static char THIS_FILE[] = __FILE__;
 const DWORD DxEffectKosmo::KOSMOSTRIP::FVF = D3DFVF_XYZ|D3DFVF_DIFFUSE|D3DFVF_TEX1;
 const DWORD DxEffectKosmo::TYPEID = DEF_EFFECT_CARTOON;
 const DWORD	DxEffectKosmo::VERSION = 0x00000100;
-const char DxEffectKosmo::NAME[] = "[3010]_[ ¸¶¹ý È¿°ú ]";
+const char DxEffectKosmo::NAME[] = "[3010]_[ ï¿½ï¿½ï¿½ï¿½ È¿ï¿½ï¿½ ]";
 const DWORD DxEffectKosmo::FLAG = NULL;
 
 void DxEffectKosmo::GetProperty ( PBYTE &pProp, DWORD &dwSize, DWORD &dwVer )
@@ -72,7 +72,7 @@ DxEffectKosmo::~DxEffectKosmo()
 	SAFE_RELEASE ( m_pIB );
 }
 
-HRESULT DxEffectKosmo::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectKosmo::CreateDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT			hr;
 	LPD3DXBUFFER	pCode = NULL; 
@@ -101,7 +101,7 @@ HRESULT DxEffectKosmo::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	{
 		pd3dDevice->BeginStateBlock();
 
-		//	Note : SetTextureStageState() ¼±¾ð
+		//	Note : SetTextureStageState() ï¿½ï¿½ï¿½ï¿½
 		//
 		pd3dDevice->SetRenderState ( D3DRS_ZWRITEENABLE ,		FALSE );
 		pd3dDevice->SetRenderState ( D3DRS_ALPHABLENDENABLE,	TRUE );
@@ -123,7 +123,7 @@ HRESULT DxEffectKosmo::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffectKosmo::ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectKosmo::ReleaseDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	pd3dDevice->DeleteVertexShader ( m_dwEffect );
 
@@ -141,7 +141,7 @@ HRESULT DxEffectKosmo::ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffectKosmo::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectKosmo::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr = S_OK;
 	/*
@@ -163,7 +163,7 @@ HRESULT DxEffectKosmo::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVIC
 		}
 	}
 
-	//	Note : ÀÚ½Ä ÇÁ·¹ÀÓ¿¡ ºÙÀÌ±â.
+	//	Note : ï¿½Ú½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½ ï¿½ï¿½ï¿½Ì±ï¿½.
 	//
 	pframeChild = pframeCur->pframeFirstChild;
 	while ( pframeChild != NULL )
@@ -179,7 +179,7 @@ HRESULT DxEffectKosmo::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVIC
 	return hr;
 }
 
-HRESULT DxEffectKosmo::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectKosmo::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	if ( !pFrame ) return S_OK;
 
@@ -200,16 +200,16 @@ HRESULT DxEffectKosmo::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dD
 }
 
 
-HRESULT DxEffectKosmo::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectKosmo::InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
-	//	Note : ÅØ½ºÃÄÀÇ ÀÐ±â ¿À·ù´Â ¹«½ÃÇÑ´Ù.
+	//	Note : ï¿½Ø½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 	//
 	TextureManager::LoadTexture ( m_szTexture, pd3dDevice, m_pddsTexture, 0, 0 );
 
 	if ( !m_pddsTexture )
 	{
 		char szMsg[256];
-		sprintf ( szMsg, "ÀÌ¹ÌÁö ÆÄÀÏ '%s' ÀÐ±â¿¡ ½ÇÆÐ", m_szTexture );
+		sprintf ( szMsg, "ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ '%s' ï¿½Ð±â¿¡ ï¿½ï¿½ï¿½ï¿½", m_szTexture );
 		MessageBox ( NULL, szMsg, "ERROR", MB_OK );
 	}
 
@@ -218,7 +218,7 @@ HRESULT DxEffectKosmo::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
 
 HRESULT DxEffectKosmo::DeleteDeviceObjects ()
 {
-	//	Note : ÀÌÀü ÅØ½ºÃÄ°¡ ·ÎµåµÇ¾î ÀÖÀ» °æ¿ì Á¦°Å.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½ï¿½Ä°ï¿½ ï¿½Îµï¿½Ç¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	if ( m_pddsTexture )
 		TextureManager::ReleaseTexture ( m_pddsTexture );
@@ -234,7 +234,7 @@ HRESULT DxEffectKosmo::FrameMove ( float fTime, float fElapsedTime )
 	return S_OK;
 }
 
-HRESULT DxEffectKosmo::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectKosmo::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr = S_OK;
 
@@ -253,7 +253,7 @@ HRESULT DxEffectKosmo::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 		pd3dDevice->SetVertexShaderConstant( VSC_CUSTOM+2, &constNums, 1);
 
 
-		//	Note : SetVertexShader¿¡ World¿Í WorldViewProjection Çà·Ä Áý¾î ³Ö±â
+		//	Note : SetVertexShaderï¿½ï¿½ Worldï¿½ï¿½ WorldViewProjection ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ö±ï¿½
 		//
 		D3DXMATRIX matWorld, matView, matProj, matWVP;
 
@@ -272,7 +272,7 @@ HRESULT DxEffectKosmo::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 
 
 /*
-		//	Note : ¿òÁ÷ÀÌ°Ô ¸¸µéÀÚ.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½Ì°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 		//
 		KOSMOFACE*	pVertices;
 		m_pVB->Lock ( 0, 0, (BYTE**)&pVertices, 0 );
@@ -281,7 +281,7 @@ HRESULT DxEffectKosmo::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 		*/
 
 
-		//	Note : ¼±À» ¿òÁ÷ÀÌÀÚ.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 		//
 		if ( m_iTemp == 0 )
 		{
@@ -293,7 +293,7 @@ HRESULT DxEffectKosmo::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 
 
 		
-		//	Note : Å¸¿øÀ» ¿òÁ÷ÀÌÀÚ.
+		//	Note : Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 		//
 		else if ( m_iTemp == 1 )
 		{
@@ -316,7 +316,7 @@ HRESULT DxEffectKosmo::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 		}
 
 		
-		//	Note : È¸¿À¸®¸¦ ¿òÁ÷ÀÌÀÚ.
+		//	Note : È¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 		//
 		else if ( m_iTemp == 2 )
 		{
@@ -339,16 +339,16 @@ HRESULT DxEffectKosmo::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 
 
 
-		//	Note : ÀÌÀü »óÅÂ ¹é¾÷.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 		//
 		pd3dDevice->CaptureStateBlock ( m_dwSavedStateBlock );
 
-		//	Note : ·£´õ¸µ »óÅÂ Á¶Á¤.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 		//
 		pd3dDevice->ApplyStateBlock ( m_dwEffectStateBlock );
 
 
-		//	Note : ¼ÒÇÁÆ®¿þ¾î ¹öÅØ½º ÇÁ·Î¼¼½Ì
+		//	Note : ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½
 		//
 		if ( DxEffectMan::Instance.GetUseSwShader() )
 			pd3dDevice->SetRenderState( D3DRS_SOFTWAREVERTEXPROCESSING, TRUE );
@@ -356,7 +356,7 @@ HRESULT DxEffectKosmo::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 
 		pd3dDevice->SetTexture ( 0, m_pddsTexture );
 
-		//	Note : LocalMesh, OctreeMesh µÑ Áß ÇÏ³ª¸¦ °í¸¥´Ù.
+		//	Note : LocalMesh, OctreeMesh ï¿½ï¿½ ï¿½ï¿½ ï¿½Ï³ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 		//
 		pd3dDevice->SetIndices ( m_pIB, 0 );
 
@@ -367,12 +367,12 @@ HRESULT DxEffectKosmo::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 
 		pd3dDevice->DrawIndexedPrimitive ( D3DPT_TRIANGLELIST, 0, dwVerts, 0, dwFaces );
 
-		//	Note : ¼ÒÇÁÆ®¿þ¾î ¹öÅØ½º ÇÁ·Î¼¼½Ì
+		//	Note : ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½
 		//
 		if ( DxEffectMan::Instance.GetUseSwShader() )
 			pd3dDevice->SetRenderState( D3DRS_SOFTWAREVERTEXPROCESSING, FALSE );
 
-		//	Note : ÀÌÀü»óÅÂ·Î º¹¿ø.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ ï¿½ï¿½ï¿½ï¿½.
 		//
 		pd3dDevice->ApplyStateBlock ( m_dwSavedStateBlock );
 
@@ -417,9 +417,9 @@ HRESULT	DxEffectKosmo::GetThisScale ( DWORD Data, float fScale )
 	return S_OK;
 }
 
-HRESULT DxEffectKosmo::AddKosmoVertex ( LPDIRECT3DDEVICE8 pd3dDevice, D3DXVECTOR3 Pos, float fSize )
+HRESULT DxEffectKosmo::AddKosmoVertex ( LPDIRECT3DDEVICE9 pd3dDevice, D3DXVECTOR3 Pos, float fSize )
 {
-	m_dwVertex++;	// Á¡ÀÌ 1¾¿ ´õÇØ Áø´Ù.
+	m_dwVertex++;	// ï¿½ï¿½ï¿½ï¿½ 1ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 
 	VERTEX*		m_pTempVertex;
 	m_pTempVertex = new VERTEX[m_dwVertex];
@@ -430,7 +430,7 @@ HRESULT DxEffectKosmo::AddKosmoVertex ( LPDIRECT3DDEVICE8 pd3dDevice, D3DXVECTOR
 		SAFE_DELETE_ARRAY ( m_pBaseVertex );
 	}
 
-	//	Note : »õ·Î¿î Á¡ Ãß°¡ ÀÛ¾÷
+	//	Note : ï¿½ï¿½ï¿½Î¿ï¿½ ï¿½ï¿½ ï¿½ß°ï¿½ ï¿½Û¾ï¿½
 	//
 	m_pTempVertex[m_dwVertex-1].Pos = Pos;
 	m_pTempVertex[m_dwVertex-1].fSize = fSize;
@@ -448,7 +448,7 @@ HRESULT DxEffectKosmo::AddKosmoVertex ( LPDIRECT3DDEVICE8 pd3dDevice, D3DXVECTOR
 
 
 
-HRESULT DxEffectKosmo::MakeMagLine ( LPDIRECT3DDEVICE8 pd3dDevice, D3DXVECTOR3 v1, D3DXVECTOR3 v2 )
+HRESULT DxEffectKosmo::MakeMagLine ( LPDIRECT3DDEVICE9 pd3dDevice, D3DXVECTOR3 v1, D3DXVECTOR3 v2 )
 {
 	SAFE_DELETE_ARRAY ( m_pBaseVertex );
 
@@ -552,7 +552,7 @@ HRESULT DxEffectKosmo::LineMove ( KOSMOFACE* pVertices, VERTEX* pBaseVertices, D
 
 
 
-HRESULT DxEffectKosmo::MakeMagCircle ( LPDIRECT3DDEVICE8 pd3dDevice, D3DXVECTOR3 Pos )
+HRESULT DxEffectKosmo::MakeMagCircle ( LPDIRECT3DDEVICE9 pd3dDevice, D3DXVECTOR3 Pos )
 {
 	SAFE_DELETE_ARRAY ( m_pBaseVertex );
 
@@ -629,7 +629,7 @@ void DxEffectKosmo::LineDuffuse	( KOSMOFACE* &pBuff, D3DXVECTOR3 v1, D3DXVECTOR3
 
 
 
-HRESULT DxEffectKosmo::MakeMagCyclone ( LPDIRECT3DDEVICE8 pd3dDevice, D3DXVECTOR3 v1, D3DXVECTOR3 v2 )
+HRESULT DxEffectKosmo::MakeMagCyclone ( LPDIRECT3DDEVICE9 pd3dDevice, D3DXVECTOR3 v1, D3DXVECTOR3 v2 )
 {
 	SAFE_DELETE_ARRAY ( m_pBaseVertex );
 
@@ -660,7 +660,7 @@ HRESULT DxEffectKosmo::MakeMagCyclone ( LPDIRECT3DDEVICE8 pd3dDevice, D3DXVECTOR
 
 
 
-HRESULT DxEffectKosmo::MakeMagLighting ( LPDIRECT3DDEVICE8 pd3dDevice, D3DXVECTOR3 v1, D3DXVECTOR3 v2 )
+HRESULT DxEffectKosmo::MakeMagLighting ( LPDIRECT3DDEVICE9 pd3dDevice, D3DXVECTOR3 v1, D3DXVECTOR3 v2 )
 {
 	SAFE_DELETE_ARRAY ( m_pBaseVertex );
 
@@ -685,13 +685,13 @@ HRESULT DxEffectKosmo::MakeMagLighting ( LPDIRECT3DDEVICE8 pd3dDevice, D3DXVECTO
 
 
 
-HRESULT DxEffectKosmo::AddMeshStrip ( LPDIRECT3DDEVICE8 pd3dDevice, DWORD Faces )
+HRESULT DxEffectKosmo::AddMeshStrip ( LPDIRECT3DDEVICE9 pd3dDevice, DWORD Faces )
 {
 	HRESULT hr;
 
 	if ( m_pBaseVertex )
 	{
-		//	Note : ¹öÅØ½º ¹öÆÛ¸¦ ¸¸µéÀÚ.
+		//	Note : ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½Û¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 		//
 		SAFE_RELEASE ( m_pVB );
 		hr = pd3dDevice->CreateVertexBuffer( Faces *2* sizeof(KOSMOSTRIP),
@@ -708,7 +708,7 @@ HRESULT DxEffectKosmo::AddMeshStrip ( LPDIRECT3DDEVICE8 pd3dDevice, DWORD Faces 
 
 
 
-		//	Note : ÀÎµ¦½º ¹öÆÛ¸¦ ¾ø¾Ö ¹ö¸®ÀÚ ¤»¤»
+		//	Note : ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Û¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		//
 		SAFE_RELEASE ( m_pIB );
 	}
@@ -739,13 +739,13 @@ void DxEffectKosmo::PushStrip ( KOSMOSTRIP* &pBuff, D3DXVECTOR3 Pos, float Size,
 
 
 
-HRESULT DxEffectKosmo::AddKosmoMesh ( LPDIRECT3DDEVICE8 pd3dDevice, DWORD Faces )
+HRESULT DxEffectKosmo::AddKosmoMesh ( LPDIRECT3DDEVICE9 pd3dDevice, DWORD Faces )
 {
 	HRESULT hr;
 
 	if ( m_pBaseVertex )
 	{
-		//	Note : ¹öÅØ½º ¹öÆÛ¸¦ ¸¸µéÀÚ.
+		//	Note : ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½Û¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 		//
 		SAFE_RELEASE ( m_pVB );
 		hr = pd3dDevice->CreateVertexBuffer( Faces *4* sizeof(KOSMOFACE),
@@ -760,11 +760,11 @@ HRESULT DxEffectKosmo::AddKosmoMesh ( LPDIRECT3DDEVICE8 pd3dDevice, DWORD Faces 
 
 
 
-		//	Note : ÀÎµ¦½º ¹öÆÛ¸¦ ¸¸µéÀÚ.
+		//	Note : ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Û¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 		//
 		SAFE_RELEASE ( m_pIB );
 
-		//	Note :  1°³ÀÇ ÆÄÆ¼Å¬¿¡¼­ 2°³ÀÇ »ï°¢ ÇüÀ» ¸¸µç´Ù.
+		//	Note :  1ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ¼Å¬ï¿½ï¿½ï¿½ï¿½ 2ï¿½ï¿½ï¿½ï¿½ ï¿½ï°¢ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½.
 		//
 		hr = pd3dDevice->CreateIndexBuffer( Faces *6* sizeof(WORD), D3DUSAGE_WRITEONLY, D3DFMT_INDEX16, D3DPOOL_MANAGED, &m_pIB );
 		if (FAILED(hr))		return S_OK;
@@ -898,10 +898,10 @@ void DxEffectKosmo::PushLine2 ( KOSMOFACE* &pBuff, D3DXVECTOR3 inFromPos, D3DXVE
 }
 
 
-HRESULT DxEffectKosmo::CreateMeshKosmo ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectKosmo::CreateMeshKosmo ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr;
-	//	Note :  1°³ÀÇ ÆÄÆ¼Å¬¿¡¼­ 4°³ÀÇ Á¡À» »ý¼º ÇÑ´Ù.
+	//	Note :  1ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ¼Å¬ï¿½ï¿½ï¿½ï¿½ 4ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ´ï¿½.
 	//
 	SAFE_RELEASE ( m_pVB );
     hr = pd3dDevice->CreateVertexBuffer( m_dwVertex *4* sizeof(KOSMOFACE),
@@ -909,12 +909,12 @@ HRESULT DxEffectKosmo::CreateMeshKosmo ( LPDIRECT3DDEVICE8 pd3dDevice )
 	if (FAILED(hr))
 		return hr;
 
-	//	Note : Áß¿ä ¼ÂÆÃ
+	//	Note : ï¿½ß¿ï¿½ ï¿½ï¿½ï¿½ï¿½
 	//
 	FillVertexBuffer();
 
 
-	//	Note :  1°³ÀÇ ÆÄÆ¼Å¬¿¡¼­ 2°³ÀÇ »ï°¢ ÇüÀ» ¸¸µç´Ù.
+	//	Note :  1ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ¼Å¬ï¿½ï¿½ï¿½ï¿½ 2ï¿½ï¿½ï¿½ï¿½ ï¿½ï°¢ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½.
 	//
 	SAFE_RELEASE ( m_pIB );
 	hr = pd3dDevice->CreateIndexBuffer( m_dwVertex *6* sizeof(WORD), D3DUSAGE_WRITEONLY, D3DFMT_INDEX16, D3DPOOL_MANAGED, &m_pIB );
@@ -1022,7 +1022,7 @@ HRESULT DxEffectKosmo::FillVertexBuffer( void )
 
 					if(f!=0.0f)
 					{
-						PushLine(pBuff,pos0,pos1,0.9f,0.9f);	// z,w Å©¸é µÎ²®°Ô ÀÛÀ¸¸é ¾ã°Ô ³ª¿Â´Ù.
+						PushLine(pBuff,pos0,pos1,0.9f,0.9f);	// z,w Å©ï¿½ï¿½ ï¿½Î²ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â´ï¿½.
 
 						i++;
 					}

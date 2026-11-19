@@ -21,7 +21,7 @@ static char THIS_FILE[] = __FILE__;
 const DWORD DxEffectBlurC::BLURTEX::FVF = D3DFVF_XYZ|D3DFVF_DIFFUSE|D3DFVF_TEX1;
 const DWORD DxEffectBlurC::TYPEID = DEF_EFFECT_BLURCURVE;
 const DWORD	DxEffectBlurC::VERSION = 0x00000100;
-const char DxEffectBlurC::NAME[] = "[3001]_[ ÀÜ»óÈ¿°ú (°î¼±) ]";
+const char DxEffectBlurC::NAME[] = "[3001]_[ ï¿½Ü»ï¿½È¿ï¿½ï¿½ (ï¿½î¼±) ]";
 const DWORD DxEffectBlurC::FLAG = NULL;
 
 void DxEffectBlurC::GetProperty ( PBYTE &pProp, DWORD &dwSize, DWORD &dwVer )
@@ -77,13 +77,13 @@ DxEffectBlurC::~DxEffectBlurC()
 	CleanUp ();
 }
 
-HRESULT DxEffectBlurC::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectBlurC::CreateDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	for( UINT which=0; which<2; which++ )
 	{
 		pd3dDevice->BeginStateBlock();
 
-		//	Note : SetRenderState() ¼±¾ð
+		//	Note : SetRenderState() ï¿½ï¿½ï¿½ï¿½
 		//
 		pd3dDevice->SetRenderState ( D3DRS_CULLMODE, D3DCULL_NONE );
 		pd3dDevice->SetRenderState ( D3DRS_ZWRITEENABLE, FALSE );
@@ -92,7 +92,7 @@ HRESULT DxEffectBlurC::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 		pd3dDevice->SetRenderState ( D3DRS_SRCBLEND,	D3DBLEND_SRCALPHA );
 		pd3dDevice->SetRenderState ( D3DRS_DESTBLEND,	D3DBLEND_ONE );
 
-		//	Note : SetTextureStageState() ¼±¾ð
+		//	Note : SetTextureStageState() ï¿½ï¿½ï¿½ï¿½
 		//
 		pd3dDevice->SetTextureStageState ( 0, D3DTSS_COLOROP,	D3DTOP_SELECTARG2 );
 
@@ -103,7 +103,7 @@ HRESULT DxEffectBlurC::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffectBlurC::ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectBlurC::ReleaseDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	if ( pd3dDevice )
 	{
@@ -119,7 +119,7 @@ HRESULT DxEffectBlurC::ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffectBlurC::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectBlurC::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr = S_OK;
 	DxMeshes *pmsMeshs;
@@ -142,7 +142,7 @@ HRESULT DxEffectBlurC::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVIC
 		}
 	}
 
-	//	Note : ÀÚ½Ä ÇÁ·¹ÀÓ¿¡ ºÙÀÌ±â.
+	//	Note : ï¿½Ú½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½ ï¿½ï¿½ï¿½Ì±ï¿½.
 	//
 	pframeChild = pframeCur->pframeFirstChild;
 	while ( pframeChild != NULL )
@@ -157,7 +157,7 @@ HRESULT DxEffectBlurC::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVIC
 	return hr;
 }
 
-HRESULT DxEffectBlurC::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectBlurC::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	if ( !pFrame ) return S_OK;
 
@@ -176,9 +176,9 @@ HRESULT DxEffectBlurC::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dD
 }
 
 
-HRESULT DxEffectBlurC::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectBlurC::InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
-	//	Note : ÅØ½ºÃÄÀÇ ÀÐ±â ¿À·ù´Â ¹«½ÃÇÑ´Ù.
+	//	Note : ï¿½Ø½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 	//
 	if ( !m_pddsTexture )
 		TextureManager::LoadTexture ( m_szTexture, pd3dDevice, m_pddsTexture, 0, 0 );
@@ -186,7 +186,7 @@ HRESULT DxEffectBlurC::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
 	if ( !m_pddsTexture )
 	{
 		char szMsg[256];
-		sprintf ( szMsg, "ÀÌ¹ÌÁö ÆÄÀÏ '%s' ÀÐ±â¿¡ ½ÇÆÐ", m_szTexture );
+		sprintf ( szMsg, "ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ '%s' ï¿½Ð±â¿¡ ï¿½ï¿½ï¿½ï¿½", m_szTexture );
 		MessageBox ( NULL, szMsg, "ERROR", MB_OK );
 	}
 
@@ -197,7 +197,7 @@ HRESULT DxEffectBlurC::DeleteDeviceObjects ()
 {
 	SAFE_RELEASE ( m_pVB );
 
-	//	Note : ÀÌÀü ÅØ½ºÃÄ°¡ ·ÎµåµÇ¾î ÀÖÀ» °æ¿ì Á¦°Å.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½ï¿½Ä°ï¿½ ï¿½Îµï¿½Ç¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	if ( m_pddsTexture )
 		TextureManager::ReleaseTexture ( m_pddsTexture );
@@ -219,21 +219,21 @@ HRESULT DxEffectBlurC::FrameMove ( float fTime, float fElapsedTime )
 	return S_OK;
 }
 
-HRESULT DxEffectBlurC::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectBlurC::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr = S_OK;
 	DxMeshes *pmsMeshs;
 
 
-	//	Note : Render ( ¿øº» )
+	//	Note : Render ( ï¿½ï¿½ï¿½ï¿½ )
 	//
 	if ( m_bTestPlay )
 	{
-		//	Note : Render ( ¿øº» )
+		//	Note : Render ( ï¿½ï¿½ï¿½ï¿½ )
 		//
 		if ( pframeCur->pmsMeshs != NULL )
 		{
-			//	Note : Æ®·»½ºÆû ¼³Á¤.
+			//	Note : Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 			//
 			D3DXMATRIX	matWorld, matTran, matRota, matRotaX;
 
@@ -246,13 +246,13 @@ HRESULT DxEffectBlurC::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 			D3DXMatrixMultiply ( &(pframeCur->matCombined), &(pframeCur->matCombined), &matRota );
 			D3DXMatrixMultiply ( &(pframeCur->matCombined), &(pframeCur->matCombined), &matRotaX );
 
-			matTestWorld = pframeCur->matCombined;		// Test ÀÜ»ó¶§ ¾²ÀÌ±â À§ÇØ¼­ 
+			matTestWorld = pframeCur->matCombined;		// Test ï¿½Ü»ï¿½ ï¿½ï¿½ï¿½Ì±ï¿½ ï¿½ï¿½ï¿½Ø¼ï¿½ 
 
 			hr = pd3dDevice->SetTransform ( D3DTS_WORLD, &pframeCur->matCombined );
 			if (FAILED(hr))
 				return hr;
 
-			//	Note : ¸Þ½¬ ±×¸®±â.
+			//	Note : ï¿½Þ½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½.
 			//
 			pmsMeshs = pframeCur->pmsMeshs;
 			while ( pmsMeshs != NULL )
@@ -269,11 +269,11 @@ HRESULT DxEffectBlurC::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 		}
 	}
 
-	//	Note : Render ( ÀÜ»ó )
+	//	Note : Render ( ï¿½Ü»ï¿½ )
 	//
 	if ( m_pVB )
 	{
-		//	Note : SetRenderState() ¼±¾ð
+		//	Note : SetRenderState() ï¿½ï¿½ï¿½ï¿½
 		//
 		D3DXMATRIX matIdentity, matWorld;
 		D3DXMatrixIdentity( &matIdentity );
@@ -295,7 +295,7 @@ HRESULT DxEffectBlurC::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 		dwFaces = (m_dwFaces*2);
 
 
-		//	Note : Shader »ó¼ö ¼±¾ð
+		//	Note : Shader ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		//
 
 		if ( m_fTime > 0.05f )
@@ -308,7 +308,7 @@ HRESULT DxEffectBlurC::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 			else
 				iTempBlurAdd = m_iBlurAdd;
 
-			//	Note : ¾ËÆÄ »©¾ß ÇÒ °ªÀ» ÁöÁ¤
+			//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			//
 			int FirstAlpha1 = ((m_vColorUP&0xff000000)>>24);
 			int TempUp = (FirstAlpha1 - m_iColorUP) / (dwFaces/2-2);
@@ -317,7 +317,7 @@ HRESULT DxEffectBlurC::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 			TempUp /= iTempBlurAdd-1;
 			TempDown /= iTempBlurAdd-1;
 
-			//	Note : Ä®¿¡ ºÙ¾î ÀÖ´Â ÀÜ»ó ¸¸µé±â.
+			//	Note : Ä®ï¿½ï¿½ ï¿½Ù¾ï¿½ ï¿½Ö´ï¿½ ï¿½Ü»ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½.
 			//
 			int FirstAlpha11 = ((m_pFirstBlur[2].d&0xff000000)>>24);
 			DWORD Sum = (m_pFirstBlur[2].d&0xffffff);
@@ -344,8 +344,8 @@ HRESULT DxEffectBlurC::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 			VertexFirst = pVertex;
 
 
-			//	Note : µðÇ»Áî °ªÀ» ½½½½ »©ÁØ´Ù.
-			//			dwFaces/2  -> ÀÌ°Ç ¾ËÆÄ°ª Àß ³ª´©¾î ÁØ´Ù.
+			//	Note : ï¿½ï¿½Ç»ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø´ï¿½.
+			//			dwFaces/2  -> ï¿½Ì°ï¿½ ï¿½ï¿½ï¿½Ä°ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ø´ï¿½.
 			//
 			for( DWORD i=0; i<dwVerts/2; i++ )
 			{
@@ -378,7 +378,7 @@ HRESULT DxEffectBlurC::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 				D3DXVECTOR3	vTempUp;
 				D3DXVECTOR3	vTempDown;
 
-				// Vertex ¸¦ World ÁÂÇ¥·Î º¯È¯
+				// Vertex ï¿½ï¿½ World ï¿½ï¿½Ç¥ï¿½ï¿½ ï¿½ï¿½È¯
 				D3DXVec3TransformCoord ( &vTempUp, &m_vBlurStart, &matTestWorld );
 				D3DXVec3TransformCoord ( &vTempDown, &m_vBlurEnd, &matTestWorld );
 
@@ -388,17 +388,17 @@ HRESULT DxEffectBlurC::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 				pVertex = VertexFirst;
 
 
-				//	Note : »õ·Î »ý±â´Â Á¡ÀÌ ¹öÅØ½º ¹öÆÛÀÇ Á¦ÀÏ ³¡À» ³Ñ¾î°¬À»¶§ ÀÌ°ÍÀÌ ¹ß»ýÇÑ´Ù.
+				//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ¾î°¬ï¿½ï¿½ï¿½ï¿½ ï¿½Ì°ï¿½ï¿½ï¿½ ï¿½ß»ï¿½ï¿½Ñ´ï¿½.
 				//			
 				if( m_dwCount >= dwFaces )	
 				{
-					//	Note : Ã³À½ 2°³ Á¡ÀÇ À§Ä¡¿Í µðÇ»Áî°ªÀº
-					//			¸¶Áö¸·ÀÇ 2°³ Á¡ÀÇ À§Ä¡¿Í µðÇ»Áî°ª°ú °°¾Æ¾ß ÇÑ´Ù.
+					//	Note : Ã³ï¿½ï¿½ 2ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½Ç»ï¿½î°ªï¿½ï¿½
+					//			ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 2ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½Ç»ï¿½î°ªï¿½ï¿½ ï¿½ï¿½ï¿½Æ¾ï¿½ ï¿½Ñ´ï¿½.
 					//
 					if( m_vBlurTexNow )
 						pVertex = m_vBlurTexNow;
 
-					//	Note : ÀÜ»óÀ» »ç¿ë ¾È ÇÏ¸é »õ·Î¿î Á¡À» »ý¼º ¾ÈÇÑ´Ù.
+					//	Note : ï¿½Ü»ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ï¸ï¿½ ï¿½ï¿½ï¿½Î¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ñ´ï¿½.
 					//
 					if ( m_bUse )
 					{
@@ -427,7 +427,7 @@ HRESULT DxEffectBlurC::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 				
 
 
-				//	Note : °è¼ÓÇØ¼­ »õ·Î¿î Á¡À» »ý¼ºÇØ ³½´Ù.
+				//	Note : ï¿½ï¿½ï¿½ï¿½Ø¼ï¿½ ï¿½ï¿½ï¿½Î¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 				//
 				if( m_vBlurTexNow )
 					pVertex = m_vBlurTexNow;
@@ -476,12 +476,12 @@ HRESULT DxEffectBlurC::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 			m_pVB->Unlock();
 		}
 
-		//	Note : Ä®¿¡ ºÙ¾î ÀÖ´Â ÀÜ»ó ¸¸µé±â
+		//	Note : Ä®ï¿½ï¿½ ï¿½Ù¾ï¿½ ï¿½Ö´ï¿½ ï¿½Ü»ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
 		//
 		D3DXVECTOR3	vTempUp;
 		D3DXVECTOR3	vTempDown;
 
-		// Vertex ¸¦ World ÁÂÇ¥·Î º¯È¯
+		// Vertex ï¿½ï¿½ World ï¿½ï¿½Ç¥ï¿½ï¿½ ï¿½ï¿½È¯
 		D3DXVec3TransformCoord ( &vTempUp, &m_vBlurStart, &matTestWorld );
 		D3DXVec3TransformCoord ( &vTempDown, &m_vBlurEnd, &matTestWorld );
 
@@ -498,11 +498,11 @@ HRESULT DxEffectBlurC::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 
 		pd3dDevice->SetTexture ( 0, m_pddsTexture );
 
-		//	Note : ÀÌÀü »óÅÂ ¹é¾÷.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 		//
 		pd3dDevice->CaptureStateBlock ( m_dwSavedStateBlock );
 
-		//	Note : ·£´õ¸µ »óÅÂ Á¶Á¤.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 		//
 		pd3dDevice->ApplyStateBlock ( m_dwEffectStateBlock );
 
@@ -510,7 +510,7 @@ HRESULT DxEffectBlurC::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 			pd3dDevice->SetTextureStageState ( 0, D3DTSS_COLOROP,	D3DTOP_MODULATE );
 
 
-		//	Note : Ä®¿¡ ºÙ¾î ÀÖ´Â ÀÜ»ó ¸¸µé±â 
+		//	Note : Ä®ï¿½ï¿½ ï¿½Ù¾ï¿½ ï¿½Ö´ï¿½ ï¿½Ü»ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ 
 		//
 		pd3dDevice->DrawPrimitiveUP ( D3DPT_TRIANGLESTRIP, 2, m_pFirstBlur, sizeof(BLURTEX) );
 
@@ -541,7 +541,7 @@ HRESULT DxEffectBlurC::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 
 
 
-		//	Note : ÀÌÀü»óÅÂ·Î º¹¿ø.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ ï¿½ï¿½ï¿½ï¿½.
 		//
 		pd3dDevice->ApplyStateBlock ( m_dwSavedStateBlock );
 
@@ -557,7 +557,7 @@ HRESULT DxEffectBlurC::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 	return S_OK;
 }
 
-HRESULT DxEffectBlurC::MakeEffBlurCMeshs( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectBlurC::MakeEffBlurCMeshs( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr;
 
@@ -576,7 +576,7 @@ HRESULT DxEffectBlurC::MakeEffBlurCMeshs( LPDIRECT3DDEVICE8 pd3dDevice )
 	D3DXVECTOR3	vTempUp;
 	D3DXVECTOR3	vTempDown;
 
-	// Vertex ¸¦ World ÁÂÇ¥·Î º¯È¯
+	// Vertex ï¿½ï¿½ World ï¿½ï¿½Ç¥ï¿½ï¿½ ï¿½ï¿½È¯
 	D3DXVec3TransformCoord ( &vTempUp, &m_vBlurStart, &matTestWorld );
 	D3DXVec3TransformCoord ( &vTempDown, &m_vBlurEnd, &matTestWorld );
 
@@ -620,7 +620,7 @@ HRESULT	DxEffectBlurC::SetInitMesh( )
 		D3DXVECTOR3	vTempUp;
 		D3DXVECTOR3	vTempDown;
 
-		// Vertex ¸¦ World ÁÂÇ¥·Î º¯È¯
+		// Vertex ï¿½ï¿½ World ï¿½ï¿½Ç¥ï¿½ï¿½ ï¿½ï¿½È¯
 		D3DXVec3TransformCoord ( &vTempUp, &m_vBlurStart, &matTestWorld );
 		D3DXVec3TransformCoord ( &vTempDown, &m_vBlurEnd, &matTestWorld );
 

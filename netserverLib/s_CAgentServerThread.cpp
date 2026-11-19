@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Psapi.h"
 #pragma comment( lib, "Psapi.lib" )
-//#include "./DbExecuter.h"
+//// DbExecuter.h: use s_CDbAction.h
 #include "s_CAgentServer.h"
 
 #ifdef _DEBUG

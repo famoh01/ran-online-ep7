@@ -1,5 +1,5 @@
 #include "stdafx.h"
-//#include "./DbExecuter.h"
+//// DbExecuter.h: use s_CDbAction.h
 #include "s_CFieldServer.h"
 
 #ifdef _DEBUG

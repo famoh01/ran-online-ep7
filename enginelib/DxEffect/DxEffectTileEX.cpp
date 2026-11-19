@@ -27,7 +27,7 @@ static char THIS_FILE[] = __FILE__;
 
 #define new DEBUG_NEW
 //	---------------------------------------------------------------------------------------------------
-//										ÀÌ ÇÔ¼öÀÇ ÃÊ±âÈ­¿Í »èÁ¦ ºÎºÐ
+//										ï¿½ï¿½ ï¿½Ô¼ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Îºï¿½
 //	---------------------------------------------------------------------------------------------------
 DxEffectTile::BASE::~BASE()
 {
@@ -38,13 +38,13 @@ DxEffectTile::BASE::~BASE()
 }
 
 //	---------------------------------------------------------------------------------------------------
-//											»ý	¼º	ºÎ	ºÐ
+//											ï¿½ï¿½	ï¿½ï¿½	ï¿½ï¿½	ï¿½ï¿½
 //	---------------------------------------------------------------------------------------------------
-void	DxEffectTile::SetBaseQuad ( LPDIRECT3DDEVICE8 pd3dDevice, DxMeshes *pmsMeshs )
+void	DxEffectTile::SetBaseQuad ( LPDIRECT3DDEVICE9 pd3dDevice, DxMeshes *pmsMeshs )
 {
 	m_pTexture = pmsMeshs->pTextures[0];
 
-	//	Note : LocalMesh, OctreeMesh µÑ Áß ÇÏ³ª¸¦ °í¸¥´Ù.
+	//	Note : LocalMesh, OctreeMesh ï¿½ï¿½ ï¿½ï¿½ ï¿½Ï³ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 	//
 	if ( !pmsMeshs->m_pLocalMesh )	return;
 
@@ -57,10 +57,10 @@ void	DxEffectTile::SetBaseQuad ( LPDIRECT3DDEVICE8 pd3dDevice, DxMeshes *pmsMesh
 	pmsMeshs->m_pLocalMesh->LockVertexBuffer ( 0L, (BYTE**)&pSrcVertices );
 	pmsMeshs->m_pLocalMesh->LockIndexBuffer ( 0L, (BYTE**)&pSrcIndices );
 
-	// »ï°¢ÇüÀ» Á¤·ÄÇÑ´Ù.
+	// ï¿½ï°¢ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 	SortTriangle ( pSrcVertices, pSrcIndices );
 	
-	// ¸ÕÀú ±âº» Æ²À» ¸¸µç´Ù.
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½âº» Æ²ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½.
 	SetBaseInit ( pd3dDevice, pSrcVertices, pSrcIndices );
 
 	pmsMeshs->m_pLocalMesh->UnlockVertexBuffer ();
@@ -78,7 +78,7 @@ void	DxEffectTile::SortTriangle ( VERTEX* pSrcVertices, WORD* pSrcIndices )
 		vVertex[1] = pSrcVertices [ pSrcIndices[(i*3)+1] ];
 		vVertex[2] = pSrcVertices [ pSrcIndices[(i*3)+2] ];
 
-		vMin = vVertex[0].vPos;	// ÃÊ±â°ª ¼ÂÆÃ
+		vMin = vVertex[0].vPos;	// ï¿½Ê±â°ª ï¿½ï¿½ï¿½ï¿½
 		vMin.x = (vVertex[1].vPos.x < vMin.x) ? vVertex[1].vPos.x : vMin.x ;
 		vMin.x = (vVertex[2].vPos.x < vMin.x) ? vVertex[2].vPos.x : vMin.x ;
 
@@ -90,9 +90,9 @@ void	DxEffectTile::SortTriangle ( VERTEX* pSrcVertices, WORD* pSrcIndices )
 	}
 }
 
-void	DxEffectTile::SetBaseInit ( LPDIRECT3DDEVICE8 pd3dDevice, VERTEX* pSrcVertices, WORD* pSrcIndices )
+void	DxEffectTile::SetBaseInit ( LPDIRECT3DDEVICE9 pd3dDevice, VERTEX* pSrcVertices, WORD* pSrcIndices )
 {
-	m_vMax = m_vMin = pSrcVertices[0].vPos;	// ÃÊ±â°ª ¼ÂÆÃ
+	m_vMax = m_vMin = pSrcVertices[0].vPos;	// ï¿½Ê±â°ª ï¿½ï¿½ï¿½ï¿½
 
 	for ( DWORD i=0; i<m_dwVertices; i++ )
 	{
@@ -105,10 +105,10 @@ void	DxEffectTile::SetBaseInit ( LPDIRECT3DDEVICE8 pd3dDevice, VERTEX* pSrcVerti
 	
 	D3DXMATRIX	matWorld;
 	D3DXMatrixMultiply ( &matWorld, m_pmatLocal, &m_matFrameComb );
-	D3DXVec3TransformCoord ( &m_vMax, &m_vMax, &matWorld );			// ÃÖÁ¾ µ¥ÀÌÅÍ m_vMax
-	D3DXVec3TransformCoord ( &m_vMin, &m_vMin, &matWorld );			// ÃÖÁ¾ µ¥ÀÌÅÍ m_vMin
+	D3DXVec3TransformCoord ( &m_vMax, &m_vMax, &matWorld );			// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ m_vMax
+	D3DXVec3TransformCoord ( &m_vMin, &m_vMin, &matWorld );			// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ m_vMin
 
-	//	Col °ú Row °¹¼ö¸¦ Ã£´Â´Ù.
+	//	Col ï¿½ï¿½ Row ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½Â´ï¿½.
 	m_dwCol = 0;
 	m_dwRow = 0;
 	float fLength = m_vMax.x - m_vMin.x;
@@ -125,7 +125,7 @@ void	DxEffectTile::SetBaseInit ( LPDIRECT3DDEVICE8 pd3dDevice, VERTEX* pSrcVerti
 		fLength -= EM_FULL_LENGTH;
 	}
 
-	//	µåµð¾î ¸¸µç´Ù. ÇÏÇÏÇÏ.^^
+	//	ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.^^
 	for ( DWORD i=0; i<m_dwCol; ++i )
 	{
 		for ( DWORD j=0; j<m_dwRow; ++j )
@@ -134,7 +134,7 @@ void	DxEffectTile::SetBaseInit ( LPDIRECT3DDEVICE8 pd3dDevice, VERTEX* pSrcVerti
 		}
 	}
 
-	//	À§Ä¡ Á¤º¸ Àç ¼öÁ¤
+	//	ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 	//	VB, IB, TEXTURE
 	SetBase_VB_IB_TEX ( pd3dDevice );
@@ -149,7 +149,7 @@ void	DxEffectTile::SetBaseMap ( int nCol, int nRow, VERTEX* pSrcVertices, WORD* 
 	pBase->vMax.x = pBase->vMin.x + EM_FULL_LENGTH;
 	pBase->vMax.z = pBase->vMin.z + EM_FULL_LENGTH;
 
-	// ±âº» Vertex µ¥ÀÌÅÍ »ðÀÔ, PickingÀ¸·Î ³ôÀÌ Á¶Àý
+	// ï¿½âº» Vertex ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, Pickingï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	for ( DWORD y=0; y<EM_VERTEX_PART; ++y )
 	{
 		for ( DWORD x=0; x<EM_VERTEX_PART; ++x )
@@ -164,7 +164,7 @@ void	DxEffectTile::SetBaseMap ( int nCol, int nRow, VERTEX* pSrcVertices, WORD* 
 		}
 	}
 
-	// Normal °ª ¼öÁ¤
+	// Normal ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	for ( DWORD y=0; y<EM_VERTEX_PART; ++y )
 	{
 		for ( DWORD x=0; x<EM_VERTEX_PART; ++x )
@@ -228,13 +228,13 @@ BOOL	DxEffectTile::Picking ( VERTEX* pVertices, VERTEX& vVertex )
 		if( DxEffectMan::Instance.IntersectTriangle( vPickRayOrig, vPickRayDir, v0, v1, v2,
 								&fDist, &fBary1, &fBary2 ) )
 		{
-			vVertex.vPos = v0 + ((v1-v0)*fBary1) + ((v2-v0)*fBary2);		// Position ¼öÁ¤
+			vVertex.vPos = v0 + ((v1-v0)*fBary1) + ((v2-v0)*fBary2);		// Position ï¿½ï¿½ï¿½ï¿½
 
 			D3DXVECTOR2 vT0, vT1, vT2;
 			vT0 = pVertices [ (*iter).second.wIndex[0] ].vTex;
 			vT1 = pVertices [ (*iter).second.wIndex[1] ].vTex;
 			vT2 = pVertices [ (*iter).second.wIndex[2] ].vTex;
-			vVertex.vTex = vT0 + ((vT1-vT0)*fBary1) + ((vT2-vT0)*fBary2);	// UV ÁÂÇ¥ ¼öÁ¤
+			vVertex.vTex = vT0 + ((vT1-vT0)*fBary1) + ((vT2-vT0)*fBary2);	// UV ï¿½ï¿½Ç¥ ï¿½ï¿½ï¿½ï¿½
 
 			return TRUE;
 		}
@@ -282,12 +282,12 @@ D3DXVECTOR3	DxEffectTile::ModifyNormalPart ( int x, int y, int x1, int y1, int x
 	D3DXVec3Cross ( &vNormal, &vLine[0], &vLine[1] );
 	D3DXVec3Normalize ( &vNormal, &vNormal );
 
-	if ( vNormal.y < 0.f )	vNormal *= -1.f;	// ¹ØÀ» ¹Ù¶óº»´Ù¸é ¹Ý´ë·Î ¹æÇâÀ» ¹Ù²Û´Ù.
+	if ( vNormal.y < 0.f )	vNormal *= -1.f;	// ï¿½ï¿½ï¿½ï¿½ ï¿½Ù¶óº»´Ù¸ï¿½ ï¿½Ý´ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ù²Û´ï¿½.
 
 	return vNormal;
 }
 
-void	DxEffectTile::SetBase_VB_IB_TEX ( LPDIRECT3DDEVICE8 pd3dDevice )
+void	DxEffectTile::SetBase_VB_IB_TEX ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	DWORD			dwCol;
 	DWORD			dwRow;
@@ -377,24 +377,24 @@ void	DxEffectTile::SetBase_VB_IB_TEX ( LPDIRECT3DDEVICE8 pd3dDevice )
 }
 
 //	---------------------------------------------------------------------------------------------------
-//									¿¡	µð	Æ®	ºÎ	ºÐ			( Interface )
+//									ï¿½ï¿½	ï¿½ï¿½	Æ®	ï¿½ï¿½	ï¿½ï¿½			( Interface )
 //	---------------------------------------------------------------------------------------------------
 
 
 //	---------------------------------------------------------------------------------------------------
-//									¿¡	µð	Æ®	ºÎ	ºÐ			( Engine )
+//									ï¿½ï¿½	ï¿½ï¿½	Æ®	ï¿½ï¿½	ï¿½ï¿½			( Engine )
 //	---------------------------------------------------------------------------------------------------
 
 
 //	---------------------------------------------------------------------------------------------------
-//									»ï	°¢	Çü	»ý	¼º	ºÎ	ºÐ
+//									ï¿½ï¿½	ï¿½ï¿½	ï¿½ï¿½	ï¿½ï¿½	ï¿½ï¿½	ï¿½ï¿½	ï¿½ï¿½
 //	---------------------------------------------------------------------------------------------------
 
 
 //	---------------------------------------------------------------------------------------------------
-//										·»	´õ	ºÎ	ºÐ
+//										ï¿½ï¿½	ï¿½ï¿½	ï¿½ï¿½	ï¿½ï¿½
 //	---------------------------------------------------------------------------------------------------
-void DxEffectTile::RenderTiles ( LPDIRECT3DDEVICE8 pd3dDevice )
+void DxEffectTile::RenderTiles ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	D3DMATERIAL8 sMaterial;
 	sMaterial.Diffuse.r = 1.f;

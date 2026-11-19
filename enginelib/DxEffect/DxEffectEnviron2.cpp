@@ -18,7 +18,7 @@ static char THIS_FILE[] = __FILE__;
 
 
 const DWORD DxEffectEnviron2::TYPEID = DEF_EFFECT_ENVIRON2;
-const char DxEffectEnviron2::NAME[] = "[3008]_[È¯°æ2È¿°ú]";
+const char DxEffectEnviron2::NAME[] = "[3008]_[È¯ï¿½ï¿½2È¿ï¿½ï¿½]";
 
 DWORD	DxEffectEnviron2::m_dwEffReflect;
 
@@ -30,42 +30,42 @@ char DxEffectEnviron2::m_strEffReflect[] =
 
 	//;transform position
 	//;----------------------------------------------------------------------------
-	//;	Vertex ¸¦ »Ñ¸°´Ù.~~~~~¤»¤»
+	//;	Vertex ï¿½ï¿½ ï¿½Ñ¸ï¿½ï¿½ï¿½.~~~~~ï¿½ï¿½ï¿½ï¿½
 	"m4x4 oPos, v0, c22	;\n"
 
 	//;----------------------------------------------------------------------------
-	//;	Vertex ¸¦ World ÁÂÇ¥·Î ÀÌµ¿ ½ÃÅ²´Ù.
+	//;	Vertex ï¿½ï¿½ World ï¿½ï¿½Ç¥ï¿½ï¿½ ï¿½Ìµï¿½ ï¿½ï¿½Å²ï¿½ï¿½.
 
-	// ¹öÅØ½º ÁÂÇ¥¸¦ World ÁÂÇ¥·Î.
+	// ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½Ç¥ï¿½ï¿½ World ï¿½ï¿½Ç¥ï¿½ï¿½.
 	"m4x3 r0, v0, c10	;\n"
 	"mov r0.w, v0.w		;\n"
 
 	//;----------------------------------------------------------------------------
-	//		³ë¸Öº¤ÅÍ¸¦ ´ÜÀ§ º¤ÅÍ·Î.		---		r9 ¿¡ µî·Ï
+	//		ï¿½ï¿½Öºï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Í·ï¿½.		---		r9 ï¿½ï¿½ ï¿½ï¿½ï¿½
 
-	// ³ë¸Öº¤ÅÍ¸¦ °¡Á®¿Â´Ù.
+	// ï¿½ï¿½Öºï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Â´ï¿½.
 	"m3x3 r9, v3, c10	;\n"
 
-	// ´ÜÀ§ º¤ÅÍ·Î ¸¸µé¾î ÁØ´Ù.
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Í·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ø´ï¿½.
 	"dp3 r9.w, r9, r9	\n"	//
 	"rsq r9.w, r9.w		\n"	//
 	"mul r9, r9, r9.w	\n"	//
 
-	// Ä«¸Þ¶ó ºÎÅÍ ¹öÅØ½º±îÁöÀÇ ´ÜÀ§ º¤ÅÍ¸¦ ¾ò´Â´Ù.
-	"sub r1, r0, c8		\n"	// °Å¸® °è»ê.
-	"dp3 r3.w, r1, r1	\n"	// ´ÜÀ§ º¤ÅÍ ¸¸µé±â ½ÃÀÛ.
+	// Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½Â´ï¿½.
+	"sub r1, r0, c8		\n"	// ï¿½Å¸ï¿½ ï¿½ï¿½ï¿½.
+	"dp3 r3.w, r1, r1	\n"	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	"rsq r3.w, r3.w		\n"	//
 	"mul r5, r1, r3.w	\n"	//
 
 	//;-------------------------------------------------------------------- 
-	//;		Diffuse Ä®¶ó¸¦ »ý¼º
+	//;		Diffuse Ä®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 	//; The directional light source.
 	"dp3 r4.x, r9, -c0		\n" //
 
-	//	Texture ¼³Á¤.
+	//	Texture ï¿½ï¿½ï¿½ï¿½.
 	//
-	"dp3 r4, r5, r9				\n"	// r4 = r3 (³»Àû) ³ë¸Öº¤ÅÍr9
+	"dp3 r4, r5, r9				\n"	// r4 = r3 (ï¿½ï¿½ï¿½ï¿½) ï¿½ï¿½Öºï¿½ï¿½ï¿½r9
 	"add r4, r4, r4				\n"	// r4 = 2 * r4
 	"mad oT0.xyz, r9, -r4, r5	\n"	// r3 - ( r4 ) * r9
 	"mov oT0.w, c28.z			\n"	// c1.x = 1.0f
@@ -77,37 +77,37 @@ char DxEffectEnviron2::m_strEffReflect[] =
 //////////////////////////////////////////////////////////////////////
 
 DxEffectEnviron2::DxEffectEnviron2() :
-	m_wEnvCase(0x0002),		// Á¾·ù °í¸¥´Ù.
-	m_pCloudTexture(NULL),					// ±¸¸§ ±×¸²ÀÚ	// ±¸¸§ ÅØ½ºÃÄ
-	m_fTime(0.0f),							// ±¸¸§ ±×¸²ÀÚ	// ½Ã°£
-	m_fLoop(0.0f),							// ±¸¸§ ±×¸²ÀÚ	// ´©ÀûµÅ´Â °ª
-	m_fLoopAdd(0.0001f),					// ±¸¸§ ±×¸²ÀÚ	// ±¸¸§ÀÌ Èê·¯°¡´Â ¼Óµµ
-	m_fDistance(10000.f),					// ±¸¸§ ±×¸²ÀÚ	// °¡·Î ±æÀÌ ¿Í ¼¼·Î ±æÀÌ
-	m_fMultiply(1.0f),						// ±¸¸§ ±×¸²ÀÚ	// °ÝÀÚ ¼ýÀÚ ?
-	m_pDot3Texture(NULL),	// ³»Àû ºí·»µù
+	m_wEnvCase(0x0002),		// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
+	m_pCloudTexture(NULL),					// ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½	// ï¿½ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½ï¿½ï¿½
+	m_fTime(0.0f),							// ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½	// ï¿½Ã°ï¿½
+	m_fLoop(0.0f),							// ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½	// ï¿½ï¿½ï¿½ï¿½ï¿½Å´ï¿½ ï¿½ï¿½
+	m_fLoopAdd(0.0001f),					// ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ê·¯ï¿½ï¿½ï¿½ï¿½ ï¿½Óµï¿½
+	m_fDistance(10000.f),					// ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	m_fMultiply(1.0f),						// ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ?
+	m_pDot3Texture(NULL),	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	m_fDotPower(0.9f),
-	m_pDetailTexture(NULL),						// »õ·Î ½ÃÀÛ
-	m_fWidth(1.0f),							// »õ·Î ½ÃÀÛ
-	m_fHeight(1.0f),						// »õ·Î ½ÃÀÛ
-	m_pCubeTexture(NULL),		// ¹Ý»ç
-	m_dwBlendAlpha(0x80ffffff)	// ¹Ý»ç	- 0 ¿¡°¡±î¿ì¸é ¿øº»¿¡ ff¿¡ °¡±î¿ì¸é ¹Ý»ç¿¡~~!!!
+	m_pDetailTexture(NULL),						// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	m_fWidth(1.0f),							// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	m_fHeight(1.0f),						// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	m_pCubeTexture(NULL),		// ï¿½Ý»ï¿½
+	m_dwBlendAlpha(0x80ffffff)	// ï¿½Ý»ï¿½	- 0 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ffï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ý»ç¿¡~~!!!
 {
-	strcpy ( m_szTexture, "cloudcover.bmp" );	// ±¸¸§ ±×¸²ÀÚ
-	strcpy ( m_szTexDot3, "_Dot_Ripples2_512.tga" );				// ³»Àû ºí·»µù
-	strcpy ( m_szTexDetail, "_Det_1.bmp" );		// ½ÃÀÛ
-	strcpy ( m_szTexture1,"_Env_lobbyxpos.bmp" );	// ¹Ý»ç
-	strcpy ( m_szTexture2,"_Env_lobbyxneg.bmp" );	// ¹Ý»ç
-	strcpy ( m_szTexture3,"_Env_lobbyypos.bmp" );	// ¹Ý»ç
-	strcpy ( m_szTexture4,"_Env_lobbyyneg.bmp" );	// ¹Ý»ç
-	strcpy ( m_szTexture5,"_Env_lobbyzpos.bmp" );	// ¹Ý»ç
-	strcpy ( m_szTexture6,"_Env_lobbyzneg.bmp" );	// ¹Ý»ç
+	strcpy ( m_szTexture, "cloudcover.bmp" );	// ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½
+	strcpy ( m_szTexDot3, "_Dot_Ripples2_512.tga" );				// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	strcpy ( m_szTexDetail, "_Det_1.bmp" );		// ï¿½ï¿½ï¿½ï¿½
+	strcpy ( m_szTexture1,"_Env_lobbyxpos.bmp" );	// ï¿½Ý»ï¿½
+	strcpy ( m_szTexture2,"_Env_lobbyxneg.bmp" );	// ï¿½Ý»ï¿½
+	strcpy ( m_szTexture3,"_Env_lobbyypos.bmp" );	// ï¿½Ý»ï¿½
+	strcpy ( m_szTexture4,"_Env_lobbyyneg.bmp" );	// ï¿½Ý»ï¿½
+	strcpy ( m_szTexture5,"_Env_lobbyzpos.bmp" );	// ï¿½Ý»ï¿½
+	strcpy ( m_szTexture6,"_Env_lobbyzneg.bmp" );	// ï¿½Ý»ï¿½
 }
 
 DxEffectEnviron2::~DxEffectEnviron2()
 {
 }
 
-HRESULT DxEffectEnviron2::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectEnviron2::CreateDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr;
 	LPD3DXBUFFER pCode = NULL; 
@@ -121,7 +121,7 @@ HRESULT DxEffectEnviron2::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 		D3DVSD_END()
 	};
 
-	//	Note : ¹Ý»ç
+	//	Note : ï¿½Ý»ï¿½
 	//
 	hr = D3DXAssembleShader( m_strEffReflect, (UINT)strlen( m_strEffReflect ), 0, NULL, &pCode, NULL );
 	if( FAILED(hr) )	return E_FAIL;
@@ -135,14 +135,14 @@ HRESULT DxEffectEnviron2::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffectEnviron2::ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectEnviron2::ReleaseDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	pd3dDevice->DeleteVertexShader ( m_dwEffReflect );
 
 	return S_OK;
 }
 
-HRESULT DxEffectEnviron2::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectEnviron2::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	if ( !pFrame ) return S_OK;
 
@@ -161,38 +161,38 @@ HRESULT DxEffectEnviron2::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd
 }
 
 
-HRESULT DxEffectEnviron2::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectEnviron2::InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
-	//	Note : ÅØ½ºÃÄÀÇ ÀÐ±â ¿À·ù´Â ¹«½ÃÇÑ´Ù.
+	//	Note : ï¿½Ø½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 	//
 	TextureManager::LoadTexture ( m_szTexture, pd3dDevice, m_pCloudTexture, 0, 0 );
 
 	if ( !m_pCloudTexture )
 	{
 		char szMsg[256];
-		sprintf ( szMsg, "ÀÌ¹ÌÁö ÆÄÀÏ '%s' ÀÐ±â¿¡ ½ÇÆÐ", m_szTexture );
+		sprintf ( szMsg, "ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ '%s' ï¿½Ð±â¿¡ ï¿½ï¿½ï¿½ï¿½", m_szTexture );
 		MessageBox ( NULL, szMsg, "ERROR", MB_OK );
 	}
 
-	//	Note : ÅØ½ºÃÄÀÇ ÀÐ±â ¿À·ù´Â ¹«½ÃÇÑ´Ù.
+	//	Note : ï¿½Ø½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 	//
 	TextureManager::LoadTexture ( m_szTexDot3, pd3dDevice, m_pDot3Texture, 0, 0 );
 
 	if ( !m_pDot3Texture )
 	{
 		char szMsg[256];
-		sprintf ( szMsg, "ÀÌ¹ÌÁö ÆÄÀÏ '%s' ÀÐ±â¿¡ ½ÇÆÐ", m_szTexDot3 );
+		sprintf ( szMsg, "ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ '%s' ï¿½Ð±â¿¡ ï¿½ï¿½ï¿½ï¿½", m_szTexDot3 );
 		MessageBox ( NULL, szMsg, "ERROR", MB_OK );
 	}
 
-	//	Note : ÅØ½ºÃÄÀÇ ÀÐ±â ¿À·ù´Â ¹«½ÃÇÑ´Ù.
+	//	Note : ï¿½Ø½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 	//
 	TextureManager::LoadTexture ( m_szTexDetail, pd3dDevice, m_pDetailTexture, 0, 0 );
 
 	if ( !m_pDetailTexture )
 	{
 		char szMsg[256];
-		sprintf ( szMsg, "ÀÌ¹ÌÁö ÆÄÀÏ '%s' ÀÐ±â¿¡ ½ÇÆÐ", m_szTexDetail );
+		sprintf ( szMsg, "ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ '%s' ï¿½Ð±â¿¡ ï¿½ï¿½ï¿½ï¿½", m_szTexDetail );
 		MessageBox ( NULL, szMsg, "ERROR", MB_OK );
 	}
 
@@ -200,7 +200,7 @@ HRESULT DxEffectEnviron2::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
 
 	//	Note : 
 	//
-	// Note	: Shader ¿¡¼­ ¾²ÀÌ´Â Cube Texture ¸¸µé±â
+	// Note	: Shader ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ì´ï¿½ Cube Texture ï¿½ï¿½ï¿½ï¿½ï¿½
 	//
 	TCHAR* szSkyTex[6] =
 	{
@@ -208,7 +208,7 @@ HRESULT DxEffectEnviron2::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
 		m_szTexture4, m_szTexture5, m_szTexture6
 	};
 
-	LPDIRECT3DTEXTURE8	m_pSkyTex[6];
+	LPDIRECT3DTEXTURE9	m_pSkyTex[6];
 
 	//	Note : 
 	//
@@ -235,7 +235,7 @@ HRESULT DxEffectEnviron2::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
 				SAFE_RELEASE(pDest);
 				SAFE_RELEASE(pSrc);
 
-				//	Note : Áö¿ö ÁØ´Ù.
+				//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½Ø´ï¿½.
 				//
 				TextureManager::ReleaseTexture ( m_pSkyTex[i] );
 				m_pSkyTex[i] = NULL;
@@ -250,25 +250,25 @@ HRESULT DxEffectEnviron2::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
 
 HRESULT DxEffectEnviron2::DeleteDeviceObjects ()
 {
-	//	Note : ÀÌÀü ÅØ½ºÃÄ°¡ ·ÎµåµÇ¾î ÀÖÀ» °æ¿ì Á¦°Å.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½ï¿½Ä°ï¿½ ï¿½Îµï¿½Ç¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	if ( m_pCloudTexture )
 		TextureManager::ReleaseTexture ( m_pCloudTexture );
 	m_pCloudTexture = NULL;
 
-	//	Note : ÀÌÀü ÅØ½ºÃÄ°¡ ·ÎµåµÇ¾î ÀÖÀ» °æ¿ì Á¦°Å.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½ï¿½Ä°ï¿½ ï¿½Îµï¿½Ç¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	if ( m_pDot3Texture )
 		TextureManager::ReleaseTexture ( m_pDot3Texture );
 	m_pDot3Texture = NULL;
 
-	//	Note : ÀÌÀü ÅØ½ºÃÄ°¡ ·ÎµåµÇ¾î ÀÖÀ» °æ¿ì Á¦°Å.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½ï¿½Ä°ï¿½ ï¿½Îµï¿½Ç¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	if ( m_pDetailTexture )
 		TextureManager::ReleaseTexture ( m_pDetailTexture );
 	m_pDetailTexture = NULL;
 
-	//	Note : ÀÌÀü ÅØ½ºÃÄ°¡ ·ÎµåµÇ¾î ÀÖÀ» °æ¿ì Á¦°Å.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½ï¿½Ä°ï¿½ ï¿½Îµï¿½Ç¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	if ( m_pCubeTexture )
 		m_pCubeTexture->Release ();
@@ -284,7 +284,7 @@ HRESULT DxEffectEnviron2::FrameMove ( float fTime, float fElapsedTime )
 	return S_OK;
 }
 
-HRESULT DxEffectEnviron2::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectEnviron2::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr = S_OK;
 	DxMeshes *pmsMeshs;
@@ -294,7 +294,7 @@ HRESULT DxEffectEnviron2::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDev
 	//
 	if ( pframeCur->pmsMeshs != NULL )
 	{
-		//	Note : ¸Þ½¬ ±×¸®±â.
+		//	Note : ï¿½Þ½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½.
 		//
 		pmsMeshs = pframeCur->pmsMeshs;
 		while ( pmsMeshs != NULL )
@@ -303,8 +303,8 @@ HRESULT DxEffectEnviron2::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDev
 			{
 				DWORD dwFVFSize;
 				DWORD dwVerts, dwFaces;
-				LPDIRECT3DINDEXBUFFER8 pIB;
-				LPDIRECT3DVERTEXBUFFER8 pVB;
+				LPDIRECT3DINDEXBUFFER9 pIB;
+				LPDIRECT3DVERTEXBUFFER9 pVB;
 				
 				pmsMeshs->m_pLocalMesh->GetIndexBuffer ( &pIB );
 				pmsMeshs->m_pLocalMesh->GetVertexBuffer ( &pVB );
@@ -316,7 +316,7 @@ HRESULT DxEffectEnviron2::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDev
 				dwFaces = pmsMeshs->m_pLocalMesh->GetNumFaces();
 
 
-				//	Note : SetVertexShader¿¡ World¿Í WorldViewProjection Çà·Ä Áý¾î ³Ö±â
+				//	Note : SetVertexShaderï¿½ï¿½ Worldï¿½ï¿½ WorldViewProjection ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ö±ï¿½
 				//
 				D3DXMATRIX	matWorld, matView, matProj, matWVP;
 
@@ -333,12 +333,12 @@ HRESULT DxEffectEnviron2::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDev
 
 
 
-				//	Note : SetRenderState() ¼±¾ð
+				//	Note : SetRenderState() ï¿½ï¿½ï¿½ï¿½
 				//
-				pd3dDevice->SetRenderState ( D3DRS_TEXTUREFACTOR, 0xffffffff );//m_dwBlendAlpha );	// ¾ËÆÄ°ª... ¤»¤»¤»È¯°æ¸Ê ¾ËÆÄ.
+				pd3dDevice->SetRenderState ( D3DRS_TEXTUREFACTOR, 0xffffffff );//m_dwBlendAlpha );	// ï¿½ï¿½ï¿½Ä°ï¿½... ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¯ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 
 
-				//	Note : SetTextureStageState() ¼±¾ð
+				//	Note : SetTextureStageState() ï¿½ï¿½ï¿½ï¿½
 				//
 				pd3dDevice->SetTextureStageState ( 0, D3DTSS_MINFILTER, D3DTEXF_LINEAR );
 				pd3dDevice->SetTextureStageState ( 0, D3DTSS_MAGFILTER, D3DTEXF_LINEAR );
@@ -354,7 +354,7 @@ HRESULT DxEffectEnviron2::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDev
 
 				switch ( m_wEnvCase )
 				{
-				case 0x0001:	// ³»Àû ºí·»µù
+				case 0x0001:	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					pd3dDevice->SetRenderState ( D3DRS_ALPHABLENDENABLE, TRUE );
 					pd3dDevice->SetRenderState ( D3DRS_SRCBLEND,	D3DBLEND_ZERO );
 					pd3dDevice->SetRenderState ( D3DRS_DESTBLEND,	D3DBLEND_SRCCOLOR );
@@ -365,7 +365,7 @@ HRESULT DxEffectEnviron2::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDev
 
 					break;
 
-				case 0x0002:	// µðÅ×ÀÏ ¸Ê
+				case 0x0002:	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
 
 					pd3dDevice->SetTexture ( 0, m_pDetailTexture );
 
@@ -377,7 +377,7 @@ HRESULT DxEffectEnviron2::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDev
 
 					break;
 
-				case 0x0003:	// ¹Ý»ç
+				case 0x0003:	// ï¿½Ý»ï¿½
 					pd3dDevice->SetRenderState ( D3DRS_ALPHABLENDENABLE, TRUE );
 					pd3dDevice->SetRenderState ( D3DRS_SRCBLEND,	D3DBLEND_DESTCOLOR );
 					pd3dDevice->SetRenderState ( D3DRS_DESTBLEND,	D3DBLEND_SRCCOLOR );
@@ -390,7 +390,7 @@ HRESULT DxEffectEnviron2::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDev
 
 					break;
 
-				case 0x0010:	// ±¸¸§ ±×¸²ÀÚ
+				case 0x0010:	// ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½
 
 					pd3dDevice->SetTexture ( 0, m_pCloudTexture );
 
@@ -428,9 +428,9 @@ HRESULT DxEffectEnviron2::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDev
 							float Z = pVertices->p.x * pframeCur->matCombined._13 + pVertices->p.y * pframeCur->matCombined._23 +
 										pVertices->p.z * pframeCur->matCombined._33 + pframeCur->matCombined._43;
 
-							//	Note : ³Êºñ°¡ (m_fDistance) ÀÎ ±¸¸§À» ¸¸µç ´ÙÀ½
-							//			U,V °ªÀ» (m_fLoop)¿òÁ÷¿©¼­ ¶¥¿¡ ±×¸²ÀÚ°¡ µå¸®¿ì´Â È¿°ú¸¦ ³½´Ù.
-							//		 À§Ä¡		³ôÀÌ¿Í ºû °¢µµ ¶«½Ã.			ÀüÃ¼Å©±â¹Ý		ÀüÃ¼Å©±â	¿òÁ÷ÀÎ´Ù
+							//	Note : ï¿½Êºï¿½ (m_fDistance) ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+							//			U,V ï¿½ï¿½ï¿½ï¿½ (m_fLoop)ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½Ú°ï¿½ ï¿½å¸®ï¿½ï¿½ï¿½ È¿ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
+							//		 ï¿½ï¿½Ä¡		ï¿½ï¿½ï¿½Ì¿ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.			ï¿½ï¿½Ã¼Å©ï¿½ï¿½ï¿½		ï¿½ï¿½Ã¼Å©ï¿½ï¿½	ï¿½ï¿½ï¿½ï¿½ï¿½Î´ï¿½
 							float u = (X + (vLightDirect.x/vLightDirect.y)*Y - m_fDistance/2) / m_fDistance - m_fLoop;// + DistX/1000;
 							float v = (Z + (vLightDirect.z/vLightDirect.y)*Y - m_fDistance/2) / m_fDistance - m_fLoop;// + DistZ/1000;
 
@@ -448,7 +448,7 @@ HRESULT DxEffectEnviron2::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDev
 
 					break;
 
-				case 0x0011:	// ±¸¸§ ±×¸²ÀÚ + ³»Àû ºí·»µù
+				case 0x0011:	// ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½ + ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 					pd3dDevice->SetTexture ( 0, m_pDot3Texture );
 					pd3dDevice->SetTextureStageState ( 0, D3DTSS_COLORARG2, D3DTA_TFACTOR );
@@ -456,11 +456,11 @@ HRESULT DxEffectEnviron2::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDev
 
 					break;
 
-				case 0x0012:	// ±¸¸§ ±×¸²ÀÚ + 
+				case 0x0012:	// ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½ + 
 
 					break;
 
-				case 0x0013:	// ±¸¸§ ±×¸²ÀÚ + ¹Ý»ç
+				case 0x0013:	// ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½ + ï¿½Ý»ï¿½
 
 					if( m_fTime > 0.05f )
 					{
@@ -470,7 +470,7 @@ HRESULT DxEffectEnviron2::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDev
 						if( m_fLoop > 1.0f )
 							m_fLoop = 0.0f;
 					}
-					//	Note : Shader »ó¼ö ¼±¾ð
+					//	Note : Shader ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 					//
 					pd3dDevice->SetVertexShaderConstant ( VSC_CUSTOM+5,	&D3DXVECTOR4( m_fDistance , m_fLoop, m_fMultiply, 0.0f ),	1 );
 
@@ -483,9 +483,9 @@ HRESULT DxEffectEnviron2::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDev
 
 					pd3dDevice->SetTextureStageState ( 0, D3DTSS_COLOROP,	D3DTOP_SELECTARG1 );
 
-					//	Note : SetRenderState() ¼±¾ð
+					//	Note : SetRenderState() ï¿½ï¿½ï¿½ï¿½
 					//
-					pd3dDevice->SetRenderState ( D3DRS_TEXTUREFACTOR, m_dwBlendAlpha );	// ¾ËÆÄ°ª... ¤»¤»¤»È¯°æ¸Ê ¾ËÆÄ.
+					pd3dDevice->SetRenderState ( D3DRS_TEXTUREFACTOR, m_dwBlendAlpha );	// ï¿½ï¿½ï¿½Ä°ï¿½... ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¯ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 
 					pd3dDevice->SetTexture ( 1, m_pCubeTexture );
 
@@ -524,7 +524,7 @@ HRESULT DxEffectEnviron2::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDev
 				pAttribTable = new D3DXATTRIBUTERANGE [ AttribTableSize ];
 				pmsMeshs->m_pLocalMesh->GetAttributeTable( pAttribTable, &AttribTableSize );
 
-				//	Note : ºÒÅõ¸í ¸Þ½¬ µå·ÎÀ×.
+				//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½.
 				//		pmsMeshs->cMaterials --> AttribTableSize
 				//
 				for ( DWORD i=0; i<AttribTableSize; i++ )
@@ -544,7 +544,7 @@ HRESULT DxEffectEnviron2::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDev
 				pd3dDevice->SetVertexShaderConstant ( VSC_MATRIAL, &( pmsMeshs->rgMaterials[0].Diffuse ), 1 );
 
 
-				//	Note : ¼ÒÇÁÆ®¿þ¾î ¹öÅØ½º ÇÁ·Î¼¼½Ì
+				//	Note : ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½
 				//
 				if ( DxEffectMan::Instance.GetUseSwShader() )
 					pd3dDevice->SetRenderState( D3DRS_SOFTWAREVERTEXPROCESSING, TRUE );		
@@ -554,10 +554,10 @@ HRESULT DxEffectEnviron2::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDev
 
 				switch ( m_wEnvCase )
 				{
-				case 0x0003:	// ¹Ý»ç
+				case 0x0003:	// ï¿½Ý»ï¿½
 					pd3dDevice->SetVertexShader ( m_dwEffReflect );
 					break;
-				case 0x0013:	// ±¸¸§ ±×¸²ÀÚ + ¹Ý»ç
+				case 0x0013:	// ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½ + ï¿½Ý»ï¿½
 		//			pd3dDevice->SetVertexShader ( m_dwEffCloudReflect );
 					break;
 				default:
@@ -578,7 +578,7 @@ HRESULT DxEffectEnviron2::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDev
 
 
 
-				//	Note : ¼ÒÇÁÆ®¿þ¾î ¹öÅØ½º ÇÁ·Î¼¼½Ì
+				//	Note : ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½
 				//
 				if ( DxEffectMan::Instance.GetUseSwShader() )
 					pd3dDevice->SetRenderState( D3DRS_SOFTWAREVERTEXPROCESSING, FALSE );
@@ -628,7 +628,7 @@ HRESULT DxEffectEnviron2::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDev
 		}
 	}
 
-	//	Note : ÀÚ½Ä ÇÁ·¹ÀÓ ±×¸®±â.
+	//	Note : ï¿½Ú½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½.
 	//
 	pframeChild = pframeCur->pframeFirstChild;
 	while ( pframeChild != NULL )

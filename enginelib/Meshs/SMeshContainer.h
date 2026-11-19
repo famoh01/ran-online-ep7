@@ -1,8 +1,8 @@
 //	[struct SMeshContainer], (2002.12.05), JDH
 //
-//	NEED	: (2002.11.29), JDH, SMeshContainer, ¸ÞÅÍ¸®¾ó ºÎºÐ Á¤¸® ÇÊ¿ä.
-//	UPDATE	: (2002.12.02), JDH, SMeshContainer, ¸ÞÅÍ¸®¾ó ºÎºÐ Á¤¸®.
-//	UPDATE	: (2002.12.05), JDH, ±â´ÉÀÌ È®ÀåµÊ¿¡ µû¶ó µû·Î ºÐ¸®ÇÏ¿© °ü¸®.
+//	NEED	: (2002.11.29), JDH, SMeshContainer, ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½ ï¿½Îºï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½.
+//	UPDATE	: (2002.12.02), JDH, SMeshContainer, ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½ ï¿½Îºï¿½ ï¿½ï¿½ï¿½ï¿½.
+//	UPDATE	: (2002.12.05), JDH, ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½Ê¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ð¸ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½.
 //
 #pragma once
 
@@ -89,19 +89,19 @@ public:
 	LPD3DXMESH					m_pMesh;
 	
 	DWORD						m_dwEffNumVerts;
-	LPDIRECT3DVERTEXBUFFER8		m_pEffVBuffer;
+	LPDIRECT3DVERTEXBUFFER9		m_pEffVBuffer;
 
 	SBoneInfluence*				m_pBoneInfluences;
 	
-	DWORD						m_cMaterials;		//	¸ÞÅÍ¸®¾óÀÇ °¹¼ö.
-	DXMATERIAL*					m_pMaterials;		//	¸ÞÅÍ¸®¾ó ¹è¿­.
+	DWORD						m_cMaterials;		//	ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
+	DXMATERIAL*					m_pMaterials;		//	ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½ ï¿½è¿­.
 	
-	//	Bone Combination ¹öÆÛÀÇ °¹¼ö. - ½ºÅ²¸Þ½¬°¡ ¾Æ´Ò °æ¿ì ¸ÞÅÍ¸®¾ó °¹¼ö.
+	//	Bone Combination ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½. - ï¿½ï¿½Å²ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½Æ´ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	DWORD						m_cpattr;
 	DWORD						m_iAttrSplit;
 
-	SMeshContainer				*m_pmcNext;			//	SFrame ¿ë ¸Þ½Ã ÄÜÅ×ÀÌ³Ê ¸®½ºÆ® ¿ë.
-	SMeshContainer				*m_pmcGlobalNext;	//	DxSkinMesh ÀÇ ÀüÃ¼ ¸Þ½Ã ÄÜÅ×ÀÌ³Ê ¸®½ºÆ® ¿ë.
+	SMeshContainer				*m_pmcNext;			//	SFrame ï¿½ï¿½ ï¿½Þ½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ì³ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½.
+	SMeshContainer				*m_pmcGlobalNext;	//	DxSkinMesh ï¿½ï¿½ ï¿½ï¿½Ã¼ ï¿½Þ½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ì³ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½.
 
 	// Skin info
 	LPD3DXSKINMESH				m_pSkinMesh;
@@ -109,35 +109,35 @@ public:
 	D3DXATTRIBUTERANGE*			m_pAttrTable;
 	
 	DWORD						m_numBoneComb;
-	D3DXMATRIX**				m_pBoneMatrix;			//	¿µÇâÀ» ¹ÌÄ¡´Â º» ¸ÞÆ®¸¯½º ¸ðÀ½. ( matCombined )
-	std::vector<std::string>	m_szBoneNames;			//	¿µÇâÀ» ¹ÌÄ¡´Â º»ÀÇ ÀÌ¸§µé.
+	D3DXMATRIX**				m_pBoneMatrix;			//	ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½. ( matCombined )
+	std::vector<std::string>	m_szBoneNames;			//	ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ï¿½ï¿½.
 	
 	LPD3DXBUFFER				m_pBoneOffsetBuf;
 	D3DXMATRIX*					m_pBoneOffsetMat;
 
-	DWORD*						m_rgiAdjacency;			//	ÆäÀÌ½º ÀÎµ¦½º ¹öÆÛ
-	DWORD						m_maxFaceInfl;			//	ºí·»µå º» ¸ÞÆ®¸¯½º °¹¼ö.
+	DWORD*						m_rgiAdjacency;			//	ï¿½ï¿½ï¿½Ì½ï¿½ ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	DWORD						m_maxFaceInfl;			//	ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	LPD3DXBUFFER				m_pBoneCombinationBuf;
-	METHOD						m_Method;				//	¸Þ½Ã µ¥ÀÌÅ¸ÀÇ ¼Ó¼º.
-	DWORD						m_paletteSize;			//	ºí·»µå »¡·¿Æ® Å©±â.
-	BOOL						m_bUseSW;				//	¼ÒÇÁÆ®¿þ¾î ¹öÅØ½º ÇÁ·Î¼¼½Ì.
+	METHOD						m_Method;				//	ï¿½Þ½ï¿½ ï¿½ï¿½ï¿½ï¿½Å¸ï¿½ï¿½ ï¿½Ó¼ï¿½.
+	DWORD						m_paletteSize;			//	ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® Å©ï¿½ï¿½.
+	BOOL						m_bUseSW;				//	ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½.
 
 
 public:
-	HRESULT				SetMaterial ( LPDIRECT3DDEVICE8 pd3dDevice, DWORD nIndex, SMATERIAL_PIECE *pmtrlPiece=NULL, DXMATERIAL_CHAR_EFF* pmtrlSpecular=NULL );
-	HRESULT				ReSetMaterial ( LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT				SetMaterial ( LPDIRECT3DDEVICE9 pd3dDevice, DWORD nIndex, SMATERIAL_PIECE *pmtrlPiece=NULL, DXMATERIAL_CHAR_EFF* pmtrlSpecular=NULL );
+	HRESULT				ReSetMaterial ( LPDIRECT3DDEVICE9 pd3dDevice );
 
-	HRESULT				GenerateMesh ( METHOD method );					// ½ºÅ² ¸Þ½¬
-	HRESULT				GenerateMesh ( LPD3DXBUFFER pAdjacency );		// ÀÏ¹Ý ¸Þ½¬
+	HRESULT				GenerateMesh ( METHOD method );					// ï¿½ï¿½Å² ï¿½Þ½ï¿½
+	HRESULT				GenerateMesh ( LPD3DXBUFFER pAdjacency );		// ï¿½Ï¹ï¿½ ï¿½Þ½ï¿½
 	HRESULT				UpdateSkinnedMesh ( PBYTE pbData, DWORD dwFVF, LPD3DXMATRIX pBoneMatrices=NULL );
 
-//	Note : ÀÌÆåÆ® ¸Þ½Ã °ü·Ã ºÎºÐ.
+//	Note : ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Þ½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Îºï¿½.
 //
 public:
 	BOOL				IsEffMesh ()	{	return (m_pEffVBuffer!=NULL); }
-	HRESULT				GenerateEffMesh ( LPDIRECT3DDEVICE8 pd3dDevice );		//	Effect ¸Þ½Ã °³Ã¼¸¦ ¸¸µë.
+	HRESULT				GenerateEffMesh ( LPDIRECT3DDEVICE9 pd3dDevice );		//	Effect ï¿½Þ½ï¿½ ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	HRESULT				UpdateEffMesh ( LPD3DXMATRIX pBoneMatrices );
-	LPDIRECT3DVERTEXBUFFER8 GetEffVertexBuffer ()	{ return m_pEffVBuffer; }
+	LPDIRECT3DVERTEXBUFFER9 GetEffVertexBuffer ()	{ return m_pEffVBuffer; }
 
 public:
 	BOOL				IsAlphaTex_HARD ( DWORD nMtIndex );
@@ -148,9 +148,9 @@ public:
 	HRESULT				GetVertexInfluences ( const DWORD dwIndex, SVERTEXINFLU *pVertInflu );
 	HRESULT				CalculateVertexInfluences ( SVERTEXINFLU *pVertInflu, D3DXVECTOR3 &vVecOutput, D3DXVECTOR3 &vNorOutput, LPD3DXMATRIX pBoneMatrice=NULL );
 
-	HRESULT				DebugRender ( LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT				DebugRender ( LPDIRECT3DDEVICE9 pd3dDevice );
 
-	HRESULT				CalculateBoundingBox ( LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMATRIX pBoneMatrices, D3DXVECTOR3 &vMax, D3DXVECTOR3 &vMin );
+	HRESULT				CalculateBoundingBox ( LPDIRECT3DDEVICE9 pd3dDevice, LPD3DXMATRIX pBoneMatrices, D3DXVECTOR3 &vMax, D3DXVECTOR3 &vMin );
 
 public:
 	SMeshContainer () :

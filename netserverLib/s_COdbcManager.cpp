@@ -1,5 +1,5 @@
 #include "stdAfx.h"
-//#include "./DbExecuter.h"
+//// DbExecuter.h: use s_CDbAction.h
 #include "s_COdbcEnv.h"
 #include "s_COdbcManager.h"
 #include "s_CDbAction.h"

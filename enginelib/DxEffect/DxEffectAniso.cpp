@@ -19,7 +19,7 @@ static char THIS_FILE[] = __FILE__;
 
 const DWORD DxEffectAniso::TYPEID = DEF_EFFECT_ANISOTROPIC;
 const DWORD	DxEffectAniso::VERSION = 0x00000100;
-const char DxEffectAniso::NAME[] = "[2004]_[ ½Ö¹æÇâ¹°Ã¼ ]";
+const char DxEffectAniso::NAME[] = "[2004]_[ ï¿½Ö¹ï¿½ï¿½â¹°Ã¼ ]";
 const DWORD DxEffectAniso::FLAG = NULL;
 
 void DxEffectAniso::GetProperty ( PBYTE &pProp, DWORD &dwSize, DWORD &dwVer )
@@ -52,7 +52,7 @@ DxEffectAniso::~DxEffectAniso()
 	SAFE_DELETE_ARRAY(m_szAdaptFrame);
 }
 
-HRESULT DxEffectAniso::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectAniso::CreateDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr;
 
@@ -73,7 +73,7 @@ HRESULT DxEffectAniso::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	{
 		pd3dDevice->BeginStateBlock();
 
-		//	Note : SetTextureStageState() ¼±¾ð
+		//	Note : SetTextureStageState() ï¿½ï¿½ï¿½ï¿½
 		//
 		pd3dDevice->SetTextureStageState ( 0, D3DTSS_ADDRESSU,	D3DTADDRESS_MIRROR );
 		pd3dDevice->SetTextureStageState ( 0, D3DTSS_COLORARG2, D3DTA_TEXTURE | D3DTA_ALPHAREPLICATE );
@@ -87,7 +87,7 @@ HRESULT DxEffectAniso::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffectAniso::ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectAniso::ReleaseDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	pd3dDevice->DeleteVertexShader ( m_dwEffect );
 
@@ -105,7 +105,7 @@ HRESULT DxEffectAniso::ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffectAniso::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectAniso::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	if ( !pFrame ) return S_OK;
 
@@ -123,16 +123,16 @@ HRESULT DxEffectAniso::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dD
 	return S_OK;
 }
 
-HRESULT DxEffectAniso::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectAniso::InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
-	//	Note : ÅØ½ºÃÄÀÇ ÀÐ±â ¿À·ù´Â ¹«½ÃÇÑ´Ù.
+	//	Note : ï¿½Ø½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 	//
 	TextureManager::LoadTexture ( m_szTexture, pd3dDevice, m_pddsTexture, 0, 0 );
 
 	if ( !m_pddsTexture )
 	{
 		char szMsg[256];
-		sprintf ( szMsg, "ÀÌ¹ÌÁö ÆÄÀÏ '%s' ÀÐ±â¿¡ ½ÇÆÐ", m_szTexture );
+		sprintf ( szMsg, "ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ '%s' ï¿½Ð±â¿¡ ï¿½ï¿½ï¿½ï¿½", m_szTexture );
 		MessageBox ( NULL, szMsg, "ERROR", MB_OK );
 	}
 
@@ -142,7 +142,7 @@ HRESULT DxEffectAniso::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
 
 HRESULT DxEffectAniso::DeleteDeviceObjects ()
 {
-	//	Note : ÀÌÀü ÅØ½ºÃÄ°¡ ·ÎµåµÇ¾î ÀÖÀ» °æ¿ì Á¦°Å.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½ï¿½Ä°ï¿½ ï¿½Îµï¿½Ç¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	if ( m_pddsTexture )
 		TextureManager::ReleaseTexture ( m_pddsTexture );
@@ -157,7 +157,7 @@ HRESULT DxEffectAniso::FrameMove ( float fTime, float fElapsedTime )
 	return S_OK;
 }
 
-HRESULT DxEffectAniso::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectAniso::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr = S_OK;
 	DxMeshes *pmsMeshs;
@@ -167,7 +167,7 @@ HRESULT DxEffectAniso::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 	//
 	if ( pframeCur->pmsMeshs != NULL )
 	{
-		//	Note : ¸Þ½¬ ±×¸®±â.
+		//	Note : ï¿½Þ½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½.
 		//
 		pmsMeshs = pframeCur->pmsMeshs;
 		while ( pmsMeshs != NULL )
@@ -176,10 +176,10 @@ HRESULT DxEffectAniso::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 			{
 				DWORD dwFVFSize;
 				DWORD dwVerts, dwFaces;
-				LPDIRECT3DINDEXBUFFER8 pIB	= NULL;
-				LPDIRECT3DVERTEXBUFFER8 pVB = NULL;
+				LPDIRECT3DINDEXBUFFER9 pIB	= NULL;
+				LPDIRECT3DVERTEXBUFFER9 pVB = NULL;
 
-				//	Note : LocalMesh, OctreeMesh µÑ Áß ÇÏ³ª¸¦ °í¸¥´Ù.
+				//	Note : LocalMesh, OctreeMesh ï¿½ï¿½ ï¿½ï¿½ ï¿½Ï³ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 				//
 				if ( pmsMeshs->m_pLocalMesh )
 				{				
@@ -202,10 +202,10 @@ HRESULT DxEffectAniso::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 				}
 
 
-				//	Note : Shader »ó¼ö ¼±¾ð
+				//	Note : Shader ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 				//
 
-				//	Note : SetVertexShader¿¡ World¿Í WorldViewProjection Çà·Ä Áý¾î ³Ö±â
+				//	Note : SetVertexShaderï¿½ï¿½ Worldï¿½ï¿½ WorldViewProjection ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ö±ï¿½
 				//
 				D3DXMATRIX	matWorld, matView, matProj, matWVP;
 
@@ -224,27 +224,27 @@ HRESULT DxEffectAniso::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 
 
 
-				//	Note : SetTextureStageState() ¼±¾ð
+				//	Note : SetTextureStageState() ï¿½ï¿½ï¿½ï¿½
 				//
 				pd3dDevice->SetTexture ( 0, m_pddsTexture );
 
-				//	Note : ÀÌÀü »óÅÂ ¹é¾÷.
+				//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 				//
 				pd3dDevice->CaptureStateBlock ( m_dwSavedStateBlock );
 
-				//	Note : ·£´õ¸µ »óÅÂ Á¶Á¤.
+				//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 				//
 				pd3dDevice->ApplyStateBlock ( m_dwEffectStateBlock );
 
 
 
-				//	Note : ¼ÒÇÁÆ®¿þ¾î ¹öÅØ½º ÇÁ·Î¼¼½Ì
+				//	Note : ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½
 				//
 				if ( DxEffectMan::Instance.GetUseSwShader() )
 					pd3dDevice->SetRenderState( D3DRS_SOFTWAREVERTEXPROCESSING, TRUE );
 
 
-				//	Note : LocalMesh, OctreeMesh µÑ Áß ÇÏ³ª¸¦ °í¸¥´Ù.
+				//	Note : LocalMesh, OctreeMesh ï¿½ï¿½ ï¿½ï¿½ ï¿½Ï³ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 				//
 				if ( pmsMeshs->m_pLocalMesh )
 				{
@@ -264,7 +264,7 @@ HRESULT DxEffectAniso::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 				pd3dDevice->DrawIndexedPrimitive ( D3DPT_TRIANGLELIST, 0, dwVerts, 0, dwFaces );
 
 
-				//	Note : ¼ÒÇÁÆ®¿þ¾î ¹öÅØ½º ÇÁ·Î¼¼½Ì
+				//	Note : ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½
 				//
 				if ( DxEffectMan::Instance.GetUseSwShader() )
 					pd3dDevice->SetRenderState( D3DRS_SOFTWAREVERTEXPROCESSING, FALSE );
@@ -274,7 +274,7 @@ HRESULT DxEffectAniso::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 
 
 
-				//	Note : ÀÌÀü»óÅÂ·Î º¹¿ø.
+				//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ ï¿½ï¿½ï¿½ï¿½.
 				//
 				pd3dDevice->ApplyStateBlock ( m_dwSavedStateBlock );
 
@@ -290,7 +290,7 @@ HRESULT DxEffectAniso::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice
 		}
 	}
 
-	//	Note : ÀÚ½Ä ÇÁ·¹ÀÓ ±×¸®±â.
+	//	Note : ï¿½Ú½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½.
 	//
 	pframeChild = pframeCur->pframeFirstChild;
 	while ( pframeChild != NULL )

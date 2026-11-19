@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "./s_CDbAction.h"
-#include "./DbExecuter.h"
+// DbExecuter.h removed: stale duplicate; declarations come from s_CDbAction.h
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

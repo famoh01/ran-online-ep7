@@ -1,4 +1,4 @@
-// RanOnlienInstallerDlg.cpp : ±¸Çö ÆÄÀÏ
+// RanOnlienInstallerDlg.cpp : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 //
 
 #include "stdafx.h"
@@ -8,14 +8,16 @@
 #include "s_CHttpPatch.h"
 #include "LogControl.h"
 
-const CLSID FOLDERID_LocalAppDataLow = { 0xA520A1A4, 0x1780, 0x4FF6 ,{ 0xBD, 0x18, 0x16, 0x73, 0x43, 0xC5, 0xAF, 0x16}};
+#include <knownfolders.h>
+// FOLDERID_LocalAppDataLow now comes from shell32.lib/knownfolders.h
+// const CLSID FOLDERID_LocalAppDataLow = { 0xA520A1A4, 0x1780, 0x4FF6 ,{ 0xBD, 0x18, 0x16, 0x73, 0x43, 0xC5, 0xAF, 0x16}};
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
 
-// CRanOnlienInstallerDlg ´ëÈ­ »óÀÚ
+// CRanOnlienInstallerDlg ï¿½ï¿½È­ ï¿½ï¿½ï¿½ï¿½
 
 
 
@@ -53,18 +55,18 @@ BEGIN_MESSAGE_MAP(CRanOnlienInstallerDlg, CDialog)
 END_MESSAGE_MAP()
 
 
-// CRanOnlienInstallerDlg ¸Þ½ÃÁö Ã³¸®±â
+// CRanOnlienInstallerDlg ï¿½Þ½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½
 
 BOOL CRanOnlienInstallerDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	// ÀÌ ´ëÈ­ »óÀÚÀÇ ¾ÆÀÌÄÜÀ» ¼³Á¤ÇÕ´Ï´Ù. ÀÀ¿ë ÇÁ·Î±×·¥ÀÇ ÁÖ Ã¢ÀÌ ´ëÈ­ »óÀÚ°¡ ¾Æ´Ò °æ¿ì¿¡´Â
-	// ÇÁ·¹ÀÓ¿öÅ©°¡ ÀÌ ÀÛ¾÷À» ÀÚµ¿À¸·Î ¼öÇàÇÕ´Ï´Ù.
-	SetIcon(m_hIcon, TRUE);			// Å« ¾ÆÀÌÄÜÀ» ¼³Á¤ÇÕ´Ï´Ù.
-	SetIcon(m_hIcon, FALSE);		// ÀÛÀº ¾ÆÀÌÄÜÀ» ¼³Á¤ÇÕ´Ï´Ù.
+	// ï¿½ï¿½ ï¿½ï¿½È­ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½. ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Î±×·ï¿½ï¿½ï¿½ ï¿½ï¿½ Ã¢ï¿½ï¿½ ï¿½ï¿½È­ ï¿½ï¿½ï¿½Ú°ï¿½ ï¿½Æ´ï¿½ ï¿½ï¿½ì¿¡ï¿½ï¿½
+	// ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½Å©ï¿½ï¿½ ï¿½ï¿½ ï¿½Û¾ï¿½ï¿½ï¿½ ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
+	SetIcon(m_hIcon, TRUE);			// Å« ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
+	SetIcon(m_hIcon, FALSE);		// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
 
-	// TODO: ¿©±â¿¡ Ãß°¡ ÃÊ±âÈ­ ÀÛ¾÷À» Ãß°¡ÇÕ´Ï´Ù.
+	// TODO: ï¿½ï¿½ï¿½â¿¡ ï¿½ß°ï¿½ ï¿½Ê±ï¿½È­ ï¿½Û¾ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ï¿½Õ´Ï´ï¿½.
 
 	CWinApp *pApp = AfxGetApp();
 	if( !pApp )	return FALSE;
@@ -94,10 +96,10 @@ BOOL CRanOnlienInstallerDlg::OnInitDialog()
 	m_strSavePath += "\\";
 
 	m_pHttpPatch = new CHttpPatch;
-	//	°­Á¦Á¾·á Åä±Û ¼³Á¤
+	//	ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	m_pHttpPatch->SetForceTerminateToggle ( &m_bForceTerminate );
 
-	//	ÁøÇà»óÈ² ¼³Á¤
+	//	ï¿½ï¿½ï¿½ï¿½ï¿½È² ï¿½ï¿½ï¿½ï¿½
 	ULONGLONG* pCurPos = NULL;
 	ULONGLONG* pCurEnd = NULL;
 	NS_LOG_CONTROL::GetProcessCurPositionAddr ( &pCurPos, &pCurEnd );	
@@ -105,22 +107,22 @@ BOOL CRanOnlienInstallerDlg::OnInitDialog()
 
 	SetDlgItemText( IDC_DOWNPLACE_STATIC, m_strSavePath + m_strFileName );
 	
-	return TRUE;  // ÄÁÆ®·Ñ¿¡ ´ëÇÑ Æ÷Ä¿½º¸¦ ¼³Á¤ÇÏÁö ¾ÊÀ» °æ¿ì TRUE¸¦ ¹ÝÈ¯ÇÕ´Ï´Ù.
+	return TRUE;  // ï¿½ï¿½Æ®ï¿½Ñ¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ TRUEï¿½ï¿½ ï¿½ï¿½È¯ï¿½Õ´Ï´ï¿½.
 }
 
-// ´ëÈ­ »óÀÚ¿¡ ÃÖ¼ÒÈ­ ´ÜÃß¸¦ Ãß°¡ÇÒ °æ¿ì ¾ÆÀÌÄÜÀ» ±×¸®·Á¸é 
-// ¾Æ·¡ ÄÚµå°¡ ÇÊ¿äÇÕ´Ï´Ù. ¹®¼­/ºä ¸ðµ¨À» »ç¿ëÇÏ´Â MFC ÀÀ¿ë ÇÁ·Î±×·¥ÀÇ °æ¿ì¿¡´Â
-// ÇÁ·¹ÀÓ¿öÅ©¿¡¼­ ÀÌ ÀÛ¾÷À» ÀÚµ¿À¸·Î ¼öÇàÇÕ´Ï´Ù.
+// ï¿½ï¿½È­ ï¿½ï¿½ï¿½Ú¿ï¿½ ï¿½Ö¼ï¿½È­ ï¿½ï¿½ï¿½ß¸ï¿½ ï¿½ß°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½ï¿½ï¿½ 
+// ï¿½Æ·ï¿½ ï¿½Úµå°¡ ï¿½Ê¿ï¿½ï¿½Õ´Ï´ï¿½. ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ MFC ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Î±×·ï¿½ï¿½ï¿½ ï¿½ï¿½ì¿¡ï¿½ï¿½
+// ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½Å©ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Û¾ï¿½ï¿½ï¿½ ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
 
 void CRanOnlienInstallerDlg::OnPaint() 
 {
 	if (IsIconic())
 	{
-		CPaintDC dc(this); // ±×¸®±â¸¦ À§ÇÑ µð¹ÙÀÌ½º ÄÁÅØ½ºÆ®
+		CPaintDC dc(this); // ï¿½×¸ï¿½ï¿½â¸¦ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ì½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½Æ®
 
 		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
 
-		// Å¬¶óÀÌ¾ðÆ® »ç°¢Çü¿¡¼­ ¾ÆÀÌÄÜÀ» °¡¿îµ¥¿¡ ¸ÂÃä´Ï´Ù.
+		// Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½ç°¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½îµ¥ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.
 		int cxIcon = GetSystemMetrics(SM_CXICON);
 		int cyIcon = GetSystemMetrics(SM_CYICON);
 		CRect rect;
@@ -128,7 +130,7 @@ void CRanOnlienInstallerDlg::OnPaint()
 		int x = (rect.Width() - cxIcon + 1) / 2;
 		int y = (rect.Height() - cyIcon + 1) / 2;
 
-		// ¾ÆÀÌÄÜÀ» ±×¸³´Ï´Ù.
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½Ï´ï¿½.
 		dc.DrawIcon(x, y, m_hIcon);
 	}
 	else
@@ -137,8 +139,8 @@ void CRanOnlienInstallerDlg::OnPaint()
 	}
 }
 
-// »ç¿ëÀÚ°¡ ÃÖ¼ÒÈ­µÈ Ã¢À» ²ô´Â µ¿¾È¿¡ Ä¿¼­°¡ Ç¥½ÃµÇµµ·Ï ½Ã½ºÅÛ¿¡¼­
-//  ÀÌ ÇÔ¼ö¸¦ È£ÃâÇÕ´Ï´Ù. 
+// ï¿½ï¿½ï¿½ï¿½Ú°ï¿½ ï¿½Ö¼ï¿½È­ï¿½ï¿½ Ã¢ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½È¿ï¿½ Ä¿ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ÃµÇµï¿½ï¿½ï¿½ ï¿½Ã½ï¿½ï¿½Û¿ï¿½ï¿½ï¿½
+//  ï¿½ï¿½ ï¿½Ô¼ï¿½ï¿½ï¿½ È£ï¿½ï¿½ï¿½Õ´Ï´ï¿½. 
 HCURSOR CRanOnlienInstallerDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
@@ -146,13 +148,13 @@ HCURSOR CRanOnlienInstallerDlg::OnQueryDragIcon()
 
 void CRanOnlienInstallerDlg::OnBnClickedExecuteButton()
 {
-	// TODO: ¿©±â¿¡ ÄÁÆ®·Ñ ¾Ë¸² Ã³¸®±â ÄÚµå¸¦ Ãß°¡ÇÕ´Ï´Ù.
+	// TODO: ï¿½ï¿½ï¿½â¿¡ ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ë¸ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½ ï¿½Úµå¸¦ ï¿½ß°ï¿½ï¿½Õ´Ï´ï¿½.
 	EXECUTE_INSTALL();
 }
 
 void CRanOnlienInstallerDlg::OnBnClickedStartButton()
 {
-	// TODO: ¿©±â¿¡ ÄÁÆ®·Ñ ¾Ë¸² Ã³¸®±â ÄÚµå¸¦ Ãß°¡ÇÕ´Ï´Ù.
+	// TODO: ï¿½ï¿½ï¿½â¿¡ ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ë¸ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½ ï¿½Úµå¸¦ ï¿½ß°ï¿½ï¿½Õ´Ï´ï¿½.
 	CFileDialog dlg( FALSE, (LPCTSTR)".*", m_strFileName.GetString(), OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT,
 		NULL, this );
 
@@ -169,7 +171,7 @@ void CRanOnlienInstallerDlg::OnBnClickedStartButton()
 
 	m_strFileName = dlg.GetFileName();	
 
-	// ´Ù¿î·Îµå ½ÃÀÛ
+	// ï¿½Ù¿ï¿½Îµï¿½ ï¿½ï¿½ï¿½ï¿½
 
 	SetDlgItemText( IDC_DOWNPLACE_STATIC, m_strSavePath + m_strFileName );
 
@@ -186,21 +188,21 @@ void CRanOnlienInstallerDlg::OnBnClickedStartButton()
 
 void CRanOnlienInstallerDlg::OnBnClickedCloseButton()
 {
-	// TODO: ¿©±â¿¡ ÄÁÆ®·Ñ ¾Ë¸² Ã³¸®±â ÄÚµå¸¦ Ãß°¡ÇÕ´Ï´Ù.
-	m_bForceTerminate = TRUE; // Àü¼Û Áß´Ü
-	if ( m_pThread )	m_pThread->KillThread(); // ¾²·¹µå Áß´Ü
+	// TODO: ï¿½ï¿½ï¿½â¿¡ ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ë¸ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½ ï¿½Úµå¸¦ ï¿½ß°ï¿½ï¿½Õ´Ï´ï¿½.
+	m_bForceTerminate = TRUE; // ï¿½ï¿½ï¿½ï¿½ ï¿½ß´ï¿½
+	if ( m_pThread )	m_pThread->KillThread(); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß´ï¿½
 
 	OnOK();
 }
 
 void CRanOnlienInstallerDlg::OnTimer(UINT nIDEvent)
 {
-	// TODO: ¿©±â¿¡ ¸Þ½ÃÁö Ã³¸®±â ÄÚµå¸¦ Ãß°¡ ¹×/¶Ç´Â ±âº»°ªÀ» È£ÃâÇÕ´Ï´Ù.
+	// TODO: ï¿½ï¿½ï¿½â¿¡ ï¿½Þ½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½ ï¿½Úµå¸¦ ï¿½ß°ï¿½ ï¿½ï¿½/ï¿½Ç´ï¿½ ï¿½âº»ï¿½ï¿½ï¿½ï¿½ È£ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
 	switch( nIDEvent )
 	{
 		case E_START_PATCH:
 		{
-			UpdateControls(); // ÇÁ·Î±×·¡½º¹Ù ÁøÇà ¾÷µ¥ÀÌÆ®
+			UpdateControls(); // ï¿½ï¿½ï¿½Î±×·ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
 			
 			if ( m_pThread->IsForceTerminate() )	//	Canceled
 			{
@@ -237,7 +239,7 @@ void CRanOnlienInstallerDlg::UpdateControls()
 	AllPercent = int( (Pos*UL100) / End);
 
 
-	// ÇöÀç±îÁö ¹ÞÀº ¿ë·® 
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ë·® 
 	CString strTemp;	
 	float dwPos = static_cast<float>((double)Pos / ( 1024 * 1024 ));
 	float dwEnd = static_cast<float>((double)End / ( 1024 * 1024 ));
@@ -246,7 +248,7 @@ void CRanOnlienInstallerDlg::UpdateControls()
 	SetDlgItemText ( IDC_STATE_STATIC, strTemp );
 
 
-	// ´Ù¿î·Îµå ¼Óµµ
+	// ï¿½Ù¿ï¿½Îµï¿½ ï¿½Óµï¿½
 	if ( m_dwBeforeTime == 0 ) 
 	{
 		m_dwBeforeTime = GetTickCount();
@@ -266,12 +268,12 @@ void CRanOnlienInstallerDlg::UpdateControls()
 			if ( ULBps > (1024 * 1024 )) // MB
 			{
 				m_dwBps = static_cast<float>( (double)ULBps / (1024*1024) );
-				strTemp2.Format( "%0.2f MB / ÃÊ ", m_dwBps );
+				strTemp2.Format( "%0.2f MB / ï¿½ï¿½ ", m_dwBps );
 			}
 			else // KB
 			{
 				m_dwBps = static_cast<float>( (double)ULBps / (1024) );
-				strTemp2.Format( "%0.2f KB / ÃÊ ", m_dwBps );
+				strTemp2.Format( "%0.2f KB / ï¿½ï¿½ ", m_dwBps );
 			}	
 			
 			
@@ -309,7 +311,7 @@ void CRanOnlienInstallerDlg::BEGIN_DOWNLOAD()
 	VERIFY(m_pThread->SetThreadPriority(THREAD_PRIORITY_IDLE));
 	m_pThread->ResumeThread();
 
-	SetTimer ( E_START_PATCH, 30, NULL ); // ¾²·¹µå »ý¼ºÈÄ Å¸ÀÌ¸Ó ÀÛµ¿ÀÌ ¸ÂÀ»±î...?
+	SetTimer ( E_START_PATCH, 30, NULL ); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½Ì¸ï¿½ ï¿½Ûµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½...?
 }
 
 void CRanOnlienInstallerDlg::END_DOWNLOAD()
@@ -317,7 +319,7 @@ void CRanOnlienInstallerDlg::END_DOWNLOAD()
 	m_ctrlProgressAll.SetPos ( 100 );
 	m_ctrlExecute.EnableWindow( TRUE );
 
-	if ( !m_pThread->IsFail() ) // ½ÇÆÐ°¡ ¾Æ´Ï¸é...
+	if ( !m_pThread->IsFail() ) // ï¿½ï¿½ï¿½Ð°ï¿½ ï¿½Æ´Ï¸ï¿½...
 	{
 		UpdateData( TRUE );
 		if ( m_bAutoExecute )
@@ -384,10 +386,10 @@ void CRanOnlienInstallerDlg::OnKillThread()
 
 void CRanOnlienInstallerDlg::PostNcDestroy()
 {
-	// TODO: ¿©±â¿¡ Æ¯¼öÈ­µÈ ÄÚµå¸¦ Ãß°¡ ¹×/¶Ç´Â ±âº» Å¬·¡½º¸¦ È£ÃâÇÕ´Ï´Ù.
+	// TODO: ï¿½ï¿½ï¿½â¿¡ Æ¯ï¿½ï¿½È­ï¿½ï¿½ ï¿½Úµå¸¦ ï¿½ß°ï¿½ ï¿½ï¿½/ï¿½Ç´ï¿½ ï¿½âº» Å¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È£ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
 	if( !m_bForceTerminate )
 	{
-		OnKillThread(); // Á¾·á¹öÆ°ÀÌ ´­·¯ÁöÁö ¾Ê¾Ò´Ù¸é ¾²·¹µå Á¦°Å
+		OnKillThread(); // ï¿½ï¿½ï¿½ï¿½ï¿½Æ°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¾Ò´Ù¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	}
 
 	SAFE_DELETE ( m_pHttpPatch );

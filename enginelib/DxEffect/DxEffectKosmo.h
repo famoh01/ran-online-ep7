@@ -32,7 +32,7 @@ struct KOSMO_PROPERTY
 
 class DxEffectKosmo : public DxEffectBase
 {
-	//	Note : ÀÌÆåÆ® Å¸ÀÔ Á¤ÀÇ.
+	//	Note : ï¿½ï¿½ï¿½ï¿½Æ® Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 public:
 	const static DWORD	TYPEID;
@@ -74,7 +74,7 @@ public:
 		float		fSize;
 	};
 
-	//	Note : ½¦ÀÌ´õ.
+	//	Note : ï¿½ï¿½ï¿½Ì´ï¿½.
 	//
 protected:	
 	static DWORD			m_dwEffect;
@@ -83,7 +83,7 @@ protected:
 	static DWORD			m_dwSavedStateBlock;
 	static DWORD			m_dwEffectStateBlock;
 
-	//	Note : ¼Ó¼º.
+	//	Note : ï¿½Ó¼ï¿½.
 	//
 protected:
 	union
@@ -118,10 +118,10 @@ public:
 	KOSMO_PROPERTY& GetProperty () { return m_Property; }
 
 protected:
-	LPDIRECT3DTEXTURE8			m_pddsTexture;
+	LPDIRECT3DTEXTURE9			m_pddsTexture;
 
-	LPDIRECT3DVERTEXBUFFER8		m_pVB;
-	LPDIRECT3DINDEXBUFFER8		m_pIB;
+	LPDIRECT3DVERTEXBUFFER9		m_pVB;
+	LPDIRECT3DINDEXBUFFER9		m_pIB;
 
 	DWORD		m_dwVertex;
 
@@ -134,41 +134,41 @@ protected:
 	float		m_fElapsedTime;
 
 public:
-	static HRESULT CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice );
-	static HRESULT ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice );
+	static HRESULT CreateDevice ( LPDIRECT3DDEVICE9 pd3dDevice );
+	static HRESULT ReleaseDevice ( LPDIRECT3DDEVICE9 pd3dDevice );
 
 protected:
-	HRESULT AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice );
 
 public:
-	HRESULT AdaptToDxFrame ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT AdaptToDxFrame ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice );
 
 	//	Note : 
 	//
 public:
-	virtual HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice );
+	virtual HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice );
 	virtual HRESULT DeleteDeviceObjects ();
 
 public:
 	HRESULT FrameMove ( float fTime, float fElapsedTime );	
-	HRESULT Render ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT Render ( DxFrame *pFrame, LPDIRECT3DDEVICE9 pd3dDevice );
 
 public:
-	HRESULT AddKosmoVertex ( LPDIRECT3DDEVICE8 pd3dDevice, D3DXVECTOR3 Pos, float fSize );
-	HRESULT AddKosmoMesh ( LPDIRECT3DDEVICE8 pd3dDevice, DWORD Faces );				// ´Ù½Ã ¸¸µé ¶§µµ »ç¿ë ÇÑ´Ù.
-	HRESULT AddMeshStrip ( LPDIRECT3DDEVICE8 pd3dDevice, DWORD Faces );
+	HRESULT AddKosmoVertex ( LPDIRECT3DDEVICE9 pd3dDevice, D3DXVECTOR3 Pos, float fSize );
+	HRESULT AddKosmoMesh ( LPDIRECT3DDEVICE9 pd3dDevice, DWORD Faces );				// ï¿½Ù½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ñ´ï¿½.
+	HRESULT AddMeshStrip ( LPDIRECT3DDEVICE9 pd3dDevice, DWORD Faces );
 
-	HRESULT MakeMagLine ( LPDIRECT3DDEVICE8 pd3dDevice, D3DXVECTOR3 v1, D3DXVECTOR3 v2 );
+	HRESULT MakeMagLine ( LPDIRECT3DDEVICE9 pd3dDevice, D3DXVECTOR3 v1, D3DXVECTOR3 v2 );
 	HRESULT LineMove ( KOSMOFACE* pVertices, VERTEX* pBaseVertices, DWORD Faces );
 
-	HRESULT MakeMagCircle ( LPDIRECT3DDEVICE8 pd3dDevice, D3DXVECTOR3 Pos );
+	HRESULT MakeMagCircle ( LPDIRECT3DDEVICE9 pd3dDevice, D3DXVECTOR3 Pos );
 	HRESULT	CircleMove ( KOSMOFACE* pVertices, VERTEX* pBaseVertices, DWORD Faces );
 	void	LineDuffuse	( KOSMOFACE* &pBuff, D3DXVECTOR3 v1, D3DXVECTOR3 v2 );
 
-	HRESULT MakeMagCyclone ( LPDIRECT3DDEVICE8 pd3dDevice, D3DXVECTOR3 v1, D3DXVECTOR3 v2 );
+	HRESULT MakeMagCyclone ( LPDIRECT3DDEVICE9 pd3dDevice, D3DXVECTOR3 v1, D3DXVECTOR3 v2 );
 	void	PushLine2		( KOSMOFACE* &pBuff, D3DXVECTOR3 inFromPos, D3DXVECTOR3 inToPos, float inFromSize, float inToSize, float Color1, float Color2 );
 
-	HRESULT MakeMagLighting ( LPDIRECT3DDEVICE8 pd3dDevice, D3DXVECTOR3 v1, D3DXVECTOR3 v2 );
+	HRESULT MakeMagLighting ( LPDIRECT3DDEVICE9 pd3dDevice, D3DXVECTOR3 v1, D3DXVECTOR3 v2 );
 	void	PushStrip	( KOSMOSTRIP* &pBuff, D3DXVECTOR3 Pos, float Size, float Color );
 
 
@@ -181,7 +181,7 @@ public:
 protected:
 	HRESULT AddVertexBuffer ( KOSMOFACE* pVertices, VERTEX* pBaseVertices, DWORD Faces );
 
-	HRESULT CreateMeshKosmo ( LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT CreateMeshKosmo ( LPDIRECT3DDEVICE9 pd3dDevice );
 
 	HRESULT FillVertexBuffer ( void );
 	void	PushLine	( KOSMOFACE* &pBuff, D3DXVECTOR3 inFromPos, D3DXVECTOR3 inToPos, float inFromSize, float inToSize );

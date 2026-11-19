@@ -21,7 +21,7 @@ static char THIS_FILE[] = __FILE__;
 const DWORD DxEffectSprite::VERTEX::FVF = D3DFVF_XYZ|D3DFVF_NORMAL|D3DFVF_TEX1;
 const DWORD DxEffectSprite::TYPEID = DEF_EFFECT_SPRITE;
 const DWORD	DxEffectSprite::VERSION = 0x00000100;
-const char DxEffectSprite::NAME[] = "[3006]_[ ±¤¿ø ]";
+const char DxEffectSprite::NAME[] = "[3006]_[ ï¿½ï¿½ï¿½ï¿½ ]";
 const DWORD DxEffectSprite::FLAG = _EFF_REPLACE;
 
 void DxEffectSprite::GetProperty ( PBYTE &pProp, DWORD &dwSize, DWORD &dwVer )
@@ -68,13 +68,13 @@ DxEffectSprite::~DxEffectSprite()
 	SAFE_DELETE_ARRAY(m_szAdaptFrame);
 }
 
-HRESULT DxEffectSprite::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectSprite::CreateDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	for( UINT which=0; which<2; which++ )
 	{
 		pd3dDevice->BeginStateBlock();
 
-		//	Note : SetRenderState() ¼±¾ð
+		//	Note : SetRenderState() ï¿½ï¿½ï¿½ï¿½
 		//
 	//	pd3dDevice->SetRenderState ( D3DRS_ZWRITEENABLE, FALSE );
 		pd3dDevice->SetRenderState ( D3DRS_LIGHTING,			FALSE );
@@ -92,7 +92,7 @@ HRESULT DxEffectSprite::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffectSprite::ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectSprite::ReleaseDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	if ( pd3dDevice )
 	{
@@ -108,7 +108,7 @@ HRESULT DxEffectSprite::ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffectSprite::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectSprite::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr = S_OK;
 	DxMeshes *pmsMeshs;
@@ -129,7 +129,7 @@ HRESULT DxEffectSprite::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVI
 		}
 	}
 
-	//	Note : ÀÚ½Ä ÇÁ·¹ÀÓ¿¡ ºÙÀÌ±â.
+	//	Note : ï¿½Ú½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½ ï¿½ï¿½ï¿½Ì±ï¿½.
 	//
 	pframeChild = pframeCur->pframeFirstChild;
 	while ( pframeChild != NULL )
@@ -144,7 +144,7 @@ HRESULT DxEffectSprite::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVI
 	return hr;
 }
 
-HRESULT DxEffectSprite::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectSprite::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	if ( !pFrame ) return S_OK;
 
@@ -162,7 +162,7 @@ HRESULT DxEffectSprite::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3d
 	return AdaptToDxFrameChild ( pFrame, pd3dDevice );
 }
 
-HRESULT DxEffectSprite::AdaptToEffList ( const DxFrame *const pFrame, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectSprite::AdaptToEffList ( const DxFrame *const pFrame, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	assert ( pFrame );
 
@@ -178,16 +178,16 @@ HRESULT DxEffectSprite::AdaptToEffList ( const DxFrame *const pFrame, LPDIRECT3D
 }
 
 
-HRESULT DxEffectSprite::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectSprite::InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
-	//	Note : ÅØ½ºÃÄÀÇ ÀÐ±â ¿À·ù´Â ¹«½ÃÇÑ´Ù.
+	//	Note : ï¿½Ø½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 	//
 	TextureManager::LoadTexture ( m_szTexture, pd3dDevice, m_pddsTexture, 0, 0 );
 
 	if ( !m_pddsTexture )
 	{
 		char szMsg[256];
-		sprintf ( szMsg, "ÀÌ¹ÌÁö ÆÄÀÏ '%s' ÀÐ±â¿¡ ½ÇÆÐ", m_szTexture );
+		sprintf ( szMsg, "ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ '%s' ï¿½Ð±â¿¡ ï¿½ï¿½ï¿½ï¿½", m_szTexture );
 		MessageBox ( NULL, szMsg, "ERROR", MB_OK );
 	}
 
@@ -196,7 +196,7 @@ HRESULT DxEffectSprite::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
 
 HRESULT DxEffectSprite::DeleteDeviceObjects ()
 {
-	//	Note : ÀÌÀü ÅØ½ºÃÄ°¡ ·ÎµåµÇ¾î ÀÖÀ» °æ¿ì Á¦°Å.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½ï¿½Ä°ï¿½ ï¿½Îµï¿½Ç¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	if ( m_pddsTexture )
 		TextureManager::ReleaseTexture ( m_pddsTexture );
@@ -212,9 +212,9 @@ HRESULT DxEffectSprite::FrameMove ( float fTime, float fElapsedTime )
 	return S_OK;
 }
 
-HRESULT DxEffectSprite::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectSprite::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice )
 {
-	//	Note : ¿øº» »Ñ¸®±â
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ¸ï¿½ï¿½ï¿½
 	//
 	if ( m_pOcMesh )
 	{
@@ -231,7 +231,7 @@ HRESULT DxEffectSprite::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevic
 		pd3dDevice->SetTransform ( D3DTS_WORLD, &matWorld );
 	}
 
-	//	Note : ½ºÇÁ¶óÀÌÆ®
+	//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
 	//
 	if ( m_pSpriteMesh )
 	{
@@ -250,7 +250,7 @@ HRESULT DxEffectSprite::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevic
 
 		DWORD					dwFVFSize;
 		DWORD					dwVerts, dwFaces;
-		LPDIRECT3DVERTEXBUFFER8 pVB	= NULL;
+		LPDIRECT3DVERTEXBUFFER9 pVB	= NULL;
 	
 		m_pSpriteMesh->GetVertexBuffer ( &pVB );
 		
@@ -271,13 +271,13 @@ HRESULT DxEffectSprite::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevic
 
 
 
-		//	 ºôº¸µå¸¦ ÇÕ´Ï´Ù...
+		//	 ï¿½ï¿½ï¿½ï¿½ï¿½å¸¦ ï¿½Õ´Ï´ï¿½...
 		//
 		D3DXVECTOR3 vWorldCenter = m_vCenter;//MatrixVertex ( &pframeCur->matCombined, &m_vCenter );
 
 		D3DXVECTOR3 &vFromPt = DxViewPort::Instance.GetFromPt ();
 
-		D3DXVECTOR3 Sub11( 0.f, 0.f, 0.f );		// ¹°Ã¼¿¡¼­ Ä«¸Þ¶ó·Î
+		D3DXVECTOR3 Sub11( 0.f, 0.f, 0.f );		// ï¿½ï¿½Ã¼ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½Þ¶ï¿½ï¿½
 		Sub11.x = vFromPt.x - vWorldCenter.x;
 		Sub11.y = vFromPt.y - vWorldCenter.y;
 		Sub11.z = vFromPt.z - vWorldCenter.z;
@@ -287,7 +287,7 @@ HRESULT DxEffectSprite::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevic
 
 		vWorldCenter += vSubDis11;
 
-		//	Note : vWorldCenter -> vLookatPt ·Î ¹Ù²ã ÁÖ¾î¾ßÁö
+		//	Note : vWorldCenter -> vLookatPt ï¿½ï¿½ ï¿½Ù²ï¿½ ï¿½Ö¾ï¿½ï¿½ï¿½ï¿½
 		D3DXMATRIX matBillboard = BillboardLookAt ( vWorldCenter, vFromPt );	
 
 
@@ -332,11 +332,11 @@ HRESULT DxEffectSprite::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevic
 		pd3dDevice->SetTexture ( 0, m_pddsTexture );
 
 
-		//	Note : ÀÌÀü »óÅÂ ¹é¾÷.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 		//
 		pd3dDevice->CaptureStateBlock ( m_dwSavedStateBlock );
 
-		//	Note : ·£´õ¸µ »óÅÂ Á¶Á¤.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 		//
 		pd3dDevice->ApplyStateBlock ( m_dwEffectStateBlock );
 
@@ -351,7 +351,7 @@ HRESULT DxEffectSprite::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevic
 		pd3dDevice->SetIndices ( NULL, 0 );
 		pd3dDevice->SetStreamSource ( 0, NULL, 0 );
 
-		//	Note : ÀÌÀü»óÅÂ·Î º¹¿ø.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ ï¿½ï¿½ï¿½ï¿½.
 		//
 		pd3dDevice->ApplyStateBlock ( m_dwSavedStateBlock );
 
@@ -382,7 +382,7 @@ HRESULT DxEffectSprite::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevic
 			
 
 
-			D3DXVECTOR3 Sub11( 0.f, 0.f, 0.f );		// ¹°Ã¼¿¡¼­ Ä«¸Þ¶ó·Î
+			D3DXVECTOR3 Sub11( 0.f, 0.f, 0.f );		// ï¿½ï¿½Ã¼ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½Þ¶ï¿½ï¿½
 			Sub11.x = vFromPt.x - vWorldCenter.x;
 			Sub11.y = vFromPt.y - vWorldCenter.y;
 			Sub11.z = vFromPt.z - vWorldCenter.z;
@@ -391,7 +391,7 @@ HRESULT DxEffectSprite::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevic
 			vSubDis11 = Sub11 * m_fDistance;
 
 
-			D3DXVECTOR3 Sub( 0.f, 0.f, 0.f );		// º¸´Â À§Ä¡¿¡¼­ Ä«¸Þ¶ó·Î
+			D3DXVECTOR3 Sub( 0.f, 0.f, 0.f );		// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½Þ¶ï¿½ï¿½
 			Sub.x = vFromPt.x - vLookatPt.x;
 			Sub.y = vFromPt.y - vLookatPt.y;
 			Sub.z = vFromPt.z - vLookatPt.z;
@@ -401,10 +401,10 @@ HRESULT DxEffectSprite::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevic
 
 
 	
-			//	Note : Shader »ó¼ö ¼±¾ð
+			//	Note : Shader ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			//
 
-			//	Note : SetRenderState() ¼±¾ð
+			//	Note : SetRenderState() ï¿½ï¿½ï¿½ï¿½
 			//
 			
 
@@ -412,21 +412,21 @@ HRESULT DxEffectSprite::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevic
 
 			pd3dDevice->SetTransform( D3DTS_WORLD, &matIdentity );
 
-			//	Note : 1 ´Ü°è	-	Áß½ÉÁ¡ Ã£±â
+			//	Note : 1 ï¿½Ü°ï¿½	-	ï¿½ß½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½
 			//
 			D3DXVECTOR3 vWorldCenterSub;
-			vWorldCenterSub.x = vWorldCenter.x + vSubDis11.x;	// ³ë¸ÖÀ» ¹°Ã¼°¡ º¸´Â ¹æÇâÀ¸·Î ÇØ¾ß ÇÑ´Ù.
+			vWorldCenterSub.x = vWorldCenter.x + vSubDis11.x;	// ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ø¾ï¿½ ï¿½Ñ´ï¿½.
 			vWorldCenterSub.y = vWorldCenter.y + vSubDis11.y;
 			vWorldCenterSub.z = vWorldCenter.z + vSubDis11.z;
 
 
-			//	Note : 2 ´Ü°è	-	¸é ¸¸µé±â
+			//	Note : 2 ï¿½Ü°ï¿½	-	ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
 			//
-			D3DXPLANE	vPlane;												// ³ë¸ÖÀ» Ä«¸Þ¶ó°¡ º¸´Â ¹æÇâÀ¸·Î ÇØ¾ß ÇÑ´Ù.
+			D3DXPLANE	vPlane;												// ï¿½ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ø¾ï¿½ ï¿½Ñ´ï¿½.
 			D3DXPlaneFromPointNormal ( &vPlane, &vWorldCenterSub, &Sub );
 
 
-			//	Note : 3 ´Ü°è	-	¼±ºÐ ¸¸µé±â
+			//	Note : 3 ï¿½Ü°ï¿½	-	ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
 			//
 			D3DXVECTOR3 vWorldLine1 = vWorld1 + (vSubDis11*10);
 			D3DXVECTOR3 vWorldLine2 = vWorld2 + (vSubDis11*10);
@@ -434,7 +434,7 @@ HRESULT DxEffectSprite::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevic
 			D3DXVECTOR3 vWorldLine4 = vWorld4 + (vSubDis11*10);
 
 
-			//	Note : 4 ´Ü°è	-	4 °³ÀÇ ±³Á¡ Ã£±â
+			//	Note : 4 ï¿½Ü°ï¿½	-	4 ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½
 			//
 			vWorldLine1 = Split ( &vPlane, &vWorld1, &vWorldLine1 );
 			vWorldLine2 = Split ( &vPlane, &vWorld2, &vWorldLine2 );
@@ -442,19 +442,19 @@ HRESULT DxEffectSprite::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevic
 			vWorldLine4 = Split ( &vPlane, &vWorld4, &vWorldLine4 );
 
 
-			//	Note : 5 ´Ü°è	-	°Å¸® °è»ê 
+			//	Note : 5 ï¿½Ü°ï¿½	-	ï¿½Å¸ï¿½ ï¿½ï¿½ï¿½ 
 			//
 
 
-			//	Note : 6 ´Ü°è	-	°Å¸®°¡ Á¼´Ù?? ±×·³ ´Ã·Á¾ßÁã.
+			//	Note : 6 ï¿½Ü°ï¿½	-	ï¿½Å¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½?? ï¿½×·ï¿½ ï¿½Ã·ï¿½ï¿½ï¿½ï¿½ï¿½.
 			//			
-			//	6-1 ´Ü°è	-	½ÇÁ¦ X ¸¦ °¡Á®¿Í¾ßÁö
+			//	6-1 ï¿½Ü°ï¿½	-	ï¿½ï¿½ï¿½ï¿½ X ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¾ï¿½ï¿½ï¿½
 			float RealX = sqrtf( powf(vWorld2.x-vWorld1.x,2) + powf(vWorld2.z-vWorld1.z,2) );
-			//	6-2 ´Ü°è	-	»Ñ·ÁÁö´Â X ¸¦ °¡Á®¿Í¾ßÁö
+			//	6-2 ï¿½Ü°ï¿½	-	ï¿½Ñ·ï¿½ï¿½ï¿½ï¿½ï¿½ X ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¾ï¿½ï¿½ï¿½
 			float RenderX = sqrtf( powf(vWorldLine2.x-vWorldLine1.x,2) + powf(vWorldLine2.z-vWorldLine1.z,2) );
-			//	6-3 ´Ü°è	-	½ÇÁ¦ X ¿Í »Ñ·ÁÁö´Â XÀÇ Â÷¸¦ ±¸ÇØ¾ßÁö	= ºñÀ²ÀÌ ³ª¿Ô´Ù	
+			//	6-3 ï¿½Ü°ï¿½	-	ï¿½ï¿½ï¿½ï¿½ X ï¿½ï¿½ ï¿½Ñ·ï¿½ï¿½ï¿½ï¿½ï¿½ Xï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø¾ï¿½ï¿½ï¿½	= ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ô´ï¿½	
 			float RRX = ((m_fWidth*2) - RenderX)/(m_fWidth*2);
-			//	6-4 ´Ü°è	-	»Ñ·ÁÁö´Â X + Â÷ÀÌ*°è»êµÈ ¼öÁö ÇØÁà¾ßÁö			Sub11
+			//	6-4 ï¿½Ü°ï¿½	-	ï¿½Ñ·ï¿½ï¿½ï¿½ï¿½ï¿½ X + ï¿½ï¿½ï¿½ï¿½*ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½			Sub11
 
 
 			D3DXVECTOR3 vkk1 = vWorldLine1;
@@ -513,7 +513,7 @@ HRESULT DxEffectSprite::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevic
 				vWorldLine4.y = fTempCh;
 			}
 
-			//	Note : 7 ´Ü°è	-	¿Ï¼ºµÈ Á¡ Áý¾î ³Ö±â
+			//	Note : 7 ï¿½Ü°ï¿½	-	ï¿½Ï¼ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ö±ï¿½
 			//
 			QUAD*			pVertexC;
 
@@ -550,7 +550,7 @@ HRESULT DxEffectSprite::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevic
 	return S_OK;
 }
 
-HRESULT DxEffectSprite::MakeEffSprite (LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMESH pLocalMesh )
+HRESULT DxEffectSprite::MakeEffSprite (LPDIRECT3DDEVICE9 pd3dDevice, LPD3DXMESH pLocalMesh )
 {
 //	QUAD* pVertices;
 	DWORD	dwFVF		= pLocalMesh->GetFVF();
@@ -587,7 +587,7 @@ HRESULT DxEffectSprite::MakeEffSprite (LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMESH 
 */
 	QUAD*			pVertexC;
 
-	D3DXCreateMeshFVF( 2,	//	TRIANGLESTRIP ÀÌ¶ó¼­ -2 
+	D3DXCreateMeshFVF( 2,	//	TRIANGLESTRIP ï¿½Ì¶ï¿½ -2 
 						4,
 						D3DXMESH_SYSTEMMEM, 
 						D3DFVF_XYZ|D3DFVF_DIFFUSE|D3DFVF_TEX1,
@@ -664,7 +664,7 @@ D3DXVECTOR3 DxEffectSprite::MatrixVertex ( D3DMATRIX *matWorld, D3DXVECTOR3 *vPo
 D3DXVECTOR3 DxEffectSprite::Split ( D3DXPLANE *vPlane, D3DXVECTOR3 *vPos1, D3DXVECTOR3 *vPos2 )
 {
 	D3DXVECTOR3 vPlaneNormal;
-	vPlaneNormal = D3DXVECTOR3 ( vPlane->a, vPlane->b, vPlane->c );	// ¸éÀÇ ³ë¸Ö
+	vPlaneNormal = D3DXVECTOR3 ( vPlane->a, vPlane->b, vPlane->c );	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 
     float aDot = D3DXVec3Dot ( &(*vPos1), &(vPlaneNormal) );
 	float bDot = D3DXVec3Dot ( &(*vPos2), &(vPlaneNormal) );
@@ -681,12 +681,12 @@ void DxEffectSprite::SaveBuffer ( CSerialFile &SFile )
 	m_pOcMesh->SaveFile ( SFile );
 }
 
-void DxEffectSprite::LoadBufferSet ( CSerialFile &SFile, DWORD dwVer, LPDIRECT3DDEVICE8 pd3dDevice )
+void DxEffectSprite::LoadBufferSet ( CSerialFile &SFile, DWORD dwVer, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	//if ( dwVer == 0x0100 )
 	//{
 	//	DWORD dwBuffSize;
-	//	SFile >> dwBuffSize; //	ÀÐÁö ¾Ê°í ½ºÅµ¿ëÀ¸·Î »ç¿ëµÇ¹Ç·Î ½ÇÁ¦ ·Îµå¿¡¼­´Â ¹«ÀÇ¹Ì.
+	//	SFile >> dwBuffSize; //	ï¿½ï¿½ï¿½ï¿½ ï¿½Ê°ï¿½ ï¿½ï¿½Åµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ç¹Ç·ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Îµå¿¡ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ç¹ï¿½.
 
 	//	return;
 	//}
@@ -694,12 +694,12 @@ void DxEffectSprite::LoadBufferSet ( CSerialFile &SFile, DWORD dwVer, LPDIRECT3D
 	m_pOcMesh->LoadFile ( SFile, pd3dDevice );
 }
 
-void DxEffectSprite::LoadBuffer ( CSerialFile &SFile, DWORD dwVer, LPDIRECT3DDEVICE8 pd3dDevice )
+void DxEffectSprite::LoadBuffer ( CSerialFile &SFile, DWORD dwVer, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	//if ( dwVer == 0x0100 )
 	//{
 	//	DWORD dwBuffSize;
-	//	SFile >> dwBuffSize; //	ÀÐÁö ¾Ê°í ½ºÅµ¿ëÀ¸·Î »ç¿ëµÇ¹Ç·Î ½ÇÁ¦ ·Îµå¿¡¼­´Â ¹«ÀÇ¹Ì.
+	//	SFile >> dwBuffSize; //	ï¿½ï¿½ï¿½ï¿½ ï¿½Ê°ï¿½ ï¿½ï¿½Åµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ç¹Ç·ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Îµå¿¡ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ç¹ï¿½.
 
 	//	if ( m_pOcMesh )
 	//	{
@@ -712,7 +712,7 @@ void DxEffectSprite::LoadBuffer ( CSerialFile &SFile, DWORD dwVer, LPDIRECT3DDEV
 	m_pOcMesh->LoadFile ( SFile, pd3dDevice );
 }
 
-HRESULT DxEffectSprite::CloneData ( DxEffectBase* pSrcEffect, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectSprite::CloneData ( DxEffectBase* pSrcEffect, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	DxEffectSprite* pSrcSprite = (DxEffectSprite*) pSrcEffect;
 	assert(pSrcSprite->m_pSpriteMesh);
@@ -733,7 +733,7 @@ HRESULT DxEffectSprite::CloneData ( DxEffectBase* pSrcEffect, LPDIRECT3DDEVICE8 
 	//	WORD*			pSrcIndex;
 	//	WORD*			pDestindex;
 
-		D3DXCreateMeshFVF( 2,	//	TRIANGLESTRIP ÀÌ¶ó¼­ -2 
+		D3DXCreateMeshFVF( 2,	//	TRIANGLESTRIP ï¿½Ì¶ï¿½ -2 
 						4,
 						D3DXMESH_SYSTEMMEM, 
 						D3DFVF_XYZ|D3DFVF_DIFFUSE|D3DFVF_TEX1,

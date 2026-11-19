@@ -17,7 +17,7 @@ struct DxFrame;
 struct SPRITE_PROPERTY
 {
 	D3DXVECTOR3		m_vCenter;
-	float			m_fWidth;	// À§ÂÊ°ú ¾Æ·¡ÂÊÀ» ºÐ¸® ÇØ¾ß ÇÑ´Ù.
+	float			m_fWidth;	// ï¿½ï¿½ï¿½Ê°ï¿½ ï¿½Æ·ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð¸ï¿½ ï¿½Ø¾ï¿½ ï¿½Ñ´ï¿½.
 	float			m_fHeight;
 	float			m_fDistance;
 	DWORD			m_dwColor;
@@ -30,7 +30,7 @@ struct SPRITE_PROPERTY
 
 class DxEffectSprite : public DxEffectBase
 {
-	//	Note : ÀÌÆåÆ® Å¸ÀÔ Á¤ÀÇ.
+	//	Note : ï¿½ï¿½ï¿½ï¿½Æ® Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 public:
 	const static DWORD	TYPEID;
@@ -46,13 +46,13 @@ public:
 	virtual void GetProperty ( PBYTE &pProp, DWORD &dwSize, DWORD &dwVer );
 	virtual void SetProperty ( PBYTE &pProp, DWORD &dwSize, DWORD dwVer );
 
-	//	Note : ½¦ÀÌ´õ.
+	//	Note : ï¿½ï¿½ï¿½Ì´ï¿½.
 	//
 protected:	
 	static DWORD	m_dwSavedStateBlock;
 	static DWORD	m_dwEffectStateBlock;
 
-	//	Note : ¼Ó¼º.
+	//	Note : ï¿½Ó¼ï¿½.
 	//
 protected:
 	union
@@ -84,7 +84,7 @@ public:
 	SPRITE_PROPERTY& GetProperty () { return m_Property; }
 
 protected:
-	LPDIRECT3DTEXTURE8	m_pddsTexture;
+	LPDIRECT3DTEXTURE9	m_pddsTexture;
 
 	float	m_fTime;
 
@@ -113,29 +113,29 @@ protected:
 	DxOcMeshes*		m_pOcMesh;
 
 public:
-	static HRESULT CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice );
-	static HRESULT ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice );
+	static HRESULT CreateDevice ( LPDIRECT3DDEVICE9 pd3dDevice );
+	static HRESULT ReleaseDevice ( LPDIRECT3DDEVICE9 pd3dDevice );
 
 protected:
-	HRESULT AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice );
 	
 public:
-	HRESULT AdaptToDxFrame ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT AdaptToDxFrame ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice );
 
-	HRESULT AdaptToEffList ( const DxFrame *const pFrame, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT AdaptToEffList ( const DxFrame *const pFrame, LPDIRECT3DDEVICE9 pd3dDevice );
 
 	//	Note : 
 	//
 public:
-	virtual HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice );
+	virtual HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice );
 	virtual HRESULT DeleteDeviceObjects ();
 
 public:
 	HRESULT FrameMove ( float fTime, float fElapsedTime );	
-	HRESULT Render ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT Render ( DxFrame *pFrame, LPDIRECT3DDEVICE9 pd3dDevice );
 
 private:
-	HRESULT MakeEffSprite ( LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMESH pLocalMesh );
+	HRESULT MakeEffSprite ( LPDIRECT3DDEVICE9 pd3dDevice, LPD3DXMESH pLocalMesh );
 	D3DMATRIX BillboardLookAt ( D3DXVECTOR3 BillboardPos, D3DXVECTOR3 CarmeraPos );
 	D3DXVECTOR3 MatrixVertex ( D3DMATRIX *matWorld, D3DXVECTOR3 *vPos );
 	D3DXVECTOR3 Split ( D3DXPLANE *vPlane, D3DXVECTOR3 *vPos1, D3DXVECTOR3 *vPos2 );
@@ -146,13 +146,13 @@ public:
 
 protected:
 	virtual void SaveBuffer ( CSerialFile &SFile );
-	virtual void LoadBufferSet ( CSerialFile &SFile, DWORD dwVer, LPDIRECT3DDEVICE8 pd3dDevice );
-	virtual void LoadBuffer ( CSerialFile &SFile, DWORD dwVer, LPDIRECT3DDEVICE8 pd3dDevice );
+	virtual void LoadBufferSet ( CSerialFile &SFile, DWORD dwVer, LPDIRECT3DDEVICE9 pd3dDevice );
+	virtual void LoadBuffer ( CSerialFile &SFile, DWORD dwVer, LPDIRECT3DDEVICE9 pd3dDevice );
 
-	//	Note : DxFrameMesh ÀÇ È¿°ú¸¦ DxLandMan ¿¡ »ðÀÔ ÇÒ ¶§ ´ë·®ÀÇ ¹öÆÛ µ¥ÀÌÅ¸¸¦
-	//		º¹Á¦ÇÏ±â À§ÇØ¼­ »ç¿ëÇÑ´Ù.
+	//	Note : DxFrameMesh ï¿½ï¿½ È¿ï¿½ï¿½ï¿½ï¿½ DxLandMan ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½ë·®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Å¸ï¿½ï¿½
+	//		ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½Ø¼ï¿½ ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 public:
-	virtual HRESULT CloneData ( DxEffectBase* pSrcEffect, LPDIRECT3DDEVICE8 pd3dDevice );
+	virtual HRESULT CloneData ( DxEffectBase* pSrcEffect, LPDIRECT3DDEVICE9 pd3dDevice );
 };
 
 #endif // !defined(AFX_DXEFFECTSPRITE_H__INCLUDED_)

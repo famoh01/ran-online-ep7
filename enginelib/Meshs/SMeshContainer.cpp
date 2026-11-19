@@ -100,7 +100,7 @@ BOOL SVERTEXINFLU::LoadFile ( basestream &SFile )
 
 		SFile >> m_dwNumBone;
 
-		SetBoneNum(m_dwNumBone);	//	Á¡°Ë Â÷¿ø¿¡¼­ È£Ãâ.
+		SetBoneNum(m_dwNumBone);	//	ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È£ï¿½ï¿½.
 		if ( m_dwNumBone > 0 && m_dwNumBone != COL_ERR )
 		{
 			SFile.ReadBuffer ( m_pBone, sizeof(DWORD)*m_dwNumBone );
@@ -121,13 +121,13 @@ SMeshContainer::~SMeshContainer ()
 {
 	if ( m_pMaterials )
 	{
-		//	Note : ÅØ½ºÃÄ ¸±¸®Áî.
+		//	Note : ï¿½Ø½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 		for ( DWORD i = 0; i<m_cMaterials; ++i )
 		{
 			m_pMaterials[i].RELEASE ();
 		}
 
-		//	Note : ¸ÞÅÍ¸®¾ó ¹è¿­ »èÁ¦.
+		//	Note : ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½ ï¿½è¿­ ï¿½ï¿½ï¿½ï¿½.
 		SAFE_DELETE_ARRAY(m_pMaterials);
 	}
 
@@ -150,7 +150,7 @@ SMeshContainer::~SMeshContainer ()
 	SAFE_DELETE(m_pmcNext);
 }
 
-HRESULT SMeshContainer::SetMaterial ( LPDIRECT3DDEVICE8 pd3dDevice, DWORD nIndex, SMATERIAL_PIECE *pmtrlPiece, DXMATERIAL_CHAR_EFF* pmtrlSpecular )
+HRESULT SMeshContainer::SetMaterial ( LPDIRECT3DDEVICE9 pd3dDevice, DWORD nIndex, SMATERIAL_PIECE *pmtrlPiece, DXMATERIAL_CHAR_EFF* pmtrlSpecular )
 {
 	if( m_cMaterials<=nIndex )
 	{
@@ -163,11 +163,11 @@ HRESULT SMeshContainer::SetMaterial ( LPDIRECT3DDEVICE8 pd3dDevice, DWORD nIndex
 	m_pMaterials[nIndex].d3dMaterial.Emissive.g = 0.f;
 	m_pMaterials[nIndex].d3dMaterial.Emissive.b = 0.f;
 
-	m_pMaterials[nIndex].d3dMaterial.Power = 14.f;						// 30.f - µðÆúÆ®
+	m_pMaterials[nIndex].d3dMaterial.Power = 14.f;						// 30.f - ï¿½ï¿½ï¿½ï¿½Æ®
 
 	DWORD dwZBias(0);
 	D3DMATERIAL8*		pd3dMaterial = NULL;
-	LPDIRECT3DTEXTURE8	pTexture	= NULL;
+	LPDIRECT3DTEXTURE9	pTexture	= NULL;
 
 	if ( pmtrlSpecular )
 	{
@@ -180,7 +180,7 @@ HRESULT SMeshContainer::SetMaterial ( LPDIRECT3DDEVICE8 pd3dDevice, DWORD nIndex
 			D3DCOLOR dwColor = D3DCOLOR_COLORVALUE ( pd3dMaterial->Diffuse.r, pd3dMaterial->Diffuse.g,
 											pd3dMaterial->Diffuse.b, pd3dMaterial->Diffuse.a );
 
-			pd3dDevice->SetRenderState ( D3DRS_TEXTUREFACTOR, dwColor );	// À½. ^^;
+			pd3dDevice->SetRenderState ( D3DRS_TEXTUREFACTOR, dwColor );	// ï¿½ï¿½. ^^;
 		}
 	}
 	else if ( pmtrlPiece )
@@ -217,7 +217,7 @@ HRESULT SMeshContainer::SetMaterial ( LPDIRECT3DDEVICE8 pd3dDevice, DWORD nIndex
 	return S_OK;
 }
 
-HRESULT SMeshContainer::ReSetMaterial ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT SMeshContainer::ReSetMaterial ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	pd3dDevice->SetRenderState ( D3DRS_ZBIAS, 0 );
 
@@ -319,7 +319,7 @@ BOOL SMeshContainer::IsCollision ( const D3DXVECTOR3 &vPoint1, const D3DXVECTOR3
 
 		SAFE_DELETE_ARRAY(pbData);
 	}
-	//	Note : ÀÏ¹Ý ¸Þ½Ã.
+	//	Note : ï¿½Ï¹ï¿½ ï¿½Þ½ï¿½.
 	//
 	else
 	{
@@ -345,7 +345,7 @@ BOOL SMeshContainer::IsCollision ( const D3DXVECTOR3 &vPoint1, const D3DXVECTOR3
 
 		if ( m_numBoneComb == 3 && m_pBoneMatrix )
 		{
-			//	Æ¯Á¤ º»¿¡ ¿µÇâÀ» ¹Þ¾Æ¾ßÇÏÁö¸¸ ±× º»ÀÌ Á¸Á¦ ¾ÈÇÒ °æ¿ì°¡ ÀÖÀ»¶§ ´ëºñ.
+			//	Æ¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ¾Æ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ì°¡ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 			D3DXMATRIX	matTemp;
 			if ( m_pBoneMatrix[2] )
 			{
@@ -425,7 +425,7 @@ HRESULT SMeshContainer::UpdateSkinnedMesh ( PBYTE pbData, DWORD dwFVF, LPD3DXMAT
 	D3DXVECTOR3 *pVector = NULL;
 	D3DXVECTOR3 *pSkinVector = NULL;
 
-	//	Note : °ªÀ» ÃÊ±âÈ­ ÇÑ´Ù.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­ ï¿½Ñ´ï¿½.
 	//
 	for ( DWORD i=0; i<dwNumVertices; i++ )
 	{
@@ -606,7 +606,7 @@ BOOL SMeshContainer::GetClosedPoint ( const D3DXVECTOR3 &vPoint1, const D3DXVECT
 
 		SAFE_DELETE_ARRAY(pbData);
 	}
-	//	Note : ÀÏ¹Ý ¸Þ½Ã.
+	//	Note : ï¿½Ï¹ï¿½ ï¿½Þ½ï¿½.
 	//
 	else
 	{
@@ -632,7 +632,7 @@ BOOL SMeshContainer::GetClosedPoint ( const D3DXVECTOR3 &vPoint1, const D3DXVECT
 
 		if ( m_numBoneComb == 3 && m_pBoneMatrix )
 		{
-			//	Æ¯Á¤ º»¿¡ ¿µÇâÀ» ¹Þ¾Æ¾ßÇÏÁö¸¸ ±× º»ÀÌ Á¸Á¦ ¾ÈÇÒ °æ¿ì°¡ ÀÖÀ»¶§ ´ëºñ.
+			//	Æ¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ¾Æ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ì°¡ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 			D3DXMATRIX	matTemp;
 			if ( m_pBoneMatrix[2] )
 			{
@@ -730,7 +730,7 @@ HRESULT SMeshContainer::GetVertexInfluences ( const DWORD dwIndex, SVERTEXINFLU 
 	if ( !m_pMesh && !m_pSkinMesh )		return E_FAIL;
 	if ( dwIndex == COL_ERR )			return E_FAIL;
 
-	//	Note : ½ºÅ² ¸Þ½ÃÀÇ °æ¿ì.
+	//	Note : ï¿½ï¿½Å² ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 	//
 	if ( m_pSkinMesh )
 	{
@@ -799,7 +799,7 @@ HRESULT SMeshContainer::GetVertexInfluences ( const DWORD dwIndex, SVERTEXINFLU 
 		m_pSkinMesh->UnlockVertexBuffer ();
 
 
-		//	Note : ¹öÅØ½º Á¤º¸.
+		//	Note : ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 		//
 		pVertInflu->m_dwIndex = dwIndex;
 		pVertInflu->m_vVector = vVector;
@@ -813,7 +813,7 @@ HRESULT SMeshContainer::GetVertexInfluences ( const DWORD dwIndex, SVERTEXINFLU 
 		SAFE_DELETE_ARRAY(pdwBone0);
 		SAFE_DELETE_ARRAY(pfWeights0);
 	}
-	//	Note : ÀÏ¹Ý ¸Þ½ÃÀÇ °æ¿ì.
+	//	Note : ï¿½Ï¹ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 	//
 	else
 	{
@@ -834,7 +834,7 @@ HRESULT SMeshContainer::GetVertexInfluences ( const DWORD dwIndex, SVERTEXINFLU 
 
 		m_pMesh->UnlockVertexBuffer ();
 
-		//	Note : ¹öÅØ½º Á¤º¸.
+		//	Note : ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 		//
 		pVertInflu->m_dwIndex = dwIndex;
 		pVertInflu->m_vVector = vVector;
@@ -855,7 +855,7 @@ HRESULT SMeshContainer::CalculateVertexInfluences ( SVERTEXINFLU *pVertInflu, D3
 	{
 		if ( !m_pSkinMesh && m_numBoneComb == 3 && m_pBoneMatrix )
 		{
-			//	Æ¯Á¤ º»¿¡ ¿µÇâÀ» ¹Þ¾Æ¾ßÇÏÁö¸¸ ±× º»ÀÌ Á¸Á¦ ¾ÈÇÒ °æ¿ì°¡ ÀÖÀ»¶§ ´ëºñ.
+			//	Æ¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ¾Æ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ì°¡ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 			D3DXMATRIX	matTemp;
 			if ( m_pBoneMatrix[2] )
 			{
@@ -866,7 +866,7 @@ HRESULT SMeshContainer::CalculateVertexInfluences ( SVERTEXINFLU *pVertInflu, D3
 			D3DXVec3TransformCoord ( &vVecComb, &pVertInflu->m_vVector, &matCombined );
 			D3DXVec3TransformNormal ( &vVecNormal, &pVertInflu->m_vNormal, &matCombined );
 
-			//	Note : Ãâ·Â°ª.
+			//	Note : ï¿½ï¿½Â°ï¿½.
 			//
 			vVecOutput = vVecComb;
 			vNorOutput = vVecNormal;
@@ -883,7 +883,7 @@ HRESULT SMeshContainer::CalculateVertexInfluences ( SVERTEXINFLU *pVertInflu, D3
 
 		DWORD dwNumBone = m_pSkinMesh->GetNumBones ();
 
-		//	Note : ¿µÇâ·ÂÀ» ÁÖ´Â Æ®·£½ºÆûÀ» ¸ðµÎ ÇÕ»êÇÏ¿© ¹öÅØ½º °ªÀ» ±¸ÇÑ´Ù.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Õ»ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ñ´ï¿½.
 		//
 		for ( DWORD i=0; i<pVertInflu->m_dwNumBone; i++ )
 		{
@@ -900,20 +900,20 @@ HRESULT SMeshContainer::CalculateVertexInfluences ( SVERTEXINFLU *pVertInflu, D3
 			vVecNormal += vVecWeightNor*pVertInflu->m_pWeights[i];
 		}
 
-		//	Note : Ãâ·Â°ª.
+		//	Note : ï¿½ï¿½Â°ï¿½.
 		//
 		vVecOutput = vVecComb;
 		D3DXVec3Normalize ( &vVecNormal, &vVecNormal );
 		vNorOutput = vVecNormal;
 
-		//	(ÁÖÀÇ) ¿µÇâÀ» ¹Þ´Â º»ÀÇ °¹¼ö°¡ ¿©·¯°³ÀÏ °æ¿ì¿¡ ¹®Á¦°¡ »ý±è.
+		//	(ï¿½ï¿½ï¿½ï¿½) ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ì¿¡ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 		if ( pBoneMatrice )		*pBoneMatrice = matCombined;
 	}
 
 	return S_OK;
 }
 
-HRESULT SMeshContainer::DebugRender ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT SMeshContainer::DebugRender ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr;
 	if ( !m_pMesh && !m_pSkinMesh )		return E_FAIL;
@@ -966,7 +966,7 @@ HRESULT SMeshContainer::DebugRender ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT SMeshContainer::CalculateBoundingBox ( LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMATRIX pBoneMatrices, D3DXVECTOR3 &vMax, D3DXVECTOR3 &vMin )
+HRESULT SMeshContainer::CalculateBoundingBox ( LPDIRECT3DDEVICE9 pd3dDevice, LPD3DXMATRIX pBoneMatrices, D3DXVECTOR3 &vMax, D3DXVECTOR3 &vMin )
 {
 	HRESULT hr;
 	if ( !m_pMesh && !m_pSkinMesh )		return E_FAIL;
@@ -1025,7 +1025,7 @@ HRESULT	SMeshContainer::GenerateMesh ( LPD3DXBUFFER pAdjacency )
 		return E_FAIL;
 	}
 
-	//// Normalize ÇÑ´Ù.
+	//// Normalize ï¿½Ñ´ï¿½.
 	//DWORD dwPosFVF	= m_pMesh->GetFVF()&D3DFVF_POSITION_MASK;
 	//UINT dwPosSize	= D3DXGetFVFVertexSize( dwPosFVF );
 	//UINT nSize		= D3DXGetFVFVertexSize( m_pMesh->GetFVF() );
@@ -1048,14 +1048,14 @@ HRESULT	SMeshContainer::GenerateMesh ( LPD3DXBUFFER pAdjacency )
 	return S_OK;
 }
 
-//	Note : µð¹ÙÀÌ½º (Device) ÇØÁ¦¿¡ ¹®Á¦°¡ ÀÖÀ½. (2002.12.03), JDH
+//	Note : ï¿½ï¿½ï¿½ï¿½Ì½ï¿½ (Device) ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½. (2002.12.03), JDH
 //
 HRESULT SMeshContainer::GenerateMesh ( METHOD method )
 {
 	if ( !m_pSkinMesh )	return E_FAIL;
 
 	HRESULT hr = S_OK;
-	LPDIRECT3DDEVICE8 pDevice = NULL;
+	LPDIRECT3DDEVICE9 pDevice = NULL;
 	DWORD cFaces = m_pSkinMesh->GetNumFaces();
 
 	hr  = m_pSkinMesh->GetDevice(&pDevice);
@@ -1086,7 +1086,7 @@ HRESULT SMeshContainer::GenerateMesh ( METHOD method )
 		);
 		if (FAILED(hr))		goto e_Exit;
 
-		//// Normalize ÇÑ´Ù.
+		//// Normalize ï¿½Ñ´ï¿½.
 		//DWORD dwPosFVF	= m_pMesh->GetFVF()&D3DFVF_POSITION_MASK;
 		//UINT dwPosSize	= D3DXGetFVFVertexSize( dwPosFVF );
 		//UINT nSize		= D3DXGetFVFVertexSize( m_pMesh->GetFVF() );
@@ -1101,7 +1101,7 @@ HRESULT SMeshContainer::GenerateMesh ( METHOD method )
 		//m_pMesh->UnlockVertexBuffer();
 
 
-		//	Note : ¸é¿¡ °¡Àå ¸¹ÀÌ ¿µÇâÀ» ¹Þ´Â º»ÀÇ °¹¼ö¸¦ ÃøÁ¤.
+		//	Note : ï¿½é¿¡ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 		//
 		if ( (m_pMesh->GetFVF()&D3DFVF_POSITION_MASK) != D3DFVF_XYZ )
 		{
@@ -1113,8 +1113,8 @@ HRESULT SMeshContainer::GenerateMesh ( METHOD method )
 			m_maxFaceInfl = 1;
 		}
 
-		//	Note : ¸¸¾à µð¹ÙÀÌ½º°¡ µÎ°³ ÀÌÇÏÀÇ ¸ÅÆ®¸¯½º ºí·£µå¸¦ Áö¿øÇÑ´Ù¸é
-		//       HW vertex processing°ú SW vertex processing À¸·Î ºÐ¸® ÇÏ¿© Ã³¸®.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ì½ï¿½ï¿½ï¿½ ï¿½Î°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½å¸¦ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´Ù¸ï¿½
+		//       HW vertex processingï¿½ï¿½ SW vertex processing ï¿½ï¿½ï¿½ï¿½ ï¿½Ð¸ï¿½ ï¿½Ï¿ï¿½ Ã³ï¿½ï¿½.
 		//
 		if ( MaxVertexBlendMatrices <= 2 )
 		{
@@ -1135,7 +1135,7 @@ HRESULT SMeshContainer::GenerateMesh ( METHOD method )
 				if ( cInfl > MaxVertexBlendMatrices )	break;
 			}
 
-			//	Note : D3DXMESH_SOFTWAREPROCESSING flag ¸¦ »ðÀÔÇÏ¿© »õ·ÎÀÌ ¸Þ½¬¸¦ ¸¸µë..
+			//	Note : D3DXMESH_SOFTWAREPROCESSING flag ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½..
 			//		if there is both HW and SW, add the Software Processing flag
 			//
 			if ( m_iAttrSplit < m_cpattr )
@@ -1174,7 +1174,7 @@ HRESULT SMeshContainer::GenerateMesh ( METHOD method )
 		);
 		if (FAILED(hr))		goto e_Exit;
 
-		// Normalize ÇÑ´Ù.
+		// Normalize ï¿½Ñ´ï¿½.
 		DWORD dwPosFVF	= m_pMesh->GetFVF()&D3DFVF_POSITION_MASK;
 		UINT dwPosSize	= D3DXGetFVFVertexSize( dwPosFVF );
 		UINT nSize		= D3DXGetFVFVertexSize( m_pMesh->GetFVF() );
@@ -1206,7 +1206,7 @@ HRESULT SMeshContainer::GenerateMesh ( METHOD method )
 		if (FAILED(hr))		goto e_Exit;
 		
         // Get palette size
-        m_paletteSize = min(23, m_pSkinMesh->GetNumBones());	// 69 °³ ¸Ô´Â´Ù.
+        m_paletteSize = min(23, m_pSkinMesh->GetNumBones());	// 69 ï¿½ï¿½ ï¿½Ô´Â´ï¿½.
 
         DWORD flags = D3DXMESHOPT_VERTEXCACHE;
         if (VertexShaderVersion >= D3DVS_VERSION(1, 1))
@@ -1257,7 +1257,7 @@ HRESULT SMeshContainer::GenerateMesh ( METHOD method )
 			//	D3DXVECTOR2	vTex1;
 			//	D3DXVECTOR3	vTex2, vTex3;
 			//};
-			hr = D3DXComputeTangent ( m_pMesh, 0, m_pMesh, 1, 2, TRUE, NULL );		// Á¢¼± U,V º¤ÅÍ¸¦ ¸¸µç´Ù.
+			hr = D3DXComputeTangent ( m_pMesh, 0, m_pMesh, 1, 2, TRUE, NULL );		// ï¿½ï¿½ï¿½ï¿½ U,V ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½.
         }
     }
 	else if ( method == D3DINDEXED )
@@ -1274,7 +1274,7 @@ HRESULT SMeshContainer::GenerateMesh ( METHOD method )
 		);
 		if (FAILED(hr))		goto e_Exit;
 
-		// Normalize ÇÑ´Ù.
+		// Normalize ï¿½Ñ´ï¿½.
 		DWORD dwPosFVF	= m_pMesh->GetFVF()&D3DFVF_POSITION_MASK;
 		UINT dwPosSize	= D3DXGetFVFVertexSize( dwPosFVF );
 		UINT nSize		= D3DXGetFVFVertexSize( m_pMesh->GetFVF() );
@@ -1318,15 +1318,15 @@ HRESULT SMeshContainer::GenerateMesh ( METHOD method )
 		if ( MaxVertexBlendMatrixIndex + 1 < maxFaceInfl )
 		{
 			// HW does not support indexed vertex blending. Use SW instead
-			//m_paletteSize = min ( 256, m_pSkinMesh->GetNumBones() );				// ¿øº»
-			m_paletteSize = min(23, m_pSkinMesh->GetNumBones());					// 69 °³ ¸Ô´Â´Ù.
+			//m_paletteSize = min ( 256, m_pSkinMesh->GetNumBones() );				// ï¿½ï¿½ï¿½ï¿½
+			m_paletteSize = min(23, m_pSkinMesh->GetNumBones());					// 69 ï¿½ï¿½ ï¿½Ô´Â´ï¿½.
 			m_bUseSW = true;
 			flags |= D3DXMESH_SYSTEMMEM;
 		}
 		else
 		{
-			//m_paletteSize = min ( MaxVertexBlendMatrixIndex + 1, m_pSkinMesh->GetNumBones() );	// ¿øº»
-			m_paletteSize = min(23, m_pSkinMesh->GetNumBones());									// 69 °³ ¸Ô´Â´Ù.
+			//m_paletteSize = min ( MaxVertexBlendMatrixIndex + 1, m_pSkinMesh->GetNumBones() );	// ï¿½ï¿½ï¿½ï¿½
+			m_paletteSize = min(23, m_pSkinMesh->GetNumBones());									// 69 ï¿½ï¿½ ï¿½Ô´Â´ï¿½.
 
 			//m_bUseSW = false;
 			//flags |= D3DXMESH_MANAGED;
@@ -1385,7 +1385,7 @@ HRESULT SMeshContainer::GenerateMesh ( METHOD method )
 		);
 		if (FAILED(hr))		goto e_Exit;
 
-		//// Normalize ÇÑ´Ù.
+		//// Normalize ï¿½Ñ´ï¿½.
 		//DWORD dwPosFVF	= m_pMesh->GetFVF()&D3DFVF_POSITION_MASK;
 		//UINT dwPosSize	= D3DXGetFVFVertexSize( dwPosFVF );
 		//UINT nSize		= D3DXGetFVFVertexSize( m_pMesh->GetFVF() );
@@ -1427,7 +1427,7 @@ e_Exit:
 	return hr;
 }
 
-HRESULT SMeshContainer::GenerateEffMesh ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT SMeshContainer::GenerateEffMesh ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr = S_OK;
 	if ( !m_pMesh && !m_pSkinMesh )	return S_FALSE;
@@ -1452,7 +1452,7 @@ HRESULT SMeshContainer::GenerateEffMesh ( LPDIRECT3DDEVICE8 pd3dDevice )
 		DWORD dwNumVertices = m_pSkinMesh->GetNumVertices ();
 		m_dwEffNumVerts = dwNumVertices;
 
-		hr = pd3dDevice->CreateVertexBuffer( m_dwEffNumVerts * sizeof(D3DXSKINEFFVERTEX),		// ¼ºÈ¯
+		hr = pd3dDevice->CreateVertexBuffer( m_dwEffNumVerts * sizeof(D3DXSKINEFFVERTEX),		// ï¿½ï¿½È¯
 			D3DUSAGE_WRITEONLY , D3DXSKINEFFVERTEX::FVF, D3DPOOL_SYSTEMMEM, &m_pEffVBuffer );
 		if ( FAILED(hr) )
 		{

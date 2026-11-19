@@ -21,16 +21,16 @@ protected:
 	D3DXVECTOR3		m_vPos;
 	D3DXMATRIX		m_matTrans;
 
-	//	Note : ¼Ó¼º°ª.
+	//	Note : ï¿½Ó¼ï¿½ï¿½ï¿½.
 	//
 	BOOL			m_bRun;
 
-	//	Note : ÇöÁ¦ »óÅÂ.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	EMACTIONTYPE	m_Action;
 	float			m_fIdleTime;
 
-	//	Note : ¼³Á¤.
+	//	Note : ï¿½ï¿½ï¿½ï¿½.
 	//
 protected:
 	float			m_fMAXATRANGE;		//	2
@@ -40,7 +40,7 @@ protected:
 	float			m_fRunVelo;			//	5
 	float			m_fAttackDelay;		//	6
 
-	//	Note : ½ºÄÉÁì·¯ µ¥ÀÌÅ¸.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ì·¯ ï¿½ï¿½ï¿½ï¿½Å¸.
 	//
 protected:
 	void Acting ( float fElapsedTime );
@@ -83,14 +83,14 @@ public:
 
 public:
 	void SetSkinObj ( char *szFile )	{ strcpy ( m_szSkinObj, szFile ); }
-	HRESULT Create ( LPDIRECT3DDEVICE8 pd3dDevice, NavigationMesh* pNavi );
+	HRESULT Create ( LPDIRECT3DDEVICE9 pd3dDevice, NavigationMesh* pNavi );
 	void SetSchedule ( GLMobSchedule* pMobSch );
 	void SetCharacter ( GLCharacter* pChar ) { m_pCharacter = pChar; }
 
 public:
 	HRESULT FrameMove ( float fTime, float fElapsedTime );
-	HRESULT Render ( LPDIRECT3DDEVICE8 pd3dDevice, CLIPVOLUME &cv, BOOL bRendAABB );
-	HRESULT RenderShadow ( LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT Render ( LPDIRECT3DDEVICE9 pd3dDevice, CLIPVOLUME &cv, BOOL bRendAABB );
+	HRESULT RenderShadow ( LPDIRECT3DDEVICE9 pd3dDevice );
 
 public:
 	static char		m_szGLActionType[8][128];
@@ -103,7 +103,7 @@ public:
 class GLMobMan
 {
 protected:
-	LPDIRECT3DDEVICE8	m_pd3dDevice;
+	LPDIRECT3DDEVICE9	m_pd3dDevice;
 	CGLLIST<GLMob*>		m_MobList;
 
 	GLCharacter*		m_pCharacter;
@@ -112,7 +112,7 @@ protected:
 public:
 	void SetCharacter ( GLCharacter* pChar ) { m_pCharacter = pChar; }
 	void SetNaviMesh ( NavigationMesh* pNaviMesh );
-	HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice );
 
 public:
 	GLMob* DetectMob ();
@@ -123,8 +123,8 @@ public:
 
 public:
 	HRESULT FrameMove ( float fTime, float fElapsedTime );
-	HRESULT Render ( LPDIRECT3DDEVICE8 pd3dDevice, CLIPVOLUME &cv );
-	HRESULT RenderShadow ( LPDIRECT3DDEVICE8 pd3dDevice, CLIPVOLUME &cv );
+	HRESULT Render ( LPDIRECT3DDEVICE9 pd3dDevice, CLIPVOLUME &cv );
+	HRESULT RenderShadow ( LPDIRECT3DDEVICE9 pd3dDevice, CLIPVOLUME &cv );
 
 public:
 	GLMobMan ();

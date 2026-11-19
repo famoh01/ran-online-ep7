@@ -7,8 +7,8 @@
 #include "stdafx.h"
 #include <tchar.h>
 #include <stdio.h>
-#include <d3d8.h>
-#include <d3dx8.h>
+#include <d3d9.h>
+#include <d3dx9.h>
 #include <dxfile.h>
 #include <rmxfguid.h>
 #include "xrmxftmpl.h"
@@ -57,7 +57,7 @@ CD3DMesh::~CD3DMesh()
 // Name:
 // Desc:
 //-----------------------------------------------------------------------------
-HRESULT CD3DMesh::Create( LPDIRECT3DDEVICE8 pd3dDevice, TCHAR* strFilename )
+HRESULT CD3DMesh::Create( LPDIRECT3DDEVICE9 pd3dDevice, TCHAR* strFilename )
 {
     TCHAR        strPath[MAX_PATH];
     CHAR         strPathANSI[MAX_PATH];
@@ -94,7 +94,7 @@ HRESULT CD3DMesh::Create( LPDIRECT3DDEVICE8 pd3dDevice, TCHAR* strFilename )
         // Allocate memory for the materials and textures
         D3DXMATERIAL* d3dxMtrls = (D3DXMATERIAL*)pMtrlBuffer->GetBufferPointer();
         m_pMaterials = new D3DMATERIAL8[m_dwNumMaterials];
-        m_pTextures  = new LPDIRECT3DTEXTURE8[m_dwNumMaterials];
+        m_pTextures  = new LPDIRECT3DTEXTURE9[m_dwNumMaterials];
 
         // Copy each material and create its texture
         for( DWORD i=0; i<m_dwNumMaterials; i++ )
@@ -132,7 +132,7 @@ HRESULT CD3DMesh::Create( LPDIRECT3DDEVICE8 pd3dDevice, TCHAR* strFilename )
 // Name:
 // Desc:
 //-----------------------------------------------------------------------------
-HRESULT CD3DMesh::Create( LPDIRECT3DDEVICE8 pd3dDevice,
+HRESULT CD3DMesh::Create( LPDIRECT3DDEVICE9 pd3dDevice,
                           LPDIRECTXFILEDATA pFileData )
 {
     LPD3DXBUFFER pMtrlBuffer = NULL;
@@ -164,7 +164,7 @@ HRESULT CD3DMesh::Create( LPDIRECT3DDEVICE8 pd3dDevice,
         // Allocate memory for the materials and textures
         D3DXMATERIAL* d3dxMtrls = (D3DXMATERIAL*)pMtrlBuffer->GetBufferPointer();
         m_pMaterials = new D3DMATERIAL8[m_dwNumMaterials];
-        m_pTextures  = new LPDIRECT3DTEXTURE8[m_dwNumMaterials];
+        m_pTextures  = new LPDIRECT3DTEXTURE9[m_dwNumMaterials];
 
         // Copy each material and create its texture
         for( DWORD i=0; i<m_dwNumMaterials; i++ )
@@ -202,7 +202,7 @@ HRESULT CD3DMesh::Create( LPDIRECT3DDEVICE8 pd3dDevice,
 // Name:
 // Desc:
 //-----------------------------------------------------------------------------
-HRESULT CD3DMesh::SetFVF( LPDIRECT3DDEVICE8 pd3dDevice, DWORD dwFVF )
+HRESULT CD3DMesh::SetFVF( LPDIRECT3DDEVICE9 pd3dDevice, DWORD dwFVF )
 {
     LPD3DXMESH pTempSysMemMesh = NULL;
     LPD3DXMESH pTempLocalMesh  = NULL;
@@ -283,7 +283,7 @@ HRESULT CD3DMesh::SetFVF( LPDIRECT3DDEVICE8 pd3dDevice, DWORD dwFVF )
 // Name:
 // Desc:
 //-----------------------------------------------------------------------------
-HRESULT CD3DMesh::RestoreDeviceObjects( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT CD3DMesh::RestoreDeviceObjects( LPDIRECT3DDEVICE9 pd3dDevice )
 {
     if( NULL == m_pSysMemMesh )
         return E_FAIL;
@@ -341,7 +341,7 @@ HRESULT CD3DMesh::Destroy()
 // Name:
 // Desc:
 //-----------------------------------------------------------------------------
-HRESULT CD3DMesh::Render( LPDIRECT3DDEVICE8 pd3dDevice, BOOL bDrawOpaqueSubsets,
+HRESULT CD3DMesh::Render( LPDIRECT3DDEVICE9 pd3dDevice, BOOL bDrawOpaqueSubsets,
                           BOOL bDrawAlphaSubsets )
 {
     if( NULL == m_pLocalMesh )
@@ -509,7 +509,7 @@ HRESULT CD3DFrame::Destroy()
 // Name:
 // Desc:
 //-----------------------------------------------------------------------------
-HRESULT CD3DFrame::RestoreDeviceObjects( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT CD3DFrame::RestoreDeviceObjects( LPDIRECT3DDEVICE9 pd3dDevice )
 {
     if( m_pMesh )  m_pMesh->RestoreDeviceObjects( pd3dDevice );
     if( m_pChild ) m_pChild->RestoreDeviceObjects( pd3dDevice );
@@ -540,7 +540,7 @@ HRESULT CD3DFrame::InvalidateDeviceObjects()
 // Name:
 // Desc:
 //-----------------------------------------------------------------------------
-HRESULT CD3DFrame::Render( LPDIRECT3DDEVICE8 pd3dDevice, BOOL bDrawOpaqueSubsets,
+HRESULT CD3DFrame::Render( LPDIRECT3DDEVICE9 pd3dDevice, BOOL bDrawOpaqueSubsets,
                            BOOL bDrawAlphaSubsets, D3DXMATRIX* pmatWorldMatrix )
 {
     // For pure devices, specify the world transform. If the world transform is not
@@ -578,7 +578,7 @@ HRESULT CD3DFrame::Render( LPDIRECT3DDEVICE8 pd3dDevice, BOOL bDrawOpaqueSubsets
 // Name:
 // Desc:
 //-----------------------------------------------------------------------------
-HRESULT CD3DFile::LoadFrame( LPDIRECT3DDEVICE8 pd3dDevice,
+HRESULT CD3DFile::LoadFrame( LPDIRECT3DDEVICE9 pd3dDevice,
                              LPDIRECTXFILEDATA pFileData,
                              CD3DFrame* pParentFrame )
 {
@@ -655,7 +655,7 @@ HRESULT CD3DFile::LoadFrame( LPDIRECT3DDEVICE8 pd3dDevice,
 // Name:
 // Desc:
 //-----------------------------------------------------------------------------
-HRESULT CD3DFile::LoadMesh( LPDIRECT3DDEVICE8 pd3dDevice,
+HRESULT CD3DFile::LoadMesh( LPDIRECT3DDEVICE9 pd3dDevice,
                             LPDIRECTXFILEDATA pFileData,
                             CD3DFrame* pParentFrame )
 {
@@ -686,7 +686,7 @@ HRESULT CD3DFile::LoadMesh( LPDIRECT3DDEVICE8 pd3dDevice,
 // Name:
 // Desc:
 //-----------------------------------------------------------------------------
-HRESULT CD3DFile::CreateFromResource( LPDIRECT3DDEVICE8 pd3dDevice, TCHAR* strResource, TCHAR* strType )
+HRESULT CD3DFile::CreateFromResource( LPDIRECT3DDEVICE9 pd3dDevice, TCHAR* strResource, TCHAR* strType )
 {
     LPDIRECTXFILE           pDXFile   = NULL;
     LPDIRECTXFILEENUMOBJECT pEnumObj  = NULL;
@@ -749,7 +749,7 @@ HRESULT CD3DFile::CreateFromResource( LPDIRECT3DDEVICE8 pd3dDevice, TCHAR* strRe
 // Name:
 // Desc:
 //-----------------------------------------------------------------------------
-HRESULT CD3DFile::Create( LPDIRECT3DDEVICE8 pd3dDevice, TCHAR* strFilename )
+HRESULT CD3DFile::Create( LPDIRECT3DDEVICE9 pd3dDevice, TCHAR* strFilename )
 {
     LPDIRECTXFILE           pDXFile   = NULL;
     LPDIRECTXFILEENUMOBJECT pEnumObj  = NULL;
@@ -810,7 +810,7 @@ HRESULT CD3DFile::Create( LPDIRECT3DDEVICE8 pd3dDevice, TCHAR* strFilename )
 // Name:
 // Desc:
 //-----------------------------------------------------------------------------
-HRESULT CD3DFile::Render( LPDIRECT3DDEVICE8 pd3dDevice, D3DXMATRIX* pmatWorldMatrix )
+HRESULT CD3DFile::Render( LPDIRECT3DDEVICE9 pd3dDevice, D3DXMATRIX* pmatWorldMatrix )
 {
 
     // For pure devices, specify the world transform. If the world transform is not

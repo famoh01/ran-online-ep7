@@ -19,7 +19,7 @@ static char THIS_FILE[] = __FILE__;
 
 const DWORD DxEffectMemb::TYPEID = DEF_EFFECT_MEMBRANE;
 const DWORD	DxEffectMemb::VERSION = 0x00000100;
-const char DxEffectMemb::NAME[] = "[ ¾ãÀº ¸· È¿°ú ]";
+const char DxEffectMemb::NAME[] = "[ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ È¿ï¿½ï¿½ ]";
 const DWORD DxEffectMemb::FLAG = NULL;
 
 void DxEffectMemb::GetProperty ( PBYTE &pProp, DWORD &dwSize, DWORD &dwVer )
@@ -48,7 +48,7 @@ DxEffectMemb::DxEffectMemb() :
 	m_fLoop(0.0f),
 	m_bBase(TRUE),
 	m_bMemb(TRUE),
-	m_fSpeed(0.002f)		// µ¹¾Æ°¡´Â ¼Óµµ !!
+	m_fSpeed(0.002f)		// ï¿½ï¿½ï¿½Æ°ï¿½ï¿½ï¿½ ï¿½Óµï¿½ !!
 {
 	strcpy ( m_szTexture, "Test_Day.dds" );
 }
@@ -58,7 +58,7 @@ DxEffectMemb::~DxEffectMemb()
 	SAFE_DELETE_ARRAY(m_szAdaptFrame);
 }
 
-HRESULT DxEffectMemb::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectMemb::CreateDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr;
 
@@ -93,13 +93,13 @@ HRESULT DxEffectMemb::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	{
 		pd3dDevice->BeginStateBlock();
 
-		//	Note : SetRenderState() ¼±¾ð
+		//	Note : SetRenderState() ï¿½ï¿½ï¿½ï¿½
 		//
 		pd3dDevice->SetRenderState ( D3DRS_ALPHABLENDENABLE, TRUE );
 		pd3dDevice->SetRenderState ( D3DRS_SRCBLEND,	D3DBLEND_ONE );
 		pd3dDevice->SetRenderState ( D3DRS_DESTBLEND,	D3DBLEND_ONE );
 
-		//	Note : SetTextureStageState() ¼±¾ð
+		//	Note : SetTextureStageState() ï¿½ï¿½ï¿½ï¿½
 		//
 		pd3dDevice->SetTextureStageState ( 0, D3DTSS_COLOROP,	D3DTOP_SELECTARG1 );
 
@@ -111,7 +111,7 @@ HRESULT DxEffectMemb::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffectMemb::ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectMemb::ReleaseDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	pd3dDevice->DeleteVertexShader ( m_dwEffect );
 	pd3dDevice->DeleteVertexShader ( m_dwEffect2 );
@@ -130,7 +130,7 @@ HRESULT DxEffectMemb::ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffectMemb::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectMemb::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	if ( !pFrame ) return S_OK;
 
@@ -149,16 +149,16 @@ HRESULT DxEffectMemb::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDe
 }
 
 
-HRESULT DxEffectMemb::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectMemb::InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
-	//	Note : ÅØ½ºÃÄÀÇ ÀÐ±â ¿À·ù´Â ¹«½ÃÇÑ´Ù.
+	//	Note : ï¿½Ø½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 	//
 	TextureManager::LoadTexture ( m_szTexture, pd3dDevice, m_pddsTexture, 0, 0 );
 
 	if ( !m_pddsTexture )
 	{
 		char szMsg[256];
-		sprintf ( szMsg, "ÀÌ¹ÌÁö ÆÄÀÏ '%s' ÀÐ±â¿¡ ½ÇÆÐ", m_szTexture );
+		sprintf ( szMsg, "ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ '%s' ï¿½Ð±â¿¡ ï¿½ï¿½ï¿½ï¿½", m_szTexture );
 		MessageBox ( NULL, szMsg, "ERROR", MB_OK );
 	}
 
@@ -168,7 +168,7 @@ HRESULT DxEffectMemb::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
 
 HRESULT DxEffectMemb::DeleteDeviceObjects ()
 {
-	//	Note : ÀÌÀü ÅØ½ºÃÄ°¡ ·ÎµåµÇ¾î ÀÖÀ» °æ¿ì Á¦°Å.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½ï¿½Ä°ï¿½ ï¿½Îµï¿½Ç¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	if ( m_pddsTexture )
 		TextureManager::ReleaseTexture ( m_pddsTexture );
@@ -183,7 +183,7 @@ HRESULT DxEffectMemb::FrameMove ( float fTime, float fElapsedTime )
 	return S_OK;
 }
 
-HRESULT DxEffectMemb::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice, DxFrameMesh *pFrameMesh, DxLandMan* pLandMan )
+HRESULT DxEffectMemb::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice, DxFrameMesh *pFrameMesh, DxLandMan* pLandMan )
 {
 	HRESULT hr = S_OK;
 	DxMeshes *pmsMeshs;
@@ -193,7 +193,7 @@ HRESULT DxEffectMemb::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice,
 	//
 	if ( pframeCur->pmsMeshs != NULL )
 	{
-		//	Note : ¸Þ½¬ ±×¸®±â.
+		//	Note : ï¿½Þ½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½.
 		//
 		pmsMeshs = pframeCur->pmsMeshs;
 		while ( pmsMeshs != NULL )
@@ -202,10 +202,10 @@ HRESULT DxEffectMemb::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice,
 			{
 				DWORD dwFVFSize;
 				DWORD dwVerts, dwFaces;
-				LPDIRECT3DINDEXBUFFER8 pIB	= NULL;
-				LPDIRECT3DVERTEXBUFFER8 pVB = NULL;
+				LPDIRECT3DINDEXBUFFER9 pIB	= NULL;
+				LPDIRECT3DVERTEXBUFFER9 pVB = NULL;
 
-				//	Note : LocalMesh, OctreeMesh µÑ Áß ÇÏ³ª¸¦ °í¸¥´Ù.
+				//	Note : LocalMesh, OctreeMesh ï¿½ï¿½ ï¿½ï¿½ ï¿½Ï³ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 				//
 				if ( pmsMeshs->m_pLocalMesh )
 				{				
@@ -236,7 +236,7 @@ HRESULT DxEffectMemb::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice,
 				}
 
 
-				//	Note : SetVertexShader¿¡ World¿Í WorldViewProjection Çà·Ä Áý¾î ³Ö±â
+				//	Note : SetVertexShaderï¿½ï¿½ Worldï¿½ï¿½ WorldViewProjection ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ö±ï¿½
 				//
 				D3DXMATRIX	matWorld, matView, matProj, matWVP;
 
@@ -282,7 +282,7 @@ HRESULT DxEffectMemb::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice,
 					memcpy ( pAttribTable, pmsMeshs->m_pDxOctreeMesh->m_pAttribTable, sizeof ( D3DXATTRIBUTERANGE ) * AttribTableSize );
 				}
 
-				//	Note : ºÒÅõ¸í ¸Þ½¬ µå·ÎÀ×.
+				//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½.
 				//		pmsMeshs->cMaterials --> AttribTableSize
 				//
 				for ( DWORD i=0; i<AttribTableSize; i++ )
@@ -298,23 +298,23 @@ HRESULT DxEffectMemb::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice,
 
 				pd3dDevice->SetVertexShaderConstant ( VSC_MATRIAL, &( pmsMeshs->rgMaterials[0].Diffuse ), 1 );
 
-				//	Note : ÀÌÀü »óÅÂ ¹é¾÷.
+				//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 				//
 			//	pd3dDevice->CaptureStateBlock ( m_dwSavedStateBlock );
 
-				//	Note : ·£´õ¸µ »óÅÂ Á¶Á¤.
+				//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 				//
 			//	pd3dDevice->ApplyStateBlock ( m_dwEffectStateBlock );
 
 
 
-				//	Note : ¼ÒÇÁÆ®¿þ¾î ¹öÅØ½º ÇÁ·Î¼¼½Ì
+				//	Note : ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½
 				//
 				if ( DxEffectMan::Instance.GetUseSwShader() )
 					pd3dDevice->SetRenderState( D3DRS_SOFTWAREVERTEXPROCESSING, TRUE );
 
 
-				//	Note : LocalMesh, OctreeMesh µÑ Áß ÇÏ³ª¸¦ °í¸¥´Ù.
+				//	Note : LocalMesh, OctreeMesh ï¿½ï¿½ ï¿½ï¿½ ï¿½Ï³ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 				//
 				if ( pmsMeshs->m_pLocalMesh )
 				{
@@ -356,7 +356,7 @@ HRESULT DxEffectMemb::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice,
 					pd3dDevice->SetTextureStageState ( 0, D3DTSS_COLOROP,	D3DTOP_MODULATE );
 
 					pd3dDevice->SetTexture ( 0, pmsMeshs->pTextures[pAttribTable[i].AttribId] );
-				//	pd3dDevice->SetVertexShader ( pmsMeshs->m_pLocalMesh->GetFVF () );	// Àü¿¡ ÇØÁÜ
+				//	pd3dDevice->SetVertexShader ( pmsMeshs->m_pLocalMesh->GetFVF () );	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 				}
 
 				pd3dDevice->DrawIndexedPrimitive
@@ -374,7 +374,7 @@ HRESULT DxEffectMemb::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice,
 				pd3dDevice->SetTextureStageState ( 1, D3DTSS_COLOROP,	D3DTOP_DISABLE );
 
 
-				//	Note : ¼ÒÇÁÆ®¿þ¾î ¹öÅØ½º ÇÁ·Î¼¼½Ì
+				//	Note : ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½
 				//
 				if ( DxEffectMan::Instance.GetUseSwShader() )
 					pd3dDevice->SetRenderState( D3DRS_SOFTWAREVERTEXPROCESSING, FALSE );
@@ -384,7 +384,7 @@ HRESULT DxEffectMemb::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice,
 
 
 
-				//	Note : ÀÌÀü»óÅÂ·Î º¹¿ø.
+				//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ ï¿½ï¿½ï¿½ï¿½.
 				//
 			//	pd3dDevice->ApplyStateBlock ( m_dwSavedStateBlock );
 
@@ -412,7 +412,7 @@ HRESULT DxEffectMemb::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice,
 		}
 	}
 
-	//	Note : ÀÚ½Ä ÇÁ·¹ÀÓ ±×¸®±â.
+	//	Note : ï¿½Ú½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½.
 	//
 	pframeChild = pframeCur->pframeFirstChild;
 	while ( pframeChild != NULL )

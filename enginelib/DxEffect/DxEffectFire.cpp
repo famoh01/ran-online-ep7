@@ -20,7 +20,7 @@ static char THIS_FILE[] = __FILE__;
 const DWORD DxEffectFire::FIREVERTEX::FVF = D3DFVF_XYZ|D3DFVF_DIFFUSE|D3DFVF_TEX1;
 const DWORD DxEffectFire::TYPEID = DEF_EFFECT_FIRE;
 const DWORD	DxEffectFire::VERSION = 0x00000100;
-const char DxEffectFire::NAME[] = "[3009]_[ ºÒ È¿°ú ]";
+const char DxEffectFire::NAME[] = "[3009]_[ ï¿½ï¿½ È¿ï¿½ï¿½ ]";
 const DWORD DxEffectFire::FLAG = NULL;
 
 void DxEffectFire::GetProperty ( PBYTE &pProp, DWORD &dwSize, DWORD &dwVer )
@@ -72,13 +72,13 @@ DxEffectFire::~DxEffectFire()
 	SAFE_DELETE_ARRAY(m_szAdaptFrame);
 }
 
-HRESULT DxEffectFire::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectFire::CreateDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	for( UINT which=0; which<2; which++ )
 	{
 		pd3dDevice->BeginStateBlock();
 
-		//	Note : SetRenderState() ¼±¾ð
+		//	Note : SetRenderState() ï¿½ï¿½ï¿½ï¿½
 		//
 		pd3dDevice->SetRenderState ( D3DRS_CULLMODE, D3DCULL_NONE );
 		pd3dDevice->SetRenderState ( D3DRS_ZWRITEENABLE, FALSE );
@@ -87,7 +87,7 @@ HRESULT DxEffectFire::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 		pd3dDevice->SetRenderState ( D3DRS_SRCBLEND,	D3DBLEND_SRCALPHA );
 		pd3dDevice->SetRenderState ( D3DRS_DESTBLEND,	D3DBLEND_ONE );
 
-		//	Note : SetTextureStageState() ¼±¾ð
+		//	Note : SetTextureStageState() ï¿½ï¿½ï¿½ï¿½
 		//
 		pd3dDevice->SetTextureStageState ( 0, D3DTSS_COLOROP,	D3DTOP_MODULATE );
 
@@ -99,7 +99,7 @@ HRESULT DxEffectFire::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffectFire::ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectFire::ReleaseDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	if ( pd3dDevice )
 	{
@@ -115,7 +115,7 @@ HRESULT DxEffectFire::ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffectFire::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectFire::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	DxMeshes *pmsMeshs;
 
@@ -132,7 +132,7 @@ HRESULT DxEffectFire::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE
 	return S_OK;
 }
 
-HRESULT DxEffectFire::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectFire::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	if ( !pFrame ) return S_OK;
 
@@ -151,16 +151,16 @@ HRESULT DxEffectFire::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDe
 }
 
 
-HRESULT DxEffectFire::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectFire::InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
-	//	Note : ÅØ½ºÃÄÀÇ ÀÐ±â ¿À·ù´Â ¹«½ÃÇÑ´Ù.
+	//	Note : ï¿½Ø½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 	//
 	TextureManager::LoadTexture ( m_szTexture, pd3dDevice, m_pddsTexture, 0, 0 );
 
 	if ( !m_pddsTexture )
 	{
 		char szMsg[256];
-		sprintf ( szMsg, "ÀÌ¹ÌÁö ÆÄÀÏ '%s' ÀÐ±â¿¡ ½ÇÆÐ", m_szTexture );
+		sprintf ( szMsg, "ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ '%s' ï¿½Ð±â¿¡ ï¿½ï¿½ï¿½ï¿½", m_szTexture );
 		MessageBox ( NULL, szMsg, "ERROR", MB_OK );
 	}
 
@@ -169,7 +169,7 @@ HRESULT DxEffectFire::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
 
 HRESULT DxEffectFire::DeleteDeviceObjects ()
 {
-	//	Note : ÀÌÀü ÅØ½ºÃÄ°¡ ·ÎµåµÇ¾î ÀÖÀ» °æ¿ì Á¦°Å.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½ï¿½Ä°ï¿½ ï¿½Îµï¿½Ç¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	if ( m_pddsTexture )
 		TextureManager::ReleaseTexture ( m_pddsTexture );
@@ -185,15 +185,15 @@ HRESULT DxEffectFire::FrameMove ( float fTime, float fElapsedTime )
 	return S_OK;
 }
 
-HRESULT DxEffectFire::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectFire::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr = S_OK;
 
-	//	Note : Render ( ÀÜ»ó )
+	//	Note : Render ( ï¿½Ü»ï¿½ )
 	//
 	if ( m_pVB )
 	{
-		//	Note : SetRenderState() ¼±¾ð
+		//	Note : SetRenderState() ï¿½ï¿½ï¿½ï¿½
 		//
 		D3DXMATRIX matIdentity, matWorld;
 		D3DXMatrixIdentity( &matIdentity );
@@ -213,7 +213,7 @@ HRESULT DxEffectFire::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice 
 //		dwFaces = m_dwNumFaces;
 
 
-		//	Note : ½ºÇÁ¶óÀÌÆ®
+		//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
 		//
 		int iSpriteNum = m_iCol * m_iRow;
 
@@ -256,11 +256,11 @@ HRESULT DxEffectFire::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice 
 
 		pd3dDevice->SetTexture ( 0, m_pddsTexture );
 
-		//	Note : ÀÌÀü »óÅÂ ¹é¾÷.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 		//
 		pd3dDevice->CaptureStateBlock ( m_dwSavedStateBlock );
 
-		//	Note : ·£´õ¸µ »óÅÂ Á¶Á¤.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 		//
 		pd3dDevice->ApplyStateBlock ( m_dwEffectStateBlock );
 
@@ -277,7 +277,7 @@ HRESULT DxEffectFire::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice 
 
 
 
-		//	Note : ÀÌÀü»óÅÂ·Î º¹¿ø.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ ï¿½ï¿½ï¿½ï¿½.
 		//
 		pd3dDevice->ApplyStateBlock ( m_dwSavedStateBlock );
 
@@ -291,7 +291,7 @@ HRESULT DxEffectFire::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice 
 	return S_OK;
 }
 
-HRESULT DxEffectFire::CreateFireMesh ( LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMESH m_pLocalMesh )
+HRESULT DxEffectFire::CreateFireMesh ( LPDIRECT3DDEVICE9 pd3dDevice, LPD3DXMESH m_pLocalMesh )
 {
 	m_dwVertices = m_dwNumFaces*4;
 	m_dwIndices = m_dwNumFaces*6;

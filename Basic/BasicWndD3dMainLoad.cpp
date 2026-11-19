@@ -111,7 +111,7 @@ HRESULT CBasicWnd::MainLoadCreateObject()
 	
 	for ( int i = 0; i < 9; i++ )
 	{
-		LPDIRECT3DVERTEXBUFFER8 &rpTexturePart = m_pTexturePartVB[i];
+		LPDIRECT3DVERTEXBUFFER9 &rpTexturePart = m_pTexturePartVB[i];
 		TEXTUREVERTEX VerticesPart[6] = 
 		{
 			TEXTUREVERTEX ( LeftPos + TextureRenderPos[i].x, TopPos + TextureRenderPos[i].y, 0.0f, 1.0f, 0xFFFFFFFF, TexturePos[i].x / fImageSize, TexturePos[i].y / fImageSize ), // x, y, z, rhw, color, tu, tv
@@ -177,8 +177,8 @@ HRESULT CBasicWnd::MainLoadRender()
 
 
 		/////////////////////////////////////////////////////////////
-		//	ÁÁÁö ¾ÊÀº ¸ð½ÀÀÇ ÄÚµå
-		//	¾ÆÀÌµð¾î°¡ ¾ø´Ù. ¸¸µé°í ÁÁÀº »ý°¢³ª¸é ¼öÁ¤ÇÏÀÚ.
+		//	ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Úµï¿½
+		//	ï¿½ï¿½ï¿½Ìµï¿½î°¡ ï¿½ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 		int pri_Step = LOADINGSTEP::GETSTEP ();
 
 		/////////////////////////////////////////////////////////////

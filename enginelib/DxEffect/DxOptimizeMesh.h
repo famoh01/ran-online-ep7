@@ -13,8 +13,8 @@ class DxOptimizeMesh : public OBJAABB
 public:
 	D3DXVECTOR3			m_vMax;
 	D3DXVECTOR3			m_vMin;
-	LPDIRECT3DTEXTURE8	m_pTexture;
-	VERTEX*				m_pVertex;		// µ¥ÀÌÅÍ ¸¸µé±â À§ÇØ °ÅÃÄ°¡´Â °Í
+	LPDIRECT3DTEXTURE9	m_pTexture;
+	VERTEX*				m_pVertex;		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ä°ï¿½ï¿½ï¿½ ï¿½ï¿½
 	DWORD				m_dwFace;
 	DxOptimizeMesh*		m_pNext;
 
@@ -31,11 +31,11 @@ public:
 		return COLLISION::IsWithInPoint ( vDivMax, vDivMin, (m_vMax+m_vMin)/2 );
 	}
 	virtual OBJAABB* GetNext () { return m_pNext; }
-	virtual HRESULT Render ( LPDIRECT3DDEVICE8 pd3dDevice, CLIPVOLUME *pCV );
+	virtual HRESULT Render ( LPDIRECT3DDEVICE9 pd3dDevice, CLIPVOLUME *pCV );
 
 public:
-	void Create ( LPDIRECT3DDEVICE8 pd3dDevice, const char* szName, DWORD dwFaceNUM, VERTEX* pVertices );
-	void MakeOptimizeMesh ( LPDIRECT3DDEVICE8 pd3dDevice );
+	void Create ( LPDIRECT3DDEVICE9 pd3dDevice, const char* szName, DWORD dwFaceNUM, VERTEX* pVertices );
+	void MakeOptimizeMesh ( LPDIRECT3DDEVICE9 pd3dDevice );
 
 public:
 	DxOptimizeMesh() :
@@ -54,6 +54,6 @@ typedef DxOptimizeMesh* PDXOPTIMIZEMESH;
 
 namespace NSOPTIMIZEMESH
 {
-	void MakeOctreeMesh ( LPDIRECT3DDEVICE8 pd3dDevice, VERTEX* pVertex, DWORD dwFaceNUM, POBJOCTREE &m_pOcTree );
-	void MakeOptimizeMesh ( LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMESH& pMesh );
+	void MakeOctreeMesh ( LPDIRECT3DDEVICE9 pd3dDevice, VERTEX* pVertex, DWORD dwFaceNUM, POBJOCTREE &m_pOcTree );
+	void MakeOptimizeMesh ( LPDIRECT3DDEVICE9 pd3dDevice, LPD3DXMESH& pMesh );
 };

@@ -31,19 +31,19 @@ struct DxSkinPiece
 	const static char	m_szPIECETYPE[PIECE_SIZE][64];
 
 
-	HRESULT SetSkinMesh ( const char* szXFileName, const char* szSkeleton, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT SetSkinMesh ( const char* szXFileName, const char* szSkeleton, LPDIRECT3DDEVICE9 pd3dDevice );
 
-	HRESULT LoadPiece ( const char* szFile, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT LoadPiece ( const char* szFile, LPDIRECT3DDEVICE9 pd3dDevice );
 	HRESULT SavePiece ( const char* szFile );
 
-	HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice );
-	HRESULT RestoreDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice );
+	HRESULT RestoreDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice );
 	HRESULT InvalidateDeviceObjects ();
 	HRESULT DeleteDeviceObjects();
 
-	HRESULT Render ( LPDIRECT3DDEVICE8 pd3dDevice, D3DXMATRIX &matRot );
+	HRESULT Render ( LPDIRECT3DDEVICE9 pd3dDevice, D3DXMATRIX &matRot );
 
-	HRESULT DrawMeshContainer ( LPDIRECT3DDEVICE8 pd3dDevice, PSMESHCONTAINER pmcMesh, BOOL bShadow=FALSE )
+	HRESULT DrawMeshContainer ( LPDIRECT3DDEVICE9 pd3dDevice, PSMESHCONTAINER pmcMesh, BOOL bShadow=FALSE )
 	{
 		if ( !pmcMesh )		return E_FAIL;
 
@@ -70,7 +70,7 @@ public:
 	char*			GetPath ()					{ return m_szPath; }
 
 protected:
-	LPDIRECT3DDEVICE8	m_pd3dDevice;
+	LPDIRECT3DDEVICE9	m_pd3dDevice;
 	DxSkinPiece			*m_pSkinPieceHead;
 
 public:
@@ -79,7 +79,7 @@ public:
 public:
 	HRESULT AddPiece ( DxSkinPiece* pSkinPiece );
 
-	DxSkinPiece* LoadPiece ( const char* szFile, LPDIRECT3DDEVICE8 pd3dDevice );
+	DxSkinPiece* LoadPiece ( const char* szFile, LPDIRECT3DDEVICE9 pd3dDevice );
 	HRESULT ReleasePiece ( const char* szFile );
 	HRESULT DeletePiece ( const char* szFile );
 	DxSkinPiece* FindPiece ( const char* szFile );
@@ -89,8 +89,8 @@ public:
 //	BOOL SaveFile ( char *szFile );
 
 public:
-	HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice );
-	HRESULT RestoreDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice );
+	HRESULT RestoreDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice );
 	HRESULT InvalidateDeviceObjects ();
 	HRESULT DeleteDeviceObjects();
 	HRESULT FinalCleanup();

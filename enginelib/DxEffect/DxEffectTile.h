@@ -46,7 +46,7 @@ struct TILE_PROPERTY					// Ver.102
 
 class DxEffectTile : public DxEffectBase
 {
-	//	Note : ÀÌÆåÆ® Å¸ÀÔ Á¤ÀÇ.
+	//	Note : ï¿½ï¿½ï¿½ï¿½Æ® Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 public:
 	const static DWORD	TYPEID;
@@ -69,7 +69,7 @@ public:
 	}
 	TILE_PROPERTY& GetProperty () { return m_Property; }
 
-	//	Note : ¼Ó¼º.
+	//	Note : ï¿½Ó¼ï¿½.
 	//
 protected:
 	union
@@ -95,7 +95,7 @@ protected:
 		};
 	};
 
-	//	Note : ·£´õ¸µ µ¥ÀÌÅÍ
+	//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	//
 protected:
 	static	DWORD			m_dwSavedSB_Detail;
@@ -122,16 +122,16 @@ protected:
 protected:
 	enum	DEFAULT
 	{	
-		EM_TEXSIZE		= 128,						// ÅØ½ºÃÄ »çÀÌÁî
-		EM_LENGTH_S		= 10,						// ÀÛÀº Å¸ÀÏ ±æÀÌ
-		EM_LENGTH		= 40,						// µðÅ×ÀÏ Å¸ÀÏ ±æÀÌ
-		EM_GRID			= 30,							// °ÝÀÚ ¼ö
-		EM_QURD			= EM_GRID*EM_GRID,				// °ÝÀÚ ¼ö
-		EM_FACE			= EM_QURD*2,					// °ÝÀÚ ¼ö
-		EM_VERTEX_PART	= 32,								// ¹öÅØ½º ¼ö
-		EM_VERTEX_ALL	= EM_VERTEX_PART*EM_VERTEX_PART,	// ¹öÅØ½º ¼ö °¡·Î¼¼·Î ÀüÃ¼
-		EM_QURD_VERTEX	= EM_QURD*4,							// »ç°¢ÇüÀ¸·Î µûÁ³À» ¶§ÀÇ Á¤Á¡ °¹¼ö
-		EM_FULL_LENGTH	= EM_LENGTH*EM_GRID,					// ÃÖ´ë ±æÀÌ
+		EM_TEXSIZE		= 128,						// ï¿½Ø½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+		EM_LENGTH_S		= 10,						// ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+		EM_LENGTH		= 40,						// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+		EM_GRID			= 30,							// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
+		EM_QURD			= EM_GRID*EM_GRID,				// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
+		EM_FACE			= EM_QURD*2,					// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
+		EM_VERTEX_PART	= 32,								// ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½
+		EM_VERTEX_ALL	= EM_VERTEX_PART*EM_VERTEX_PART,	// ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½ ï¿½ï¿½Ã¼
+		EM_QURD_VERTEX	= EM_QURD*4,							// ï¿½ç°¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+		EM_FULL_LENGTH	= EM_LENGTH*EM_GRID,					// ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½
 	};
 
 	char		m_cBaseName[100];
@@ -141,8 +141,8 @@ protected:
 protected:
 	struct TILE
 	{
-		DWORD		dwTile;		// Å¸ÀÏ ¹øÈ£
-		VERTEX_TEX2	sVertex[4];	// Á¤Á¡ Á¤º¸
+		DWORD		dwTile;		// Å¸ï¿½ï¿½ ï¿½ï¿½È£
+		VERTEX_TEX2	sVertex[4];	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 		TILE () :
 			dwTile(0)
@@ -152,15 +152,15 @@ protected:
 
 	struct BASE
 	{
-		D3DXVECTOR3	vMax;				// Clip ÇÏ±â À§ÇÑ °ª
-		D3DXVECTOR3	vMin;				// Clip ÇÏ±â À§ÇÑ °ª
+		D3DXVECTOR3	vMax;				// Clip ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
+		D3DXVECTOR3	vMin;				// Clip ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
 
-		LPDIRECT3DVERTEXBUFFER8	pVB;		// Vertex Buffer
-		LPDIRECT3DINDEXBUFFER8	pIB;		// Index Buffer
-		LPDIRECT3DTEXTURE8		pTexture;	// BaseTex
+		LPDIRECT3DVERTEXBUFFER9	pVB;		// Vertex Buffer
+		LPDIRECT3DINDEXBUFFER9	pIB;		// Index Buffer
+		LPDIRECT3DTEXTURE9		pTexture;	// BaseTex
 
 		DWORD		sColor[EM_TEXSIZE][EM_TEXSIZE];
-		TILE		sTile[EM_GRID][EM_GRID];			// Å¸ÀÏ Á¤º¸
+		TILE		sTile[EM_GRID][EM_GRID];			// Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 		BASE() :
 			vMax(0.f,0.f,0.f),
@@ -181,28 +181,28 @@ protected:
 	};
 
 	//typedef stdext::hash_map<DWORD,BASE*>		BASEMAP;
-	typedef std::map<DWORD,BASE*>			BASEMAP;		// Å¸ÀÏÀÇ X,Y ¹øÈ£
+	typedef std::map<DWORD,BASE*>			BASEMAP;		// Å¸ï¿½ï¿½ï¿½ï¿½ X,Y ï¿½ï¿½È£
 	typedef BASEMAP::iterator				BASEMAP_ITER;
 
 	BASEMAP		m_mapBase;
 
 protected:
-	VERTEX		m_sVertex[EM_VERTEX_PART][EM_VERTEX_PART];	// µ¥ÀÌÅÍÀÇ ÃàÀû
+	VERTEX		m_sVertex[EM_VERTEX_PART][EM_VERTEX_PART];	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 	struct FACE
 	{
 		WORD wIndex[3];
 	};
 
-	typedef std::multimap<float,FACE>	FACEMAP;		// x Ãà ÁÂÇ¥·Î¸¸ Ã£¾Æ³» º¸ÀÚ.
+	typedef std::multimap<float,FACE>	FACEMAP;		// x ï¿½ï¿½ ï¿½ï¿½Ç¥ï¿½Î¸ï¿½ Ã£ï¿½Æ³ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	typedef FACEMAP::iterator			FACEMAP_ITER;
 
 	FACEMAP		m_mapFace;
 
 protected:
-	DWORD		m_dwCol;		// ¿­ °¹¼ö
-	DWORD		m_dwRow;		// Çà °¹¼ö
-	LPDIRECT3DTEXTURE8		m_pTexture;	// BaseTex
+	DWORD		m_dwCol;		// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	DWORD		m_dwRow;		// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	LPDIRECT3DTEXTURE9		m_pTexture;	// BaseTex
 
 protected:
 	struct SEPARATE_PROPERTY
@@ -214,7 +214,7 @@ protected:
 
 	class SEPARATEOBJ : public OBJAABB
 	{
-	public:										// ÀúÀåÇÏ´Â°Í
+	public:										// ï¿½ï¿½ï¿½ï¿½ï¿½Ï´Â°ï¿½
 		union
 		{
 			struct
@@ -265,7 +265,7 @@ protected:
 
 		virtual OBJAABB* GetNext () { return pNext; }
 
-		virtual HRESULT Render ( LPDIRECT3DDEVICE8 pd3dDevice, CLIPVOLUME *pCV );
+		virtual HRESULT Render ( LPDIRECT3DDEVICE9 pd3dDevice, CLIPVOLUME *pCV );
 
 	public:
 		void		SaveFile ( CSerialFile &SFile );
@@ -274,22 +274,22 @@ protected:
 	typedef SEPARATEOBJ*	PSEPARATEOBJ;
 
 protected:
-	LPDIRECT3DTEXTURE8		m_pDetailTex;
+	LPDIRECT3DTEXTURE9		m_pDetailTex;
 
 protected:
-	virtual HRESULT AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice );
+	virtual HRESULT AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice );
 public:
-	virtual HRESULT AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDevice );
-	virtual HRESULT AdaptToEffList ( const DxFrame *const pFrame, LPDIRECT3DDEVICE8 pd3dDevice );
+	virtual HRESULT AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE9 pd3dDevice );
+	virtual HRESULT AdaptToEffList ( const DxFrame *const pFrame, LPDIRECT3DDEVICE9 pd3dDevice );
 
 public:
-	static HRESULT CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice );
-	static HRESULT ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice );
+	static HRESULT CreateDevice ( LPDIRECT3DDEVICE9 pd3dDevice );
+	static HRESULT ReleaseDevice ( LPDIRECT3DDEVICE9 pd3dDevice );
 
 public:
 	virtual HRESULT OneTimeSceneInit ();
-	virtual HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice );
-	virtual HRESULT RestoreDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice );
+	virtual HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice );
+	virtual HRESULT RestoreDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice );
 
 	virtual HRESULT InvalidateDeviceObjects ();
 	virtual HRESULT DeleteDeviceObjects ();
@@ -297,23 +297,23 @@ public:
 
 public:
 	virtual HRESULT FrameMove ( float fTime, float fElapsedTime );
-	virtual HRESULT Render ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDevice, DxFrameMesh *pFrameMesh, DxLandMan* pLandMan );
+	virtual HRESULT Render ( DxFrame *pFrame, LPDIRECT3DDEVICE9 pd3dDevice, DxFrameMesh *pFrameMesh, DxLandMan* pLandMan );
  
 protected:
-	//	»ý	¼º	ºÎ	ºÐ
-	void	SetBaseQuad ( LPDIRECT3DDEVICE8 pd3dDevice, DxMeshes *pmsMeshs );
+	//	ï¿½ï¿½	ï¿½ï¿½	ï¿½ï¿½	ï¿½ï¿½
+	void	SetBaseQuad ( LPDIRECT3DDEVICE9 pd3dDevice, DxMeshes *pmsMeshs );
 	void	SortTriangle ( VERTEX* pSrcVertices, WORD* pSrcIndices );
-	void	SetBaseInit ( LPDIRECT3DDEVICE8 pd3dDevice, VERTEX* pSrcVertices, WORD* pSrcIndices );
+	void	SetBaseInit ( LPDIRECT3DDEVICE9 pd3dDevice, VERTEX* pSrcVertices, WORD* pSrcIndices );
 	void	SetBaseMap ( int i, int j, VERTEX* pSrcVertices, WORD* pSrcIndices );
-	void	SetBase_VB_IB_TEX ( LPDIRECT3DDEVICE8 pd3dDevice );
+	void	SetBase_VB_IB_TEX ( LPDIRECT3DDEVICE9 pd3dDevice );
 
 
 	BOOL		Picking ( VERTEX* pVertices, VERTEX& vPos );
 	void		ModifyNormal ( DWORD x, DWORD y );
 	D3DXVECTOR3	ModifyNormalPart ( int x, int y, int x1, int y1, int x2, int y2 );
 
-	//	·»	´õ	ºÎ	ºÐ
-	void	RenderTiles ( LPDIRECT3DDEVICE8 pd3dDevice );
+	//	ï¿½ï¿½	ï¿½ï¿½	ï¿½ï¿½	ï¿½ï¿½
+	void	RenderTiles ( LPDIRECT3DDEVICE9 pd3dDevice );
 public:
 	DxEffectTile ();
 	virtual ~DxEffectTile ();
@@ -326,13 +326,13 @@ public:
 
 protected:
 	virtual void SaveBuffer ( CSerialFile &SFile );
-	virtual void LoadBufferSet ( CSerialFile &SFile, DWORD dwVer, LPDIRECT3DDEVICE8 pd3dDevice );
-	virtual void LoadBuffer ( CSerialFile &SFile, DWORD dwVer, LPDIRECT3DDEVICE8 pd3dDevice );
+	virtual void LoadBufferSet ( CSerialFile &SFile, DWORD dwVer, LPDIRECT3DDEVICE9 pd3dDevice );
+	virtual void LoadBuffer ( CSerialFile &SFile, DWORD dwVer, LPDIRECT3DDEVICE9 pd3dDevice );
 
-	//	Note : DxFrameMesh ÀÇ È¿°ú¸¦ DxLandMan ¿¡ »ðÀÔ ÇÒ ¶§ ´ë·®ÀÇ ¹öÆÛ µ¥ÀÌÅ¸¸¦
-	//		º¹Á¦ÇÏ±â À§ÇØ¼­ »ç¿ëÇÑ´Ù.
+	//	Note : DxFrameMesh ï¿½ï¿½ È¿ï¿½ï¿½ï¿½ï¿½ DxLandMan ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½ë·®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Å¸ï¿½ï¿½
+	//		ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½Ø¼ï¿½ ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 public:
-	virtual HRESULT CloneData ( DxEffectBase* pSrcEffect, LPDIRECT3DDEVICE8 pd3dDevice );
+	virtual HRESULT CloneData ( DxEffectBase* pSrcEffect, LPDIRECT3DDEVICE9 pd3dDevice );
 };
 
 #endif // !defined(__DxEffectTile__INCLUDED__)

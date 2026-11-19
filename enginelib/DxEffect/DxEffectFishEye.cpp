@@ -19,7 +19,7 @@ static char THIS_FILE[] = __FILE__;
 
 const DWORD DxEffectFishEye::TYPEID = DEF_EFFECT_FISHEYE;
 const DWORD	DxEffectFishEye::VERSION = 0x00000100;
-const char DxEffectFishEye::NAME[] = "[18]_[ º¼·Ï·»Áî ]";
+const char DxEffectFishEye::NAME[] = "[18]_[ ï¿½ï¿½ï¿½Ï·ï¿½ï¿½ï¿½ ]";
 const DWORD DxEffectFishEye::FLAG = NULL;
 
 void DxEffectFishEye::GetProperty ( PBYTE &pProp, DWORD &dwSize, DWORD &dwVer )
@@ -52,7 +52,7 @@ DxEffectFishEye::~DxEffectFishEye()
 	SAFE_DELETE_ARRAY(m_szAdaptFrame);
 }
 
-HRESULT DxEffectFishEye::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectFishEye::CreateDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr;
 
@@ -75,7 +75,7 @@ HRESULT DxEffectFishEye::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	{
 		pd3dDevice->BeginStateBlock();
 
-		//	Note : SetTextureStageState() ¼±¾ð
+		//	Note : SetTextureStageState() ï¿½ï¿½ï¿½ï¿½
 		//
 		pd3dDevice->SetTextureStageState ( 0, D3DTSS_ADDRESSU,	D3DTADDRESS_MIRROR );
 
@@ -87,7 +87,7 @@ HRESULT DxEffectFishEye::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffectFishEye::ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectFishEye::ReleaseDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	pd3dDevice->DeleteVertexShader ( m_dwEffect );
 
@@ -105,7 +105,7 @@ HRESULT DxEffectFishEye::ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffectFishEye::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectFishEye::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	if ( !pFrame ) return S_OK;
 
@@ -124,7 +124,7 @@ HRESULT DxEffectFishEye::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3
 }
 
 
-HRESULT DxEffectFishEye::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectFishEye::InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 
 	return S_OK;
@@ -142,7 +142,7 @@ HRESULT DxEffectFishEye::FrameMove ( float fTime, float fElapsedTime )
 	return S_OK;
 }
 
-HRESULT DxEffectFishEye::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectFishEye::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr = S_OK;
 	DxMeshes *pmsMeshs;
@@ -152,7 +152,7 @@ HRESULT DxEffectFishEye::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevi
 	//
 	if ( pframeCur->pmsMeshs != NULL )
 	{
-		//	Note : ¸Þ½¬ ±×¸®±â.
+		//	Note : ï¿½Þ½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½.
 		//
 		pmsMeshs = pframeCur->pmsMeshs;
 		while ( pmsMeshs != NULL )
@@ -161,10 +161,10 @@ HRESULT DxEffectFishEye::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevi
 			{
 				DWORD dwFVFSize;
 				DWORD dwVerts, dwFaces;
-				LPDIRECT3DINDEXBUFFER8 pIB	= NULL;
-				LPDIRECT3DVERTEXBUFFER8 pVB = NULL;
+				LPDIRECT3DINDEXBUFFER9 pIB	= NULL;
+				LPDIRECT3DVERTEXBUFFER9 pVB = NULL;
 
-				//	Note : LocalMesh, OctreeMesh µÑ Áß ÇÏ³ª¸¦ °í¸¥´Ù.
+				//	Note : LocalMesh, OctreeMesh ï¿½ï¿½ ï¿½ï¿½ ï¿½Ï³ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 				//
 				if ( pmsMeshs->m_pLocalMesh )
 				{				
@@ -187,7 +187,7 @@ HRESULT DxEffectFishEye::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevi
 				}
 
 
-				//	Note : Shader »ó¼ö ¼±¾ð
+				//	Note : Shader ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 				//
 				D3DXVECTOR4	m_vConstants(m_fDistortion + 1.0f, 0.0f, 0.5f, 0.8f);
 				D3DXVECTOR4	m_vInfo(m_fXZRatio, m_fDistortion, 0.0f, 1.0f);
@@ -195,7 +195,7 @@ HRESULT DxEffectFishEye::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevi
 				pd3dDevice->SetVertexShaderConstant ( VSC_CUSTOM+2,		&m_vConstants,	1 );
 				pd3dDevice->SetVertexShaderConstant ( VSC_CUSTOM+1,		&m_vInfo,		1 );
 
-				//	Note : SetVertexShader¿¡ World¿Í WorldViewProjection Çà·Ä Áý¾î ³Ö±â
+				//	Note : SetVertexShaderï¿½ï¿½ Worldï¿½ï¿½ WorldViewProjection ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ö±ï¿½
 				//
 				D3DXMATRIX	matWorld, matView, matProj, matWVP;
 
@@ -236,35 +236,35 @@ HRESULT DxEffectFishEye::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevi
 					memcpy ( pAttribTable, pmsMeshs->m_pDxOctreeMesh->m_pAttribTable, sizeof ( D3DXATTRIBUTERANGE ) * AttribTableSize );
 				}
 
-				//	Note : ºÒÅõ¸í ¸Þ½¬ µå·ÎÀ×.
+				//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½.
 				//		pmsMeshs->cMaterials --> AttribTableSize
 				//
 				for ( DWORD i=0; i<AttribTableSize; i++ )
 				{
-					//	Note : ¸ÞÅÍ¸®¾ó, ÅØ½ºÃÄ ÁöÁ¤.
+					//	Note : ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½, ï¿½Ø½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 					pd3dDevice->SetVertexShaderConstant ( VSC_MATRIAL, &( pmsMeshs->rgMaterials[i].Diffuse ), 1 );
 	//				pd3dDevice->SetVertexShaderConstant ( VSC_AMBIENT, &( pmsMeshs->rgMaterials[i].Ambient ), 1 );
 					pd3dDevice->SetTexture ( 0, pmsMeshs->pTextures[pAttribTable[i].AttribId] );
 				
 
-					//	Note : ÀÌÀü »óÅÂ ¹é¾÷.
+					//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 					//
 					pd3dDevice->CaptureStateBlock ( m_dwSavedStateBlock );
 
-					//	Note : ·£´õ¸µ »óÅÂ Á¶Á¤.
+					//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 					//
 					pd3dDevice->ApplyStateBlock ( m_dwEffectStateBlock );
 
 
 
-					//	Note : ¼ÒÇÁÆ®¿þ¾î ¹öÅØ½º ÇÁ·Î¼¼½Ì
+					//	Note : ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½
 					//
 					if ( DxEffectMan::Instance.GetUseSwShader() )
 						pd3dDevice->SetRenderState( D3DRS_SOFTWAREVERTEXPROCESSING, TRUE );
 
 
 
-					//	Note : LocalMesh, OctreeMesh µÑ Áß ÇÏ³ª¸¦ °í¸¥´Ù.
+					//	Note : LocalMesh, OctreeMesh ï¿½ï¿½ ï¿½ï¿½ ï¿½Ï³ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 					//
 					if ( pmsMeshs->m_pLocalMesh )
 					{
@@ -290,7 +290,7 @@ HRESULT DxEffectFishEye::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevi
 					);
 
 
-					//	Note : ¼ÒÇÁÆ®¿þ¾î ¹öÅØ½º ÇÁ·Î¼¼½Ì
+					//	Note : ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½
 					//
 					if ( DxEffectMan::Instance.GetUseSwShader() )
 						pd3dDevice->SetRenderState( D3DRS_SOFTWAREVERTEXPROCESSING, FALSE );
@@ -300,7 +300,7 @@ HRESULT DxEffectFishEye::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevi
 
 
 
-					//	Note : ÀÌÀü»óÅÂ·Î º¹¿ø.
+					//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ ï¿½ï¿½ï¿½ï¿½.
 					//
 					pd3dDevice->ApplyStateBlock ( m_dwSavedStateBlock );
 
@@ -320,7 +320,7 @@ HRESULT DxEffectFishEye::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevi
 		}
 	}
 
-	//	Note : ÀÚ½Ä ÇÁ·¹ÀÓ ±×¸®±â.
+	//	Note : ï¿½Ú½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½.
 	//
 	pframeChild = pframeCur->pframeFirstChild;
 	while ( pframeChild != NULL )

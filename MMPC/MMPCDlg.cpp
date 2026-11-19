@@ -1,4 +1,4 @@
-// MMPCDlg.cpp : ±¸Çö ÆÄÀÏ
+// MMPCDlg.cpp : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 //
 
 #include "stdafx.h"
@@ -8,7 +8,7 @@
 
 #include "BitmapMan.h"
 
-inline ROUND( float fValue)
+inline int ROUND( float fValue)
 {
 	return static_cast<int>( fValue + ( fValue > 0 ? 0.5 : -0.5 ) );
 }
@@ -17,20 +17,20 @@ inline ROUND( float fValue)
 #define new DEBUG_NEW
 #endif
 
-// ÀÀ¿ë ÇÁ·Î±×·¥ Á¤º¸¿¡ »ç¿ëµÇ´Â CAboutDlg ´ëÈ­ »óÀÚÀÔ´Ï´Ù.
+// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Î±×·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ç´ï¿½ CAboutDlg ï¿½ï¿½È­ ï¿½ï¿½ï¿½ï¿½ï¿½Ô´Ï´ï¿½.
 
 class CAboutDlg : public CDialog
 {
 public:
 	CAboutDlg();
 
-// ´ëÈ­ »óÀÚ µ¥ÀÌÅÍ
+// ï¿½ï¿½È­ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	enum { IDD = IDD_ABOUTBOX };
 
 	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Áö¿ø
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV ï¿½ï¿½ï¿½ï¿½
 
-// ±¸Çö
+// ï¿½ï¿½ï¿½ï¿½
 protected:
 	DECLARE_MESSAGE_MAP()
 };
@@ -48,7 +48,7 @@ BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
 END_MESSAGE_MAP()
 
 
-// CMMPCDlg ´ëÈ­ »óÀÚ
+// CMMPCDlg ï¿½ï¿½È­ ï¿½ï¿½ï¿½ï¿½
 
 
 
@@ -93,15 +93,15 @@ ON_BN_CLICKED(IDC_BUTTON2, OnBnClickedButton2)
 END_MESSAGE_MAP()
 
 
-// CMMPCDlg ¸Þ½ÃÁö Ã³¸®±â
+// CMMPCDlg ï¿½Þ½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½
 
 BOOL CMMPCDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	// ½Ã½ºÅÛ ¸Þ´º¿¡ "Á¤º¸..." ¸Þ´º Ç×¸ñÀ» Ãß°¡ÇÕ´Ï´Ù.
+	// ï¿½Ã½ï¿½ï¿½ï¿½ ï¿½Þ´ï¿½ï¿½ï¿½ "ï¿½ï¿½ï¿½ï¿½..." ï¿½Þ´ï¿½ ï¿½×¸ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ï¿½Õ´Ï´ï¿½.
 
-	// IDM_ABOUTBOX´Â ½Ã½ºÅÛ ¸í·É ¹üÀ§¿¡ ÀÖ¾î¾ß ÇÕ´Ï´Ù.
+	// IDM_ABOUTBOXï¿½ï¿½ ï¿½Ã½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö¾ï¿½ï¿½ ï¿½Õ´Ï´ï¿½.
 	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
 	ASSERT(IDM_ABOUTBOX < 0xF000);
 
@@ -117,15 +117,15 @@ BOOL CMMPCDlg::OnInitDialog()
 		}
 	}
 
-	// ÀÌ ´ëÈ­ »óÀÚÀÇ ¾ÆÀÌÄÜÀ» ¼³Á¤ÇÕ´Ï´Ù. ÀÀ¿ë ÇÁ·Î±×·¥ÀÇ ÁÖ Ã¢ÀÌ ´ëÈ­ »óÀÚ°¡ ¾Æ´Ò °æ¿ì¿¡´Â
-	// ÇÁ·¹ÀÓ¿öÅ©°¡ ÀÌ ÀÛ¾÷À» ÀÚµ¿À¸·Î ¼öÇàÇÕ´Ï´Ù.
-	SetIcon(m_hIcon, TRUE);			// Å« ¾ÆÀÌÄÜÀ» ¼³Á¤ÇÕ´Ï´Ù.
-	SetIcon(m_hIcon, FALSE);		// ÀÛÀº ¾ÆÀÌÄÜÀ» ¼³Á¤ÇÕ´Ï´Ù.
+	// ï¿½ï¿½ ï¿½ï¿½È­ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½. ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Î±×·ï¿½ï¿½ï¿½ ï¿½ï¿½ Ã¢ï¿½ï¿½ ï¿½ï¿½È­ ï¿½ï¿½ï¿½Ú°ï¿½ ï¿½Æ´ï¿½ ï¿½ï¿½ì¿¡ï¿½ï¿½
+	// ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½Å©ï¿½ï¿½ ï¿½ï¿½ ï¿½Û¾ï¿½ï¿½ï¿½ ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
+	SetIcon(m_hIcon, TRUE);			// Å« ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
+	SetIcon(m_hIcon, FALSE);		// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
 
-	// TODO: ¿©±â¿¡ Ãß°¡ ÃÊ±âÈ­ ÀÛ¾÷À» Ãß°¡ÇÕ´Ï´Ù.
-	HideEditView(); // ¾Æ·¡ ÄÁÆ®·ÑÀ» ¼û±è
+	// TODO: ï¿½ï¿½ï¿½â¿¡ ï¿½ß°ï¿½ ï¿½Ê±ï¿½È­ ï¿½Û¾ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ï¿½Õ´Ï´ï¿½.
+	HideEditView(); // ï¿½Æ·ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	
-	return TRUE;  // ÄÁÆ®·Ñ¿¡ ´ëÇÑ Æ÷Ä¿½º¸¦ ¼³Á¤ÇÏÁö ¾ÊÀ» °æ¿ì TRUE¸¦ ¹ÝÈ¯ÇÕ´Ï´Ù.
+	return TRUE;  // ï¿½ï¿½Æ®ï¿½Ñ¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ TRUEï¿½ï¿½ ï¿½ï¿½È¯ï¿½Õ´Ï´ï¿½.
 }
 
 void CMMPCDlg::OnSysCommand(UINT nID, LPARAM lParam)
@@ -141,19 +141,19 @@ void CMMPCDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	}
 }
 
-// ´ëÈ­ »óÀÚ¿¡ ÃÖ¼ÒÈ­ ´ÜÃß¸¦ Ãß°¡ÇÒ °æ¿ì ¾ÆÀÌÄÜÀ» ±×¸®·Á¸é 
-// ¾Æ·¡ ÄÚµå°¡ ÇÊ¿äÇÕ´Ï´Ù. ¹®¼­/ºä ¸ðµ¨À» »ç¿ëÇÏ´Â MFC ÀÀ¿ë ÇÁ·Î±×·¥ÀÇ °æ¿ì¿¡´Â
-// ÇÁ·¹ÀÓ¿öÅ©¿¡¼­ ÀÌ ÀÛ¾÷À» ÀÚµ¿À¸·Î ¼öÇàÇÕ´Ï´Ù.
+// ï¿½ï¿½È­ ï¿½ï¿½ï¿½Ú¿ï¿½ ï¿½Ö¼ï¿½È­ ï¿½ï¿½ï¿½ß¸ï¿½ ï¿½ß°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½ï¿½ï¿½ 
+// ï¿½Æ·ï¿½ ï¿½Úµå°¡ ï¿½Ê¿ï¿½ï¿½Õ´Ï´ï¿½. ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ MFC ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Î±×·ï¿½ï¿½ï¿½ ï¿½ï¿½ì¿¡ï¿½ï¿½
+// ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½Å©ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Û¾ï¿½ï¿½ï¿½ ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
 
 void CMMPCDlg::OnPaint() 
 {
 	if (IsIconic())
 	{
-		CPaintDC dc(this); // ±×¸®±â¸¦ À§ÇÑ µð¹ÙÀÌ½º ÄÁÅØ½ºÆ®
+		CPaintDC dc(this); // ï¿½×¸ï¿½ï¿½â¸¦ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ì½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½Æ®
 
 		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
 
-		// Å¬¶óÀÌ¾ðÆ® »ç°¢Çü¿¡¼­ ¾ÆÀÌÄÜÀ» °¡¿îµ¥¿¡ ¸ÂÃä´Ï´Ù.
+		// Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½ç°¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½îµ¥ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.
 		int cxIcon = GetSystemMetrics(SM_CXICON);
 		int cyIcon = GetSystemMetrics(SM_CYICON);
 		CRect rect;
@@ -161,7 +161,7 @@ void CMMPCDlg::OnPaint()
 		int x = (rect.Width() - cxIcon + 1) / 2;
 		int y = (rect.Height() - cyIcon + 1) / 2;
 
-		// ¾ÆÀÌÄÜÀ» ±×¸³´Ï´Ù.
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½Ï´ï¿½.
 		dc.DrawIcon(x, y, m_hIcon);
 	}
 	else
@@ -170,8 +170,8 @@ void CMMPCDlg::OnPaint()
 	}
 }
 
-// »ç¿ëÀÚ°¡ ÃÖ¼ÒÈ­µÈ Ã¢À» ²ô´Â µ¿¾È¿¡ Ä¿¼­°¡ Ç¥½ÃµÇµµ·Ï ½Ã½ºÅÛ¿¡¼­
-//  ÀÌ ÇÔ¼ö¸¦ È£ÃâÇÕ´Ï´Ù. 
+// ï¿½ï¿½ï¿½ï¿½Ú°ï¿½ ï¿½Ö¼ï¿½È­ï¿½ï¿½ Ã¢ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½È¿ï¿½ Ä¿ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ÃµÇµï¿½ï¿½ï¿½ ï¿½Ã½ï¿½ï¿½Û¿ï¿½ï¿½ï¿½
+//  ï¿½ï¿½ ï¿½Ô¼ï¿½ï¿½ï¿½ È£ï¿½ï¿½ï¿½Õ´Ï´ï¿½. 
 HCURSOR CMMPCDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
@@ -179,8 +179,8 @@ HCURSOR CMMPCDlg::OnQueryDragIcon()
 
 void CMMPCDlg::OnBnClickedButton1()
 {
-	// TODO: BMP ÆÄÀÏ ¼±ÅÃ
-	CString szFilter = "ºñÆ®¸Ê ÆÄÀÏ(*.bmp)|*.bmp|";
+	// TODO: BMP ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	CString szFilter = "ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(*.bmp)|*.bmp|";
 
 	CFileDialog dlg( TRUE, ".bmp", NULL, OFN_HIDEREADONLY, szFilter );
 
@@ -195,8 +195,8 @@ void CMMPCDlg::OnBnClickedButton1()
 
 void CMMPCDlg::OnBnClickedOk()
 {
-	// TODO: MMP ÆÄÀÏ »ý¼º
-	CString szFilter = "MMP ÆÄÀÏ(*.mmp)|*.mmp|";
+	// TODO: MMP ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	CString szFilter = "MMP ï¿½ï¿½ï¿½ï¿½(*.mmp)|*.mmp|";
 
 	CFileDialog dlg( FALSE, ".mmp", NULL, OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT, szFilter );
 
@@ -204,24 +204,24 @@ void CMMPCDlg::OnBnClickedOk()
 	{
 		BeginWaitCursor();
 		{
-			// ¿¡µðÅÍ¹Ú½º¿¡ ÀÖ´Â °ªÀ» ¾ò¾î¿Â´Ù.
+			// ï¿½ï¿½ï¿½ï¿½ï¿½Í¹Ú½ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â´ï¿½.
 			UpdateData();
 
-			// BMPÀÇ ÁÂ·á¸¦ ¾ò¾î¿Â´Ù.
+			// BMPï¿½ï¿½ ï¿½Â·á¸¦ ï¿½ï¿½ï¿½Â´ï¿½.
 			RECT rect = GetBitmapPosition();
 
-			// ÁÂÇ¥ °è»ê
+			// ï¿½ï¿½Ç¥ ï¿½ï¿½ï¿½
 			MiniMapPositionCalc( rect );
 		}
 		EndWaitCursor();
 
 		CString strBUFFER;
 
-		// ÆÄÀÏ ÀúÀå
+		// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		if( !MiniMapPositionSave( dlg.GetPathName(), strBUFFER ) )
 		{
-			// ÀúÀå ½ÇÆÐ
-			AfxMessageBox( "MMP ÆÄÀÏ »ý¼º¿¡ ½ÇÆÐÇÏ¿´½À´Ï´Ù." );
+			// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+			AfxMessageBox( "MMP ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ï¿½ï¿½ï¿½Ï´ï¿½." );
 		}
 		else
 		{
@@ -238,7 +238,7 @@ void CMMPCDlg::ShowEditView( CString & strBUFFER )
 
 	SetDlgItemText( IDC_VIEW, strBUFFER );
 
-	if( m_ctrlButtonHide.IsWindowVisible() == TRUE ) return; // ÀÌ¹Ì ¿¡µðÅÍºä°¡ º¸ÀÌ¸é Å©±âÁ¶Àý ÇÏÁö¾Ê´Â´Ù.
+	if( m_ctrlButtonHide.IsWindowVisible() == TRUE ) return; // ï¿½Ì¹ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Íºä°¡ ï¿½ï¿½ï¿½Ì¸ï¿½ Å©ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ê´Â´ï¿½.
 
 	m_ctrlButtonCancel.GetWindowRect( &rtCancel );
 	m_ctrlButtonHide.GetWindowRect( &rtHide );
@@ -295,7 +295,7 @@ BOOL CMMPCDlg::MiniMapPositionSave( CString & strPathName, CString & strBUFFER )
 	strBUFFER.AppendFormat( "TEXTURE_SIZE\t\t%d %d\r\n", sBitmap.bmWidth, sBitmap.bmHeight );
 	strBUFFER.AppendFormat( "TEXTURE_POS\t\t%d %d %d %d", 0, 0, sBitmap.bmWidth, sBitmap.bmHeight ); 
 
-	file.Write( strBUFFER, strBUFFER.GetLength() ); // ÆÄÀÏ ¾²±â
+	file.Write( strBUFFER, strBUFFER.GetLength() ); // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 	file.Close();
 
@@ -326,7 +326,7 @@ RECT CMMPCDlg::GetBitmapPosition()
 	BITMAP sBitmap = CBitmapMan::m_cBitmapMan.GetBitmap();
 	HBITMAP hBitmap = CBitmapMan::m_cBitmapMan.GetHBitmap();
 
-	MemDC.SelectObject( (HBITMAP)hBitmap ); // ÇöÀç ¿ÀºêÁ§Æ®¸¦ ÀúÀåÇß´Ù°¡ ³ªÁß¿¡ ¼±ÅÃÇÏ´Â°Ô ¿¡·¯³².
+	MemDC.SelectObject( (HBITMAP)hBitmap ); // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ß´Ù°ï¿½ ï¿½ï¿½ï¿½ß¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´Â°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 
 	///////////////////////////////
 	INT nLEFT(0);
@@ -339,7 +339,7 @@ RECT CMMPCDlg::GetBitmapPosition()
 
 	////////////////////////////////////////////////////////////////////////////////////
 	COLORREF colorRef = GetPixel(MemDC, nLEFT, nTOP);
-	for(int i=nTOP; i<=nBOTTOM && !bOut; ++i) // À§ÂÊ ¶óÀÎÀ» °Ë»çÇÑ´Ù.
+	for(int i=nTOP; i<=nBOTTOM && !bOut; ++i) // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ë»ï¿½ï¿½Ñ´ï¿½.
 	{
 		for(int j=nLEFT; j<=nRIGHT; ++j)
 		{
@@ -356,7 +356,7 @@ RECT CMMPCDlg::GetBitmapPosition()
 	////////////////////////////////////////////////////////////////////////////////////
 	bOut = FALSE;
 	colorRef = GetPixel(MemDC, nLEFT, nBOTTOM);
-	for(int i=nBOTTOM; i>=nTOP && !bOut; --i) // ¾Æ·¡ÂÊ ¶óÀÎÀ» °Ë»çÇÑ´Ù.
+	for(int i=nBOTTOM; i>=nTOP && !bOut; --i) // ï¿½Æ·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ë»ï¿½ï¿½Ñ´ï¿½.
 	{
 		for(int j=nLEFT; j<=nRIGHT; ++j)
 		{
@@ -373,7 +373,7 @@ RECT CMMPCDlg::GetBitmapPosition()
 	////////////////////////////////////////////////////////////////////////////////////
 	bOut = FALSE;
 	colorRef = GetPixel(MemDC, nLEFT, nTOP);
-	for(int i=nLEFT; i<=nRIGHT && !bOut; ++i) // ¿ÞÂÊ ¶óÀÎÀ» °Ë»çÇÑ´Ù.
+	for(int i=nLEFT; i<=nRIGHT && !bOut; ++i) // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ë»ï¿½ï¿½Ñ´ï¿½.
 	{
 		for(int j=nTOP; j<=nBOTTOM; ++j)
 		{
@@ -390,7 +390,7 @@ RECT CMMPCDlg::GetBitmapPosition()
 	////////////////////////////////////////////////////////////////////////////////////
 	bOut = FALSE;
 	colorRef = GetPixel(MemDC, nRIGHT, nTOP);
-	for(int i=nRIGHT; i>=nLEFT && !bOut; --i) // ¿À¸¥ÂÊ ¶óÀÎÀ» °Ë»çÇÑ´Ù.
+	for(int i=nRIGHT; i>=nLEFT && !bOut; --i) // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ë»ï¿½ï¿½Ñ´ï¿½.
 	{
 		for(int j=nTOP; j<=nBOTTOM; ++j)
 		{
@@ -421,8 +421,8 @@ void CMMPCDlg::OnBnClickedHide()
 
 void CMMPCDlg::OnBnClickedButton2()
 {
-	// TODO: DDS ÆÄÀÏ ¼±ÅÃ
-	CString szFilter = "DDS ÆÄÀÏ(*.dds)|*.dds|";
+	// TODO: DDS ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	CString szFilter = "DDS ï¿½ï¿½ï¿½ï¿½(*.dds)|*.dds|";
 
 	CFileDialog dlg( TRUE, ".dds", NULL, OFN_HIDEREADONLY, szFilter );
 

@@ -63,7 +63,7 @@ DxSkinMesh::~DxSkinMesh()
 	ClearMeshHierarchy();
 }
 
-HRESULT DxSkinMesh::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxSkinMesh::InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	m_pd3dDevice = pd3dDevice;
 	
@@ -76,7 +76,7 @@ HRESULT DxSkinMesh::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxSkinMesh::RestoreDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxSkinMesh::RestoreDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr = S_OK;
 //
@@ -90,18 +90,18 @@ HRESULT DxSkinMesh::RestoreDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
 //	if ( d3dCaps.VertexShaderVersion >= D3DVS_VERSION(1, 1) &&
 //		d3dCaps.PixelShaderVersion >= D3DPS_VERSION(1, 1) )
 //	{
-//		m_method = D3DINDEXEDVS;	// À¹ ¾ÈµÅ.
-//		m_dwUseSwShader = 0;		// ÀÌ·² ¶© MIXED -> H/W °¡¼Ó ÀÌ´Ù.
+//		m_method = D3DINDEXEDVS;	// ï¿½ï¿½ ï¿½Èµï¿½.
+//		m_dwUseSwShader = 0;		// ï¿½Ì·ï¿½ ï¿½ï¿½ MIXED -> H/W ï¿½ï¿½ï¿½ï¿½ ï¿½Ì´ï¿½.
 //	}
 //	else if ( d3dCaps.VertexShaderVersion >= D3DVS_VERSION(1, 1) )
 //	{
-//		m_method = D3DNONINDEXED;	// À¹.. ¾ÈµÅ.
-//		m_dwUseSwShader = 0;		// ÀÌ·² ¶© MIXED -> H/W °¡¼Ó ÀÌ´Ù.
+//		m_method = D3DNONINDEXED;	// ï¿½ï¿½.. ï¿½Èµï¿½.
+//		m_dwUseSwShader = 0;		// ï¿½Ì·ï¿½ ï¿½ï¿½ MIXED -> H/W ï¿½ï¿½ï¿½ï¿½ ï¿½Ì´ï¿½.
 //	}
 //	else
 //	{
-//		m_method = D3DNONINDEXED;							// À¹.. ¾ÈµÅ.
-//		m_dwUseSwShader = D3DUSAGE_SOFTWAREPROCESSING;		// ÀÌ·² ¶©      SW
+//		m_method = D3DNONINDEXED;							// ï¿½ï¿½.. ï¿½Èµï¿½.
+//		m_dwUseSwShader = D3DUSAGE_SOFTWAREPROCESSING;		// ï¿½Ì·ï¿½ ï¿½ï¿½      SW
 //	}
 //
 ////	m_method = D3DNONINDEXED;
@@ -301,9 +301,9 @@ void DxSkinMesh::Init_Detail_Texture ()
 	m_fHeight		= 0.f;
 }
 
-//	Note : ¸¸¾ï pMesh °¡ MANAGED, SYSTEMMEM ¼Ó¼ºÀ» °¡Áø °³Ã¼°¡ ¾Æ´Ò °æ¿ì
-//		Invalidate È£Ãâ½Ã¿¡ Á¦°ÅÇÏ°í »õ·Î Mesh°¡ ¸¸µé¾îÁ®¾ß ÇÑ´Ù. ±×¶§
-//		»ç¿ëµÈ´Ù.
+//	Note : ï¿½ï¿½ï¿½ï¿½ pMesh ï¿½ï¿½ MANAGED, SYSTEMMEM ï¿½Ó¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½Æ´ï¿½ ï¿½ï¿½ï¿½
+//		Invalidate È£ï¿½ï¿½Ã¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½ï¿½ï¿½ Meshï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ´ï¿½. ï¿½×¶ï¿½
+//		ï¿½ï¿½ï¿½È´ï¿½.
 //
 void ReleaseDeviceDependentMeshes(SFrame* pframe)
 {
@@ -328,11 +328,11 @@ void ReleaseDeviceDependentMeshes(SFrame* pframe)
 }
 
 
-HRESULT DxSkinMesh::InvalidateDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxSkinMesh::InvalidateDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
-	//	Note : ¸¸¾ï pMesh °¡ MANAGED, SYSTEMMEM ¼Ó¼ºÀ» °¡Áø °³Ã¼°¡ ¾Æ´Ò °æ¿ì
-	//		Invalidate È£Ãâ½Ã¿¡ Á¦°ÅÇÏ°í »õ·Î Mesh°¡ ¸¸µé¾îÁ®¾ß ÇÑ´Ù. ±×¶§
-	//		»ç¿ëµÈ´Ù.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ pMesh ï¿½ï¿½ MANAGED, SYSTEMMEM ï¿½Ó¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½Æ´ï¿½ ï¿½ï¿½ï¿½
+	//		Invalidate È£ï¿½ï¿½Ã¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½ï¿½ï¿½ Meshï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ´ï¿½. ï¿½×¶ï¿½
+	//		ï¿½ï¿½ï¿½È´ï¿½.
 	//
 	//if ( pframeRoot )
 	//	ReleaseDeviceDependentMeshes ( pframeRoot );
@@ -374,7 +374,7 @@ HRESULT DxSkinMesh::ClearMeshHierarchy()
 
 SMeshContainer* DxSkinMesh::FindMeshContainer ( char *szName )
 {
-	//	Note : ¸Þ½¬ Ã£±â.
+	//	Note : ï¿½Þ½ï¿½ Ã£ï¿½ï¿½.
 	//
 	SMeshContainer *pmcMesh = pMeshGlobalHead;
 	while ( pmcMesh != NULL )

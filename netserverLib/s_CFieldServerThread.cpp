@@ -1,5 +1,5 @@
 #include "stdafx.h"
-//#include "./DbExecuter.h"
+//// DbExecuter.h: use s_CDbAction.h
 #include "tbb/task_scheduler_init.h"
 #include "tbb/blocked_range.h"
 #include "tbb/parallel_for.h"

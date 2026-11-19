@@ -37,10 +37,10 @@ DxOptimizeMesh::~DxOptimizeMesh()
 
 	SAFE_DELETE ( m_pOcTree );
 
-	SAFE_DELETE ( m_pNext );		// °è¼Ó ¾ø¾Ø´Ù.
+	SAFE_DELETE ( m_pNext );		// ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø´ï¿½.
 }
 
-void DxOptimizeMesh::Create ( LPDIRECT3DDEVICE8 pd3dDevice, const char* szName, DWORD dwFaceNUM, VERTEX* pVertices )
+void DxOptimizeMesh::Create ( LPDIRECT3DDEVICE9 pd3dDevice, const char* szName, DWORD dwFaceNUM, VERTEX* pVertices )
 {
 	if ( m_pTexture )
 	{
@@ -67,12 +67,12 @@ void DxOptimizeMesh::Create ( LPDIRECT3DDEVICE8 pd3dDevice, const char* szName, 
 	}
 }
 
-void DxOptimizeMesh::MakeOptimizeMesh ( LPDIRECT3DDEVICE8 pd3dDevice )
+void DxOptimizeMesh::MakeOptimizeMesh ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	NSOPTIMIZEMESH::MakeOctreeMesh ( pd3dDevice, m_pVertex, m_dwFace, m_pOcTree );
 }
 
-HRESULT DxOptimizeMesh::Render ( LPDIRECT3DDEVICE8 pd3dDevice, CLIPVOLUME *pCV )
+HRESULT DxOptimizeMesh::Render ( LPDIRECT3DDEVICE9 pd3dDevice, CLIPVOLUME *pCV )
 {
 	pd3dDevice->SetTexture ( 0, m_pTexture );
 	NSOCTREE::RenderOctree ( pd3dDevice, pCV, m_pOcTree );
@@ -177,7 +177,7 @@ namespace NSOPTIMIZEMESH
 			pVertexS[i].vTex = pVertices[i].vTex;
 		}
 
-		//	Note : ÃÖÀûÈ­µÈ Vertex¿Í Index¸¦ ¾ò´Â´Ù.
+		//	Note : ï¿½ï¿½ï¿½ï¿½È­ï¿½ï¿½ Vertexï¿½ï¿½ Indexï¿½ï¿½ ï¿½ï¿½Â´ï¿½.
 		//
 		for ( DWORD i=0; i<dwFaceNUM; ++i )
 		{
@@ -186,7 +186,7 @@ namespace NSOPTIMIZEMESH
 			SetPoint ( mapVertex, pVertexS[pIndices[i*3+2]], pIndices[i*3+2] );
 		}
 
-		// Note : Vertex µ¥ÀÌÅÍ¸¦ ¼öÁ¤ÇÑ´Ù.
+		// Note : Vertex ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 		dwVertNUM = mapVertex.size();
 		SAFE_DELETE_ARRAY ( pVertices );
 		pVertices	= new VERTEX[dwVertNUM];
@@ -200,7 +200,7 @@ namespace NSOPTIMIZEMESH
 		SAFE_DELETE_ARRAY ( pVertexS );
 	}
 
-	void MakeOptimizeMesh ( LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMESH& pMesh )
+	void MakeOptimizeMesh ( LPDIRECT3DDEVICE9 pd3dDevice, LPD3DXMESH& pMesh )
 	{
 		DWORD dwVertNUM = pMesh->GetNumVertices();
 		DWORD dwFaceNUM = pMesh->GetNumFaces();
@@ -232,10 +232,10 @@ namespace NSOPTIMIZEMESH
 			pMesh->UnlockIndexBuffer();
 		}
 
-		// Note : Á¤º¸ °»½Å
+		// Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		MakeOptimizeVertex( pNewVertex, pNewIndex, dwVertNUM, dwFaceNUM );
 
-		// Note : Mesh »õ·Î »ý¼º
+		// Note : Mesh ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		SAFE_RELEASE ( pMesh );
 		if ( dwVertNUM > 65000 )
 		{
@@ -267,22 +267,22 @@ namespace NSOPTIMIZEMESH
 		SAFE_DELETE_ARRAY ( pNewVertex );
 		SAFE_DELETE_ARRAY ( pNewIndex );
 
-		// Note : ÃÖÀûÈ­ ¿Ï·á
+		// Note : ï¿½ï¿½ï¿½ï¿½È­ ï¿½Ï·ï¿½
 		DWORD* pAdjacency = new DWORD[3*dwFaceNUM];
 		pMesh->GenerateAdjacency ( 0.01f, pAdjacency );
 		pMesh->OptimizeInplace ( D3DXMESHOPT_VERTEXCACHE, pAdjacency, NULL, NULL, NULL );
 		SAFE_DELETE_ARRAY ( pAdjacency );
 	}
 
-	void MakeOctreeMesh ( LPDIRECT3DDEVICE8 pd3dDevice, VERTEX* pVertex, DWORD dwFaceNUM, POBJOCTREE &m_pOcTree )
+	void MakeOctreeMesh ( LPDIRECT3DDEVICE9 pd3dDevice, VERTEX* pVertex, DWORD dwFaceNUM, POBJOCTREE &m_pOcTree )
 	{
-		// Note : Octree Çü½ÄÀ¸·Î ºÐÇÒ
+		// Note : Octree ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		NSOCTREE::MakeOctree ( m_pOcTree, pVertex, dwFaceNUM );
 
-		// Note : OcMesh ¸¸µé±â
+		// Note : OcMesh ï¿½ï¿½ï¿½ï¿½ï¿½
 		NSOCTREE::MakeOcMesh ( pd3dDevice, m_pOcTree );
 
-		// Note : OcMesh ÃÖÀûÈ­
+		// Note : OcMesh ï¿½ï¿½ï¿½ï¿½È­
 		NSOCTREE::MakeOptimizeMesh ( pd3dDevice, m_pOcTree );
 	}
 };

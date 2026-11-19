@@ -17,8 +17,8 @@ public:
 
 public:
 	HRESULT OneTimeSceneInit();
-	HRESULT InitDeviceObjects(LPDIRECT3DDEVICE8 pd3dDevice);
-	HRESULT RestoreDeviceObjects(LPDIRECT3DDEVICE8 pd3dDevice);
+	HRESULT InitDeviceObjects(LPDIRECT3DDEVICE9 pd3dDevice);
+	HRESULT RestoreDeviceObjects(LPDIRECT3DDEVICE9 pd3dDevice);
 	HRESULT InvalidateDeviceObjects();
 	HRESULT DeleteDeviceObjects();
 	HRESULT FinalCleanup();
@@ -36,10 +36,10 @@ public:
 
 public:
 	HRESULT FrameMove ( float fTime, float fElapsedTime );
-	HRESULT Render ( LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT Render ( LPDIRECT3DDEVICE9 pd3dDevice );
 
 public:
-	void LoadSet ( char	*pFileName, LPDIRECT3DDEVICE8 pd3dDevice );
+	void LoadSet ( char	*pFileName, LPDIRECT3DDEVICE9 pd3dDevice );
 	void SaveSet ( char	*pFileName );
 
 public:

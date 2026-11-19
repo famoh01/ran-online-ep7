@@ -1,4 +1,4 @@
-// SoundSourceManagerDoc.cpp : CSoundSourceManagerDoc Å¬·¡½ºÀÇ ±¸Çö
+// SoundSourceManagerDoc.cpp : CSoundSourceManagerDoc Å¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 //
 
 #include "stdafx.h"
@@ -7,7 +7,7 @@
 #include "SoundSourceManagerDoc.h"
 #include "MainFrm.h"
 
-#include <d3d8types.h>
+#include <d3d9types.h>
 #include "SerialFile.h"
 #include "SoundSourceMan.h"
 #include ".\soundsourcemanagerdoc.h"
@@ -24,11 +24,11 @@ BEGIN_MESSAGE_MAP(CSoundSourceManagerDoc, CDocument)
 END_MESSAGE_MAP()
 
 
-// CSoundSourceManagerDoc »ý¼º/¼Ò¸ê
+// CSoundSourceManagerDoc ï¿½ï¿½ï¿½ï¿½/ï¿½Ò¸ï¿½
 
 CSoundSourceManagerDoc::CSoundSourceManagerDoc()
 {
-	// TODO: ¿©±â¿¡ ÀÏÈ¸¼º »ý¼º ÄÚµå¸¦ Ãß°¡ÇÕ´Ï´Ù.
+	// TODO: ï¿½ï¿½ï¿½â¿¡ ï¿½ï¿½È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Úµå¸¦ ï¿½ß°ï¿½ï¿½Õ´Ï´ï¿½.
 }
 
 CSoundSourceManagerDoc::~CSoundSourceManagerDoc()
@@ -40,8 +40,8 @@ BOOL CSoundSourceManagerDoc::OnNewDocument()
 	if (!CDocument::OnNewDocument())
 		return FALSE;
 
-	// TODO: ¿©±â¿¡ ´Ù½Ã ÃÊ±âÈ­ ÄÚµå¸¦ Ãß°¡ÇÕ´Ï´Ù.
-	// SDI ¹®¼­´Â ÀÌ ¹®¼­¸¦ ´Ù½Ã »ç¿ëÇÕ´Ï´Ù.
+	// TODO: ï¿½ï¿½ï¿½â¿¡ ï¿½Ù½ï¿½ ï¿½Ê±ï¿½È­ ï¿½Úµå¸¦ ï¿½ß°ï¿½ï¿½Õ´Ï´ï¿½.
+	// SDI ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ù½ï¿½ ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
 	return TRUE;
 }
 
@@ -51,16 +51,16 @@ void CSoundSourceManagerDoc::Serialize(CArchive& ar)
 {
 	if (ar.IsStoring())
 	{
-		// TODO: ¿©±â¿¡ ÀúÀå ÄÚµå¸¦ Ãß°¡ÇÕ´Ï´Ù.
+		// TODO: ï¿½ï¿½ï¿½â¿¡ ï¿½ï¿½ï¿½ï¿½ ï¿½Úµå¸¦ ï¿½ß°ï¿½ï¿½Õ´Ï´ï¿½.
 	}
 	else
 	{
-		// TODO: ¿©±â¿¡ ·Îµù ÄÚµå¸¦ Ãß°¡ÇÕ´Ï´Ù.
+		// TODO: ï¿½ï¿½ï¿½â¿¡ ï¿½Îµï¿½ ï¿½Úµå¸¦ ï¿½ß°ï¿½ï¿½Õ´Ï´ï¿½.
 	}
 }
 
 
-// CSoundSourceManagerDoc Áø´Ü
+// CSoundSourceManagerDoc ï¿½ï¿½ï¿½ï¿½
 
 #ifdef _DEBUG
 void CSoundSourceManagerDoc::AssertValid() const
@@ -75,7 +75,7 @@ void CSoundSourceManagerDoc::Dump(CDumpContext& dc) const
 #endif //_DEBUG
 
 
-// CSoundSourceManagerDoc ¸í·É
+// CSoundSourceManagerDoc ï¿½ï¿½ï¿½ï¿½
 //
 //BOOL	CSoundSourceManagerDoc::DefaultSaveFile ()
 //{

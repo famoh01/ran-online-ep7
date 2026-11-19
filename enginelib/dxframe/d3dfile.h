@@ -6,8 +6,8 @@
 #ifndef D3DFILE_H
 #define D3DFILE_H
 #include <tchar.h>
-#include <d3d8.h>
-#include <d3dx8.h>
+#include <d3d9.h>
+#include <d3dx9.h>
 
 
 
@@ -27,12 +27,12 @@ public:
     
     DWORD               m_dwNumMaterials; // Materials for the mesh
     D3DMATERIAL8*       m_pMaterials;
-    LPDIRECT3DTEXTURE8* m_pTextures;
+    LPDIRECT3DTEXTURE9* m_pTextures;
     BOOL                m_bUseMaterials;
 
 public:
     // Rendering
-    HRESULT Render( LPDIRECT3DDEVICE8 pd3dDevice, 
+    HRESULT Render( LPDIRECT3DDEVICE9 pd3dDevice, 
                     BOOL bDrawOpaqueSubsets = TRUE,
                     BOOL bDrawAlphaSubsets = TRUE );
 
@@ -42,15 +42,15 @@ public:
 
     // Rendering options
     VOID    UseMeshMaterials( BOOL bFlag ) { m_bUseMaterials = bFlag; }
-    HRESULT SetFVF( LPDIRECT3DDEVICE8 pd3dDevice, DWORD dwFVF );
+    HRESULT SetFVF( LPDIRECT3DDEVICE9 pd3dDevice, DWORD dwFVF );
 
     // Initializing
-    HRESULT RestoreDeviceObjects( LPDIRECT3DDEVICE8 pd3dDevice );
+    HRESULT RestoreDeviceObjects( LPDIRECT3DDEVICE9 pd3dDevice );
     HRESULT InvalidateDeviceObjects();
 
     // Creation/destruction
-    HRESULT Create( LPDIRECT3DDEVICE8 pd3dDevice, TCHAR* strFilename );
-    HRESULT Create( LPDIRECT3DDEVICE8 pd3dDevice, LPDIRECTXFILEDATA pFileData );
+    HRESULT Create( LPDIRECT3DDEVICE9 pd3dDevice, TCHAR* strFilename );
+    HRESULT Create( LPDIRECT3DDEVICE9 pd3dDevice, LPDIRECTXFILEDATA pFileData );
     HRESULT Destroy();
 
     CD3DMesh( TCHAR* strName = _T("CD3DFile_Mesh") );
@@ -86,9 +86,9 @@ public:
                             VOID* pContext );
 
     HRESULT Destroy();
-    HRESULT RestoreDeviceObjects( LPDIRECT3DDEVICE8 pd3dDevice );
+    HRESULT RestoreDeviceObjects( LPDIRECT3DDEVICE9 pd3dDevice );
     HRESULT InvalidateDeviceObjects();
-    HRESULT Render( LPDIRECT3DDEVICE8 pd3dDevice, 
+    HRESULT Render( LPDIRECT3DDEVICE9 pd3dDevice, 
                     BOOL bDrawOpaqueSubsets = TRUE,
                     BOOL bDrawAlphaSubsets = TRUE,
                     D3DXMATRIX* pmatWorldMartix = NULL);
@@ -106,16 +106,16 @@ public:
 //-----------------------------------------------------------------------------
 class CD3DFile : public CD3DFrame
 {
-    HRESULT LoadMesh( LPDIRECT3DDEVICE8 pd3dDevice, LPDIRECTXFILEDATA pFileData, 
+    HRESULT LoadMesh( LPDIRECT3DDEVICE9 pd3dDevice, LPDIRECTXFILEDATA pFileData, 
                       CD3DFrame* pParentFrame );
-    HRESULT LoadFrame( LPDIRECT3DDEVICE8 pd3dDevice, LPDIRECTXFILEDATA pFileData, 
+    HRESULT LoadFrame( LPDIRECT3DDEVICE9 pd3dDevice, LPDIRECTXFILEDATA pFileData, 
                        CD3DFrame* pParentFrame );
 public:
-    HRESULT Create( LPDIRECT3DDEVICE8 pd3dDevice, TCHAR* strFilename );
-    HRESULT CreateFromResource( LPDIRECT3DDEVICE8 pd3dDevice, TCHAR* strResource, TCHAR* strType );
+    HRESULT Create( LPDIRECT3DDEVICE9 pd3dDevice, TCHAR* strFilename );
+    HRESULT CreateFromResource( LPDIRECT3DDEVICE9 pd3dDevice, TCHAR* strResource, TCHAR* strType );
     // For pure devices, specify the world transform. If the world transform is not
     // specified on pure devices, this function will fail.
-    HRESULT Render( LPDIRECT3DDEVICE8 pd3dDevice, D3DXMATRIX* pmatWorldMatrix = NULL );
+    HRESULT Render( LPDIRECT3DDEVICE9 pd3dDevice, D3DXMATRIX* pmatWorldMatrix = NULL );
 
     CD3DFile() : CD3DFrame( _T("CD3DFile_Root") ) {}
 };

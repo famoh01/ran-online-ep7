@@ -67,7 +67,7 @@ GLMob::~GLMob ()
 
 }
 
-HRESULT GLMob::Create ( LPDIRECT3DDEVICE8 pd3dDevice, NavigationMesh* pNavi )
+HRESULT GLMob::Create ( LPDIRECT3DDEVICE9 pd3dDevice, NavigationMesh* pNavi )
 {
 	DxSkinCharData* pCharData = DxSkinCharDataContainer::Instance.LoadData ( m_szSkinObj, pd3dDevice );
 	if ( !pCharData )	return E_FAIL;
@@ -78,7 +78,7 @@ HRESULT GLMob::Create ( LPDIRECT3DDEVICE8 pd3dDevice, NavigationMesh* pNavi )
 	if ( pNavi ) Actor::Create ( pNavi, m_vPos, -1 );
 
 
-	//	Note : ¼¼ºÎ ¼³Á¤À» ÆÄÀÏ¿¡¼­ ÀÐÀ½.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	char szFullPath[256];
 //	strcpy ( szFullPath, GLMobScheduleMan::GetPath() );
@@ -88,7 +88,7 @@ HRESULT GLMob::Create ( LPDIRECT3DDEVICE8 pd3dDevice, NavigationMesh* pNavi )
 	CStringFile StrFile;
 	if ( !StrFile.Open ( szFullPath ) )
 	{
-		MessageBox ( NULL, "'mob.txt' ÆÄÀÏÀÌ Á¸Á¦ÇÏÁö ¾Ê½À´Ï´Ù.", "ERROR", MB_OK );
+		MessageBox ( NULL, "'mob.txt' ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê½ï¿½ï¿½Ï´ï¿½.", "ERROR", MB_OK );
 		return E_FAIL;
 	}
 
@@ -146,7 +146,7 @@ void GLMob::SetSchedule ( GLMobSchedule* pMobSch )
 {
 	m_vPos = pMobSch->m_pAffineParts->vTrans;
 
-	//	NEED : ±âÅ¸ ¼³Á¤ ÇÊ¿ä.
+	//	NEED : ï¿½ï¿½Å¸ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½.
 	//
 	m_pMobSchedule = pMobSch;
 	m_pCurrentAct = m_pMobSchedule->m_sMobActList.m_pHead;
@@ -315,7 +315,7 @@ void GLMob::Acting ( float fElapsedTime )
 				vPos+D3DXVECTOR3(0,-1000,0)
 			);
 
-			//	´ÙÀ½ ±æÃ£±â ½Ã°£ À¯°Ý ÁöÁ¤.
+			//	ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã£ï¿½ï¿½ ï¿½Ã°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 			m_fStayTimer = RANDOM_NUM * 1.5f;
 		}
 		
@@ -339,11 +339,11 @@ void GLMob::Acting ( float fElapsedTime )
 
 HRESULT GLMob::FrameMove ( float fTime, float fElapsedTime )
 {
-	//	Note : ½ºÄÉÁì Àû¿ë.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	Acting ( fElapsedTime );
 
-	//	Note : Çàµ¿ »óÅÂ¿¡ µû¸¥ Àç¾î.
+	//	Note : ï¿½àµ¿ ï¿½ï¿½ï¿½Â¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 	//
 	switch ( m_Action )
 	{
@@ -382,7 +382,7 @@ HRESULT GLMob::FrameMove ( float fTime, float fElapsedTime )
 				Actor::SetMaxSpeed ( m_fWalkVelo );
 			}
 
-			//	Note : Mob À§Ä¡ ¾÷µ¥ÀÌÆ®.
+			//	Note : Mob ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®.
 			//
 			Actor::Update ( fElapsedTime );
 			if ( !Actor::PathIsActive() )						TurnAction ( GLAT_IDLE );
@@ -405,16 +405,16 @@ HRESULT GLMob::FrameMove ( float fTime, float fElapsedTime )
 	};
 
 	
-	//	Note : Mob ½ºÅ² ¾÷µ¥ÀÌÆ®.
+	//	Note : Mob ï¿½ï¿½Å² ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®.
 	//
 	DxSkinAniControl::SetPosition ( m_vPos );
 	DxSkinChar::FrameMove ( fTime, fElapsedTime );
 
-	//	Note : MobÀÇ ÇöÁ¦ À§Ä¡ ¾÷µ¥ÀÌÆ®.
+	//	Note : Mobï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®.
 	//
 	m_vPos = Actor::Position();
 
-	//	Note : MobÀÇ ÇöÁ¦ ¹æÇâ ¾÷µ¥ÀÌÆ®.
+	//	Note : Mobï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®.
 	//
 	if ( m_Action==GLAT_MOVE )
 	{
@@ -430,7 +430,7 @@ HRESULT GLMob::FrameMove ( float fTime, float fElapsedTime )
 		}
 	}
 
-	//	Note : °ø°Ý ¹æÇâÀ¸·Î È¸Àü.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È¸ï¿½ï¿½.
 	//
 	if ( m_Action==GLAT_ATTACK )
 	{
@@ -440,7 +440,7 @@ HRESULT GLMob::FrameMove ( float fTime, float fElapsedTime )
 		m_vDir = vDirection;
 	}
 
-	//	Note : ÇöÁ¦ À§Ä¡¿Í ¹æÇâÀ¸·Î Transform ¸ÞÆ®¸¯½º °è»ê.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Transform ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 	//
 	D3DXMATRIX matTrans, matYRot;
 	D3DXMatrixTranslation ( &matTrans, m_vPos.x, m_vPos.y, m_vPos.z );
@@ -449,7 +449,7 @@ HRESULT GLMob::FrameMove ( float fTime, float fElapsedTime )
 
 	m_matTrans = matYRot * matTrans;
 
-	//	Note : AABB °è»ê.
+	//	Note : AABB ï¿½ï¿½ï¿½.
 	//
 	m_vMax = m_vPos + m_vMaxOrg;
 	m_vMin = m_vPos + m_vMinOrg;
@@ -457,10 +457,10 @@ HRESULT GLMob::FrameMove ( float fTime, float fElapsedTime )
 	return S_OK;
 }
 
-HRESULT GLMob::Render ( LPDIRECT3DDEVICE8 pd3dDevice, CLIPVOLUME &cv, BOOL bRendAABB )
+HRESULT GLMob::Render ( LPDIRECT3DDEVICE9 pd3dDevice, CLIPVOLUME &cv, BOOL bRendAABB )
 {
 	if ( !COLLISION::IsCollisionVolume ( cv, m_vMax, m_vMin ) )	return S_OK;
-	if ( bRendAABB ) EDITMESHS::RENDERAABB ( pd3dDevice, m_vMax, m_vMin );	//	Å×½ºÆ®¿ë.
+	if ( bRendAABB ) EDITMESHS::RENDERAABB ( pd3dDevice, m_vMax, m_vMin );	//	ï¿½×½ï¿½Æ®ï¿½ï¿½.
 	
 	DxSkinChar::Render ( pd3dDevice, m_matTrans );
 	//Actor::Render ( pd3dDevice );
@@ -468,9 +468,9 @@ HRESULT GLMob::Render ( LPDIRECT3DDEVICE8 pd3dDevice, CLIPVOLUME &cv, BOOL bRend
 	return S_OK;
 }
 
-HRESULT GLMob::RenderShadow ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT GLMob::RenderShadow ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
-	//	Note : ±×¸²ÀÚ ·£´õ¸µ.
+	//	Note : ï¿½×¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 	//
 	DxEffectMan::Instance.RenderShadowMob ( this, m_matTrans, pd3dDevice );
 
@@ -497,7 +497,7 @@ void GLMobMan::SetNaviMesh ( NavigationMesh* pNaviMesh )
 	m_pNaviMesh = pNaviMesh;
 }
 
-HRESULT GLMobMan::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT GLMobMan::InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	m_pd3dDevice = pd3dDevice;
 
@@ -507,8 +507,8 @@ HRESULT GLMobMan::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
 HRESULT GLMobMan::NewMob ( SGLNODE<GLMobSchedule*>* pMobNode )
 {
 	HRESULT hr;
-	assert(m_pd3dDevice&&"D3D DEVICE °¡ ÃÊ±âÈ­ µÇÁö ¾Ê¾ÒÀ½.");
-	assert(m_pNaviMesh&&"³×ºñ°ÔÀÌ¼Ç ¸Þ½¬°¡ ÃÊ±âÈ­ µÇÁö ¾Ê¾ÒÀ½.");
+	assert(m_pd3dDevice&&"D3D DEVICE ï¿½ï¿½ ï¿½Ê±ï¿½È­ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¾ï¿½ï¿½ï¿½.");
+	assert(m_pNaviMesh&&"ï¿½×ºï¿½ï¿½ï¿½Ì¼ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¾ï¿½ï¿½ï¿½.");
 
 	GLMobSchedule* pMobSch = pMobNode->Data;
 
@@ -524,7 +524,7 @@ HRESULT GLMobMan::NewMob ( SGLNODE<GLMobSchedule*>* pMobNode )
 		return hr;
 	}
 
-	//	Note : ¸÷ ¸®½ºÆ®¿¡ »ðÀÔ.
+	//	Note : ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	m_MobList.ADDHEAD ( pMob );
 
@@ -578,7 +578,7 @@ HRESULT GLMobMan::FrameMove ( float fTime, float fElapsedTime )
 		
 		pCur = pCur->pNext;
 
-		//	Note : »èÁ¦´Â Ä¿¼­ ÀÌµ¿ÈÄ¿¡.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä¿ï¿½ï¿½ ï¿½Ìµï¿½ï¿½Ä¿ï¿½.
 		if ( pMob->IsDead() )
 		{
 			m_MobList.DELNODE ( pCur );
@@ -588,7 +588,7 @@ HRESULT GLMobMan::FrameMove ( float fTime, float fElapsedTime )
 	return S_OK;
 }
 
-HRESULT GLMobMan::Render ( LPDIRECT3DDEVICE8 pd3dDevice, CLIPVOLUME &cv )
+HRESULT GLMobMan::Render ( LPDIRECT3DDEVICE9 pd3dDevice, CLIPVOLUME &cv )
 {
 	HRESULT hr;
 
@@ -606,7 +606,7 @@ HRESULT GLMobMan::Render ( LPDIRECT3DDEVICE8 pd3dDevice, CLIPVOLUME &cv )
 }
 
 
-HRESULT GLMobMan::RenderShadow ( LPDIRECT3DDEVICE8 pd3dDevice, CLIPVOLUME &cv )
+HRESULT GLMobMan::RenderShadow ( LPDIRECT3DDEVICE9 pd3dDevice, CLIPVOLUME &cv )
 {
 	HRESULT hr;
 

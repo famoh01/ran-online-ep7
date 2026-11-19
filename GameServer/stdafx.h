@@ -1,20 +1,20 @@
-// stdafx.h : Àß º¯°æµÇÁö ¾Ê°í ÀÚÁÖ »ç¿ëÇÏ´Â
-// Ç¥ÁØ ½Ã½ºÅÛ Æ÷ÇÔ ÆÄÀÏ ¹× ÇÁ·ÎÁ§Æ® °ü·Ã Æ÷ÇÔ ÆÄÀÏÀÌ 
-// µé¾î ÀÖ´Â Æ÷ÇÔ ÆÄÀÏÀÔ´Ï´Ù.
+// stdafx.h : ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï´ï¿½
+// Ç¥ï¿½ï¿½ ï¿½Ã½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 
+// ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ô´Ï´ï¿½.
 //
 
 #pragma once
 
-//#define WIN32_LEAN_AND_MEAN		// °ÅÀÇ »ç¿ëµÇÁö ¾Ê´Â ³»¿ëÀº Windows Çì´õ¿¡¼­ Á¦¿ÜÇÕ´Ï´Ù.
-//// Windows Çì´õ ÆÄÀÏÀÔ´Ï´Ù.
+//#define WIN32_LEAN_AND_MEAN		// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Windows ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
+//// Windows ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ô´Ï´ï¿½.
 //#include <windows.h>
-//// CÀÇ ·±Å¸ÀÓ Çì´õ ÆÄÀÏÀÔ´Ï´Ù.
+//// Cï¿½ï¿½ ï¿½ï¿½Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ô´Ï´ï¿½.
 //#include <stdlib.h>
 //#include <malloc.h>
 //#include <memory.h>
 //#include <tchar.h>
 
-// TODO: ÇÁ·Î±×·¥¿¡ ÇÊ¿äÇÑ Ãß°¡ Çì´õ´Â ¿©±â¿¡¼­ ÂüÁ¶ÇÕ´Ï´Ù.
+// TODO: ï¿½ï¿½ï¿½Î±×·ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½â¿¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
 
 #include <afxwin.h>         // MFC core and standard components
 #include <afxext.h>         // MFC extensions
@@ -27,7 +27,7 @@
 #define STRSAFE_NO_DEPRECATE
 #include "strsafe.h"
 
-//	Note : ±âº» ÇØ´õ ÆÄÀÏ.
+//	Note : ï¿½âº» ï¿½Ø´ï¿½ ï¿½ï¿½ï¿½ï¿½.
 //
 #include <windows.h>
 #include <windowsx.h>
@@ -61,7 +61,7 @@ using namespace std;
 	#define STRICT
 #endif //STRICT
 
-//	Note : DX °ü·Ã ÇØ´õ ÆÄÀÏ.
+//	Note : DX ï¿½ï¿½ï¿½ï¿½ ï¿½Ø´ï¿½ ï¿½ï¿½ï¿½ï¿½.
 //
 #include <ddraw.h>
 
@@ -70,7 +70,7 @@ using namespace std;
 #endif //DIRECTINPUT_VERSION
 #include <dinput.h>
 
-#include <d3d8.h>
+#include <d3d9.h>
 #include <D3d8types.h>
 #include <D3DX8.h>
 #include <D3dx8math.h>
@@ -78,7 +78,7 @@ using namespace std;
 #include <rmxfguid.h>
 
 
-//	Note : DX À¯Æ¿ ÇØ´õ ÆÄÀÏ.
+//	Note : DX ï¿½ï¿½Æ¿ ï¿½Ø´ï¿½ ï¿½ï¿½ï¿½ï¿½.
 //
 #include "xrmxftmpl.h"
 #include "dxutil.h"
@@ -87,7 +87,7 @@ using namespace std;
 #include "d3dfont.h"
 #include "d3dapp.h"
 
-//	Note : engine lib ÇØ´õ ÆÄÀÏ.
+//	Note : engine lib ï¿½Ø´ï¿½ ï¿½ï¿½ï¿½ï¿½.
 //
 #include "DebugSet.h"
 #include "profile.h"

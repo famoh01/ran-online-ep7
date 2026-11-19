@@ -1,7 +1,7 @@
 //
 //	[struct DXMATERIAL], JDH, (2002.12.02)
-//		¸ÞÅÍ¸®¾ó°ú ÅØ½ºÃÄ, ¸ÞÅÍ¸®¾ó(ÅØ½ºÃÄ) ¼Ó¼º°ªÀ» °¡Áö°í ÀÖ´Â ±¸Á¶Ã¼.
-//		ÀÌµé µ¥ÀÌÅÍ´Â °°ÀÌ ÀÖÀ» °æ¿ì°¡ ¸¹À¸¹Ç·Î ÀÌ·¸°Ô Ã³¸®ÇÔ.
+//		ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½(ï¿½Ø½ï¿½ï¿½ï¿½) ï¿½Ó¼ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½Ã¼.
+//		ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ì°¡ ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ ï¿½Ì·ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½.
 //
 #pragma once
 #include <string>
@@ -17,12 +17,14 @@ struct DXMATERIAL
 	DWORD				dwFlags;
 	LPDIRECT3DTEXTUREQ	pTexture;
 	std::string			strTexture;
+	D3DMATERIALQ		d3dMaterial;	// legacy code (DxSkinMeshLoad) expects a material block
 
 	DXMATERIAL () :
 		dwFlags(NULL),
 		pTexture(NULL)
 	{
 		strTexture = "";
+		memset(&d3dMaterial, 0, sizeof(d3dMaterial));
 	}
 
 	void RELEASE ();
@@ -95,7 +97,7 @@ struct DXMATERIAL_CHAR_EFF
 //{
 //	BOOL				bEffUse;
 //	D3DMATERIALQ		d3dMaterial;
-//	DWORD				dwDiffuse;		// Optimize - ÃÖÀûÈ­ ¶§¹®¿¡ ¾²ÀÎ´Ù.
+//	DWORD				dwDiffuse;		// Optimize - ï¿½ï¿½ï¿½ï¿½È­ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Î´ï¿½.
 //	LPDIRECT3DTEXTUREQ	pEffTex;
 //	char				szTexture[MAX_PATH];
 //	char				szEffTex[MAX_PATH];

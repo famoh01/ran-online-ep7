@@ -25,8 +25,8 @@ public:
 	DxAABBCollision*	GetAABBCollision()	{ return m_pAABBCollision; }
 
 public:
-	void MakeStaticMesh ( LPDIRECT3DDEVICE8 pd3dDevice );
-	void Render ( LPDIRECT3DDEVICE8 pd3dDevice, CLIPVOLUME *pCV );
+	void MakeStaticMesh ( LPDIRECT3DDEVICE9 pd3dDevice );
+	void Render ( LPDIRECT3DDEVICE9 pd3dDevice, CLIPVOLUME *pCV );
 
 protected:
 	void CleanUp();

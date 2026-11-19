@@ -15,22 +15,22 @@ struct DxFrame;
 
 struct SHADOW_PROPERTY
 {
-	WORD			m_wEnvCase;					// »óÅÂ
+	WORD			m_wEnvCase;					// ï¿½ï¿½ï¿½ï¿½
 
-	float			m_fLoop;					// ±¸¸§ È¿°ú
+	float			m_fLoop;					// ï¿½ï¿½ï¿½ï¿½ È¿ï¿½ï¿½
 	float			m_fLoopAdd;
 	float			m_fDistance;
 	float			m_fMultiply;
 	char			m_szTexture[MAX_PATH];
 
 	float			m_fDotPower;
-	char			m_szTexDot3[MAX_PATH];		// ³»Àû ºí·»µù
+	char			m_szTexDot3[MAX_PATH];		// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-	float			m_fWidth;					// »õ·Î ½ÃÀÛ
+	float			m_fWidth;					// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	float			m_fHeight;
 	char			m_szTexDetail[MAX_PATH];
 
-	DWORD			m_dwBlendAlpha;				// ¹Ý»ç
+	DWORD			m_dwBlendAlpha;				// ï¿½Ý»ï¿½
 	char			m_szTexture1[MAX_PATH];
 	char			m_szTexture2[MAX_PATH];
 	char			m_szTexture3[MAX_PATH];
@@ -42,7 +42,7 @@ struct SHADOW_PROPERTY
 
 class DxEffectEnviron2 : public DxEffectBase
 {
-	//	Note : ÀÌÆåÆ® Å¸ÀÔ Á¤ÀÇ.
+	//	Note : ï¿½ï¿½ï¿½ï¿½Æ® Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 public:
 	const static DWORD	TYPEID;
@@ -52,7 +52,7 @@ public:
 	virtual DWORD GetTypeID ()		{ return TYPEID; }
 	virtual const char* GetName ()	{ return NAME; }
 
-	//	Note : ½¦ÀÌ´õ
+	//	Note : ï¿½ï¿½ï¿½Ì´ï¿½
 	//
 protected:	
 	static DWORD	m_dwEffReflect;
@@ -65,7 +65,7 @@ protected:
 	static DWORD	m_dwEffectStateBlock;
 
 
-	//	Note : ¼Ó¼º.
+	//	Note : ï¿½Ó¼ï¿½.
 	//
 protected:
 	union
@@ -74,22 +74,22 @@ protected:
 
 		struct
 		{
-			WORD			m_wEnvCase;					// »óÅÂ
+			WORD			m_wEnvCase;					// ï¿½ï¿½ï¿½ï¿½
 
-			float			m_fLoop;					// ±¸¸§ È¿°ú
+			float			m_fLoop;					// ï¿½ï¿½ï¿½ï¿½ È¿ï¿½ï¿½
 			float			m_fLoopAdd;
 			float			m_fDistance;
 			float			m_fMultiply;
 			char			m_szTexture[MAX_PATH];
 
 			float			m_fDotPower;
-			char			m_szTexDot3[MAX_PATH];		// ³»Àû ºí·»µù
+			char			m_szTexDot3[MAX_PATH];		// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-			float			m_fWidth;					// »õ·Î ½ÃÀÛ
+			float			m_fWidth;					// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			float			m_fHeight;
 			char			m_szTexDetail[MAX_PATH];
 
-			DWORD			m_dwBlendAlpha;				// ¹Ý»ç
+			DWORD			m_dwBlendAlpha;				// ï¿½Ý»ï¿½
 			char			m_szTexture1[MAX_PATH];
 			char			m_szTexture2[MAX_PATH];
 			char			m_szTexture3[MAX_PATH];
@@ -109,31 +109,31 @@ public:
 protected:
 	float				m_fTime;
 
-	LPDIRECT3DTEXTURE8		m_pCloudTexture;	// ±¸¸§ ±×¸²ÀÚ	 // ±¸¸§ ÅØ½ºÃÄ
-	LPDIRECT3DTEXTURE8		m_pDot3Texture;		// ³»Àû ºí·»µù	 // Dot3 ÅØ½ºÃÄ
-	LPDIRECT3DTEXTURE8		m_pDetailTexture;		// Á¤Ã¼ ºÒ¸í ºí·»µù	 // Dot3 ÅØ½ºÃÄ
-	LPDIRECT3DCUBETEXTURE8	m_pCubeTexture;		// ¹Ý»ç			// Å¥ºê ÅØ½ºÃÄ
+	LPDIRECT3DTEXTURE9		m_pCloudTexture;	// ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½	 // ï¿½ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½ï¿½ï¿½
+	LPDIRECT3DTEXTURE9		m_pDot3Texture;		// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½	 // Dot3 ï¿½Ø½ï¿½ï¿½ï¿½
+	LPDIRECT3DTEXTURE9		m_pDetailTexture;		// ï¿½ï¿½Ã¼ ï¿½Ò¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½	 // Dot3 ï¿½Ø½ï¿½ï¿½ï¿½
+	LPDIRECT3DCUBETEXTURE8	m_pCubeTexture;		// ï¿½Ý»ï¿½			// Å¥ï¿½ï¿½ ï¿½Ø½ï¿½ï¿½ï¿½
 
 //	WORD			m_wEnvCase;
 
 protected:	
 
 public:
-	static HRESULT CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice );
-	static HRESULT ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice );
+	static HRESULT CreateDevice ( LPDIRECT3DDEVICE9 pd3dDevice );
+	static HRESULT ReleaseDevice ( LPDIRECT3DDEVICE9 pd3dDevice );
 
 public:
-	HRESULT AdaptToDxFrame ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT AdaptToDxFrame ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice );
 
 	//	Note : 
 	//
 public:
-	virtual HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice );
+	virtual HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice );
 	virtual HRESULT DeleteDeviceObjects ();
 
 public:
 	HRESULT FrameMove ( float fTime, float fElapsedTime );	
-	HRESULT Render ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT Render ( DxFrame *pFrame, LPDIRECT3DDEVICE9 pd3dDevice );
 
 
 public:

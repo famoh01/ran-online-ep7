@@ -29,7 +29,7 @@ static char THIS_FILE[] = __FILE__;
 
 const DWORD DxEffectTile::TYPEID = DEF_EFFECT_TILE;
 const DWORD	DxEffectTile::VERSION = 0x00000100;
-const char DxEffectTile::NAME[] = "[ Å¸ÀÏ ½Ã½ºÅÛ : BASE ]";
+const char DxEffectTile::NAME[] = "[ Å¸ï¿½ï¿½ ï¿½Ã½ï¿½ï¿½ï¿½ : BASE ]";
 const DWORD DxEffectTile::FLAG = _EFF_REPLACE;
 
 const DWORD		DxEffectTile::VERTEX::FVF = D3DFVF_XYZ|D3DFVF_NORMAL|D3DFVF_TEX1;
@@ -78,7 +78,7 @@ DxEffectTile::~DxEffectTile ()
 	m_mapFace.clear();
 }
 
-HRESULT DxEffectTile::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectTile::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr = S_OK;
 	DxMeshes *pmsMeshs;
@@ -101,9 +101,9 @@ HRESULT DxEffectTile::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE
 	return hr;
 }
 
-//	Note : DxFrame ¿¡ È¿°ú¸¦ ºÙÀÏ °æ¿ì¿¡ »ç¿ëµÈ´Ù.
+//	Note : DxFrame ï¿½ï¿½ È¿ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ì¿¡ ï¿½ï¿½ï¿½È´ï¿½.
 //
-HRESULT DxEffectTile::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectTile::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	if ( !pFrame )		return S_OK;
 
@@ -125,7 +125,7 @@ HRESULT DxEffectTile::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDe
 	return AdaptToDxFrameChild ( pFrame, pd3dDevice );
 }
 
-HRESULT DxEffectTile::AdaptToEffList ( const DxFrame *const pFrame, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectTile::AdaptToEffList ( const DxFrame *const pFrame, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	GASSERT ( pFrame );
 
@@ -150,7 +150,7 @@ HRESULT DxEffectTile::OneTimeSceneInit ()
 	return hr;
 }
 
-HRESULT DxEffectTile::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectTile::CreateDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	for( UINT which=0; which<2; which++ )
 	{
@@ -171,7 +171,7 @@ HRESULT DxEffectTile::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffectTile::ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectTile::ReleaseDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	pd3dDevice->DeleteStateBlock ( m_dwSavedSB_Detail );
 	pd3dDevice->DeleteStateBlock ( m_dwDrawSB_Detail );
@@ -182,14 +182,14 @@ HRESULT DxEffectTile::ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffectTile::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectTile::InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	TextureManager::LoadTexture ( m_szDetailTex, pd3dDevice, m_pDetailTex, 0, 0 );
 
 	return S_OK;
 }
 
-HRESULT DxEffectTile::RestoreDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectTile::RestoreDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	return S_OK;
 }
@@ -212,8 +212,8 @@ HRESULT DxEffectTile::FinalCleanup ()
 	return S_OK;
 }
 
-//	Note : ·£´õ¸µ µÇÁö ¾ÊÀ»¶§ ÇÊ¿ä ¾ø´Â ºÎºÐÀ» Á¦°ÅÇÏ°í
-//		·£´õ¸µ µÇÁö ¾ÊÀ»¶§ÀÇ ºÎÇÏ °æ°¨À» À§ÇØ °¡Àå ´Ü¼øÇÏ°Ô À¯ÁöÇÑ´Ù.
+//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Îºï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½
+//		ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½æ°¨ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ü¼ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 //
 HRESULT DxEffectTile::FrameMove ( float fTime, float fElapsedTime )
 {
@@ -224,7 +224,7 @@ HRESULT DxEffectTile::FrameMove ( float fTime, float fElapsedTime )
 	return S_OK;
 }
 
-HRESULT DxEffectTile::Render ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDevice, DxFrameMesh *pFrameMesh, DxLandMan* pLandMan )
+HRESULT DxEffectTile::Render ( DxFrame *pFrame, LPDIRECT3DDEVICE9 pd3dDevice, DxFrameMesh *pFrameMesh, DxLandMan* pLandMan )
 {
 	PROFILE_BEGIN("DxEffectTile");
 
@@ -272,7 +272,7 @@ void DxEffectTile::SaveBuffer ( CSerialFile &SFile )
 
 }
 
-void DxEffectTile::LoadBufferSet ( CSerialFile &SFile, DWORD dwVer, LPDIRECT3DDEVICE8 pd3dDevice )
+void DxEffectTile::LoadBufferSet ( CSerialFile &SFile, DWORD dwVer, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	if ( VERSION==dwVer )
 	{
@@ -288,7 +288,7 @@ void DxEffectTile::LoadBufferSet ( CSerialFile &SFile, DWORD dwVer, LPDIRECT3DDE
 	}
 }
 
-void DxEffectTile::LoadBuffer ( CSerialFile &SFile, DWORD dwVer, LPDIRECT3DDEVICE8 pd3dDevice )
+void DxEffectTile::LoadBuffer ( CSerialFile &SFile, DWORD dwVer, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	if ( VERSION==dwVer )
 	{
@@ -304,7 +304,7 @@ void DxEffectTile::LoadBuffer ( CSerialFile &SFile, DWORD dwVer, LPDIRECT3DDEVIC
 	}
 }
 
-HRESULT DxEffectTile::CloneData ( DxEffectBase* pSrcEffect, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectTile::CloneData ( DxEffectBase* pSrcEffect, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	GASSERT(pSrcEffect);
 	DxEffectTile *pEffSrc = (DxEffectTile*)pSrcEffect;

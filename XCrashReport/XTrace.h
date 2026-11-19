@@ -66,7 +66,7 @@ public:
 		TCHAR buf2[BUFFER_SIZE];
 
 		// add the __FILE__ and __LINE__ to the front
-		LPTSTR cp = (LPTSTR) m_file;
+		LPCTSTR cp = (LPCTSTR) m_file;
 
 		if (!XTRACE_SHOW_FULLPATH)
 		{

@@ -12,7 +12,7 @@
 
 const DWORD DxEffectRain::TYPEID = DEF_EFFECT_RAIN;
 const DWORD	DxEffectRain::VERSION = 0x00000100;
-const char DxEffectRain::NAME[] = "[14]_[ ºø¹æ¿ï È¿°ú ]";
+const char DxEffectRain::NAME[] = "[14]_[ ï¿½ï¿½ï¿½ï¿½ï¿½ È¿ï¿½ï¿½ ]";
 const DWORD DxEffectRain::FLAG = NULL;
 
 void DxEffectRain::GetProperty ( PBYTE &pProp, DWORD &dwSize, DWORD &dwVer )
@@ -30,7 +30,7 @@ void DxEffectRain::SetProperty ( PBYTE &pProp, DWORD &dwSize, DWORD dwVer )
 	}
 }
 
-//	Note : Á¤Àû º¯¼ö »ý¼º.
+//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 //
 DWORD	DxEffectRain::m_dwEffect;
 
@@ -41,21 +41,21 @@ char DxEffectRain::m_strEffect[] =
 	"vs.1.1	\n"	//
 
 	//;-------------------------------------------------------------------- 
-	//;	Normal º¤ÅÍ¿Í Rainº¤ÅÍÀÇ ³»Àû --------- r0.x ¿¡ µî·Ï
+	//;	Normal ï¿½ï¿½ï¿½Í¿ï¿½ Rainï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ --------- r0.x ï¿½ï¿½ ï¿½ï¿½ï¿½
 
 	//; Transform the normal to world
 	"m3x3 r1, v3, c10	\n"
 
-	//	´ÜÀ§ º¤ÅÍ·Î ¸¸µç´Ù.
+	//	ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Í·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½.
 	"dp3 r1.w, r1, r1	\n"
 	"rsq r1.w, r1.w		\n"
 	"mul r1, r1, r1.w	\n"
 
 	//; Calculate dp of rain direction and vertex normal
-	"dp3 r0.x, r1, -c9	\n"	//	; ³ë¸Ö º¤ÅÍ¿Í Rain º¤ÅÍ¸¦ ³»Àû
+	"dp3 r0.x, r1, -c9	\n"	//	; ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Í¿ï¿½ Rain ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 	//;----------------------------------------------------------------------
-	//;	Á¡À» »Ñ·ÁÁÜ, 	ÆÄÆ¼Å¬°úÀÇ °Å¸®¸¦ °è»êÇÑ´Ù. ----- r1.w ¿¡ µî·Ï
+	//;	ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ·ï¿½ï¿½ï¿½, 	ï¿½ï¿½Æ¼Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½Å¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½. ----- r1.w ï¿½ï¿½ ï¿½ï¿½ï¿½
 
 	//;Transform vertex position to screen
 	"m4x4 r2, v0, c10	\n"
@@ -66,61 +66,61 @@ char DxEffectRain::m_strEffect[] =
 	"mov oPos.w, r1.w	\n"
 
 	//;----------------------------------------------------------------------
-	//;	¹«¾ð°¡ ·£´ýÇÑ °ªÀ»..  ----- r2.w ¿¡ µî·Ï
+	//;	ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½..  ----- r2.w ï¿½ï¿½ ï¿½ï¿½ï¿½
 
 	//; Compute animation seed for this vertex
 	//; Take the time index and limit it to the range definef for the vertex. (this 
 	//; causes the animation to randomize on each vertex
 	//; Then we clamp the output to 0-1.
-	"rcp r2.x, v1.x			\n"	//		; 1/1~10 ±îÁö
-	"mul r2.y, r2.x, c29.x	\n"	//	; ½Ã°£/1~10
-	"expp r2.y, r2.y		\n"	//		; Á¤¼öºÎºÐÀº ´Ù ºüÁø´Ù.
+	"rcp r2.x, v1.x			\n"	//		; 1/1~10 ï¿½ï¿½ï¿½ï¿½
+	"mul r2.y, r2.x, c29.x	\n"	//	; ï¿½Ã°ï¿½/1~10
+	"expp r2.y, r2.y		\n"	//		; ï¿½ï¿½ï¿½ï¿½ï¿½Îºï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 	"mov r2.z, r2.y			\n"	//		; r2.z = r2.y 
-	"mul r2.y, r2.y, v1.x	\n"	//	; (½Ã°£/1~10)¼Ò¼öºÎºÐ¸¸ * 1~10
-	"min r2.w, r2.y, c29.y	\n"	//	; °á°ú °ªÀº 1º¸´Ù ÀÛ´Ù. (0¿¡¼­ 1±îÁö °£´Ù. loop)
+	"mul r2.y, r2.y, v1.x	\n"	//	; (ï¿½Ã°ï¿½/1~10)ï¿½Ò¼ï¿½ï¿½ÎºÐ¸ï¿½ * 1~10
+	"min r2.w, r2.y, c29.y	\n"	//	; ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 1ï¿½ï¿½ï¿½ï¿½ ï¿½Û´ï¿½. (0ï¿½ï¿½ï¿½ï¿½ 1ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½. loop)
 
 	//;----------------------------------------------------------------------
-	//;	r1.w ¸¦		 1/r1.w À¸·Î 	 ----- r1.w ¿¡ µî·Ï
+	//;	r1.w ï¿½ï¿½		 1/r1.w ï¿½ï¿½ï¿½ï¿½ 	 ----- r1.w ï¿½ï¿½ ï¿½ï¿½ï¿½
 
 	//;Compute the basic distance based on the distance
 	"rcp r1.w, r1.w	\n"	//				; 1/w (used to scale vert proportional to distance)
 
 	//;----------------------------------------------------------------------
-	//;	Diffuse ÄÃ·¯ »ý¼º
+	//;	Diffuse ï¿½Ã·ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 	//; Figure out final color and alpha
-	"add r4.x, c29.y, -r2.w			\n"	//		; c9.z °ª¿¡ ÀÇÇØ ¾ËÆÄ°ª º¯½Å
+	"add r4.x, c29.y, -r2.w			\n"	//		; c9.z ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ä°ï¿½ ï¿½ï¿½ï¿½ï¿½
 	"mul oD0.xyzw, r0.xxxx, r4.xxxx	\n"	//	; 
 
 	//;----------------------------------------------------------------------
-	//;		ÆÄÆ¼Å¬ÀÇ »çÀÌÁî¸¦ °áÁ¤ÇÑ´Ù.
+	//;		ï¿½ï¿½Æ¼Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½î¸¦ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 
 	"mul r2.x, r1.w, r2.w		\n"	//		; Scale the splash by the animation seed
-				//	; 1/°Å¸® * (0~1)	°Å¸®°¡ ¸Ö¸é °ªÀÌ ÀÛ¾ÆÁø´Ù.		-	r2.w ´Â 0~1 ±îÁöÀÇ °ªÀÌ´Ù.
+				//	; 1/ï¿½Å¸ï¿½ * (0~1)	ï¿½Å¸ï¿½ï¿½ï¿½ ï¿½Ö¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Û¾ï¿½ï¿½ï¿½ï¿½ï¿½.		-	r2.w ï¿½ï¿½ 0~1 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ì´ï¿½.
 	"mul r2.x, r2.x, r0.x		\n"	//		; Scale the splash proprotinate to the rain-vertNorm angle
-				//	; Normal°ú RainÀÇ ³»Àû¿¡ 1/°Å¸® * (0~1) ÀÇ °ö
+				//	; Normalï¿½ï¿½ Rainï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 1/ï¿½Å¸ï¿½ * (0~1) ï¿½ï¿½ ï¿½ï¿½
 	"mul oPts.x, r2.x, c29.z	\n"	//		; Calculate final sphash size by multiplying by a size constant
-					//;  °ªÀ» º¯È­½ÃÄÑ¼­ ½ºÄÉÀÏ¿¡ º¯È­¸¦ ÁÙ¼ö ÀÖ´Ù.
+					//;  ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È­ï¿½ï¿½ï¿½Ñ¼ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½È­ï¿½ï¿½ ï¿½Ù¼ï¿½ ï¿½Ö´ï¿½.
 
 						/*
 	"vs.1.1	\n"	//
 
 	//;-------------------------------------------------------------------- 
-	//;	Normal º¤ÅÍ¿Í Rainº¤ÅÍÀÇ ³»Àû --------- r0.x ¿¡ µî·Ï
+	//;	Normal ï¿½ï¿½ï¿½Í¿ï¿½ Rainï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ --------- r0.x ï¿½ï¿½ ï¿½ï¿½ï¿½
 
 	//; Transform the normal to world
 	"m3x3 r1, v3, c10	\n"
 
-	//	´ÜÀ§ º¤ÅÍ·Î ¸¸µç´Ù.
+	//	ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Í·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½.
 	"dp3 r1.w, r1, r1	\n"
 	"rsq r1.w, r1.w		\n"
 	"mul r1, r1, r1.w	\n"
 
 	//; Calculate dp of rain direction and vertex normal
-	"dp3 r0.x, r1, -c9	\n"	//	; ³ë¸Ö º¤ÅÍ¿Í Rain º¤ÅÍ¸¦ ³»Àû
+	"dp3 r0.x, r1, -c9	\n"	//	; ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Í¿ï¿½ Rain ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 	//;----------------------------------------------------------------------
-	//;	Á¡À» »Ñ·ÁÁÜ, 	ÆÄÆ¼Å¬°úÀÇ °Å¸®¸¦ °è»êÇÑ´Ù. ----- r1.w ¿¡ µî·Ï
+	//;	ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ·ï¿½ï¿½ï¿½, 	ï¿½ï¿½Æ¼Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½Å¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½. ----- r1.w ï¿½ï¿½ ï¿½ï¿½ï¿½
 
 	//;Transform vertex position to screen
 	"m4x4 r2, v0, c10	\n"
@@ -131,43 +131,43 @@ char DxEffectRain::m_strEffect[] =
 	"mov oPos.w, r1.w	\n"
 
 	//;----------------------------------------------------------------------
-	//;	¹«¾ð°¡ ·£´ýÇÑ °ªÀ»..  ----- r2.w ¿¡ µî·Ï
+	//;	ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½..  ----- r2.w ï¿½ï¿½ ï¿½ï¿½ï¿½
 
 	//; Compute animation seed for this vertex
 	//; Take the time index and limit it to the range definef for the vertex. (this 
 	//; causes the animation to randomize on each vertex
 	//; Then we clamp the output to 0-1.
-	"rcp r2.x, v1.x			\n"	//		; 1/1~10 ±îÁö
-	"mul r2.y, r2.x, c29.x	\n"	//	; ½Ã°£/1~10
-	"expp r2.y, r2.y		\n"	//		; Á¤¼öºÎºÐÀº ´Ù ºüÁø´Ù.
+	"rcp r2.x, v1.x			\n"	//		; 1/1~10 ï¿½ï¿½ï¿½ï¿½
+	"mul r2.y, r2.x, c29.x	\n"	//	; ï¿½Ã°ï¿½/1~10
+	"expp r2.y, r2.y		\n"	//		; ï¿½ï¿½ï¿½ï¿½ï¿½Îºï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 	"mov r2.z, r2.y			\n"	//		; r2.z = r2.y 
-	"mul r2.y, r2.y, v1.x	\n"	//	; (½Ã°£/1~10)¼Ò¼öºÎºÐ¸¸ * 1~10
-	"min r2.w, r2.y, c29.y	\n"	//	; °á°ú °ªÀº 1º¸´Ù ÀÛ´Ù. (0¿¡¼­ 1±îÁö °£´Ù. loop)
+	"mul r2.y, r2.y, v1.x	\n"	//	; (ï¿½Ã°ï¿½/1~10)ï¿½Ò¼ï¿½ï¿½ÎºÐ¸ï¿½ * 1~10
+	"min r2.w, r2.y, c29.y	\n"	//	; ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 1ï¿½ï¿½ï¿½ï¿½ ï¿½Û´ï¿½. (0ï¿½ï¿½ï¿½ï¿½ 1ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½. loop)
 
 	//;----------------------------------------------------------------------
-	//;	r1.w ¸¦		 1/r1.w À¸·Î 	 ----- r1.w ¿¡ µî·Ï
+	//;	r1.w ï¿½ï¿½		 1/r1.w ï¿½ï¿½ï¿½ï¿½ 	 ----- r1.w ï¿½ï¿½ ï¿½ï¿½ï¿½
 
 	//;Compute the basic distance based on the distance
 	"rcp r1.w, r1.w	\n"	//				; 1/w (used to scale vert proportional to distance)
 
 	//;----------------------------------------------------------------------
-	//;	Diffuse ÄÃ·¯ »ý¼º
+	//;	Diffuse ï¿½Ã·ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 	//; Figure out final color and alpha
-	"add r4.x, c29.y, -r2.w			\n"	//		; c9.z °ª¿¡ ÀÇÇØ ¾ËÆÄ°ª º¯½Å
+	"add r4.x, c29.y, -r2.w			\n"	//		; c9.z ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ä°ï¿½ ï¿½ï¿½ï¿½ï¿½
 	"mul oD0.xyzw, r0.xxxx, r4.xxxx	\n"	//	; 
 
 	//;----------------------------------------------------------------------
-	//;		ÆÄÆ¼Å¬ÀÇ »çÀÌÁî¸¦ °áÁ¤ÇÑ´Ù.
+	//;		ï¿½ï¿½Æ¼Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½î¸¦ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 
 //	"sge r2.w, r2.w, c28.y		\n"
 
 	"mul r2.x, r1.w, r2.w		\n"	//		; Scale the splash by the animation seed
-				//	; 1/°Å¸® * (0~1)	°Å¸®°¡ ¸Ö¸é °ªÀÌ ÀÛ¾ÆÁø´Ù.		-	r2.w ´Â 0~1 ±îÁöÀÇ °ªÀÌ´Ù.
+				//	; 1/ï¿½Å¸ï¿½ * (0~1)	ï¿½Å¸ï¿½ï¿½ï¿½ ï¿½Ö¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Û¾ï¿½ï¿½ï¿½ï¿½ï¿½.		-	r2.w ï¿½ï¿½ 0~1 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ì´ï¿½.
 	"mul r2.x, r2.x, r0.x		\n"	//		; Scale the splash proprotinate to the rain-vertNorm angle
-				//	; Normal°ú RainÀÇ ³»Àû¿¡ 1/°Å¸® * (0~1) ÀÇ °ö
+				//	; Normalï¿½ï¿½ Rainï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 1/ï¿½Å¸ï¿½ * (0~1) ï¿½ï¿½ ï¿½ï¿½
 	"mul oPts.x, r2.x, c29.z	\n"	//		; Calculate final sphash size by multiplying by a size constant
-					//;  °ªÀ» º¯È­½ÃÄÑ¼­ ½ºÄÉÀÏ¿¡ º¯È­¸¦ ÁÙ¼ö ÀÖ´Ù.
+					//;  ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È­ï¿½ï¿½ï¿½Ñ¼ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½È­ï¿½ï¿½ ï¿½Ù¼ï¿½ ï¿½Ö´ï¿½.
 
 					*/
 };
@@ -183,7 +183,7 @@ DxEffectRain::DxEffectRain() :
 	m_pddsTexture(NULL),
 	m_fTime(0.0f),	
 	m_fAlpha(1.0f),		
-	m_fScale(150.0f),			// Å©±â
+	m_fScale(150.0f),			// Å©ï¿½ï¿½
 	m_fRainRate(0.003f)
 {
 	strcpy ( m_szTexture, "./Rain.bmp" );
@@ -193,7 +193,7 @@ DxEffectRain::~DxEffectRain()
 {
 }
 
-HRESULT DxEffectRain::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectRain::CreateDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr;
 	LPD3DXBUFFER pCode = NULL; 
@@ -202,7 +202,7 @@ HRESULT DxEffectRain::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	{
 		D3DVSD_STREAM(0),
 		D3DVSD_REG(0, D3DVSDT_FLOAT3 ),		//	D3DVSDE_POSITION,  0  
-		D3DVSD_REG(1, D3DVSDT_FLOAT1 ),		//	À½.. ÀÌ°Í¶«½Ã ºø¹æ¿ïÀÌ ÆÛÁö´Â ½Ã±â°¡ ´Ù¸£´Ù.
+		D3DVSD_REG(1, D3DVSDT_FLOAT1 ),		//	ï¿½ï¿½.. ï¿½Ì°Í¶ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ã±â°¡ ï¿½Ù¸ï¿½ï¿½ï¿½.
 		D3DVSD_REG(3, D3DVSDT_FLOAT3 ),		//	D3DVSDE_  
 		D3DVSD_END()
 	};
@@ -220,7 +220,7 @@ HRESULT DxEffectRain::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	{
 		pd3dDevice->BeginStateBlock();
 
-		//	Note : SetRenderState() ¼±¾ð
+		//	Note : SetRenderState() ï¿½ï¿½ï¿½ï¿½
 		//
 		pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, FALSE );
 		pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, TRUE );
@@ -231,12 +231,12 @@ HRESULT DxEffectRain::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 		pd3dDevice->SetRenderState( D3DRS_POINTSCALEENABLE,  false );	// Scale	- FALSE
 
 		// Set point sprite params for rain layer
-		pd3dDevice->SetRenderState( D3DRS_POINTSIZE_MIN, FtoDW(0.1f) );	// ÃÖ¼Ò ÀÌ¹ÌÁö
-		pd3dDevice->SetRenderState( D3DRS_POINTSIZE_MAX, FtoDW(64.0f) );	// ÃÖ´ë ÀÌ¹ÌÁö
-		pd3dDevice->SetRenderState( D3DRS_POINTSIZE,     FtoDW(32.0f) );	// Æò±Õ ÀÌ¹ÌÁö (¸Â³ª?)
+		pd3dDevice->SetRenderState( D3DRS_POINTSIZE_MIN, FtoDW(0.1f) );	// ï¿½Ö¼ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½
+		pd3dDevice->SetRenderState( D3DRS_POINTSIZE_MAX, FtoDW(64.0f) );	// ï¿½Ö´ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½
+		pd3dDevice->SetRenderState( D3DRS_POINTSIZE,     FtoDW(32.0f) );	// ï¿½ï¿½ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ (ï¿½Â³ï¿½?)
 
 
-		//	Note : SetTextureStageState() ¼±¾ð
+		//	Note : SetTextureStageState() ï¿½ï¿½ï¿½ï¿½
 		//
 	//	pd3dDevice->SetTextureStageState ( 0, D3DTSS_MINFILTER, D3DTEXF_LINEAR );
 	//	pd3dDevice->SetTextureStageState ( 0, D3DTSS_MAGFILTER, D3DTEXF_LINEAR );
@@ -258,7 +258,7 @@ HRESULT DxEffectRain::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffectRain::ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectRain::ReleaseDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	pd3dDevice->DeleteVertexShader ( m_dwEffect );
 
@@ -276,7 +276,7 @@ HRESULT DxEffectRain::ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffectRain::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectRain::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr = S_OK;
 	DxMeshes *pmsMeshs;
@@ -299,7 +299,7 @@ HRESULT DxEffectRain::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE
 		}
 	}
 
-	//	Note : ÀÚ½Ä ÇÁ·¹ÀÓ¿¡ ºÙÀÌ±â.
+	//	Note : ï¿½Ú½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½ ï¿½ï¿½ï¿½Ì±ï¿½.
 	//
 	pframeChild = pframeCur->pframeFirstChild;
 	while ( pframeChild != NULL )
@@ -314,7 +314,7 @@ HRESULT DxEffectRain::AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE
 	return hr;
 }
 
-HRESULT DxEffectRain::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectRain::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	if ( !pFrame ) return S_OK;
 
@@ -333,9 +333,9 @@ HRESULT DxEffectRain::AdaptToDxFrame ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDe
 }
 
 
-HRESULT DxEffectRain::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectRain::InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
-	//	Note : ÅØ½ºÃÄÀÇ ÀÐ±â ¿À·ù´Â ¹«½ÃÇÑ´Ù.
+	//	Note : ï¿½Ø½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 	//
 	TextureManager::LoadTexture ( m_szTexture, pd3dDevice, m_pddsTexture, 0, 0 );
 
@@ -344,7 +344,7 @@ HRESULT DxEffectRain::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
 
 HRESULT DxEffectRain::DeleteDeviceObjects ()
 {
-	//	Note : ÀÌÀü ÅØ½ºÃÄ°¡ ·ÎµåµÇ¾î ÀÖÀ» °æ¿ì Á¦°Å.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½ï¿½Ä°ï¿½ ï¿½Îµï¿½Ç¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	if ( m_pddsTexture )
 		TextureManager::ReleaseTexture ( m_pddsTexture );
@@ -360,23 +360,23 @@ HRESULT DxEffectRain::FrameMove ( float fTime, float fElapsedTime )
 	return S_OK;
 }
 
-HRESULT DxEffectRain::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffectRain::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr = S_OK;
 	DxMeshes *pmsMeshs;
 	DxFrame *pframeChild;
 
-	//	Note : Render ( ¿øº» )
+	//	Note : Render ( ï¿½ï¿½ï¿½ï¿½ )
 	//
 	if ( pframeCur->pmsMeshs != NULL )
 	{
-		//	Note : Æ®·»½ºÆû ¼³Á¤.
+		//	Note : Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 		//
 		hr = pd3dDevice->SetTransform ( D3DTS_WORLD, &pframeCur->matCombined );
 		if (FAILED(hr))
 			return hr;
 
-		//	Note : ¸Þ½¬ ±×¸®±â.
+		//	Note : ï¿½Þ½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½.
 		//
 		pmsMeshs = pframeCur->pmsMeshs;
 		while ( pmsMeshs != NULL )
@@ -394,11 +394,11 @@ HRESULT DxEffectRain::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice 
 		}
 	}
 
-	//	Note : Render ( ºø¹æ¿ï )
+	//	Note : Render ( ï¿½ï¿½ï¿½ï¿½ï¿½ )
 	//
 	if ( pframeCur->pmsMeshs != NULL )
 	{
-		//	Note : ¸Þ½¬ ±×¸®±â.
+		//	Note : ï¿½Þ½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½.
 		//
 		pmsMeshs = pframeCur->pmsMeshs;
 		while ( pmsMeshs != NULL )
@@ -407,7 +407,7 @@ HRESULT DxEffectRain::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice 
 			{
 				DWORD dwFVFSize;
 				DWORD dwVerts;
-				LPDIRECT3DVERTEXBUFFER8 pVB;
+				LPDIRECT3DVERTEXBUFFER9 pVB;
 				
 				pmsMeshs->m_pEffectMesh->GetVertexBuffer ( &pVB );
 				
@@ -417,11 +417,11 @@ HRESULT DxEffectRain::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice 
 				dwVerts = pmsMeshs->m_pEffectMesh->GetNumVertices();
 
 
-				//	Note : Shader »ó¼ö ¼±¾ð
+				//	Note : Shader ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 				//
 				pd3dDevice->SetVertexShaderConstant( VSC_CUSTOM+1, D3DXVECTOR4( m_fTime, m_fAlpha, m_fScale, 1.0f ), 1 );
 				
-				//	Note : SetVertexShader¿¡ World¿Í WorldViewProjection Çà·Ä Áý¾î ³Ö±â
+				//	Note : SetVertexShaderï¿½ï¿½ Worldï¿½ï¿½ WorldViewProjection ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ö±ï¿½
 				//
 				D3DXMATRIX	matWorld, matView, matProj, matWVP;
 
@@ -440,17 +440,17 @@ HRESULT DxEffectRain::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice 
 				pd3dDevice->SetTexture( 0, m_pddsTexture );
 
 
-				//	Note : ÀÌÀü »óÅÂ ¹é¾÷.
+				//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
 				//
 				pd3dDevice->CaptureStateBlock ( m_dwSavedStateBlock );
 
-				//	Note : ·£´õ¸µ »óÅÂ Á¶Á¤.
+				//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 				//
 				pd3dDevice->ApplyStateBlock ( m_dwEffectStateBlock );
 
 
 
-				//	Note : ¼ÒÇÁÆ®¿þ¾î ¹öÅØ½º ÇÁ·Î¼¼½Ì
+				//	Note : ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½
 				//
 				if ( DxEffectMan::Instance.GetUseSwShader() )
 					pd3dDevice->SetRenderState( D3DRS_SOFTWAREVERTEXPROCESSING, TRUE );
@@ -463,7 +463,7 @@ HRESULT DxEffectRain::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice 
 				pd3dDevice->DrawPrimitive ( D3DPT_POINTLIST, 0, dwVerts );
 
 
-				//	Note : ¼ÒÇÁÆ®¿þ¾î  ¹öÅØ½º ÇÁ·Î¼¼½Ì
+				//	Note : ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½  ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½
 				//
 				if ( DxEffectMan::Instance.GetUseSwShader() )
 					pd3dDevice->SetRenderState( D3DRS_SOFTWAREVERTEXPROCESSING, FALSE );
@@ -473,7 +473,7 @@ HRESULT DxEffectRain::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice 
 
 
 
-				//	Note : ÀÌÀü»óÅÂ·Î º¹¿ø.
+				//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ ï¿½ï¿½ï¿½ï¿½.
 				//
 				pd3dDevice->ApplyStateBlock ( m_dwSavedStateBlock );
 
@@ -486,7 +486,7 @@ HRESULT DxEffectRain::Render ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice 
 		}
 	}
 
-	//	Note : ÀÚ½Ä ÇÁ·¹ÀÓ ±×¸®±â.
+	//	Note : ï¿½Ú½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½.
 	//
 	pframeChild = pframeCur->pframeFirstChild;
 	while ( pframeChild != NULL )
@@ -520,8 +520,8 @@ float DxEffectRain::CalcSurfaceArea(VERTEX* pFV[3])
 	return (float)sqrt(s*(s-len[0])*(s-len[1])*(s-len[2]));
 }
 
-//	¹°¹æÀ» ¹öÅØ½º ¸¸µé ¶§ »ç¿ëÇÑ´Ù.
-HRESULT DxEffectRain::MakeEffRainMeshs(LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMESH *pEffectMesh )
+//	ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+HRESULT DxEffectRain::MakeEffRainMeshs(LPDIRECT3DDEVICE9 pd3dDevice, LPD3DXMESH *pEffectMesh )
 {	
 	int			attribs = 1;
 	RAINVERTEX* pRainVert;
@@ -549,9 +549,9 @@ HRESULT DxEffectRain::MakeEffRainMeshs(LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMESH 
 	}
 
 
-//	Vertices = (int)(area*m_fRainRate);	// ºø¹æ¿ïÀÇ °¹¼ö¸¦ °áÁ¤ÇÑ´Ù.
+//	Vertices = (int)(area*m_fRainRate);	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 
-	//	ºø¹æ¿ïÀÌ ÇÏ³ªµµ »ý¼ºÀÌ ¾ÈµÅ¸é Áö¿ö¹ö¸°´Ù.
+	//	ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ï³ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ÈµÅ¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 //	if( Vertices < 1.0f )
 //		GXRELEASE(*pEffectMesh);
 	
@@ -564,8 +564,8 @@ HRESULT DxEffectRain::MakeEffRainMeshs(LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMESH 
 		Array[0] = &pVertices[pIndicesCur[j*3+0]];
 		Array[1] = &pVertices[pIndicesCur[j*3+1]];
 		Array[2] = &pVertices[pIndicesCur[j*3+2]];
-		area += m_fRainRate*CalcSurfaceArea(Array);	// 1¸éÀÇ ¸éÀûÀ» °è»êÇØ¼­ ºø¹æ¿ï °¹¼ö Á¤ÇÔ.
-		//area += m_fRainRate;							// 1¸é´ç - »ý¼ºÇÒ ºø¹æ¿ï °¹¼ö.
+		area += m_fRainRate*CalcSurfaceArea(Array);	// 1ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ø¼ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
+		//area += m_fRainRate;							// 1ï¿½ï¿½ï¿½ - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 
 		// Here we create random vertices in the triangle. The randomness is defines
 		// based on 2 edge vector of the triangle. We compute a ratio r1 and r2 which represent a fraction
@@ -585,11 +585,11 @@ HRESULT DxEffectRain::MakeEffRainMeshs(LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMESH 
 			t.x = Array[2]->p.x - Array[0]->p.x;
 			t.y = Array[2]->p.y - Array[0]->p.y;
 			t.z = Array[2]->p.z - Array[0]->p.z;
-			pRainVertex[dwRainVert].p.x = Array[0]->p.x + s.x*r1 + t.x*r2;							// 1 Á¤Á¡ ±ÙÃ³¿¡ Vertex¸¦ »ý¼º
+			pRainVertex[dwRainVert].p.x = Array[0]->p.x + s.x*r1 + t.x*r2;							// 1 ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã³ï¿½ï¿½ Vertexï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			pRainVertex[dwRainVert].p.y = Array[0]->p.y + s.y*r1 + t.y*r2;
 			pRainVertex[dwRainVert].p.z = Array[0]->p.z + s.z*r1 + t.z*r2;
-			pRainVertex[dwRainVert].loop = (100+rand()%900) / 100.0f;							// ·£´ýÇÑ °ª 
-			pRainVertex[dwRainVert].n.x = (Array[0]->n.x + Array[1]->n.x + Array[2]->n.x)/3.0f;	// ³ë¸Ö º¤ÅÍ »ý¼º
+			pRainVertex[dwRainVert].loop = (100+rand()%900) / 100.0f;							// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ 
+			pRainVertex[dwRainVert].n.x = (Array[0]->n.x + Array[1]->n.x + Array[2]->n.x)/3.0f;	// ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			pRainVertex[dwRainVert].n.y = (Array[0]->n.y + Array[1]->n.y + Array[2]->n.y)/3.0f;
 			pRainVertex[dwRainVert].n.z = (Array[0]->n.z + Array[1]->n.z + Array[2]->n.z)/3.0f;
 
@@ -600,11 +600,11 @@ HRESULT DxEffectRain::MakeEffRainMeshs(LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMESH 
 	(*pEffectMesh)->UnlockVertexBuffer();
     (*pEffectMesh)->UnlockIndexBuffer();
 
-	//	Áö¿öÁÖ´Â °Å´ç.
+	//	ï¿½ï¿½ï¿½ï¿½ï¿½Ö´ï¿½ ï¿½Å´ï¿½.
 	GXRELEASE(*pEffectMesh);
 
 
-	// ´Ù½Ã ¸¸µç´ç.
+	// ï¿½Ù½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½.
 	D3DXCreateMeshFVF( dwRainVert,
 						dwRainVert,
 						D3DXMESH_SYSTEMMEM, 
@@ -631,14 +631,14 @@ HRESULT DxEffectRain::MakeEffRainMeshs(LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMESH 
 }
 
 /*
-//	¹°¹æÀ» ¹öÅØ½º ¸¸µé ¶§ »ç¿ëÇÑ´Ù.
-HRESULT DxEffectRain::MakeEffRainMeshs(LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMESH *pEffectMesh )
+//	ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+HRESULT DxEffectRain::MakeEffRainMeshs(LPDIRECT3DDEVICE9 pd3dDevice, LPD3DXMESH *pEffectMesh )
 {	
 	int			attribs = 1;
 	RAINVERTEX* pRainVert;
 	VERTEX*		Array[3];
 	float		area=0.0f;
-	DWORD		Vertices;	// ºø¹æ¿ï °¹¼ö
+	DWORD		Vertices;	// ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 	VERTEX*		pVertices;
 	WORD*		pIndices;
@@ -654,7 +654,7 @@ HRESULT DxEffectRain::MakeEffRainMeshs(LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMESH 
 
 	Vertices = Faces*m_fRainRate;
 
-	//	ºø¹æ¿ïÀÌ ÇÏ³ªµµ »ý¼ºÀÌ ¾ÈµÅ¸é Áö¿ö¹ö¸°´Ù.
+	//	ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ï³ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ÈµÅ¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 	if( Vertices < 1.0f )
 		GXRELEASE(*pEffectMesh);
 	
@@ -667,8 +667,8 @@ HRESULT DxEffectRain::MakeEffRainMeshs(LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMESH 
 		Array[0] = &pVertices[pIndicesCur[j*3+0]];
 		Array[1] = &pVertices[pIndicesCur[j*3+1]];
 		Array[2] = &pVertices[pIndicesCur[j*3+2]];
-		//area += m_fRainRate*CalcSurfaceArea(Array);	// 1¸éÀÇ ¸éÀûÀ» °è»êÇØ¼­ ºø¹æ¿ï °¹¼ö Á¤ÇÔ.
-		area += m_fRainRate;							// 1¸é´ç - »ý¼ºÇÒ ºø¹æ¿ï °¹¼ö.
+		//area += m_fRainRate*CalcSurfaceArea(Array);	// 1ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ø¼ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
+		area += m_fRainRate;							// 1ï¿½ï¿½ï¿½ - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 
 		// Here we create random vertices in the triangle. The randomness is defines
 		// based on 2 edge vector of the triangle. We compute a ratio r1 and r2 which represent a fraction
@@ -688,11 +688,11 @@ HRESULT DxEffectRain::MakeEffRainMeshs(LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMESH 
 			t.x = Array[2]->p.x - Array[0]->p.x;
 			t.y = Array[2]->p.y - Array[0]->p.y;
 			t.z = Array[2]->p.z - Array[0]->p.z;
-			pRainVertex[dwRainVert].p.x = Array[0]->p.x + s.x*r1 + t.x*r2;							// 1 Á¤Á¡ ±ÙÃ³¿¡ Vertex¸¦ »ý¼º
+			pRainVertex[dwRainVert].p.x = Array[0]->p.x + s.x*r1 + t.x*r2;							// 1 ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã³ï¿½ï¿½ Vertexï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			pRainVertex[dwRainVert].p.y = Array[0]->p.y + s.y*r1 + t.y*r2;
 			pRainVertex[dwRainVert].p.z = Array[0]->p.z + s.z*r1 + t.z*r2;
-			pRainVertex[dwRainVert].loop = (100+rand()%900) / 100.0f;							// ·£´ýÇÑ °ª 
-			pRainVertex[dwRainVert].n.x = (Array[0]->n.x + Array[1]->n.x + Array[2]->n.x)/3.0f;	// ³ë¸Ö º¤ÅÍ »ý¼º
+			pRainVertex[dwRainVert].loop = (100+rand()%900) / 100.0f;							// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ 
+			pRainVertex[dwRainVert].n.x = (Array[0]->n.x + Array[1]->n.x + Array[2]->n.x)/3.0f;	// ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			pRainVertex[dwRainVert].n.y = (Array[0]->n.y + Array[1]->n.y + Array[2]->n.y)/3.0f;
 			pRainVertex[dwRainVert].n.z = (Array[0]->n.z + Array[1]->n.z + Array[2]->n.z)/3.0f;
 
@@ -703,11 +703,11 @@ HRESULT DxEffectRain::MakeEffRainMeshs(LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMESH 
 	(*pEffectMesh)->UnlockVertexBuffer();
     (*pEffectMesh)->UnlockIndexBuffer();
 
-	//	Áö¿öÁÖ´Â °Å´ç.
+	//	ï¿½ï¿½ï¿½ï¿½ï¿½Ö´ï¿½ ï¿½Å´ï¿½.
 	GXRELEASE(*pEffectMesh);
 
 
-	// ´Ù½Ã ¸¸µç´ç.
+	// ï¿½Ù½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½.
 	D3DXCreateMeshFVF( dwRainVert,
 						dwRainVert,
 						D3DXMESH_SYSTEMMEM, 

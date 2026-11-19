@@ -1,7 +1,7 @@
 //! 2002.05.30 jgkim Create
 //! Copyright (c) Min Communications. All rights reserved.
 #include "stdafx.h"
-//#include "./DbExecuter.h"
+//// DbExecuter.h: use s_CDbAction.h
 #include "s_CAgentServer.h"
 
 #ifdef _DEBUG

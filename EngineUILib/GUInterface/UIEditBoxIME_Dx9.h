@@ -1,7 +1,7 @@
 #pragma once
 
 #include "UIControl.h"
-#include "UITextControl.h"
+#include "UITextUtil.h"
 
 class CUIEditBoxIME_Dx9 : public CUIControl
 {
@@ -22,7 +22,7 @@ public:
 	void InitEditBox( CDXUTDialogResourceManager * pDialogResourceManager, PCALLBACKDXUTGUIEVENT pCallback = NULL );
 	HRESULT SetFont( UINT index, LPCWSTR strFaceName, LONG height, LONG weight );
 
-	HRESULT AddEditBox( INT nID, LPCWSTR strText = L"", D3DCOLOR dwColor = NS_UITEXTCOLOR::WHITE );
+	HRESULT AddEditBox( INT nID, LPCWSTR strText = L"", D3DCOLOR dwColor = NS_UITEXTUTIL::WHITE );
 
 public:
 	virtual HRESULT RestoreDeviceObjects( LPDIRECT3DDEVICEQ pd3dDevice );

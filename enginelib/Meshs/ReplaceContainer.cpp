@@ -19,13 +19,13 @@ DxSkinPieceContainer DxSkinPieceContainer::Instance;
 const DWORD	DxSkinPiece::VERSION = 0x00000100;
 const char	DxSkinPiece::m_szPIECETYPE[PIECE_SIZE][64] =
 {
-	"¸Ó¸®",
-	"»óÃ¼",
-	"ÇÏÃ¼",
-	"¼Õ",
-	"¿À¸¥¼Õµµ±¸",
-	"¿Þ¼Õµµ±¸",
-	"¹ß",
+	"ï¿½Ó¸ï¿½",
+	"ï¿½ï¿½Ã¼",
+	"ï¿½ï¿½Ã¼",
+	"ï¿½ï¿½",
+	"ï¿½ï¿½ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½",
+	"ï¿½Þ¼Õµï¿½ï¿½ï¿½",
+	"ï¿½ï¿½",
 	"REV01",
 	"REV02",
 	"REV03",
@@ -63,7 +63,7 @@ DxSkinPiece::~DxSkinPiece ()
 	// don't delete m_pmcMesh
 }
 
-HRESULT DxSkinPiece::SetSkinMesh ( const char* szXFileName, const char* szSkeleton, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxSkinPiece::SetSkinMesh ( const char* szXFileName, const char* szSkeleton, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	assert(szXFileName);
 	assert(szSkeleton);
@@ -84,7 +84,7 @@ HRESULT DxSkinPiece::SetSkinMesh ( const char* szXFileName, const char* szSkelet
 	return S_OK;
 }
 
-HRESULT DxSkinPiece::LoadPiece ( const char* szFile, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxSkinPiece::LoadPiece ( const char* szFile, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr;
 
@@ -115,7 +115,7 @@ HRESULT DxSkinPiece::LoadPiece ( const char* szFile, LPDIRECT3DDEVICE8 pd3dDevic
 	char *szSkeleton = new char[dwSize];
 	SFile.ReadBuffer ( szSkeleton, sizeof(char)*dwSize );
 
-	//	Note : ½ºÅ² ¸Þ½¬ ÀÐ±â.
+	//	Note : ï¿½ï¿½Å² ï¿½Þ½ï¿½ ï¿½Ð±ï¿½.
 	//
 	hr = SetSkinMesh ( szXFileName, szSkeleton, pd3dDevice );
 	SAFE_DELETE(szXFileName);
@@ -179,12 +179,12 @@ HRESULT DxSkinPiece::SavePiece ( const char* szFile )
 	return S_OK;
 }
 
-HRESULT DxSkinPiece::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxSkinPiece::InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	return S_OK;
 }
 
-HRESULT DxSkinPiece::RestoreDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxSkinPiece::RestoreDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	return S_OK;
 }
@@ -199,18 +199,18 @@ HRESULT DxSkinPiece::DeleteDeviceObjects ()
 	return S_OK;
 }
 
-HRESULT DxSkinPiece::Render ( LPDIRECT3DDEVICE8 pd3dDevice, D3DXMATRIX &matRot )
+HRESULT DxSkinPiece::Render ( LPDIRECT3DDEVICE9 pd3dDevice, D3DXMATRIX &matRot )
 {
 	assert(pd3dDevice);
 
 	HRESULT hr = S_OK;
 	if ( !m_pSkeleton || !m_pSkinMesh )		return S_FALSE;
 
-	//	Note : °èÃþ ¸ÞÆ®¸¯½º ¾÷µ¥ÀÌÆ®.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®.
 	//
 	m_pSkeleton->UpdateBones ( m_pSkeleton->pBoneRoot, matRot );
 
-	//	Note : SkinMesh ÀüÃ¼ ±×¸®±â.
+	//	Note : SkinMesh ï¿½ï¿½Ã¼ ï¿½×¸ï¿½ï¿½ï¿½.
 	//
 	DWORD dwFill;
 	pd3dDevice->GetRenderState ( D3DRS_FILLMODE, &dwFill );
@@ -218,7 +218,7 @@ HRESULT DxSkinPiece::Render ( LPDIRECT3DDEVICE8 pd3dDevice, D3DXMATRIX &matRot )
 	m_pSkinMesh->Render ( matRot, pd3dDevice );
 	pd3dDevice->SetRenderState ( D3DRS_FILLMODE, dwFill );
 
-	//	Note : SkinMesh ¼±ÅÃºÎºÐ ±×¸®±â.
+	//	Note : SkinMesh ï¿½ï¿½ï¿½ÃºÎºï¿½ ï¿½×¸ï¿½ï¿½ï¿½.
 	//
 	if ( !m_pmcMesh )	return S_FALSE;
 
@@ -258,7 +258,7 @@ HRESULT DxSkinPieceContainer::AddPiece ( DxSkinPiece* pSkinPiece )
 	hr = pSkinPiece->SavePiece ( pSkinPiece->m_szFileName );
 	if ( FAILED(hr) )	return E_FAIL;
 
-	//	Note : ¸®½ºÆ®¿¡ »ðÀÔ.
+	//	Note : ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	pSkinPiece->m_pNext = m_pSkinPieceHead;
 	m_pSkinPieceHead = pSkinPiece;
@@ -266,7 +266,7 @@ HRESULT DxSkinPieceContainer::AddPiece ( DxSkinPiece* pSkinPiece )
 	return S_OK;
 }
 
-DxSkinPiece* DxSkinPieceContainer::LoadPiece ( const char* szFile, LPDIRECT3DDEVICE8 pd3dDevice )
+DxSkinPiece* DxSkinPieceContainer::LoadPiece ( const char* szFile, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr;
 	assert(szFile);
@@ -276,7 +276,7 @@ DxSkinPiece* DxSkinPieceContainer::LoadPiece ( const char* szFile, LPDIRECT3DDEV
 	pSkinPiece = FindPiece ( szFile );
 	if ( pSkinPiece )	return pSkinPiece;
 
-	//	Note : SkinPiece Load ¼öÇà.
+	//	Note : SkinPiece Load ï¿½ï¿½ï¿½ï¿½.
 	//
 	pSkinPiece = new DxSkinPiece;
 
@@ -289,7 +289,7 @@ DxSkinPiece* DxSkinPieceContainer::LoadPiece ( const char* szFile, LPDIRECT3DDEV
 
 	strcpy ( pSkinPiece->m_szFileName, szFile );
 
-	//	Note : ¸®½ºÆ®¿¡ »ðÀÔ.
+	//	Note : ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	pSkinPiece->m_pNext = m_pSkinPieceHead;
 	m_pSkinPieceHead = pSkinPiece;
@@ -390,7 +390,7 @@ DxSkinPiece* DxSkinPieceContainer::FindPiece ( const char* szFile )
 	return NULL;
 }
 
-HRESULT DxSkinPieceContainer::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxSkinPieceContainer::InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	m_pd3dDevice = pd3dDevice;
 
@@ -405,7 +405,7 @@ HRESULT DxSkinPieceContainer::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxSkinPieceContainer::RestoreDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxSkinPieceContainer::RestoreDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	DxSkinPiece *pSkinPieceCur = m_pSkinPieceHead;
 	while ( pSkinPieceCur )

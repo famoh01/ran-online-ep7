@@ -15,16 +15,16 @@ struct DxFrame;
 
 struct RAIN_PROPERTY
 {
-	float		m_fAlpha;		//	ºø¹æ¿ï ¾ËÆÄ ºí·»µù °ª
-	float		m_fScale;		//	ºø¹æ¿ï Å©±â
-	float		m_fRainRate;	//	¸éÀû´ç ³ªÅ¸³ª´Â ºø¹æ¿ï °¹¼ö   ( 0.f - 0°³, 0.5f - 0.5°³, 1.f - 1°³ )
+	float		m_fAlpha;		//	ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
+	float		m_fScale;		//	ï¿½ï¿½ï¿½ï¿½ï¿½ Å©ï¿½ï¿½
+	float		m_fRainRate;	//	ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½   ( 0.f - 0ï¿½ï¿½, 0.5f - 0.5ï¿½ï¿½, 1.f - 1ï¿½ï¿½ )
 	char		m_szTexture[MAX_PATH];
 };
 
 
 class DxEffectRain : public DxEffectBase
 {
-	//	Note : ÀÌÆåÆ® Å¸ÀÔ Á¤ÀÇ.
+	//	Note : ï¿½ï¿½ï¿½ï¿½Æ® Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 public:
 	const static DWORD	TYPEID;
@@ -40,7 +40,7 @@ public:
 	virtual void GetProperty ( PBYTE &pProp, DWORD &dwSize, DWORD &dwVer );
 	virtual void SetProperty ( PBYTE &pProp, DWORD &dwSize, DWORD dwVer );
 	
-	//	Note : ½¦ÀÌ´õ.
+	//	Note : ï¿½ï¿½ï¿½Ì´ï¿½.
 	//
 protected:	
 	static DWORD			m_dwEffect;
@@ -49,7 +49,7 @@ protected:
 	static DWORD			m_dwSavedStateBlock;
 	static DWORD			m_dwEffectStateBlock;
 
-	//	Note : ¼Ó¼º.
+	//	Note : ï¿½Ó¼ï¿½.
 	//
 protected:
 	union
@@ -58,9 +58,9 @@ protected:
 
 		struct
 		{
-			float		m_fAlpha;		//	ºø¹æ¿ï ¾ËÆÄ ºí·»µù °ª
-			float		m_fScale;		//	ºø¹æ¿ï Å©±â
-			float		m_fRainRate;	//	¸éÀû´ç ³ªÅ¸³ª´Â ºø¹æ¿ï °¹¼ö   ( 0.f - 0°³, 0.5f - 0.5°³, 1.f - 1°³ )
+			float		m_fAlpha;		//	ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
+			float		m_fScale;		//	ï¿½ï¿½ï¿½ï¿½ï¿½ Å©ï¿½ï¿½
+			float		m_fRainRate;	//	ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½   ( 0.f - 0ï¿½ï¿½, 0.5f - 0.5ï¿½ï¿½, 1.f - 1ï¿½ï¿½ )
 			char		m_szTexture[MAX_PATH];
 		};
 	};
@@ -75,7 +75,7 @@ public:
 protected:
 	float		m_fTime;
 
-	LPDIRECT3DTEXTURE8	m_pddsTexture;
+	LPDIRECT3DTEXTURE9	m_pddsTexture;
 
 	struct VERTEX
 	{
@@ -91,26 +91,26 @@ protected:
 	};
 
 public:
-	static HRESULT CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice );
-	static HRESULT ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice );
+	static HRESULT CreateDevice ( LPDIRECT3DDEVICE9 pd3dDevice );
+	static HRESULT ReleaseDevice ( LPDIRECT3DDEVICE9 pd3dDevice );
 
 protected:
-	HRESULT AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice );
 
 public:
-	HRESULT AdaptToDxFrame ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT AdaptToDxFrame ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice );
 
 	//	Note : 
 	//
 public:
-	virtual HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice );
+	virtual HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice );
 	virtual HRESULT DeleteDeviceObjects ();
 
 public:
 	HRESULT FrameMove ( float fTime, float fElapsedTime );	
-	HRESULT Render ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT Render ( DxFrame *pFrame, LPDIRECT3DDEVICE9 pd3dDevice );
 private:
-	HRESULT MakeEffRainMeshs ( LPDIRECT3DDEVICE8 pd3dDevice, LPD3DXMESH *pEffectMesh );
+	HRESULT MakeEffRainMeshs ( LPDIRECT3DDEVICE9 pd3dDevice, LPD3DXMESH *pEffectMesh );
 	float	CalcSurfaceArea(VERTEX* pFV[3]);
 
 public:

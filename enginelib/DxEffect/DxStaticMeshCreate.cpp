@@ -44,7 +44,7 @@ void DxStaticMesh::FrameMove ( float fTime, float fElapsedTime )
 {
 }
 
-void DxStaticMesh::Render( LPDIRECT3DDEVICE8 pd3dDevice, CLIPVOLUME *pCV )
+void DxStaticMesh::Render( LPDIRECT3DDEVICE9 pd3dDevice, CLIPVOLUME *pCV )
 {
 	D3DXMATRIX	matIdentity;
 	D3DXMatrixIdentity ( &matIdentity );
@@ -53,7 +53,7 @@ void DxStaticMesh::Render( LPDIRECT3DDEVICE8 pd3dDevice, CLIPVOLUME *pCV )
 	COLLISION::RenderAABBTree ( pd3dDevice, pCV, m_pMeshTree, FALSE );
 }
 
-void DxStaticMesh::RenderAlpha( LPDIRECT3DDEVICE8 pd3dDevice, CLIPVOLUME *pCV )
+void DxStaticMesh::RenderAlpha( LPDIRECT3DDEVICE9 pd3dDevice, CLIPVOLUME *pCV )
 {
 	D3DXMATRIX	matIdentity;
 	D3DXMatrixIdentity ( &matIdentity );
@@ -64,7 +64,7 @@ void DxStaticMesh::RenderAlpha( LPDIRECT3DDEVICE8 pd3dDevice, CLIPVOLUME *pCV )
 	DxRenderStates::Instance.ReSetOnAlphaMap ( pd3dDevice );
 }
 
-void DxStaticMesh::MakeAABBOCTree ( LPDIRECT3DDEVICE8 pd3dDevice, DxFrameMesh* pFrameMesh )
+void DxStaticMesh::MakeAABBOCTree ( LPDIRECT3DDEVICE9 pd3dDevice, DxFrameMesh* pFrameMesh )
 {
 	CleanUp();
 
@@ -120,13 +120,13 @@ namespace NSSTATICMESH
 		{
 			STATICDATA* pData = (STATICDATA*)(*iter).second;
 
-			// ±âÁ¸ µ¥ÀÌÅÍ ¹é¾÷
+			// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 			STATICDATA OldData;
 			OldData.dwFaceNUM = pData->dwFaceNUM;
 			OldData.pVertices = new VERTEX[pData->dwFaceNUM*3];
 			memcpy ( OldData.pVertices, pData->pVertices, sizeof(VERTEX)*OldData.dwFaceNUM*3 );
 
-			// µ¥ÀÌÅÍ Ãß°¡ »ðÀÔ
+			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ ï¿½ï¿½ï¿½ï¿½
 			pData->dwFaceNUM += dwFaceCount;
 			SAFE_DELETE_ARRAY ( pData->pVertices );
 			pData->pVertices = new VERTEX[pData->dwFaceNUM*3];
@@ -199,7 +199,7 @@ namespace NSSTATICMESH
 
 			D3DSURFACE_DESC sDesc;
 			sDesc.Format = D3DFMT_UNKNOWN;
-			if ( pMesh->pTextures[dwAttribID] )	pMesh->pTextures[dwAttribID]->GetLevelDesc( 0, &sDesc );	// ÅØ½ºÃÄ°¡ ¾ø´Â °ÍµéÀÌ ÀÖÀ» ¼ö ÀÖ´Ù.
+			if ( pMesh->pTextures[dwAttribID] )	pMesh->pTextures[dwAttribID]->GetLevelDesc( 0, &sDesc );	// ï¿½Ø½ï¿½ï¿½Ä°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Íµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ö´ï¿½.
 
 			switch ( sDesc.Format )
 			{
@@ -237,7 +237,7 @@ namespace NSSTATICMESH
 	{		
 		if ( pframeCur->IsReplace() || pframeCur->pframeFromAnimate )
 		{
-			// Note : ¿©±â¼­´Â ¾Æ¹«°Íµµ ÇÏ¸é ¾ÈµÈ´Ù.
+			// Note : ï¿½ï¿½ï¿½â¼­ï¿½ï¿½ ï¿½Æ¹ï¿½ï¿½Íµï¿½ ï¿½Ï¸ï¿½ ï¿½ÈµÈ´ï¿½.
 		}
 		else
 		{
@@ -251,7 +251,7 @@ namespace NSSTATICMESH
 			ExportProgress::CurPos++;
 		}
 
-		//	Note : ÀÚ½ÄµéÀ» Àç±ÍÀûÀ¸·Î ¸ðµÎ Å½»ö.
+		//	Note : ï¿½Ú½Äµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ Å½ï¿½ï¿½.
 		DxFrame *pframeChild = pframeCur->pframeFirstChild;
 		while (pframeChild != NULL)
 		{
@@ -260,11 +260,11 @@ namespace NSSTATICMESH
 		}
 	}
 
-	void MakeStaticMesh ( LPDIRECT3DDEVICE8 pd3dDevice, DxStaticMesh* pStaticMesh )
+	void MakeStaticMesh ( LPDIRECT3DDEVICE9 pd3dDevice, DxStaticMesh* pStaticMesh )
 	{
 		MAPSTATICDATA_ITER iter;
 
-		ExportProgress::SetStateString ( "Optimize Mesh·Î »ý¼º Áß...2/3" );
+		ExportProgress::SetStateString ( "Optimize Meshï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½...2/3" );
 		ExportProgress::CurPos= 0;
 		ExportProgress::EndPos = mapMeshData.size();
 		for ( iter=mapMeshData.begin(); iter!=mapMeshData.end(); ++iter )
@@ -276,7 +276,7 @@ namespace NSSTATICMESH
 			ExportProgress::CurPos++;
 		}
 
-		ExportProgress::SetStateString ( "Optimize Mesh·Î »ý¼º Áß...3/3" );
+		ExportProgress::SetStateString ( "Optimize Meshï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½...3/3" );
 		ExportProgress::CurPos= 0;
 		ExportProgress::EndPos = mapMeshAlpha.size();
 		for ( iter=mapMeshAlpha.begin(); iter!=mapMeshAlpha.end(); ++iter )
@@ -296,7 +296,7 @@ namespace NSSTATICMESH
 		if ( pframeCur->IsReplace() || pframeCur->pframeFromAnimate )	{}
 		else															ExportProgress::EndPos++;
 
-		//	Note : ÀÚ½ÄµéÀ» Àç±ÍÀûÀ¸·Î ¸ðµÎ Å½»ö.
+		//	Note : ï¿½Ú½Äµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ Å½ï¿½ï¿½.
 		DxFrame *pframeChild = pframeCur->pframeFirstChild;
 		while (pframeChild != NULL)
 		{
@@ -305,7 +305,7 @@ namespace NSSTATICMESH
 		}
 	}
 
-	void ExportMaterialList ( LPDIRECT3DDEVICE8 pd3dDevice, DxFrameMesh* pFrameMesh, DxStaticMesh* pStaticMesh )
+	void ExportMaterialList ( LPDIRECT3DDEVICE9 pd3dDevice, DxFrameMesh* pFrameMesh, DxStaticMesh* pStaticMesh )
 	{
 		DxFrame* pFrameRoot = pFrameMesh->GetFrameRoot();
 		if ( pFrameRoot )
@@ -315,7 +315,7 @@ namespace NSSTATICMESH
 			std::for_each ( mapMeshAlpha.begin(), mapMeshAlpha.end(), std_afunc::DeleteMapObject() );
 			mapMeshAlpha.clear();
 
-			ExportProgress::SetStateString ( "Optimize Mesh·Î »ý¼º Áß...1/3" );
+			ExportProgress::SetStateString ( "Optimize Meshï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½...1/3" );
 			ExportProgress::CurPos= 0;
 			ExportProgress::EndPos = 0;
 			FindNodeNUM ( pFrameRoot );

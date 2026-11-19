@@ -16,7 +16,7 @@ class DxSkinChar;
 class DxEffectShadowHW
 {
 protected:
-	static		LPDIRECT3DVERTEXBUFFER8		m_pShadowVB;
+	static		LPDIRECT3DVERTEXBUFFER9		m_pShadowVB;
 	const static	float					m_fRange;
 
 protected:	

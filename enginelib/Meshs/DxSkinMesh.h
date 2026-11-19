@@ -3,22 +3,23 @@
 //////////////////////////////////////////////////////////////////////
 #pragma once
 
+#include "DxSkinMesh9.h"
 #include "SMeshContainer.h"
 
 #define __FRAMEROOT ("__ROOT")
 
 struct SFrame
 {
-	SMeshContainer	*pmcMesh;		//	¸Þ½¬ ÄÜÅ×ÀÌ³Ê Æ®¸®.
+	SMeshContainer	*pmcMesh;		//	ï¿½Þ½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ì³ï¿½ Æ®ï¿½ï¿½.
 
-	D3DXMATRIXA16	matRot;			//	¿¡´Ï¸ÞÀÌ¼Ç Æ®·£½ºÆû ¸ÞÆ®¸¯½º.
-	D3DXMATRIXA16	matRotOrig;		//	¿øº» Æ®·£½ºÆû ¸ÞÆ®¸¯½º.
-	D3DXMATRIXA16	matCombined;	//	°èÃþ Æ®·£½ºÆû ¸ÞÆ®¸¯½º ÇÕ¼ºµÈ °Í.
+	D3DXMATRIXA16	matRot;			//	ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½.
+	D3DXMATRIXA16	matRotOrig;		//	ï¿½ï¿½ï¿½ï¿½ Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½.
+	D3DXMATRIXA16	matCombined;	//	ï¿½ï¿½ï¿½ï¿½ Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½Õ¼ï¿½ï¿½ï¿½ ï¿½ï¿½.
 
-	SFrame			*pframeSibling;		//	ÇüÁ¦ ³ëµåµé.
-	SFrame			*pframeFirstChild;	//	ÀÚ½Ä ³ëµåµé.
+	SFrame			*pframeSibling;		//	ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
+	SFrame			*pframeFirstChild;	//	ï¿½Ú½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 
-	char			*szName;			//	¿ÀºêÁ§Æ® ÀÌ¸§.
+	char			*szName;			//	ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Ì¸ï¿½.
 
 	SFrame ()
 		:
@@ -112,31 +113,31 @@ struct SMATERIAL_PIECE;
 class DxSkinMesh
 {
 public:
-	static METHOD		m_method;						//	½ºÅ°´× ¿¡´Ï¸ÞÀÌ¼Ç Á¾·ù
+	static METHOD		m_method;						//	ï¿½ï¿½Å°ï¿½ï¿½ ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 
 protected:
-	LPDIRECT3DDEVICE8	m_pd3dDevice;
+	LPDIRECT3DDEVICE9	m_pd3dDevice;
 	DWORD				m_dwD3dMaxVertexBlendMatrices;
-	DWORD				m_dwFVF;						//	FVF ¼³Á¤.
+	DWORD				m_dwFVF;						//	FVF ï¿½ï¿½ï¿½ï¿½.
 
 protected:
-	TCHAR				m_szName[MAX_PATH];				//	Çü»ó xFile ÀÌ¸§.
-	TCHAR				m_szSkeleton[MAX_PATH];			//	Skeleton xFile ÀÌ¸§.
+	TCHAR				m_szName[MAX_PATH];				//	ï¿½ï¿½ï¿½ï¿½ xFile ï¿½Ì¸ï¿½.
+	TCHAR				m_szSkeleton[MAX_PATH];			//	Skeleton xFile ï¿½Ì¸ï¿½.
 
-	//	Note : Çü»ó Á¤º¸.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
-	SFrame*				pframeRoot;						//	ÇÁ·¹ÀÓ Æ®¸®.
+	SFrame*				pframeRoot;						//	ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Æ®ï¿½ï¿½.
 	DxSkeleton*			pSkeleton;
-	D3DXVECTOR3			vCenter;						//	¹°Ã¼ Áß½É.
-	float				fRadius;						//	¹°Ã¼ ¹Ý°æ.
+	D3DXVECTOR3			vCenter;						//	ï¿½ï¿½Ã¼ ï¿½ß½ï¿½.
+	float				fRadius;						//	ï¿½ï¿½Ã¼ ï¿½Ý°ï¿½.
 
-	SMeshContainer*		pMeshGlobalHead;				//	¸Þ½¬ ÄÜÅ×ÀÌ³ÊÀÇ ÀüÃ¼ ¸®½ºÆ®.
+	SMeshContainer*		pMeshGlobalHead;				//	ï¿½Þ½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ì³ï¿½ï¿½ï¿½ ï¿½ï¿½Ã¼ ï¿½ï¿½ï¿½ï¿½Æ®.
 
-	//	Note : SoftWare ¿ë ÀÓ½Ã ¹è¿­.
+	//	Note : SoftWare ï¿½ï¿½ ï¿½Ó½ï¿½ ï¿½è¿­.
 	//
-	LPD3DXMATRIX		m_pBoneMatrices;				//	º»ÀÇ ¸ÞÆ®¸¯½º ÁÖ¼Ò.
-	DWORD				m_maxBones;						//	º»ÀÇ °¹¼ö.
+	LPD3DXMATRIX		m_pBoneMatrices;				//	ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½Ö¼ï¿½.
+	DWORD				m_maxBones;						//	ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 
 //protected:
 //	static DWORD		dwSkinmesh1VertexShader[];
@@ -144,12 +145,12 @@ protected:
 //	static DWORD		dwSkinmesh3VertexShader[];
 //	static DWORD		dwSkinmesh4VertexShader[];
 //	static DWORD		dwSkinmeshPixelShader[];
-//	static DWORD		m_dwIndexedVS[4];				// Shader ¿ë	¹üÇÁ(DOT3)
+//	static DWORD		m_dwIndexedVS[4];				// Shader ï¿½ï¿½	ï¿½ï¿½ï¿½ï¿½(DOT3)
 //	static DWORD		m_dwIndexedPS;					// PS
 //
-//	static DWORD		m_dwTestVS[4];					// Test ¿ë
-//	static DWORD		m_dwTestPS;						// Test ¿ë
-//	LPDIRECT3DTEXTURE8	m_pTestTex;						// Test ¿ë
+//	static DWORD		m_dwTestVS[4];					// Test ï¿½ï¿½
+//	static DWORD		m_dwTestPS;						// Test ï¿½ï¿½
+//	LPDIRECT3DTEXTURE9	m_pTestTex;						// Test ï¿½ï¿½
 
 public:
 	DWORD				dwRefCount;
@@ -203,50 +204,50 @@ public:
 	void ResetTransform () { pframeRoot->ResetMatrix (); }
 
 public:
-	HRESULT LoadMeshHierarchy ( char *szFile, char *szSkeletonFile, LPDIRECT3DDEVICE8 pd3dDevice, const BOOL bThread );
+	HRESULT LoadMeshHierarchy ( char *szFile, char *szSkeletonFile, LPDIRECT3DDEVICE9 pd3dDevice, const BOOL bThread );
 	HRESULT ClearMeshHierarchy ();
 
 protected:
 	HRESULT FindBones ( SFrame *pframeCur );
 	HRESULT LoadFrames ( LPDIRECTXFILEDATA pxofobjCur,
-					DWORD options, DWORD fvf, LPDIRECT3DDEVICE8 pD3DDevice,
+					DWORD options, DWORD fvf, LPDIRECT3DDEVICE9 pD3DDevice,
 					SFrame *pframeParent, const BOOL bThread );
 	HRESULT LoadMesh ( LPDIRECTXFILEDATA pxofobjCur,
-					DWORD options, DWORD fvf, LPDIRECT3DDEVICE8 pD3DDevice,
+					DWORD options, DWORD fvf, LPDIRECT3DDEVICE9 pD3DDevice,
 					SFrame *pframeParent, const BOOL bThread );
 public:
 	void	Init_Detail_Texture ();
 
 	void	SetDrawState ( BOOL bOriginDraw=TRUE, BOOL bAlpha=FALSE, BOOL bShadow=FALSE, BOOL bAlphaTex=TRUE, BOOL bLevel=FALSE, float fHeight=0.f );
 
-	HRESULT DrawMeshContainer ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshContainer *pmcMesh, SMATERIAL_PIECE *pmtrlPiece=NULL, DXMATERIAL_CHAR_EFF* pmtrlSpecular=NULL );
+	HRESULT DrawMeshContainer ( LPDIRECT3DDEVICE9 pd3dDevice, SMeshContainer *pmcMesh, SMATERIAL_PIECE *pmtrlPiece=NULL, DXMATERIAL_CHAR_EFF* pmtrlSpecular=NULL );
 
 protected:
-	HRESULT RenderDefault ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshContainer *pmcMesh, int ipattr, DWORD dwThisAttribId, 
+	HRESULT RenderDefault ( LPDIRECT3DDEVICE9 pd3dDevice, SMeshContainer *pmcMesh, int ipattr, DWORD dwThisAttribId, 
 							SMATERIAL_PIECE *pmtrlPiece, DXMATERIAL_CHAR_EFF* pmtrlSpecular );
-	HRESULT RenderVS ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshContainer *pmcMesh, LPD3DXBONECOMBINATION pBoneComb, int ipattr, 
+	HRESULT RenderVS ( LPDIRECT3DDEVICE9 pd3dDevice, SMeshContainer *pmcMesh, LPD3DXBONECOMBINATION pBoneComb, int ipattr, 
 						DWORD dwThisAttribId, SMATERIAL_PIECE *pmtrlPiece, DXMATERIAL_CHAR_EFF* pmtrlSpecular );
 
 public:
 	HRESULT UpdateFrames ( SFrame *pframeCur, D3DXMATRIX &matCur );
-	HRESULT DrawFrames ( LPDIRECT3DDEVICE8 pd3dDevice, SFrame *pframeCur, UINT &cTriangles );
-	HRESULT DrawMeshClobal ( LPDIRECT3DDEVICE8 pd3dDevice, UINT &cTriangles );
+	HRESULT DrawFrames ( LPDIRECT3DDEVICE9 pd3dDevice, SFrame *pframeCur, UINT &cTriangles );
+	HRESULT DrawMeshClobal ( LPDIRECT3DDEVICE9 pd3dDevice, UINT &cTriangles );
 
 public:
-	HRESULT UpdateEffMesh ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshContainer* pmcMesh );
+	HRESULT UpdateEffMesh ( LPDIRECT3DDEVICE9 pd3dDevice, SMeshContainer* pmcMesh );
 
 public:
 	HRESULT CalculateBoundingSphere ();
-	HRESULT CalculateBoundingBox ( LPDIRECT3DDEVICE8 pd3dDevice, SMeshContainer* pmcMesh, D3DXVECTOR3 &vMax, D3DXVECTOR3 &vMin );
+	HRESULT CalculateBoundingBox ( LPDIRECT3DDEVICE9 pd3dDevice, SMeshContainer* pmcMesh, D3DXVECTOR3 &vMax, D3DXVECTOR3 &vMin );
 
 public:
-	HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice );
-	HRESULT RestoreDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice );
-	HRESULT InvalidateDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice );
+	HRESULT RestoreDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice );
+	HRESULT InvalidateDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice );
 	HRESULT DeleteDeviceObjects();
 
 	HRESULT FrameMove ( float fElapsedTime );
-	HRESULT Render ( D3DXMATRIX matRot, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT Render ( D3DXMATRIX matRot, LPDIRECT3DDEVICE9 pd3dDevice );
 
 public:
 	DxSkinMesh ();

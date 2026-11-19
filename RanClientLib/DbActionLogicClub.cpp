@@ -9,12 +9,12 @@
 #endif
 
 /**
-* »õ·Î¿î Å¬·´À» »ý¼ºÇÑ´Ù.
-* \param strClubName : Å¬·´ÀÌ¸§
-* \param dwChaNum : Å¬·´À» »ý¼ºÇÏ·Á´Â Ä³¸¯ÅÍ ¹øÈ£ (ÀÌ Ä³¸¯ÅÍ°¡ Å¬·´ÀÇ ¸¶½ºÅÍ°¡ µÈ´Ù)
-* \return -1 : ÀÌ¹Ì ±æµå¸¶½ºÅÍ·Î µî·ÏµÇ¾î ÀÖÀ½ »ý¼ººÒ°¡.
-*         -2 : ±æµå»ý¼ºÁß ¿¡·¯¹ß»ý (Áßº¹µÈ±æµåÀÌ¸§)
-*         0 º¸´Ù Å¬¶§ : »ý¼ºµÈ ±æµå¹øÈ£ÀÓ
+* ï¿½ï¿½ï¿½Î¿ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+* \param strClubName : Å¬ï¿½ï¿½ï¿½Ì¸ï¿½
+* \param dwChaNum : Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È£ (ï¿½ï¿½ Ä³ï¿½ï¿½ï¿½Í°ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í°ï¿½ ï¿½È´ï¿½)
+* \return -1 : ï¿½Ì¹ï¿½ ï¿½ï¿½å¸¶ï¿½ï¿½ï¿½Í·ï¿½ ï¿½ï¿½ÏµÇ¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ò°ï¿½.
+*         -2 : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ß»ï¿½ (ï¿½ßºï¿½ï¿½È±ï¿½ï¿½ï¿½Ì¸ï¿½)
+*         0 ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È£ï¿½ï¿½
 */
 CCreateClub::CCreateClub(
 	DWORD dwClientID,
@@ -63,11 +63,11 @@ int CCreateClub::Execute(
 }
 
 /**
-* Å¬·´À» »èÁ¦ÇÑ´Ù.
-* \param dwClub : Å¬·´¹øÈ£
-* \param dwChaNum : Å¬·´À» »èÁ¦ÇÏ·Á´Â Ä³¸¯ÅÍ¹øÈ£(Ä³¸¯ÅÍ ¹øÈ£°¡ Å¬·´ ¸¶½ºÅÍ°¡ ¾Æ´Ï¸é »èÁ¦°¡ µÇÁö ¾Ê´Â´Ù)
-* \return 0 : ±æµå »èÁ¦ ½ÇÆÐ
-*         1 : ±æµå »èÁ¦ ¼º°ø
+* Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+* \param dwClub : Å¬ï¿½ï¿½ï¿½ï¿½È£
+* \param dwChaNum : Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ï¿½Í¹ï¿½È£(Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È£ï¿½ï¿½ Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í°ï¿½ ï¿½Æ´Ï¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê´Â´ï¿½)
+* \return 0 : ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+*         1 : ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 */
 CDeleteClub::CDeleteClub(
 	DWORD dwClub, 
@@ -84,9 +84,9 @@ int CDeleteClub::Execute(
 }
 
 /**
-* Å¬·´·©Å©¸¦ ¼¼ÆÃÇÑ´Ù.
-* \param dwClub : Å¬·´¹øÈ£
-* \param dwRank : ·©Å·
+* Å¬ï¿½ï¿½ï¿½ï¿½Å©ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+* \param dwClub : Å¬ï¿½ï¿½ï¿½ï¿½È£
+* \param dwRank : ï¿½ï¿½Å·
 */
 CSetClubRank::CSetClubRank(
 	DWORD dwClub,
@@ -102,11 +102,11 @@ int CSetClubRank::Execute(CServer* pServer)
 }
 
 /**
-* Å¬·´¸¶Å© ÀÌ¹ÌÁö¸¦ ¼³Á¤ÇÑ´Ù.
-* \param dwClub : Å¬·´¹øÈ£
-* \param dwMarkVer : ¸¶Å©¹öÀü
-* \param pData : µ¥ÀÌÅÍ Æ÷ÀÎÅÍ
-* \param nSize : µ¥ÀÌÅÍ size
+* Å¬ï¿½ï¿½ï¿½ï¿½Å© ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+* \param dwClub : Å¬ï¿½ï¿½ï¿½ï¿½È£
+* \param dwMarkVer : ï¿½ï¿½Å©ï¿½ï¿½ï¿½ï¿½
+* \param pData : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+* \param nSize : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ size
 */
 CWriteClubMarkImage::CWriteClubMarkImage(
 	DWORD dwClub,
@@ -149,9 +149,9 @@ int CWriteClubMarkImage::Execute(CServer* pServer)
 }
 
 /**
-* Å¬·´ ÇØÃ¼½Ã°£À» ¼³Á¤ÇÑ´Ù.
-* dwClub : Å¬·´¹øÈ£
-* tDiss : ÇØÃ¼½Ã°£
+* Å¬ï¿½ï¿½ ï¿½ï¿½Ã¼ï¿½Ã°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+* dwClub : Å¬ï¿½ï¿½ï¿½ï¿½È£
+* tDiss : ï¿½ï¿½Ã¼ï¿½Ã°ï¿½
 */
 CSetClubDissolutionTime::CSetClubDissolutionTime(
 	DWORD dwClub,
@@ -168,9 +168,9 @@ int CSetClubDissolutionTime::Execute(
 }
 
 /**
-* Å¬·´ÀÇ µ¿¸ÍÅ»Åð È¤Àº Á¦¸í½Ã°£À» Á¤ÇÑ´Ù.
-* \param dwClub Å¬·´¹øÈ£
-* \param tSec ½Ã°£
+* Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Å»ï¿½ï¿½ È¤ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ã°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ñ´ï¿½.
+* \param dwClub Å¬ï¿½ï¿½ï¿½ï¿½È£
+* \param tSec ï¿½Ã°ï¿½
 * \return 
 */
 CSetClubAllianceSec::CSetClubAllianceSec(
@@ -188,9 +188,9 @@ int CSetClubAllianceSec::Execute(
 }
 
 /**
-* Å¬·´ÀÇ µ¿¸ÍÇØ»ê ½Ã°£À» Á¤ÇÑ´Ù.
-* \param dwClub Å¬·´¹øÈ£
-* \param tDis ÇØ»ê½Ã°£
+* Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ø»ï¿½ ï¿½Ã°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ñ´ï¿½.
+* \param dwClub Å¬ï¿½ï¿½ï¿½ï¿½È£
+* \param tDis ï¿½Ø»ï¿½Ã°ï¿½
 * \return 
 */
 CSetClubAllianceDis::CSetClubAllianceDis(
@@ -209,9 +209,9 @@ int CSetClubAllianceDis::Execute(
 
 
 /**
-* Å¬·´ÀÇ ¸¶½ºÅÍ À§ÀÓ ½Ã°£À» ¼³Á¤ÇÑ´Ù.
-* \param dwClub Å¬·´¹øÈ£
-* \param tDis ¸¶½ºÅÍ À§ÀÓ ½Ã°£
+* Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+* \param dwClub Å¬ï¿½ï¿½ï¿½ï¿½È£
+* \param tDis ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½
 * \return 
 */
 CSetClubAuthorityTime::CSetClubAuthorityTime(
@@ -231,9 +231,9 @@ int CSetClubAuthorityTime::Execute(
 
 
 /**
-* »õ·Î¿î Ä³¸¯ÅÍ¸¦ Å¬·´¿¡ °¡ÀÔ½ÃÅ²´Ù
-* \param dwClub : Å¬·´¹øÈ£
-* \param dwChaNum : °¡ÀÔ½ÃÅ°·Á´Â Ä³¸¯ÅÍ¹øÈ£
+* ï¿½ï¿½ï¿½Î¿ï¿½ Ä³ï¿½ï¿½ï¿½Í¸ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ô½ï¿½Å²ï¿½ï¿½
+* \param dwClub : Å¬ï¿½ï¿½ï¿½ï¿½È£
+* \param dwChaNum : ï¿½ï¿½ï¿½Ô½ï¿½Å°ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ï¿½Í¹ï¿½È£
 */
 CAddClubMember::CAddClubMember(
 	DWORD dwClub,
@@ -243,14 +243,14 @@ CAddClubMember::CAddClubMember(
 {    
 }
 
-CAddClubMember::Execute(CServer* pServer)
+int CAddClubMember::Execute(CServer* pServer)
 {
     return m_pDbManager->AddClubMember(m_dwClub, m_dwChaNum);
 }
 
 /**
-* °¡ÀÔµÇ¾î ÀÖ´Â Ä³¸¯ÅÍ¸¦ Å¬·´¿¡¼­ Å»Åð½ÃÅ²´Ù
-* \param dwChaNum : Ä³¸¯ÅÍ¹øÈ£
+* ï¿½ï¿½ï¿½ÔµÇ¾ï¿½ ï¿½Ö´ï¿½ Ä³ï¿½ï¿½ï¿½Í¸ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å»ï¿½ï¿½ï¿½Å²ï¿½ï¿½
+* \param dwChaNum : Ä³ï¿½ï¿½ï¿½Í¹ï¿½È£
 */
 CDeleteClubMember::CDeleteClubMember(
 	DWORD dwChaNum )
@@ -265,9 +265,9 @@ int CDeleteClubMember::Execute(
 }
 
 /**
-* ÇØ´çÅ¬·´ÀÇ º¸À¯±Ý¾×À» ¼¼ÆÃÇÑ´Ù. (Storage)
-* \param dwClub : Å¬·´¹øÈ£
-* \param llMoney : º¸À¯±Ý¾× (±Ý¾×Àº >= 0)
+* ï¿½Ø´ï¿½Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ý¾ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½. (Storage)
+* \param dwClub : Å¬ï¿½ï¿½ï¿½ï¿½È£
+* \param llMoney : ï¿½ï¿½ï¿½ï¿½ï¿½Ý¾ï¿½ (ï¿½Ý¾ï¿½ï¿½ï¿½ >= 0)
 */
 CSetClubMoney::CSetClubMoney(
 	DWORD dwClub,
@@ -284,9 +284,9 @@ int CSetClubMoney::Execute(
 }
 
 /**
-* ÇØ´çÅ¬·´ÀÇ ¼öÀÔ±Ý¾×À» ¼¼ÆÃÇÑ´Ù. (Income money)
-* \param dwClub : Å¬·´¹øÈ£
-* \param llMoney : ¼öÀÔ±Ý¾× (±Ý¾×Àº >= 0)
+* ï¿½Ø´ï¿½Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ô±Ý¾ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½. (Income money)
+* \param dwClub : Å¬ï¿½ï¿½ï¿½ï¿½È£
+* \param llMoney : ï¿½ï¿½ï¿½Ô±Ý¾ï¿½ (ï¿½Ý¾ï¿½ï¿½ï¿½ >= 0)
 */
 CSetClubIncomeMoney::CSetClubIncomeMoney(
 	DWORD dwClub,
@@ -303,10 +303,10 @@ int CSetClubIncomeMoney::Execute(
 }
 
 /**
-* ÇØ´çÅ¬·´ÀÇ Å¬·´Ã¢°í¸¦ ÀúÀåÇÑ´Ù.
-* \param dwClub : Å¬·´¹øÈ£
-* \param pData : Ã¢°íÀ§Ä¡
-* \param nSize : ¹öÆÛ ÀüÃ¼Å©±â
+* ï¿½Ø´ï¿½Å¬ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½Ã¢ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+* \param dwClub : Å¬ï¿½ï¿½ï¿½ï¿½È£
+* \param pData : Ã¢ï¿½ï¿½ï¿½ï¿½Ä¡
+* \param nSize : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã¼Å©ï¿½ï¿½
 */
 CWriteClubStorage::CWriteClubStorage(
 	DWORD dwClub,
@@ -382,10 +382,10 @@ int CGetClubStorage::Execute(
 }
 
 ///////////////////////////////////////////////////////////////////////////
-// ºÎ Å¬·´ÀåÀ» ¼¼ÆÃÇÑ´Ù
-// dwClub : Å¬·´¹øÈ£
-// dwChaNum : Ä³¸¯ÅÍ¹øÈ£
-// dwSubMasterFlags : ÇÃ·¡±× (0 À¸·Î ³ÖÀ¸¸é ÀÏ¹Ý±æµå¿øÀÌ µÈ´Ù)
+// ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½
+// dwClub : Å¬ï¿½ï¿½ï¿½ï¿½È£
+// dwChaNum : Ä³ï¿½ï¿½ï¿½Í¹ï¿½È£
+// dwSubMasterFlags : ï¿½Ã·ï¿½ï¿½ï¿½ (0 ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ï¹Ý±ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½È´ï¿½)
 CSetClubMasterFlags::CSetClubMasterFlags(DWORD dwClub, DWORD dwChaNum, DWORD dwSubMasterFlags)
 {
 	m_dwClub           = dwClub;
@@ -399,14 +399,14 @@ int CSetClubMasterFlags::Execute(CServer* pServer)
 }
 
 ///////////////////////////////////////////////////////////////////////////
-// µ¿¸Í Å¬·´À» °á¼ºÇÑ´Ù.
-// dwClubP : ÁÖ Å¬·´¹øÈ£ (µ¿¸Í Å¬·´ÀÇ ÁÖ)
-// dwClubS : º¸Á¶ Å¬·´¹øÈ£ (ÁÖ Å¬·´ ¹ØÀ¸·Î µé¾î°¡´Â ÇÏÀ§ Å¬·´)
-// * ÁÖÀÇ *
-// db ´Â Å¬·´ÀÇ ¹«°á¼ºÀ» Ã¼Å©ÇÏÁö ¾Ê´Â´Ù.
-// A °¡ B ÀÇ º¸Á¶ÀÎ »óÅÂ¿¡¼­ 
-// B °¡ C ÀÇ º¸Á¶·Î µé¾î°¡°í
-// C °¡ A ÀÇ º¸Á¶·Î µé¾î°¡¸é ¼ÒÀ¯±Ç Ã¼ÀÎ ¹®Á¦°¡ ¹ß»ýÇÑ´Ù.
+// ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½á¼ºï¿½Ñ´ï¿½.
+// dwClubP : ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½È£ (ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½)
+// dwClubS : ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½È£ (ï¿½ï¿½ Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½î°¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½)
+// * ï¿½ï¿½ï¿½ï¿½ *
+// db ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½á¼ºï¿½ï¿½ Ã¼Å©ï¿½ï¿½ï¿½ï¿½ ï¿½Ê´Â´ï¿½.
+// A ï¿½ï¿½ B ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â¿ï¿½ï¿½ï¿½ 
+// B ï¿½ï¿½ C ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½î°¡ï¿½ï¿½
+// C ï¿½ï¿½ A ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½î°¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß»ï¿½ï¿½Ñ´ï¿½.
 CSetClubAlliance::CSetClubAlliance(DWORD dwClubP, DWORD dwClubS)
 {
 	m_dwClubP = dwClubP;
@@ -419,9 +419,9 @@ int CSetClubAlliance::Execute(CServer* pServer)
 }
 
 ///////////////////////////////////////////////////////////////////////////
-// µ¿¸Í Å¬·´À» ÇØÃ¼ÇÑ´Ù.
-// dwClubP : ÁÖ Å¬·´¹øÈ£ (µ¿¸Í Å¬·´ÀÇ ÁÖ)
-// dwClubS : º¸Á¶ Å¬·´¹øÈ£ (ÁÖ Å¬·´ ¹ØÀ¸·Î µé¾î°¡´Â ÇÏÀ§ Å¬·´)
+// ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã¼ï¿½Ñ´ï¿½.
+// dwClubP : ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½È£ (ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½)
+// dwClubS : ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½È£ (ï¿½ï¿½ Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½î°¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½)
 CDelClubAlliance::CDelClubAlliance(DWORD dwClubP, DWORD dwClubS)
 {	
 	m_dwClubP = dwClubP;
@@ -435,9 +435,9 @@ int CDelClubAlliance::Execute(CServer* pServer)
 
 
 ///////////////////////////////////////////////////////////////////////////
-// Å¬·´¹èÆ²À» ½ÃÀÛÇÑ´Ù.
-// dwClubP : ÁÖ Å¬·´¹øÈ£ (ÀÚ±âÅ¬·´)
-// dwClubS : º¸Á¶ Å¬·´¹øÈ£ (»ó´ëÅ¬·´)
+// Å¬ï¿½ï¿½ï¿½ï¿½Æ²ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+// dwClubP : ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½È£ (ï¿½Ú±ï¿½Å¬ï¿½ï¿½)
+// dwClubS : ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½È£ (ï¿½ï¿½ï¿½Å¬ï¿½ï¿½)
 CSetClubBattle::CSetClubBattle(DWORD dwClubP, DWORD dwClubS, DWORD dwEndTime, bool bAlliance )
 	: m_dwClubP ( dwClubP )
 	, m_dwClubS ( dwClubS )
@@ -452,12 +452,12 @@ int CSetClubBattle::Execute(CServer* pServer)
 }
 
 ///////////////////////////////////////////////////////////////////////////
-// Å¬·´¹èÆ²À» Á¾·áÇÑ´Ù.
-// dwClubP : ÁÖ Å¬·´¹øÈ£ (ÀÚ±âÅ¬·´)
-// dwClubS : º¸Á¶ Å¬·´¹øÈ£ (»ó´ëÅ¬·´)
-// nFlag :	Á¾·á Flag
-// nGuKillNum : Å³¼ö
-// nGuDeathNum : µ¥½º¼ö
+// Å¬ï¿½ï¿½ï¿½ï¿½Æ²ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+// dwClubP : ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½È£ (ï¿½Ú±ï¿½Å¬ï¿½ï¿½)
+// dwClubS : ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½È£ (ï¿½ï¿½ï¿½Å¬ï¿½ï¿½)
+// nFlag :	ï¿½ï¿½ï¿½ï¿½ Flag
+// nGuKillNum : Å³ï¿½ï¿½
+// nGuDeathNum : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 CEndClubBattle::CEndClubBattle(
 	DWORD dwClubP, 
 	DWORD dwClubS, 
@@ -482,12 +482,12 @@ int CEndClubBattle::Execute(CServer* pServer)
 
 
 ///////////////////////////////////////////////////////////////////////////
-// Å¬·´¹èÆ²À» Á¾·áÇÑ´Ù.
-// dwClubP : ÁÖ Å¬·´¹øÈ£ (ÀÚ±âÅ¬·´)
-// dwClubS : º¸Á¶ Å¬·´¹øÈ£ (»ó´ëÅ¬·´)
-// nFlag :	Á¾·á Flag
-// nGuKillNum : Å³¼ö
-// nGuDeathNum : µ¥½º¼ö
+// Å¬ï¿½ï¿½ï¿½ï¿½Æ²ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+// dwClubP : ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½È£ (ï¿½Ú±ï¿½Å¬ï¿½ï¿½)
+// dwClubS : ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½È£ (ï¿½ï¿½ï¿½Å¬ï¿½ï¿½)
+// nFlag :	ï¿½ï¿½ï¿½ï¿½ Flag
+// nGuKillNum : Å³ï¿½ï¿½
+// nGuDeathNum : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 CSaveClubBattle::CSaveClubBattle(
 	DWORD dwClubP, 
 	DWORD dwClubS, 
@@ -517,7 +517,7 @@ int CReSetAllianceBattle::Execute(CServer* pServer)
 
 
 ///////////////////////////////////////////////////////////////////////////
-// Å¬·´ÀÇ °øÁö»çÇ×À» ¼¼ÆÃÇÑ´Ù.
+// Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 CSetClubNotice::CSetClubNotice(DWORD dwClub, const char* szClubNotice)
 {
 	memset(m_szNotice, 0, sizeof(char) * (EMCLUB_NOTICE_LEN+1));
@@ -536,7 +536,7 @@ int CSetClubNotice::Execute(CServer* pServer)
 }
 
 ///////////////////////////////////////////////////////////////////////////
-// Å¬·´ÀÇ ¼±µµÅ¬·´ ÀÎÁõ ´ë¸®ÀÚ¸¦ ¼¼ÆÃÇÑ´Ù.
+// Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ë¸®ï¿½Ú¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 CSetClubDeputy::CSetClubDeputy(DWORD dwClub, DWORD dwDeputy)
 {
 	m_dwClub   = dwClub;

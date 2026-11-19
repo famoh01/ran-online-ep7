@@ -16,7 +16,7 @@ static char THIS_FILE[] = __FILE__;
 const DWORD DxEffCharElectricity::D3DVERTEX::FVF = D3DFVF_XYZ|D3DFVF_DIFFUSE|D3DFVF_TEX1;
 DWORD		DxEffCharElectricity::TYPEID			= EMEFFCHAR_ELECTRICITY;
 DWORD		DxEffCharElectricity::VERSION			= 0x0100;
-char		DxEffCharElectricity::NAME[MAX_PATH]	= "2.Àü±â";
+char		DxEffCharElectricity::NAME[MAX_PATH]	= "2.ï¿½ï¿½ï¿½ï¿½";
 
 DWORD		DxEffCharElectricity::m_dwSavedStateBlock		= NULL;
 DWORD		DxEffCharElectricity::m_dwEffectStateBlock	= NULL;
@@ -66,7 +66,7 @@ DxEffCharElectricity::~DxEffCharElectricity(void)
 //	SAFE_DELETE_ARRAY ( m_pTargetPos );
 }
 
-DxEffChar* DxEffCharElectricity::CloneInstance ( LPDIRECT3DDEVICE8 pd3dDevice, DxCharPart* pCharPart, DxSkinPiece* pSkinPiece )
+DxEffChar* DxEffCharElectricity::CloneInstance ( LPDIRECT3DDEVICE9 pd3dDevice, DxCharPart* pCharPart, DxSkinPiece* pSkinPiece )
 {
 	HRESULT hr;
 	DxEffCharElectricity *pEffChar = new DxEffCharElectricity;
@@ -83,7 +83,7 @@ DxEffChar* DxEffCharElectricity::CloneInstance ( LPDIRECT3DDEVICE8 pd3dDevice, D
 	return pEffChar;
 }
 
-HRESULT DxEffCharElectricity::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffCharElectricity::CreateDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {	
 	D3DCAPS8	d3dCaps;
 	pd3dDevice->GetDeviceCaps ( &d3dCaps );
@@ -92,7 +92,7 @@ HRESULT DxEffCharElectricity::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	{
 		pd3dDevice->BeginStateBlock();
 
-		//	Note : SetRenderState() ¼±¾ð
+		//	Note : SetRenderState() ï¿½ï¿½ï¿½ï¿½
 		//
 		pd3dDevice->SetRenderState ( D3DRS_CULLMODE,			D3DCULL_NONE );
 		pd3dDevice->SetRenderState ( D3DRS_LIGHTING,			FALSE );
@@ -115,7 +115,7 @@ HRESULT DxEffCharElectricity::CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffCharElectricity::ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffCharElectricity::ReleaseDevice ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	if ( pd3dDevice )
 	{
@@ -137,12 +137,12 @@ HRESULT DxEffCharElectricity::OneTimeSceneInit ()
 	return S_OK;
 }
 
-HRESULT DxEffCharElectricity::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffCharElectricity::InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr = S_OK;
 	D3DXVECTOR3	vNormal;
 
-	//	Note : Eff GroupÀÇ ¸ÅÆ®¸¯½º Æ®·£½ºÆû ÁöÁ¤.
+	//	Note : Eff Groupï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	if ( m_szTraceUP[0] == NULL )	return E_FAIL;
 	if ( m_szTraceDOWN[0] == NULL )	return E_FAIL;
@@ -164,7 +164,7 @@ HRESULT DxEffCharElectricity::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
 		if ( FAILED(hr) )	return E_FAIL;
 	}
 
-	//	Note : ÅØ½ºÃÄ ·Îµå
+	//	Note : ï¿½Ø½ï¿½ï¿½ï¿½ ï¿½Îµï¿½
 	//
 	TextureManager::LoadTexture ( m_szTexture_In, pd3dDevice, m_pTexture_In, 0, 0 );
 
@@ -173,14 +173,14 @@ HRESULT DxEffCharElectricity::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
 	if ( !m_pTexture_In )
 	{
 		char szMsg[256];
-		sprintf ( szMsg, "ÀÌ¹ÌÁö ÆÄÀÏ '%s' ÀÐ±â¿¡ ½ÇÆÐ", m_szTexture_In );
+		sprintf ( szMsg, "ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ '%s' ï¿½Ð±â¿¡ ï¿½ï¿½ï¿½ï¿½", m_szTexture_In );
 		MessageBox ( NULL, szMsg, "ERROR", MB_OK );
 	}
 
 	if ( !m_pTexture_Out )
 	{
 		char szMsg[256];
-		sprintf ( szMsg, "ÀÌ¹ÌÁö ÆÄÀÏ '%s' ÀÐ±â¿¡ ½ÇÆÐ", m_szTexture_Out );
+		sprintf ( szMsg, "ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ '%s' ï¿½Ð±â¿¡ ï¿½ï¿½ï¿½ï¿½", m_szTexture_Out );
 		MessageBox ( NULL, szMsg, "ERROR", MB_OK );
 	}
 
@@ -189,7 +189,7 @@ HRESULT DxEffCharElectricity::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
 	return S_OK;
 }
 
-HRESULT DxEffCharElectricity::CreateBlurVB( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffCharElectricity::CreateBlurVB( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	D3DXVECTOR3 pDelta;
 
@@ -208,7 +208,7 @@ HRESULT DxEffCharElectricity::CreateBlurVB( LPDIRECT3DDEVICE8 pd3dDevice )
 	else										m_fAlphaDelta3 = ( m_fAlphaEnd - m_fAlphaMid2 ) / (m_fLifeTime-m_fAlphaTime2);
 
 
-	//	Note : ºÐÇÒ¸éÀÌ ÀÖ´Ù¸é Á¡À» ¾ò¾î ¿Í¶ó.
+	//	Note : ï¿½ï¿½ï¿½Ò¸ï¿½ï¿½ï¿½ ï¿½Ö´Ù¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Í¶ï¿½.
 	//
 	SAFE_DELETE_ARRAY ( m_pRootVertex );
 
@@ -231,7 +231,7 @@ HRESULT DxEffCharElectricity::CreateBlurVB( LPDIRECT3DDEVICE8 pd3dDevice )
 	D3DXVECTOR3&	vLookatPt	= DxViewPort::Instance.GetLookatPt();
 	D3DXVECTOR3		vParent(0.f,0.f,0.f);
 
-	//	Note : ÃÊ±â À§Ä¡ »ý¼º
+	//	Note : ï¿½Ê±ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½
 	//
 	SAFE_DELETE_ARRAY ( m_pVertex );
 	m_pVertex = new D3DVERTEX[m_nVertexNum];
@@ -243,15 +243,15 @@ HRESULT DxEffCharElectricity::CreateBlurVB( LPDIRECT3DDEVICE8 pd3dDevice )
 	{
 		vCarDirec = vLookatPt - vFromPt;
 
-		vDirection = DirectSum( m_pRootVertex, i, m_dwOriginNum-1 );	// ¹æÇâÀ» ¾òÀ» ¼ö ÀÖ´Ù.. !!
+		vDirection = DirectSum( m_pRootVertex, i, m_dwOriginNum-1 );	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ö´ï¿½.. !!
 
 		D3DXVec3Cross ( &m_pRootVertex[i].vLookatCross, &vDirection, &vCarDirec );
-		D3DXVec3Normalize ( &m_pRootVertex[i].vLookatCross, &m_pRootVertex[i].vLookatCross );		// °è¼Ó °ªÀ» ¹Þ¾Æ¼­ ¹Ù²Ù¾îÁà¾ß ÇÏ´Â °Í.!!
+		D3DXVec3Normalize ( &m_pRootVertex[i].vLookatCross, &m_pRootVertex[i].vLookatCross );		// ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Þ¾Æ¼ï¿½ ï¿½Ù²Ù¾ï¿½ï¿½ï¿½ï¿½ ï¿½Ï´ï¿½ ï¿½ï¿½.!!
 
 		m_pVertex[i*2+0].vPos = m_pRootVertex[i].vPos+(m_pRootVertex[i].vLookatCross*m_fWidth_In);	//	m_dwAngel
 		m_pVertex[i*2+1].vPos = m_pRootVertex[i].vPos-(m_pRootVertex[i].vLookatCross*m_fWidth_In);
 
-		//	Note : Àá½Ã.. ²À Áö¿ö¾ß ÇÔ.
+		//	Note : ï¿½ï¿½ï¿½.. ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½.
 		//
 		m_cColor.a = 1.f;
 		m_cColor.r = 1.f;
@@ -281,14 +281,14 @@ HRESULT DxEffCharElectricity::CreateBlurVB( LPDIRECT3DDEVICE8 pd3dDevice )
 //	SAFE_DELETE_ARRAY ( m_pTargetPos );
 //	m_pTargetPos = new POSITION[m_nVertexNum];
 
-	//	Note : ºôº¸µå ¹× Á¡µé ¾÷µ¥ÀÌÆ®..
+	//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®..
 	//
 	UpdatePos ();
 
 	return S_OK;
 }
 
-HRESULT DxEffCharElectricity::RestoreDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEffCharElectricity::RestoreDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	m_pd3dDevice = pd3dDevice;
 
@@ -330,7 +330,7 @@ HRESULT DxEffCharElectricity::FrameMove ( float fTime, float fElapsedTime )
 
 	m_fElapsedTime += fElapsedTime;
 /*
-	//	Note : ¹Ýº¹ÇÒ ¶§ ½Ã°£ ¹× ¿©·¯ °ªÀ» ÃÊ±âÈ­ ÇÑ´Ù.
+	//	Note : ï¿½Ýºï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ã°ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­ ï¿½Ñ´ï¿½.
 	//
 	if ( m_fGAge>=(m_fGBeginTime+m_fLifeTime) )
 	{
@@ -339,7 +339,7 @@ HRESULT DxEffCharElectricity::FrameMove ( float fTime, float fElapsedTime )
 		m_cColor = m_cColorStart;
 	}
 
-	//	Note : ÄÃ·¯ Á¶Á¤ 
+	//	Note : ï¿½Ã·ï¿½ ï¿½ï¿½ï¿½ï¿½ 
 	//
 	if ( m_fGAge >= m_fGBeginTime && m_fGAge < m_fAlphaTime1)
 		m_fAlpha += m_fAlphaDelta1*fElapsedTime;
@@ -349,12 +349,12 @@ HRESULT DxEffCharElectricity::FrameMove ( float fTime, float fElapsedTime )
 		m_fAlpha += m_fAlphaDelta3*fElapsedTime;
 
 	m_cColor += m_cColorDelta*fElapsedTime;
-	m_cColor.a = m_fAlpha;		// ¾ËÆÄ°ª Àû¿ë
+	m_cColor.a = m_fAlpha;		// ï¿½ï¿½ï¿½Ä°ï¿½ ï¿½ï¿½ï¿½ï¿½
 */
 	return S_OK;
 }
 
-HRESULT	DxEffCharElectricity::Render ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT	DxEffCharElectricity::Render ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr = S_OK;
 	D3DXVECTOR3	vNormal;
@@ -376,7 +376,7 @@ HRESULT	DxEffCharElectricity::Render ( LPDIRECT3DDEVICE8 pd3dDevice )
 		if ( FAILED(hr) )	return E_FAIL;
 	}
 
-	//	Note : À§Ä¡ º¯°æ µÇ¾úÀ» ¶§ !!
+	//	Note : ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½ ï¿½Ç¾ï¿½ï¿½ï¿½ ï¿½ï¿½ !!
 	//
 	if ( (m_vTransUP!=m_vPrevUP) ||	(m_vTransDOWN!=m_vPrevDOWN) )	UpdatePos ();
 
@@ -405,7 +405,7 @@ HRESULT	DxEffCharElectricity::Render ( LPDIRECT3DDEVICE8 pd3dDevice )
 	pd3dDevice->GetRenderState ( D3DRS_ALPHAFUNC,			&dwAlphaFunc );
 	pd3dDevice->GetTextureStageState ( 0, D3DTSS_COLOROP,	&dwColorOP );
 
-	//	Note : ºí·»µù ¿ä¼Ò ¼ÂÆÃ
+	//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	//
 	switch ( m_nBlend )
 	{
@@ -447,7 +447,7 @@ HRESULT	DxEffCharElectricity::Render ( LPDIRECT3DDEVICE8 pd3dDevice )
 	}
 
 
-	//	Note : ÅØ½ºÃÄ ¼³Á¤.
+	//	Note : ï¿½Ø½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	pd3dDevice->SetIndices ( NULL, 0 );
 	pd3dDevice->SetStreamSource ( 0, NULL, 0 );
@@ -462,7 +462,7 @@ HRESULT	DxEffCharElectricity::Render ( LPDIRECT3DDEVICE8 pd3dDevice )
 	{
 		for ( DWORD i=0; i<m_dwLightning; i++ )
 		{
-			// Note : °è»ê.. ·£´ý
+			// Note : ï¿½ï¿½ï¿½.. ï¿½ï¿½ï¿½ï¿½
 			UpdatePos_Out ();
 
 			pd3dDevice->SetTexture ( 0, m_pTexture_Out );
@@ -523,15 +523,15 @@ void	DxEffCharElectricity::UpdatePos ()
 	D3DXVECTOR3&	vLookatPt	= DxViewPort::Instance.GetLookatPt();
 
 	
-	//	Note : »Ñ·ÁÁú À§Ä¡ ¼³Á¤ 
+	//	Note : ï¿½Ñ·ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½ 
 	//
 	m_pRootVertex[0].vPos					= m_vTransUP;
 	m_pRootVertex[m_dwOriginNum-1].vPos		= m_vTransDOWN;
 
-	//	Note : È¸Àü 
+	//	Note : È¸ï¿½ï¿½ 
 	//
 	D3DXVECTOR3		vVel(0.f,0.f,0.f);
-	//	% °è»ê»ó ¿À·ù¸¦ ÇÇÇÏ±â À§ÇØ¼­ 
+	//	% ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½Ø¼ï¿½ 
 	//
 	if ( m_dwVelocity > 0 )
 	{
@@ -548,10 +548,10 @@ void	DxEffCharElectricity::UpdatePos ()
 	{
 		vCarDirec = vLookatPt - vFromPt;
 
-		vDirection = DirectSum( m_pRootVertex, i, m_dwOriginNum-1 );	// ¹æÇâÀ» ¾òÀ» ¼ö ÀÖ´Ù.. !!
+		vDirection = DirectSum( m_pRootVertex, i, m_dwOriginNum-1 );	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ö´ï¿½.. !!
 
 		D3DXVec3Cross ( &m_pRootVertex[i].vLookatCross, &vDirection, &vCarDirec );
-		D3DXVec3Normalize ( &m_pRootVertex[i].vLookatCross, &m_pRootVertex[i].vLookatCross );		// °è¼Ó °ªÀ» ¹Þ¾Æ¼­ ¹Ù²Ù¾îÁà¾ß ÇÏ´Â °Í.!!
+		D3DXVec3Normalize ( &m_pRootVertex[i].vLookatCross, &m_pRootVertex[i].vLookatCross );		// ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Þ¾Æ¼ï¿½ ï¿½Ù²Ù¾ï¿½ï¿½ï¿½ï¿½ ï¿½Ï´ï¿½ ï¿½ï¿½.!!
 
 		m_pVertex[i*2+0].vPos = m_pRootVertex[i].vPos+(m_pRootVertex[i].vLookatCross*m_fWidth_In);	//	m_dwAngel
 		m_pVertex[i*2+1].vPos = m_pRootVertex[i].vPos-(m_pRootVertex[i].vLookatCross*m_fWidth_In);
@@ -570,7 +570,7 @@ void	DxEffCharElectricity::UpdatePos_Out ()
 
 	for ( int i=0; i<m_dwOriginNum; i++ )
 	{
-		//	% °è»ê»ó ¿À·ù¸¦ ÇÇÇÏ±â À§ÇØ¼­ 
+		//	% ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½Ø¼ï¿½ 
 		//
 		if ( m_dwMaxLenth > 0 )
 		{
@@ -594,13 +594,13 @@ void	DxEffCharElectricity::UpdatePos_Out ()
 		}
 	}
 
-	//	Note ; ¼Óµµ Á¶Àý
+	//	Note ; ï¿½Óµï¿½ ï¿½ï¿½ï¿½ï¿½
 	//
 //	m_nRoop--;
 //	if ( m_nRoop < 0 )	m_nRoop = m_nDivide-1;
 }
 
-HRESULT	DxEffCharElectricity::LoadFile ( basestream &SFile, LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT	DxEffCharElectricity::LoadFile ( basestream &SFile, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr;
 	DWORD dwVer, dwSize;
@@ -608,15 +608,15 @@ HRESULT	DxEffCharElectricity::LoadFile ( basestream &SFile, LPDIRECT3DDEVICE8 pd
 	SFile >> dwVer;
 	SFile >> dwSize;
 
-	//	Note : ¹öÀüÀÌ ÀÏÄ¡ÇÒ °æ¿ì. 
+	//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½. 
 	//
 	if ( dwVer == VERSION )
 	{
-		//	Note : ÀÌÆÑÆ®ÀÇ Property ¸¦ ÀúÀå.
+		//	Note : ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ Property ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 		//
 		SFile.ReadBuffer ( &m_Property, sizeof(m_Property) );
 
-		//	Note : Device ÀÚ¿øÀ» »ý¼ºÇÑ´Ù.
+		//	Note : Device ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 		//
 		hr = Create ( pd3dDevice );
 		if ( FAILED(hr) )	return hr;
@@ -624,7 +624,7 @@ HRESULT	DxEffCharElectricity::LoadFile ( basestream &SFile, LPDIRECT3DDEVICE8 pd
 	}
 	else
 	{
-		//	Note : ¹öÀüÀÌ Æ²¸± °æ¿ì¿¡´Â ÆÄÀÏ¿¡ ¾²¿©Áø DATA¿µ¿ªÀ» °Ç´õ ¶ç´Â ÀÛ¾÷À» ÁøÇà.
+		//	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Æ²ï¿½ï¿½ ï¿½ï¿½ì¿¡ï¿½ï¿½ ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ DATAï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç´ï¿½ ï¿½ï¿½ï¿½ ï¿½Û¾ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 		//
 		SFile.SetOffSet ( SFile.GetfTell()+dwSize );
 		
@@ -639,11 +639,11 @@ HRESULT	DxEffCharElectricity::SaveFile ( basestream &SFile )
 	SFile << TYPEID;
 	SFile << VERSION;
 
-	//	Note : DATAÀÇ »çÀÌÁî¸¦ ±â·ÏÇÑ´Ù. Load ½Ã¿¡ ¹öÀüÀÌ Æ²¸± °æ¿ì »ç¿ëµÊ.
+	//	Note : DATAï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½î¸¦ ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½. Load ï¿½Ã¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Æ²ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	SFile << (DWORD) ( sizeof(m_Property) );
 
-	//	Note : ÀÌÆÑÆ®ÀÇ Property ¸¦ ÀúÀå.
+	//	Note : ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ Property ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	SFile.WriteBuffer ( &m_Property, sizeof(m_Property) );
 

@@ -20,7 +20,7 @@ struct BLURCURVE_PROPERTY
 	DWORD			m_dwFaces;
 	D3DCOLOR		m_vColorUP;
 	D3DCOLOR		m_vColorDOWN;
-	int				m_iBlurAdd;				// ´õÇØÁö´Â ÀÜ»ó °¹¼ö
+	int				m_iBlurAdd;				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ü»ï¿½ ï¿½ï¿½ï¿½ï¿½
 	int				m_iColorUP;
 	int				m_iColorDOWN;
 	D3DXVECTOR3		m_vBlurStart;
@@ -32,7 +32,7 @@ struct BLURCURVE_PROPERTY
 
 class DxEffectBlurC : public DxEffectBase
 {
-	//	Note : ÀÌÆåÆ® Å¸ÀÔ Á¤ÀÇ.
+	//	Note : ï¿½ï¿½ï¿½ï¿½Æ® Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 public:
 	const static DWORD	TYPEID;
@@ -48,13 +48,13 @@ public:
 	virtual void GetProperty ( PBYTE &pProp, DWORD &dwSize, DWORD &dwVer );
 	virtual void SetProperty ( PBYTE &pProp, DWORD &dwSize, DWORD dwVer );
 
-	//	Note : ½¦ÀÌ´õ.
+	//	Note : ï¿½ï¿½ï¿½Ì´ï¿½.
 	//
 protected:	
 	static DWORD	m_dwSavedStateBlock;
 	static DWORD	m_dwEffectStateBlock;
 
-	//	Note : ¼Ó¼º.
+	//	Note : ï¿½Ó¼ï¿½.
 	//
 protected:
 	union
@@ -71,7 +71,7 @@ protected:
 			DWORD			m_dwFaces;
 			D3DCOLOR		m_vColorUP;
 			D3DCOLOR		m_vColorDOWN;
-			int				m_iBlurAdd;		// ´õÇØÁö´Â ÀÜ»ó °¹¼ö
+			int				m_iBlurAdd;		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ü»ï¿½ ï¿½ï¿½ï¿½ï¿½
 			int				m_iColorUP;
 			int				m_iColorDOWN;
 			D3DXVECTOR3		m_vBlurStart;
@@ -100,7 +100,7 @@ protected:
 		const static DWORD FVF;
 	};
 
-	LPDIRECT3DVERTEXBUFFER8		m_pVB;
+	LPDIRECT3DVERTEXBUFFER9		m_pVB;
 
 	DxFrame		*m_pframeCur;
 	BLURTEX		*m_vBlurTexNow;
@@ -108,36 +108,36 @@ protected:
 	BLURTEX		m_pFirstBlur[4];
 	float		m_fTestTime;
 
-	int			m_iBlurNum;		// »Ñ·Á¾ß ÇÒ ÀÜ»ó °¹¼ö
+	int			m_iBlurNum;		// ï¿½Ñ·ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ü»ï¿½ ï¿½ï¿½ï¿½ï¿½
 
-	int			m_iAdd;			// ´õÇØÁö´Â ÀÜ»ó °¹¼ö
+	int			m_iAdd;			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ü»ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 	D3DXMATRIX	matTestWorld;
 
-	LPDIRECT3DTEXTURE8	m_pddsTexture;
+	LPDIRECT3DTEXTURE9	m_pddsTexture;
 
 public:
-	static HRESULT CreateDevice ( LPDIRECT3DDEVICE8 pd3dDevice );
-	static HRESULT ReleaseDevice ( LPDIRECT3DDEVICE8 pd3dDevice );
+	static HRESULT CreateDevice ( LPDIRECT3DDEVICE9 pd3dDevice );
+	static HRESULT ReleaseDevice ( LPDIRECT3DDEVICE9 pd3dDevice );
 
 protected:
-	HRESULT AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT AdaptToDxFrameChild ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice );
 
 public:
-	HRESULT AdaptToDxFrame ( DxFrame *pframeCur, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT AdaptToDxFrame ( DxFrame *pframeCur, LPDIRECT3DDEVICE9 pd3dDevice );
 
 	//	Note : 
 	//
 public:
-	virtual HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice );
+	virtual HRESULT InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice );
 	virtual HRESULT DeleteDeviceObjects ();
 
 public:
 	HRESULT FrameMove ( float fTime, float fElapsedTime );	
-	HRESULT Render ( DxFrame *pFrame, LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT Render ( DxFrame *pFrame, LPDIRECT3DDEVICE9 pd3dDevice );
 
 public:
-	HRESULT		MakeEffBlurCMeshs( LPDIRECT3DDEVICE8 pd3dDevice );
+	HRESULT		MakeEffBlurCMeshs( LPDIRECT3DDEVICE9 pd3dDevice );
 	HRESULT		SetInitMesh( );
 	D3DXVECTOR3 GetPoint ( int UpDown );
 

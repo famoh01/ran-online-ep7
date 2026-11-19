@@ -12,40 +12,40 @@ public:
 	DxNaviMesh() {};
 	virtual	~DxNaviMesh() {};
 
-	HRESULT InitDeviceObjects(LPDIRECT3DDEVICE8 pd3dDevice);	
+	HRESULT InitDeviceObjects(LPDIRECT3DDEVICE9 pd3dDevice);	
 	HRESULT	Update(void);
 	HRESULT	Render(void);
 	HRESULT DeleteDeviceObjects();	
 
-	//	<--	¸Þ½îµå ÀÛ¼º
-	//		*¸Þ½¬¸¦ ÁÖ¸é ±×°ÍÀÇ Á¤º¸¸¦ ¶â¾î NavigationMesh Å¬·¡½º¿¡
-	//		µî·ÏÇÏ´Â ¸Þ½îµå ÀÛ¼º*
-	//		*ÀÌ¹Ì ¿øÇÏ´Â DxFrameÀÌ ³Ñ¾î¿Â´Ù°í °¡Á¤ÇÔ*
-	//		*¹«°á¼º °Ë»ç - Æ®¶óÀÌ¾Þ±Û ³ë¸»ÀÇ °¢ÀÌ 90µµ¸¦ ³Ñ¾î°¡´ÂÁö Ã¼Å© - ¸¦ ¼öÇàÇÑ´Ù.
-	//		¸¸¾à, ÀÖ´Ù¸é E_FAIL, ¾ø´Ù¸é S_OK¸¦ ¹ÝÈ¯ÇÑ´Ù.*
+	//	<--	ï¿½Þ½ï¿½ï¿½ ï¿½Û¼ï¿½
+	//		*ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½Ö¸ï¿½ ï¿½×°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ NavigationMesh Å¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	//		ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½Þ½ï¿½ï¿½ ï¿½Û¼ï¿½*
+	//		*ï¿½Ì¹ï¿½ ï¿½ï¿½ï¿½Ï´ï¿½ DxFrameï¿½ï¿½ ï¿½Ñ¾ï¿½Â´Ù°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*
+	//		*ï¿½ï¿½ï¿½á¼º ï¿½Ë»ï¿½ - Æ®ï¿½ï¿½ï¿½Ì¾Þ±ï¿½ ï¿½ë¸»ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 90ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ¾î°¡ï¿½ï¿½ï¿½ï¿½ Ã¼Å© - ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+	//		ï¿½ï¿½ï¿½ï¿½, ï¿½Ö´Ù¸ï¿½ E_FAIL, ï¿½ï¿½ï¿½Ù¸ï¿½ S_OKï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ñ´ï¿½.*
 	HRESULT	CreateNaviMesh ( DxFrame *pNaviFrame );
-	//	-->	¸Þ½îµå ÀÛ¼º
+	//	-->	ï¿½Þ½ï¿½ï¿½ ï¿½Û¼ï¿½
 
-	//	<--	¸¶¿ì½º¸¦ ÀÌ¿ëÇÑ Ä³¸¯ÅÍ ÀÌµ¿
+	//	<--	ï¿½ï¿½ï¿½ì½ºï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½
 	void	IsCollision ( const D3DXVECTOR3 &vP1, const D3DXVECTOR3 &vP2 );
 	void	Follow ();
 	void	GotoError ();// { NaviMesh.GotoErrorPosition(  ); }
-	//	-->	¸¶¿ì½º¸¦ ÀÌ¿ëÇÑ Ä³¸¯ÅÍ ÀÌµ¿
+	//	-->	ï¿½ï¿½ï¿½ì½ºï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½
 
 	void	SaveFile ( );
 	void	LoadFile ( );
 
 
-	//	<--	ÀÓ½Ã ¸Þ½îµå ¹× º¯¼öµé
+	//	<--	ï¿½Ó½ï¿½ ï¿½Þ½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 protected:	
 	HRESULT	LoadDxFrameNaviMesh ();
 
 private:
-	LPDIRECT3DDEVICE8			m_pd3dDevice;
+	LPDIRECT3DDEVICE9			m_pd3dDevice;
 	Actor PathObject;		// red cone that does the pathfinding
 	Actor ControlObject;	// blue cone controlled by the player	
 	NavigationMesh NaviMesh;// our navigation mesh
-	//	-->	ÀÓ½Ã ¸Þ½îµå ¹× º¯¼öµé
+	//	-->	ï¿½Ó½ï¿½ ï¿½Þ½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 };
 
 #endif	//	__DX_NAVI_MESH__

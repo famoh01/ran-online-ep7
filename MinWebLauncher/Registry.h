@@ -341,8 +341,7 @@ public:
 	void	write();					///< writes the value to the registry
 	
 	operator CRect();
-	operator LPCRECT() { return (LPCRECT)(CRect)*this; }
-	operator LPRECT() { return (LPRECT)(CRect)*this; }
+	// operators LPCRECT/LPRECT removed: ambiguous with out-of-line operator CRect() on modern MSVC
 	CRegRect& operator=(CRect r);
 	CRegRect& operator+=(POINT r) { return *this = (CRect)*this + r;}
 	CRegRect& operator+=(SIZE r) { return *this = (CRect)*this + r;}

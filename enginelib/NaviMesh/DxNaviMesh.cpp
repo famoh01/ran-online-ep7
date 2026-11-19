@@ -15,7 +15,7 @@ static char THIS_FILE[] = __FILE__;
 
 DxNaviMesh	g_DxNaviMesh;
 
-HRESULT DxNaviMesh::InitDeviceObjects( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxNaviMesh::InitDeviceObjects( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	m_pd3dDevice = pd3dDevice;
 
@@ -63,14 +63,14 @@ HRESULT	DxNaviMesh::LoadDxFrameNaviMesh ()
 {
 	HRESULT hr = E_FAIL;
 
-//	<-- DxFrameMeshÁß NavigationMesh °¡Á®¿À±â
+//	<-- DxFrameMeshï¿½ï¿½ NavigationMesh ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     DxFrameMesh* pRawFrameMesh = new DxFrameMesh();
 	
-	//	Note : Á¾Àü µ¥ÀÌÅÍ »èÁ¦.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 	//
 	pRawFrameMesh->CleanUp ();	
 
-	//	Note : ÀÐÀ» xÆÄÀÏ°ú ¹öÅØ½º ±¸Á¶ Á¤º¸ ( FVF ) ¸¦ ÁØ´Ù.
+	//	Note : ï¿½ï¿½ï¿½ï¿½ xï¿½ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ( FVF ) ï¿½ï¿½ ï¿½Ø´ï¿½.
 	//
 //	pRawFrameMesh->SetFile ( "e:/smtm_c/_dbin/xFiles/neschool.x" );
 	pRawFrameMesh->SetFile ( "e:/smtm_c/_dbin/xFiles/nav.x" );
@@ -78,40 +78,40 @@ HRESULT	DxNaviMesh::LoadDxFrameNaviMesh ()
 
 	pRawFrameMesh->SetFVF ( D3DFVF_XYZ );	
 
-	//	Note : ÃÊ±âÈ­ ÇÑ´Ù.
+	//	Note : ï¿½Ê±ï¿½È­ ï¿½Ñ´ï¿½.
 	//
 	if ( FAILED ( pRawFrameMesh->Create ( m_pd3dDevice ) ) )
 	{
 		return E_FAIL;
 	}
 	pRawFrameMesh->UpdateFrames();
-//	--> DxFrameMeshÁß NavigationMesh °¡Á®¿À±â
+//	--> DxFrameMeshï¿½ï¿½ NavigationMesh ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //	DxFrame* pFrameMesh = pRawFrameMesh->FindFrame ( "Frame514_endnevi_Layer1" );
 	DxFrame* pFrameMesh = pRawFrameMesh->FindFrame ( "Line01s[Mesh]" );
 //	DxFrame* pFrameMesh = pRawFrameMesh->FindFrame ( "nav[Mesh]" );
 	pRawFrameMesh->SetCollisionDetectedFrame ( pFrameMesh );
 
-	//	<--	Navigation Mesh µ¥ÀÌÅ¸ ¼¼ÆÃ
-	//		*³×ºñ°ÔÀÌ¼Ç ¸Þ½¬ Á¤º¸¸¦ °¡Áø DxFrameÀ» ÆÄ¶ó¹ÌÅÍ·Î ³Ñ±ä´Ù.*
-	//		*¿À·ù°¡ ¹ß»ýÇÏ¸é ¹Ù·Î Á¤Áö...*
+	//	<--	Navigation Mesh ï¿½ï¿½ï¿½ï¿½Å¸ ï¿½ï¿½ï¿½ï¿½
+	//		*ï¿½×ºï¿½ï¿½ï¿½Ì¼ï¿½ ï¿½Þ½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ DxFrameï¿½ï¿½ ï¿½Ä¶ï¿½ï¿½ï¿½Í·ï¿½ ï¿½Ñ±ï¿½ï¿½.*
+	//		*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß»ï¿½ï¿½Ï¸ï¿½ ï¿½Ù·ï¿½ ï¿½ï¿½ï¿½ï¿½...*
 //	hr = NaviMesh.CreateNaviMesh( pFrameMesh );
 //	if ( FAILED ( hr ) )
 //	{
 //		SAFE_DELETE ( pRawFrameMesh );
 //		return E_FAIL;
 //	}
-	//	-->	Navigation Mesh µ¥ÀÌÅ¸ ¼¼ÆÃ
+	//	-->	Navigation Mesh ï¿½ï¿½ï¿½ï¿½Å¸ ï¿½ï¿½ï¿½ï¿½
 	SAFE_DELETE ( pRawFrameMesh );
 
-	//	<--	Ä³¸¯ÅÍ, ¸÷À» ¸¸µç´Ù.
+	//	<--	Ä³ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½.
 	PathObject.Create(&NaviMesh, D3DXVECTOR3(0.0f, 0.0f, 0.0f),-1);
 	ControlObject.Create(&NaviMesh, D3DXVECTOR3(0.0f, 0.0f, 0.0f),-1);
-	//	-->	Ä³¸¯ÅÍ, ¸÷À» ¸¸µç´Ù.
+	//	-->	Ä³ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½.
 	
-	//	<--	Ä³¸¯ÅÍ, ¸÷ÀÇ ¼Óµµ¸¦ 
+	//	<--	Ä³ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½Óµï¿½ï¿½ï¿½ 
 	ControlObject.SetMaxSpeed ( 1.0f );
 	PathObject.SetMaxSpeed ( 0.9f );
-	//	-->	Ä³¸¯ÅÍ, ¸÷À» ¸¸µç´Ù.
+	//	-->	Ä³ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½.
 
 	return S_OK;
 }
@@ -133,9 +133,9 @@ void DxNaviMesh::IsCollision ( const D3DXVECTOR3 &vP1, const D3DXVECTOR3 &vP2 )
 	if ( bCollision )
 	{		
 		ControlObject.GotoLocation ( vDest, CollisionID );
-		CDebugSet::ToView ( "È®½ÇÇÑ  ±æ - %d", CollisionID );
+		CDebugSet::ToView ( "È®ï¿½ï¿½ï¿½ï¿½  ï¿½ï¿½ - %d", CollisionID );
 	}
-	//	<--	¿µ¿ª¿Ü ºÎºÐÀ» Âï¾úÀ» °æ¿ì
+	//	<--	ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Îºï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 	else
 	{	
 //		vDest = ( vFromPt + vTargetPt * 2 )  / 3;
@@ -143,7 +143,7 @@ void DxNaviMesh::IsCollision ( const D3DXVECTOR3 &vP1, const D3DXVECTOR3 &vP2 )
 //		DWORD	CellID;
 //		vDest = pNaviMesh->SnapPointToMesh ( &CellID,vDest );		
 //		ControlObject.GotoLocation ( vDest, CellID );
-//		CDebugSet::ToView ( "¾î¸²ÀâÀº±æ - %d", CollisionID );
+//		CDebugSet::ToView ( "ï¿½î¸²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ - %d", CollisionID );
 	}
 	//	-->
 }
@@ -180,13 +180,13 @@ void	DxNaviMesh::LoadFile (  )
 //	NaviMesh.LoadFile ( SFile );
 	SFile.CloseFile();
 
-	//	<--	Ä³¸¯ÅÍ, ¸÷À» ¸¸µç´Ù.
+	//	<--	Ä³ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½.
 	PathObject.Create(&NaviMesh, D3DXVECTOR3(0.0f, 0.0f, 0.0f),-1);
 	ControlObject.Create(&NaviMesh, D3DXVECTOR3(0.0f, 0.0f, 0.0f),-1);
-	//	-->	Ä³¸¯ÅÍ, ¸÷À» ¸¸µç´Ù.
+	//	-->	Ä³ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½.
 	
-	//	<--	Ä³¸¯ÅÍ, ¸÷ÀÇ ¼Óµµ¸¦ 
+	//	<--	Ä³ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½Óµï¿½ï¿½ï¿½ 
 	ControlObject.SetMaxSpeed ( 1.0f );
 	PathObject.SetMaxSpeed ( 0.9f );
-	//	-->	Ä³¸¯ÅÍ, ¸÷À» ¸¸µç´Ù.
+	//	-->	Ä³ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½.
 }

@@ -11,7 +11,7 @@ static char THIS_FILE[] = __FILE__;
 
 #define new DEBUG_NEW
 
-//	Note : DxEditMan, ¹öÀü
+//	Note : DxEditMan, ï¿½ï¿½ï¿½ï¿½
 //
 const DWORD DxEditMan::VERSION = 0x00000001;
 
@@ -34,13 +34,13 @@ HRESULT DxEditMan::OneTimeSceneInit ()
 	return S_OK;
 }
 
-HRESULT DxEditMan::InitDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEditMan::InitDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr = S_OK;
 	return S_OK;
 }
 
-HRESULT DxEditMan::RestoreDeviceObjects ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEditMan::RestoreDeviceObjects ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr = S_OK;
 	return S_OK;
@@ -70,13 +70,13 @@ HRESULT DxEditMan::FrameMove ( float fTime, float fElapsedTime )
 	return S_OK;
 }
 
-HRESULT DxEditMan::Render ( LPDIRECT3DDEVICE8 pd3dDevice )
+HRESULT DxEditMan::Render ( LPDIRECT3DDEVICE9 pd3dDevice )
 {
 	HRESULT hr = S_OK;
 	return S_OK;
 }
 
-void DxEditMan::LoadSet ( char *pFileName, LPDIRECT3DDEVICE8 pd3dDevice )
+void DxEditMan::LoadSet ( char *pFileName, LPDIRECT3DDEVICE9 pd3dDevice )
 {
 //	CDebugSet::ClearFile ( "LoadSet.log" );
 //
@@ -95,7 +95,7 @@ void DxEditMan::LoadSet ( char *pFileName, LPDIRECT3DDEVICE8 pd3dDevice )
 //
 //	if ( dwFileVer > DxEditMan::VERSION )
 //	{
-//		CDebugSet::ToFile ( "LoadSet.log", "-. ERROR ¸Ê ¼³Á¤ ÆÄÀÏ(PSF) ÀÌ ÇöÁ¦ ÅøÀÇ ¹öÀüº¸´Ù »óÀ§ÀÇ ¹öÀüÀÔ´Ï´Ù." );
+//		CDebugSet::ToFile ( "LoadSet.log", "-. ERROR ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(PSF) ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ô´Ï´ï¿½." );
 //		return;
 //	}
 //
@@ -110,7 +110,7 @@ void DxEditMan::LoadSet ( char *pFileName, LPDIRECT3DDEVICE8 pd3dDevice )
 //	CDebugSet::ToFile ( "LoadSet.log", "-. [FrameMesh Loading] - Start" );
 //	if ( !m_FrameMesh.LoadSet ( SFile, pd3dDevice ) )
 //	{
-//		CDebugSet::ToFile ( "LoadSet.log", "-. ÇÁ·¹ÀÓ ¸Þ½¬·Îµå¿¡ ½ÇÆÐÇÏ¿´½À´Ï´Ù." );
+//		CDebugSet::ToFile ( "LoadSet.log", "-. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½Îµå¿¡ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ï¿½ï¿½ï¿½Ï´ï¿½." );
 //		return;
 //	}
 //	CDebugSet::ToFile ( "LoadSet.log", "-. [FrameMesh Loading] - End" );
@@ -190,7 +190,7 @@ void DxEditMan::LoadSet ( char *pFileName, LPDIRECT3DDEVICE8 pd3dDevice )
 //		CDebugSet::ToFile ( "LoadSet.log", "-. [DXLANDEFF Loading] - End" );
 //	}
 //
-//	//	Note : ¸Ê ID ÀÐ±â.
+//	//	Note : ï¿½ï¿½ ID ï¿½Ð±ï¿½.
 //	//
 //	SFile >> bResult;
 //	if ( bResult )
@@ -289,7 +289,7 @@ void DxEditMan::SaveSet ( char	*pFileName )
 	////
 	//m_FrameMesh.SaveSet ( SFile );
 
-	////	Note : ³»ºñ°ÔÀÌ¼Ç ¸Þ½Ã.
+	////	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì¼ï¿½ ï¿½Þ½ï¿½.
 	////
 	//if ( m_pNaviFrame )		SFile << BOOL ( TRUE );
 	//else					SFile << BOOL ( FALSE );
@@ -325,7 +325,7 @@ void DxEditMan::SaveSet ( char	*pFileName )
 	//	else			SFile << BOOL ( FALSE );
 	//}
 
-	////	Note : ¸Ê ID ÀúÀå.
+	////	Note : ï¿½ï¿½ ID ï¿½ï¿½ï¿½ï¿½.
 	////
 	//SFile << BOOL ( TRUE );
 	//SFile << m_MapID.dwID;
@@ -334,7 +334,7 @@ void DxEditMan::SaveSet ( char	*pFileName )
 	//SFile.WriteBuffer ( m_szMapName, sizeof(char)*MAXLANDNAME );
 
 
-	////	Note : Land ¿¡ »ðÀÔµÈ SkinObject
+	////	Note : Land ï¿½ï¿½ ï¿½ï¿½ï¿½Ôµï¿½ SkinObject
 	////
 	//if ( m_pLandSkinObjList )	SFile << BOOL ( TRUE );
 	//else						SFile << BOOL ( FALSE );
@@ -358,7 +358,7 @@ void DxEditMan::SaveSet ( char	*pFileName )
 	//SFile << BOOL ( TRUE );
 	//m_WeatherMan.SaveSet ( SFile );
 
-	////	Note : BGM ÆÄÀÏ ÀÌ¸§ [ 1°³¸¸ Á¸Àç ]
+	////	Note : BGM ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ [ 1ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ]
 	//SFile << BOOL ( TRUE );
 	//m_BGMDATA.SaveSet ( SFile );	
 
@@ -370,7 +370,7 @@ void DxEditMan::SaveSet ( char	*pFileName )
 	//SFile << BOOL ( TRUE );
 	//m_SKY_PROPERTY.SaveSet ( SFile );
 
-	////	Note : ´ÙÀ½¿¡ Ãß°¡µÉ µ¥ÀÌÅÍ¸¦ À§ÇØ¼­ ¸¶Å· ------
+	////	Note : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½Ø¼ï¿½ ï¿½ï¿½Å· ------
 	////
 	//SFile << BOOL ( FALSE );
 }
