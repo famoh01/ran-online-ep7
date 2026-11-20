@@ -58,7 +58,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path artifacts | Out-Null
-          $dirs = @("_RBuildData", "_DBuildData", "Bin")
+          $dirs = @("_RBuildData", "_DBuildData", "_Bin", "Bin", "MinWebLauncher\\Release", "RanOnlienInstaller\\Release")
           foreach ($d in $dirs) {
             if (Test-Path $d) {
               Get-ChildItem -Recurse $d -Filter *.exe | ForEach-Object {
