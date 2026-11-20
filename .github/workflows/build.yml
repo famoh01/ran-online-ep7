@@ -58,14 +58,14 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path artifacts | Out-Null
-          $dirs = @("_RBuildData", "_DBuildData", "_Bin", "Bin", "MinWebLauncher\\Release", "RanOnlienInstaller\\Release")
+          $dirs = @("_RBuildData", "_DBuildData", "_Bin", "Bin", "MinWebLauncher\Release", "RanOnlienInstaller\Release")
           foreach ($d in $dirs) {
             if (Test-Path $d) {
               Get-ChildItem -Recurse $d -Filter *.exe | ForEach-Object {
                 Write-Host "found: $($_.FullName)"
                 Copy-Item $_.FullName artifacts\
               }
-              Get-ChildItem -Recurse $d -Filter *.dll | ForEach-Object {
+              Get-ChildItem -Recurse $d -Include *.dll,*.ocx | ForEach-Object {
                 Write-Host "found: $($_.FullName)"
                 Copy-Item $_.FullName artifacts\
               }
