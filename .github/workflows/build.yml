@@ -71,6 +71,25 @@ jobs:
               }
             }
           }
+          # --- runtime DLLs shipped with the source tree (game needs them next to the exe) ---
+          $runtime = @(
+            "=Library\\ggauth.dll",
+            "=Library\\ggsrvdll.dll",
+            "=Library\\zlib1.dll",
+            "=TbbLib\\bin\\tbb.dll",
+            "=TbbLib\\bin\\tbbmalloc.dll",
+            "=DLL\\ntwdblib.DLL",
+            "=DLL\\CABINET.DLL",
+            "LegacyInclude\\DaumCrypt.DLL"
+          )
+          foreach ($f in $runtime) {
+            if (Test-Path $f) {
+              Write-Host "runtime: $f"
+              Copy-Item $f artifacts\
+            } else {
+              Write-Host "MISSING runtime: $f"
+            }
+          }
           Get-ChildItem artifacts
 
       - name: Upload artifacts
