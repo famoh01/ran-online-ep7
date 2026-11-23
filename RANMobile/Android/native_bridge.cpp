@@ -118,8 +118,10 @@ static void ShowAndroidKeyboard(ANativeActivity* activity, bool show) {
             jobject decor = env->CallObjectMethod(win, getDecor);
             if (decor) {
                 if (show) {
-                    jmethodID showSoft = env->GetMethodID(immCls, "showSoftInput", "(Landroid/view/View;I)Z");
-                    env->CallBooleanMethod(imm, showSoft, decor, 2); // SHOW_FORCED
+                    jmethodID toggleSoft = env->GetMethodID(immCls, "toggleSoftInput", "(II)V");
+                    if (toggleSoft) {
+                        env->CallVoidMethod(imm, toggleSoft, 2, 0); // SHOW_FORCED
+                    }
                 } else {
                     jclass viewCls = env->GetObjectClass(decor);
                     jmethodID getTok = env->GetMethodID(viewCls, "getWindowToken", "()Landroid/os/IBinder;");
