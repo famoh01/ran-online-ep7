@@ -1,0 +1,8 @@
+{
+  "gameTitle": "RAN ONLINE EP7",
+  "serverDisplayName": "FAM HAWAII",
+  "loginServerHost": "127.0.0.1",
+  "loginServerPort": 5001,
+  "protocolVersion": "EP7",
+  "useExistingEP7DataOnly": true
+}

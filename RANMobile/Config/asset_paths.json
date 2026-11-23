@@ -1,0 +1,13 @@
+{
+  "ep7DataRoot": "./ep7_data",
+  "mapsList": "mapslist.mst",
+  "crowData": "glogic/crow.mnsf",
+  "itemData": "glogic/item.isf",
+  "skillData": "glogic/skill.ssf",
+  "questList": "quest/quest.lst",
+  "npcTalkDir": "npctalk/",
+  "skinObjectDir": "skinobject/",
+  "textureDir": "texture/",
+  "animationDir": "animation/",
+  "allowMockData": false
+}

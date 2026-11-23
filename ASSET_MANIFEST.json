@@ -1,0 +1,27 @@
+{
+  "project": "RAN ONLINE EP7 - FAM HAWAII MOBILE",
+  "release": "https://github.com/famoh01/ran-online-ep7/releases/tag/ran-ep7-full-v1",
+  "assets": [
+    {
+      "originalFileName": "RAN-EP7-Client-TH.zip.part00",
+      "assetType": "Archive",
+      "fileFormat": ".zip.part00",
+      "fileSize": 1572864000,
+      "availability": "BLOCKED"
+    },
+    {
+      "originalFileName": "RAN-EP7-Client-TH.zip.part01",
+      "assetType": "Archive",
+      "fileFormat": ".zip.part01",
+      "fileSize": 1010562339,
+      "availability": "BLOCKED"
+    },
+    {
+      "originalFileName": "RAN-EP7-ThaiPack-FamHawaii.zip",
+      "assetType": "ThaiPack",
+      "fileFormat": ".zip",
+      "fileSize": 1359185,
+      "availability": "BLOCKED"
+    }
+  ]
+}
