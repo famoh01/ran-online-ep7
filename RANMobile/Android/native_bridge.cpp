@@ -2,6 +2,7 @@
 #include <android_native_app_glue.h>
 #include <android/input.h>
 #include <android/keycodes.h>
+#include <android/log.h>
 #include <android/native_activity.h>
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
@@ -30,13 +31,35 @@ static void InitEGL(AndroidAppContext* ctx, ANativeWindow* window) {
     ctx->display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     eglInitialize(ctx->display, nullptr, nullptr);
 
-    EGLConfig config;
+    EGLConfig config = nullptr;
     EGLint numConfigs = 0;
-    eglChooseConfig(ctx->display, attribs, &config, 1, &numConfigs);
+    if (!eglChooseConfig(ctx->display, attribs, &config, 1, &numConfigs) || numConfigs == 0) {
+        const EGLint fallbackAttribs[] = {
+            EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+            EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+            EGL_BLUE_SIZE, 8,
+            EGL_GREEN_SIZE, 8,
+            EGL_RED_SIZE, 8,
+            EGL_NONE
+        };
+        eglChooseConfig(ctx->display, fallbackAttribs, &config, 1, &numConfigs);
+    }
+    if (numConfigs == 0) {
+        __android_log_print(ANDROID_LOG_ERROR, "RANMobile", "eglChooseConfig failed: no matching config");
+        return;
+    }
 
     const EGLint ctxAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE };
     ctx->context = eglCreateContext(ctx->display, config, EGL_NO_CONTEXT, ctxAttribs);
+    if (ctx->context == EGL_NO_CONTEXT) {
+        const EGLint es2Attribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
+        ctx->context = eglCreateContext(ctx->display, config, EGL_NO_CONTEXT, es2Attribs);
+    }
     ctx->surface = eglCreateWindowSurface(ctx->display, config, window, nullptr);
+    if (ctx->context == EGL_NO_CONTEXT || ctx->surface == EGL_NO_SURFACE) {
+        __android_log_print(ANDROID_LOG_ERROR, "RANMobile", "eglCreateContext/Surface failed");
+        return;
+    }
     eglMakeCurrent(ctx->display, ctx->surface, ctx->surface, ctx->context);
 
     EGLint w = 1280, h = 720;
