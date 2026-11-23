@@ -4,6 +4,7 @@
 
 namespace RANMobile {
     class NetworkClient;
+    class MobileRenderer;
 }
 
 class LoginScreen {
