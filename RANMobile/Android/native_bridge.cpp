@@ -6,6 +6,7 @@
 #include <android/native_activity.h>
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
+#include <jni.h>
 #include <chrono>
 #include "../Engine/Core/RANMobileEngine.h"
 #include "../UI/Login/LoginScreen.h"
@@ -98,6 +99,41 @@ static void HandleAppCmd(struct android_app* app, int32_t cmd) {
     }
 }
 
+static void ShowAndroidKeyboard(ANativeActivity* activity, bool show) {
+    if (!activity || !activity->vm) return;
+    JNIEnv* env = nullptr;
+    if (activity->vm->AttachCurrentThread(&env, nullptr) != JNI_OK || !env) return;
+
+    jclass actCls = env->GetObjectClass(activity->clazz);
+    jmethodID getSysSvc = env->GetMethodID(actCls, "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;");
+    jstring immStr = env->NewStringUTF("input_method");
+    jobject imm = env->CallObjectMethod(activity->clazz, getSysSvc, immStr);
+    if (imm) {
+        jclass immCls = env->GetObjectClass(imm);
+        jmethodID getWin = env->GetMethodID(actCls, "getWindow", "()Landroid/view/Window;");
+        jobject win = env->CallObjectMethod(activity->clazz, getWin);
+        if (win) {
+            jclass winCls = env->GetObjectClass(win);
+            jmethodID getDecor = env->GetMethodID(winCls, "getDecorView", "()Landroid/view/View;");
+            jobject decor = env->CallObjectMethod(win, getDecor);
+            if (decor) {
+                if (show) {
+                    jmethodID showSoft = env->GetMethodID(immCls, "showSoftInput", "(Landroid/view/View;I)Z");
+                    env->CallBooleanMethod(imm, showSoft, decor, 2); // SHOW_FORCED
+                } else {
+                    jclass viewCls = env->GetObjectClass(decor);
+                    jmethodID getTok = env->GetMethodID(viewCls, "getWindowToken", "()Landroid/os/IBinder;");
+                    jobject tok = env->CallObjectMethod(decor, getTok);
+                    jmethodID hideSoft = env->GetMethodID(immCls, "hideSoftInputFromWindow", "(Landroid/os/IBinder;I)Z");
+                    env->CallBooleanMethod(imm, hideSoft, tok, 0);
+                }
+            }
+        }
+    }
+    env->DeleteLocalRef(immStr);
+    activity->vm->DetachCurrentThread();
+}
+
 static int32_t HandleInputEvent(struct android_app* app, AInputEvent* event) {
     auto* ctx = static_cast<AndroidAppContext*>(app->userData);
     if (!ctx || !ctx->engine.IsInitialized()) return 0;
@@ -116,9 +152,9 @@ static int32_t HandleInputEvent(struct android_app* app, AInputEvent* event) {
             if (ctx->engine.GetLoginScreen()) {
                 auto focus = ctx->engine.GetLoginScreen()->GetFocus();
                 if (focus == LoginFocus::Username || focus == LoginFocus::Password) {
-                    ANativeActivity_showSoftInput(app->activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_IMPLICIT);
+                    ShowAndroidKeyboard(app->activity, true);
                 } else {
-                    ANativeActivity_hideSoftInput(app->activity, ANATIVEACTIVITY_HIDE_SOFT_INPUT_NOT_ALWAYS);
+                    ShowAndroidKeyboard(app->activity, false);
                 }
             }
         } else if (masked == AMOTION_EVENT_ACTION_MOVE) {
