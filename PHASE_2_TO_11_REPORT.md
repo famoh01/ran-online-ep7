@@ -16,12 +16,12 @@
 
 ## PHASE 3 — MOBILE ENGINE
 - **COMPLETED**: สร้าง `RANMobileEngine`, `MobileRenderer`, `ResourceManager`, `AudioManager`, `AnimationManager`, `Logger`
-- **COMPILE**: PASS (Linux C++17) | Android NDK `arm64-v8a` (`libranmobile.so`) FAILED in GitHub Actions Run `45205668221` (Commit `7dc3c79`)
+- **COMPILE**: PASS (Linux C++17) | **PASS** Android NDK r26d `arm64-v8a` (`libranmobile.so` built & uploaded in GitHub Actions Run `45206977085`, Commit `3b77943`)
 - **TEST**: PASS (`RANMobileEngine` lifecycle, `AudioManager`, `AnimationManager`)
 - **FILES CREATED**: `RANMobile/Engine/Audio/AudioManager.h/.cpp`, `RANMobile/Engine/Animation/AnimationManager.h/.cpp`
-- **FILES MODIFIED**: `RANMobile/CMakeLists.txt` (removed `LINKER_LANGUAGE C` override), `RANMobile/Android/native_bridge.cpp` (`extern "C" android_main`)
-- **VERIFIED**: Engine Initialize/Start/Update/Render/Shutdown ทำงานจริง; GitHub Actions Step 3 (Original EP7 Client Data) & Step 4 (C++17 Tests) **PASS**
-- **BLOCKED**: `ANDROID BUILD = BLOCKED` (Step 6 `libranmobile.so` failed in CI; CI log download blocked by sandbox allowlist; APK/AAB not built yet)
+- **FILES MODIFIED**: `RANMobile/CMakeLists.txt` (compiled `android_native_app_glue.c` directly into `ranmobile`), `RANMobile/Android/native_bridge.cpp` (`extern "C" android_main`)
+- **VERIFIED**: Engine Initialize/Start/Update/Render/Shutdown ทำงานจริง; GitHub Actions Run `45206977085` **ALL STEPS SUCCESS** (`libranmobile-arm64-v8a` artifact uploaded)
+- **BLOCKED**: `APK/AAB` packaging (ยังไม่รัน Gradle APK/AAB packaging) และ `REAL EP7 SERVER TEST` (ยังไม่ได้เชื่อม EP7 Server จริง)
 - **REMAINING**: แก้ไขจุดที่ Build `libranmobile.so` ไม่ผ่านบน Android NDK r26d และ Build APK/AAB
 
 ## PHASE 4 — DATA CONVERTER & VALIDATOR
