@@ -32,8 +32,6 @@ public:
     void BeginFrame();
     void EndFrame();
     void DrawUIQuad(float x, float y, float width, float height, float r, float g, float b, float a);
-    void DrawUITexturedQuad(uint32_t texId, float x, float y, float width, float height);
-    uint32_t LoadTextureFromMemory(const uint8_t* data, size_t size);
     void DrawUIText(float x, float y, const std::string& text, float scale, float r, float g, float b, float a);
     float MeasureTextWidth(const std::string& text, float scale);
 

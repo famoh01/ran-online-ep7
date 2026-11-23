@@ -4,7 +4,6 @@
 #include <android/keycodes.h>
 #include <android/log.h>
 #include <android/native_activity.h>
-#include <android/asset_manager.h>
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
 #include <chrono>
@@ -90,19 +89,6 @@ static void HandleAppCmd(struct android_app* app, int32_t cmd) {
     if (!ctx) return;
     if (cmd == APP_CMD_INIT_WINDOW && app->window != nullptr) {
         InitEGL(ctx, app->window);
-        if (ctx->hasWindow && app->activity && app->activity->assetManager &&
-            ctx->engine.GetRenderer() && ctx->engine.GetLoginScreen()) {
-            AAsset* asset = AAssetManager_open(app->activity->assetManager, "login_bg.jpg", AASSET_MODE_BUFFER);
-            if (asset) {
-                const void* buf = AAsset_getBuffer(asset);
-                off_t len = AAsset_getLength(asset);
-                if (buf && len > 0) {
-                    uint32_t tex = ctx->engine.GetRenderer()->LoadTextureFromMemory(static_cast<const uint8_t*>(buf), static_cast<size_t>(len));
-                    ctx->engine.GetLoginScreen()->SetBackgroundTexture(tex);
-                }
-                AAsset_close(asset);
-            }
-        }
     } else if (cmd == APP_CMD_TERM_WINDOW) {
         TermEGL(ctx);
     } else if (cmd == APP_CMD_PAUSE) {

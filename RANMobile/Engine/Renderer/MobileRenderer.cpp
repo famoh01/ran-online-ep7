@@ -3,12 +3,6 @@
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wall"
-#pragma GCC diagnostic ignored "-Wextra"
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-#pragma GCC diagnostic pop
 
 #include <fstream>
 #include <cstring>
@@ -319,63 +313,6 @@ void MobileRenderer::DrawUIQuad(float x, float y, float width, float height, flo
     glBindVertexArray(0);
 #else
     (void)x; (void)y; (void)width; (void)height; (void)r; (void)g; (void)b; (void)a;
-#endif
-}
-
-uint32_t MobileRenderer::LoadTextureFromMemory(const uint8_t* data, size_t size) {
-#ifdef __ANDROID__
-    if (!data || size == 0) return 0;
-    int w = 0, h = 0, comp = 0;
-    uint8_t* pixels = stbi_load_from_memory(data, static_cast<int>(size), &w, &h, &comp, 4);
-    if (!pixels) return 0;
-    GLuint tex = 0;
-    glGenTextures(1, &tex);
-    glBindTexture(GL_TEXTURE_2D, tex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    stbi_image_free(pixels);
-    return tex;
-#else
-    (void)data; (void)size;
-    return 0;
-#endif
-}
-
-void MobileRenderer::DrawUITexturedQuad(uint32_t texId, float x, float y, float width, float height) {
-    m_stats.drawCalls++;
-    m_stats.triangles += 2;
-#ifdef __ANDROID__
-    if (!m_initialized || !m_uiProgram || texId == 0) return;
-    glUseProgram(m_uiProgram);
-    float L = 0.0f, R = static_cast<float>(m_width);
-    float T = 0.0f, B = static_cast<float>(m_height);
-    float proj[16] = {
-        2.0f / (R - L), 0.0f, 0.0f, 0.0f,
-        0.0f, 2.0f / (T - B), 0.0f, 0.0f,
-        0.0f, 0.0f, -1.0f, 0.0f,
-        -(R + L) / (R - L), -(T + B) / (T - B), 0.0f, 1.0f
-    };
-    glUniformMatrix4fv(m_uProjLoc, 1, GL_FALSE, proj);
-    glUniform4f(m_uColorLoc, 1.0f, 1.0f, 1.0f, 1.0f);
-    glUniform1i(m_uUseTexLoc, 2);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texId);
-    float verts[16] = {
-        x, y, 0.0f, 0.0f,
-        x + width, y, 1.0f, 0.0f,
-        x, y + height, 0.0f, 1.0f,
-        x + width, y + height, 1.0f, 1.0f
-    };
-    glBindVertexArray(m_uiVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, m_uiVBO);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(verts), verts);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glBindVertexArray(0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-#else
-    (void)texId; (void)x; (void)y; (void)width; (void)height;
 #endif
 }
 
