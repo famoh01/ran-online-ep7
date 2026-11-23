@@ -2,7 +2,7 @@
 #include <android_native_app_glue.h>
 #include "../Engine/Core/RANMobileEngine.h"
 
-void android_main(struct android_app* state) {
+extern "C" void android_main(struct android_app* state) {
     RANMobileEngine engine;
     if (!engine.Initialize()) {
         return;
