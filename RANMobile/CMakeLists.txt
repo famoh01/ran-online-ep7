@@ -37,11 +37,19 @@ set(RANMOBILE_SOURCES
 )
 
 if(ANDROID)
+    set(NATIVE_APP_GLUE_DIR "${ANDROID_NDK}/sources/android/native_app_glue")
+    add_library(android_native_app_glue STATIC
+        "${NATIVE_APP_GLUE_DIR}/android_native_app_glue.c"
+    )
+    target_include_directories(android_native_app_glue PUBLIC "${NATIVE_APP_GLUE_DIR}")
+
     add_library(ranmobile SHARED
         ${RANMOBILE_SOURCES}
         Android/native_bridge.cpp
     )
+    target_include_directories(ranmobile PRIVATE "${NATIVE_APP_GLUE_DIR}")
     target_link_libraries(ranmobile
+        android_native_app_glue
         android
         log
         EGL
