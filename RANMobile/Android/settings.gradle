@@ -1,0 +1,2 @@
+rootProject.name = "RANMobile"
+include(":app")
