@@ -193,6 +193,22 @@ int main() {
     skillUI.BindSkillSlot(0, 101);
     assert(skillUI.GetSkillSlot(0)->CanUse());
 
+    // 15. Real LoginScreen Focus, Text Input, Backspace, Password Masking, Render
+    auto* engLogin = engine.GetLoginScreen();
+    assert(engLogin != nullptr);
+    engLogin->HandleTouchDown(0, 640.0f, 220.0f); // Username field
+    assert(engLogin->GetFocus() == LoginFocus::Username);
+    engLogin->HandleTextInput("famuser");
+    engLogin->HandleBackspace();
+    assert(engLogin->GetUsername() == "famuse");
+
+    engLogin->HandleTouchDown(0, 640.0f, 280.0f); // Password field
+    assert(engLogin->GetFocus() == LoginFocus::Password);
+    engLogin->HandleTextInput("secret");
+    assert(engLogin->GetMaskedPassword() == "******");
+    engine.Render();
+    assert(engine.GetRenderer()->GetStats().drawCalls > 0);
+
     engine.Shutdown();
     assert(!engine.IsInitialized());
 

@@ -12,6 +12,7 @@ namespace RANMobile {
     class NetworkClient;
     class GameDataLoader;
 }
+class LoginScreen;
 
 class RANMobileEngine {
 public:
@@ -24,7 +25,18 @@ public:
     void Start();
     void Update(float deltaTime);
     void Render();
+    void Resize(int width, int height);
+    void Pause();
+    void Resume();
     void Shutdown();
+
+    void OnTouchDown(int pointerId, float x, float y);
+    void OnTouchMove(int pointerId, float x, float y);
+    void OnTouchUp(int pointerId, float x, float y);
+    void OnTextInput(const std::string& utf8);
+    void OnBackspace();
+
+    LoginScreen* GetLoginScreen() const { return m_loginScreen.get(); }
 
     bool IsInitialized() const { return m_initialized; }
     bool IsRunning() const { return m_running; }
@@ -51,4 +63,5 @@ private:
     std::unique_ptr<RANMobile::MobileCamera> m_camera;
     std::unique_ptr<RANMobile::NetworkClient> m_networkClient;
     std::unique_ptr<RANMobile::GameDataLoader> m_gameDataLoader;
+    std::unique_ptr<LoginScreen> m_loginScreen;
 };

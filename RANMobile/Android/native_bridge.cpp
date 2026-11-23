@@ -1,10 +1,13 @@
 #ifdef __ANDROID__
 #include <android_native_app_glue.h>
 #include <android/input.h>
+#include <android/keycodes.h>
+#include <android/native_activity.h>
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
+#include <chrono>
 #include "../Engine/Core/RANMobileEngine.h"
-#include "../Engine/Touch/TouchSystem.h"
+#include "../UI/Login/LoginScreen.h"
 
 struct AndroidAppContext {
     RANMobileEngine engine;
@@ -40,6 +43,7 @@ static void InitEGL(AndroidAppContext* ctx, ANativeWindow* window) {
     eglQuerySurface(ctx->display, ctx->surface, EGL_WIDTH, &w);
     eglQuerySurface(ctx->display, ctx->surface, EGL_HEIGHT, &h);
     ctx->engine.Initialize();
+    ctx->engine.Resize(w, h);
     ctx->engine.Start();
     ctx->hasWindow = true;
 }
@@ -64,13 +68,19 @@ static void HandleAppCmd(struct android_app* app, int32_t cmd) {
         InitEGL(ctx, app->window);
     } else if (cmd == APP_CMD_TERM_WINDOW) {
         TermEGL(ctx);
+    } else if (cmd == APP_CMD_PAUSE) {
+        ctx->engine.Pause();
+    } else if (cmd == APP_CMD_RESUME) {
+        ctx->engine.Resume();
     }
 }
 
 static int32_t HandleInputEvent(struct android_app* app, AInputEvent* event) {
     auto* ctx = static_cast<AndroidAppContext*>(app->userData);
     if (!ctx || !ctx->engine.IsInitialized()) return 0;
-    if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
+
+    int32_t type = AInputEvent_getType(event);
+    if (type == AINPUT_EVENT_TYPE_MOTION) {
         int32_t action = AMotionEvent_getAction(event);
         int32_t masked = action & AMOTION_EVENT_ACTION_MASK;
         int32_t idx = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
@@ -78,17 +88,39 @@ static int32_t HandleInputEvent(struct android_app* app, AInputEvent* event) {
         float x = AMotionEvent_getX(event, idx);
         float y = AMotionEvent_getY(event, idx);
 
-        auto* touch = ctx->engine.GetTouchSystem();
-        if (touch) {
-            if (masked == AMOTION_EVENT_ACTION_DOWN || masked == AMOTION_EVENT_ACTION_POINTER_DOWN) {
-                touch->OnTouchDown(pointerId, x, y);
-            } else if (masked == AMOTION_EVENT_ACTION_MOVE) {
-                touch->OnTouchMove(pointerId, x, y);
-            } else if (masked == AMOTION_EVENT_ACTION_UP || masked == AMOTION_EVENT_ACTION_POINTER_UP) {
-                touch->OnTouchUp(pointerId, x, y);
+        if (masked == AMOTION_EVENT_ACTION_DOWN || masked == AMOTION_EVENT_ACTION_POINTER_DOWN) {
+            ctx->engine.OnTouchDown(pointerId, x, y);
+            if (ctx->engine.GetLoginScreen()) {
+                auto focus = ctx->engine.GetLoginScreen()->GetFocus();
+                if (focus == LoginFocus::Username || focus == LoginFocus::Password) {
+                    ANativeActivity_showSoftInput(app->activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_IMPLICIT);
+                } else {
+                    ANativeActivity_hideSoftInput(app->activity, ANATIVEACTIVITY_HIDE_SOFT_INPUT_NOT_ALWAYS);
+                }
             }
+        } else if (masked == AMOTION_EVENT_ACTION_MOVE) {
+            ctx->engine.OnTouchMove(pointerId, x, y);
+        } else if (masked == AMOTION_EVENT_ACTION_UP || masked == AMOTION_EVENT_ACTION_POINTER_UP || masked == AMOTION_EVENT_ACTION_CANCEL) {
+            ctx->engine.OnTouchUp(pointerId, x, y);
         }
         return 1;
+    } else if (type == AINPUT_EVENT_TYPE_KEY && AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN) {
+        int32_t keyCode = AKeyEvent_getKeyCode(event);
+        if (keyCode == AKEYCODE_DEL) {
+            ctx->engine.OnBackspace();
+            return 1;
+        } else if (keyCode == AKEYCODE_ENTER && ctx->engine.GetLoginScreen()) {
+            ctx->engine.GetLoginScreen()->OnLoginPressed();
+            return 1;
+        } else if (keyCode >= AKEYCODE_A && keyCode <= AKEYCODE_Z) {
+            char c = static_cast<char>('a' + (keyCode - AKEYCODE_A));
+            ctx->engine.OnTextInput(std::string(1, c));
+            return 1;
+        } else if (keyCode >= AKEYCODE_0 && keyCode <= AKEYCODE_9) {
+            char c = static_cast<char>('0' + (keyCode - AKEYCODE_0));
+            ctx->engine.OnTextInput(std::string(1, c));
+            return 1;
+        }
     }
     return 0;
 }
@@ -99,6 +131,7 @@ extern "C" void android_main(struct android_app* state) {
     state->onAppCmd = HandleAppCmd;
     state->onInputEvent = HandleInputEvent;
 
+    auto lastTime = std::chrono::steady_clock::now();
     int events;
     struct android_poll_source* source;
     while (!state->destroyRequested) {
@@ -108,8 +141,13 @@ extern "C" void android_main(struct android_app* state) {
             }
             if (state->destroyRequested) break;
         }
+        auto now = std::chrono::steady_clock::now();
+        float dt = std::chrono::duration<float>(now - lastTime).count();
+        lastTime = now;
+        if (dt > 0.1f) dt = 0.1f;
+
         if (ctx.hasWindow && ctx.engine.IsRunning()) {
-            ctx.engine.Update(1.0f / 60.0f);
+            ctx.engine.Update(dt);
             ctx.engine.Render();
             eglSwapBuffers(ctx.display, ctx.surface);
         }

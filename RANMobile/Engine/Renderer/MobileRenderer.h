@@ -30,8 +30,8 @@ public:
 
     int GetWidth() const { return m_width; }
     int GetHeight() const { return m_height; }
+    bool IsInitialized() const { return m_initialized; }
 
-    // Frustum culling helper (AABB)
     bool IsBoxInFrustum(float minX, float minY, float minZ, float maxX, float maxY, float maxZ) const;
 
 private:
@@ -40,6 +40,14 @@ private:
     int m_height = 720;
     GraphicsSettings m_settings;
     RenderStats m_stats;
+
+#ifdef __ANDROID__
+    uint32_t m_uiProgram = 0;
+    uint32_t m_uiVAO = 0;
+    uint32_t m_uiVBO = 0;
+    int32_t m_uProjLoc = -1;
+    int32_t m_uColorLoc = -1;
+#endif
 };
 
 } // namespace RANMobile
