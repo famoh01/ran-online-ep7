@@ -217,6 +217,20 @@ int main() {
     assert(RANMobile::MobileRenderer::DecodeUTF8(thaiSample, utfIdx) == 0x0E31); // ั (combining)
     assert(engine.GetRenderer()->MeasureTextWidth(thaiSample, 1.0f) > 0.0f);
 
+    // 17. Settings & Exit Confirmation Hit Testing
+    engLogin->HandleTouchDown(0, 420.0f, 485.0f); // Settings button
+    assert(engLogin->IsSettingsOpen());
+    engLogin->HandleTouchDown(0, 640.0f, 300.0f); // Sound toggle
+    assert(!engLogin->IsSoundEnabled());
+    engLogin->HandleTouchDown(0, 640.0f, 470.0f); // Close settings
+    assert(!engLogin->IsSettingsOpen());
+
+    engLogin->HandleTouchDown(0, 800.0f, 485.0f); // Exit button
+    assert(engLogin->IsExitConfirmOpen());
+    engLogin->HandleTouchDown(0, 720.0f, 400.0f); // NO
+    assert(!engLogin->IsExitConfirmOpen());
+    assert(!engLogin->WantsExit());
+
     engine.Shutdown();
     assert(!engine.IsInitialized());
 

@@ -42,6 +42,11 @@ public:
     LoginAuthState GetAuthState() const { return m_authState; }
     const std::string& GetStatusMessage() const { return m_statusMessage; }
     bool WantsExit() const { return m_exitRequested; }
+    bool IsSettingsOpen() const { return m_showSettingsPanel; }
+    bool IsExitConfirmOpen() const { return m_showExitConfirm; }
+    bool IsSoundEnabled() const { return m_soundEnabled; }
+    bool IsMusicEnabled() const { return m_musicEnabled; }
+    int GetGraphicsLevel() const { return m_graphicsLevel; }
 
     void HandleTouchDown(int pointerId, float x, float y);
     void HandleTouchMove(int pointerId, float x, float y);
@@ -62,6 +67,11 @@ private:
     std::string m_password;
     bool m_rememberAccount = false;
     bool m_showPassword = false;
+    bool m_showSettingsPanel = false;
+    bool m_showExitConfirm = false;
+    bool m_soundEnabled = true;
+    bool m_musicEnabled = true;
+    int m_graphicsLevel = 1; // 0=LOW, 1=MED, 2=HIGH, 3=ULTRA
 
     LoginFocus m_focus = LoginFocus::None;
     LoginAuthState m_authState = LoginAuthState::Disconnected;

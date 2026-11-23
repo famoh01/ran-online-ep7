@@ -143,6 +143,18 @@ static int32_t HandleInputEvent(struct android_app* app, AInputEvent* event) {
             char c = static_cast<char>('0' + (keyCode - AKEYCODE_0));
             ctx->engine.OnTextInput(std::string(1, c));
             return 1;
+        } else if (keyCode == AKEYCODE_PERIOD) {
+            ctx->engine.OnTextInput(".");
+            return 1;
+        } else if (keyCode == AKEYCODE_MINUS) {
+            ctx->engine.OnTextInput("-");
+            return 1;
+        } else if (keyCode == AKEYCODE_AT) {
+            ctx->engine.OnTextInput("@");
+            return 1;
+        } else if (keyCode == AKEYCODE_SPACE) {
+            ctx->engine.OnTextInput(" ");
+            return 1;
         }
     }
     return 0;
@@ -173,6 +185,10 @@ extern "C" void android_main(struct android_app* state) {
             ctx.engine.Update(dt);
             ctx.engine.Render();
             eglSwapBuffers(ctx.display, ctx.surface);
+        }
+        if (ctx.engine.GetLoginScreen() && ctx.engine.GetLoginScreen()->WantsExit()) {
+            ANativeActivity_finish(state->activity);
+            break;
         }
     }
     ctx.engine.Shutdown();

@@ -22,6 +22,34 @@ void LoginScreen::HandleTouchDown(int pointerId, float x, float y) {
     float px = (m_screenW - panelW) * 0.5f;
     float py = (m_screenH - panelH) * 0.5f;
 
+    if (m_showExitConfirm) {
+        float dlgW = 420.0f, dlgH = 200.0f;
+        float dx = (m_screenW - dlgW) * 0.5f;
+        float dy = (m_screenH - dlgH) * 0.5f;
+        if (HitRect(x, y, dx + 30.0f, dy + 120.0f, 165.0f, 48.0f)) {
+            m_exitRequested = true;
+        } else if (HitRect(x, y, dx + 225.0f, dy + 120.0f, 165.0f, 48.0f)) {
+            m_showExitConfirm = false;
+        }
+        return;
+    }
+
+    if (m_showSettingsPanel) {
+        float spW = 460.0f, spH = 320.0f;
+        float sx = (m_screenW - spW) * 0.5f;
+        float sy = (m_screenH - spH) * 0.5f;
+        if (HitRect(x, y, sx + 30.0f, sy + 75.0f, spW - 60.0f, 44.0f)) {
+            m_soundEnabled = !m_soundEnabled;
+        } else if (HitRect(x, y, sx + 30.0f, sy + 130.0f, spW - 60.0f, 44.0f)) {
+            m_musicEnabled = !m_musicEnabled;
+        } else if (HitRect(x, y, sx + 30.0f, sy + 185.0f, spW - 60.0f, 44.0f)) {
+            m_graphicsLevel = (m_graphicsLevel + 1) % 4;
+        } else if (HitRect(x, y, sx + 130.0f, sy + 250.0f, 200.0f, 46.0f)) {
+            m_showSettingsPanel = false;
+        }
+        return;
+    }
+
     if (HitRect(x, y, px + 30.0f, py + 110.0f, panelW - 60.0f, 44.0f)) {
         m_focus = LoginFocus::Username;
     } else if (HitRect(x, y, px + panelW - 80.0f, py + 170.0f, 50.0f, 44.0f)) {
@@ -33,8 +61,12 @@ void LoginScreen::HandleTouchDown(int pointerId, float x, float y) {
     } else if (HitRect(x, y, px + 30.0f, py + 300.0f, panelW - 60.0f, 48.0f)) {
         m_focus = LoginFocus::None;
         OnLoginPressed();
+    } else if (HitRect(x, y, px + 30.0f, py + 365.0f, (panelW - 75.0f) * 0.5f, 42.0f)) {
+        m_focus = LoginFocus::None;
+        m_showSettingsPanel = true;
     } else if (HitRect(x, y, px + 45.0f + (panelW - 75.0f) * 0.5f, py + 365.0f, (panelW - 75.0f) * 0.5f, 42.0f)) {
-        m_exitRequested = true;
+        m_focus = LoginFocus::None;
+        m_showExitConfirm = true;
     } else {
         m_focus = LoginFocus::None;
     }
@@ -132,4 +164,33 @@ void LoginScreen::Draw(RANMobile::MobileRenderer* renderer) {
     renderer->DrawUIText(px + 65.0f + (panelW - 75.0f) * 0.5f, py + 376.0f, "ออกจากเกม", 0.9f, 1.0f, 1.0f, 1.0f, 1.0f);
 
     renderer->DrawUIText(px + 30.0f, py + panelH - 30.0f, "Version : 1.0.0 | " + m_statusMessage, 0.8f, 0.8f, 0.9f, 1.0f, 1.0f);
+
+    if (m_showSettingsPanel) {
+        float spW = 460.0f, spH = 320.0f;
+        float sx = (m_screenW - spW) * 0.5f;
+        float sy = (m_screenH - spH) * 0.5f;
+        renderer->DrawUIQuad(sx, sy, spW, spH, 0.05f, 0.10f, 0.22f, 0.96f);
+        renderer->DrawUIText(sx + 30.0f, sy + 24.0f, "ตั้งค่าเกม", 1.1f, 1.0f, 0.85f, 0.25f, 1.0f);
+        renderer->DrawUIQuad(sx + 30.0f, sy + 75.0f, spW - 60.0f, 44.0f, 0.10f, 0.20f, 0.38f, 1.0f);
+        renderer->DrawUIText(sx + 45.0f, sy + 87.0f, std::string("เสียงเอฟเฟกต์: ") + (m_soundEnabled ? "เปิด" : "ปิด"), 0.9f, 1.0f, 1.0f, 1.0f, 1.0f);
+        renderer->DrawUIQuad(sx + 30.0f, sy + 130.0f, spW - 60.0f, 44.0f, 0.10f, 0.20f, 0.38f, 1.0f);
+        renderer->DrawUIText(sx + 45.0f, sy + 142.0f, std::string("เพลงประกอบ: ") + (m_musicEnabled ? "เปิด" : "ปิด"), 0.9f, 1.0f, 1.0f, 1.0f, 1.0f);
+        const char* gfxNames[] = {"LOW", "MEDIUM", "HIGH", "ULTRA"};
+        renderer->DrawUIQuad(sx + 30.0f, sy + 185.0f, spW - 60.0f, 44.0f, 0.10f, 0.20f, 0.38f, 1.0f);
+        renderer->DrawUIText(sx + 45.0f, sy + 197.0f, std::string("กราฟิก: ") + gfxNames[m_graphicsLevel % 4], 0.9f, 1.0f, 1.0f, 1.0f, 1.0f);
+        renderer->DrawUIQuad(sx + 130.0f, sy + 250.0f, 200.0f, 46.0f, 0.92f, 0.65f, 0.12f, 1.0f);
+        renderer->DrawUIText(sx + 205.0f, sy + 263.0f, "ปิด", 1.0f, 0.10f, 0.08f, 0.02f, 1.0f);
+    }
+
+    if (m_showExitConfirm) {
+        float dlgW = 420.0f, dlgH = 200.0f;
+        float dx = (m_screenW - dlgW) * 0.5f;
+        float dy = (m_screenH - dlgH) * 0.5f;
+        renderer->DrawUIQuad(dx, dy, dlgW, dlgH, 0.05f, 0.10f, 0.22f, 0.96f);
+        renderer->DrawUIText(dx + 45.0f, dy + 40.0f, "ต้องการออกจากเกมหรือไม่?", 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+        renderer->DrawUIQuad(dx + 30.0f, dy + 120.0f, 165.0f, 48.0f, 0.75f, 0.20f, 0.20f, 1.0f);
+        renderer->DrawUIText(dx + 95.0f, dy + 134.0f, "ใช่", 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+        renderer->DrawUIQuad(dx + 225.0f, dy + 120.0f, 165.0f, 48.0f, 0.15f, 0.32f, 0.60f, 1.0f);
+        renderer->DrawUIText(dx + 280.0f, dy + 134.0f, "ไม่ใช่", 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+    }
 }
