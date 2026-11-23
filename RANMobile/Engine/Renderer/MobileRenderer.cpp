@@ -52,6 +52,22 @@ void MobileRenderer::EndFrame() {
     // Swap buffers handled by EGL/NativeActivity on Android
 }
 
+void MobileRenderer::DrawUIQuad(float x, float y, float width, float height, float r, float g, float b, float a) {
+    m_stats.drawCalls++;
+    m_stats.triangles += 2;
+#ifdef __ANDROID__
+    if (!m_initialized) return;
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(static_cast<GLint>(x), static_cast<GLint>(m_height - y - height),
+              static_cast<GLsizei>(width), static_cast<GLsizei>(height));
+    glClearColor(r, g, b, a);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_SCISSOR_TEST);
+#else
+    (void)x; (void)y; (void)width; (void)height; (void)r; (void)g; (void)b; (void)a;
+#endif
+}
+
 void MobileRenderer::ApplySettings(const GraphicsSettings& settings) {
     m_settings = settings;
     Logger::Info("MobileRenderer", "Applied graphics settings: FPS=" +

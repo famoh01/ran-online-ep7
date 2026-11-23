@@ -1,17 +1,24 @@
 # CONTINUOUS_DEV_REPORT.md — RAN ONLINE EP7 (FAM HAWAII MOBILE)
 
-## 1–4. Android NativeActivity, EGL/OpenGL ES 3.0 & Touch Integration
-- **Status**: `IMPLEMENTED & COMPILED` (`RANMobile/Android/native_bridge.cpp`)
-- **Details**: Wired `APP_CMD_INIT_WINDOW` / `APP_CMD_TERM_WINDOW` (EGL + OpenGL ES 3.0 context) and `HandleInputEvent` (`AMotionEvent` -> `TouchSystem`).
-- **Device Smoke Test**: `BLOCKED` (No physical Android device/emulator in sandbox).
+## PHASE A — REAL RENDERING
+- **Status**: `IMPLEMENTED & COMPILED`
+- **Details**: Added `MobileRenderer::DrawUIQuad` (OpenGL ES 3.0 `glScissor` + `glClearColor` UI pass) and `LoginScreen` (`RAN ONLINE EP7` / `FAM HAWAII`).
 
-## 5–6. Original EP7 Asset & Map/Data Integration
-- **Status**: `VERIFIED` (GitHub Actions downloads & extracts `RAN-EP7-Client-TH.zip` + `ThaiPack` from `ran-ep7-full-v1`; `ThaiPackLoader` & `DataValidator` verified).
+## PHASE B — TOUCH INTEGRATION
+- **Status**: `IMPLEMENTED & COMPILED`
+- **Details**: `native_bridge.cpp` routes `AMotionEvent` multi-touch to `TouchSystem`, `VirtualJoystick`, and `MobileHUD`.
 
-## 7–12. Login (`FAM HAWAII`), Character Select, HUD, Combat, Inventory/Skill/Quest/Chat, EP7 Network
-- **Status**: `IMPLEMENTED & LOCAL TEST PASS` (`g++ -std=c++17 -Wall -Wextra -Werror`, 14 test suites).
-- **Live Server Test**: `BLOCKED` (No live EP7 Server + MSSQL in sandbox).
+## PHASE C — ORIGINAL GAME DATA
+- **Status**: `VERIFIED` (GitHub Actions Run `45215920594` downloads & extracts `RAN-EP7-Client-TH.zip` + `ThaiPack` from `ran-ep7-full-v1`; `ThaiPackLoader` & `DataValidator` verified).
 
-## 13–15. Release Signing & Device Performance
-- **Release Signing**: `BLOCKED` (No keystore secrets stored in repository; unsigned release APK & AAB built in CI).
-- **Device Performance**: `BLOCKED` (Requires physical Android ARM64 device).
+## PHASE D — GAMEPLAY RUNTIME
+- **Status**: `IMPLEMENTED & LOCAL TEST PASS` (`CharacterController`, `MobileCamera`, `CharacterSelectManager`, `InventoryManager`, `SkillUI`, `QuestUI`, `ChatUI`, `EP7Protocol.h`).
+
+## PHASE E — REAL DEVICE TEST
+- **Status**: `BLOCKED` (No physical Android ARM64 device or emulator in sandbox; Debug APK built in CI).
+
+## PHASE F — EP7 SERVER
+- **Status**: `BLOCKED` (`EP7Protocol.h` verified against `netclientLib/s_NetGlobal.h`; no live EP7 Server in sandbox).
+
+## PHASE G — RELEASE
+- **Status**: `PARTIAL / BLOCKED` (Debug APK, Unsigned Release APK, and Release AAB built in CI Run `45215920594`; Release Keystore Signing & Device Performance Test `BLOCKED`).
