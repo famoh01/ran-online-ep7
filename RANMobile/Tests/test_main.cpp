@@ -13,6 +13,9 @@
 #include "../Client/Quest/QuestManager.h"
 #include "../Client/Chat/ChatManager.h"
 #include "../UI/Settings/SettingsUI.h"
+#include "../UI/Inventory/InventoryUI.h"
+#include "../UI/Skills/SkillUI.h"
+#include "../Data/Loader/ThaiPackLoader.h"
 #include "../UI/Quest/QuestUI.h"
 #include "../UI/Map/MapUI.h"
 #include "../UI/Chat/ChatUI.h"
@@ -174,6 +177,21 @@ int main() {
     assert(pool.AvailableCount() == 3);
     pool.Release(std::move(pooledObj));
     assert(pool.AvailableCount() == 4);
+
+    // 14. Phase 32-41: Real ThaiPackLoader + InventoryUI + SkillUI
+    auto tpStats = RANMobile::ThaiPackLoader::InspectThaiPack("external/ep7_release/thaipack_original");
+    assert(tpStats.found);
+    assert(tpStats.ntkCount == 309);
+    assert(tpStats.qstCount == 730);
+
+    RANMobile::InventoryUI invUI;
+    invUI.Initialize(&inv);
+    invUI.SelectSlot(0);
+    assert(invUI.GetSelectedSlot() == 0);
+
+    RANMobile::SkillUI skillUI;
+    skillUI.BindSkillSlot(0, 101);
+    assert(skillUI.GetSkillSlot(0)->CanUse());
 
     engine.Shutdown();
     assert(!engine.IsInitialized());

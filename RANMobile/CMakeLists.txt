@@ -18,6 +18,7 @@ set(RANMOBILE_SOURCES
     Data/Importer/EP7AssetImporter.cpp
     Data/Converter/RANMobileDataConverter.cpp
     Data/Loader/GameDataLoader.cpp
+    Data/Loader/ThaiPackLoader.cpp
     Client/Login/AuthenticationManager.cpp
     Client/Character/CharacterSelectManager.cpp
     Client/Gameplay/CharacterController.cpp
