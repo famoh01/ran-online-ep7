@@ -209,6 +209,14 @@ int main() {
     engine.Render();
     assert(engine.GetRenderer()->GetStats().drawCalls > 0);
 
+    // 16. UTF-8 Thai Font Decoding & Width Measurement
+    std::string thaiSample = "สวัสดี FAM HAWAII 123";
+    size_t utfIdx = 0;
+    assert(RANMobile::MobileRenderer::DecodeUTF8(thaiSample, utfIdx) == 0x0E2A); // ส
+    assert(RANMobile::MobileRenderer::DecodeUTF8(thaiSample, utfIdx) == 0x0E27); // ว
+    assert(RANMobile::MobileRenderer::DecodeUTF8(thaiSample, utfIdx) == 0x0E31); // ั (combining)
+    assert(engine.GetRenderer()->MeasureTextWidth(thaiSample, 1.0f) > 0.0f);
+
     engine.Shutdown();
     assert(!engine.IsInitialized());
 
