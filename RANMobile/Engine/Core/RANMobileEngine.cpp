@@ -7,6 +7,7 @@
 #include "../Network/NetworkClient.h"
 #include "../../Data/Loader/GameDataLoader.h"
 #include "../../UI/Login/LoginScreen.h"
+#include "../../UI/HUD/MobileHUD.h"
 
 RANMobileEngine::RANMobileEngine() = default;
 RANMobileEngine::~RANMobileEngine() {
@@ -29,6 +30,7 @@ bool RANMobileEngine::Initialize() {
     m_networkClient = std::make_unique<RANMobile::NetworkClient>();
     m_gameDataLoader = std::make_unique<RANMobile::GameDataLoader>();
     m_loginScreen = std::make_unique<LoginScreen>();
+    m_mobileHUD = std::make_unique<RANMobile::MobileHUD>();
 
     if (!m_renderer->Initialize(1280, 720)) {
         RANMobile::Logger::Error("RANMobileEngine", "Failed to initialize MobileRenderer");
@@ -36,6 +38,7 @@ bool RANMobileEngine::Initialize() {
     }
 
     m_loginScreen->Initialize(m_networkClient.get());
+    m_mobileHUD->Initialize(1280.0f, 720.0f);
     m_initialized = true;
     RANMobile::Logger::Info("RANMobileEngine", "RANMobileEngine initialized successfully.");
     return true;
@@ -82,7 +85,7 @@ void RANMobileEngine::Render() {
         return;
     }
     m_renderer->BeginFrame();
-    if (m_loginScreen) {
+    if (m_screenState == EngineScreenState::Login && m_loginScreen) {
         m_loginScreen->Draw(m_renderer.get());
     }
     m_renderer->EndFrame();

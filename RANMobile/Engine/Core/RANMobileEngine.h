@@ -13,6 +13,13 @@ namespace RANMobile {
     class GameDataLoader;
 }
 class LoginScreen;
+namespace RANMobile { class MobileHUD; }
+
+enum class EngineScreenState {
+    Login,
+    CharacterSelect,
+    InGame
+};
 
 class RANMobileEngine {
 public:
@@ -37,6 +44,9 @@ public:
     void OnBackspace();
 
     LoginScreen* GetLoginScreen() const { return m_loginScreen.get(); }
+    RANMobile::MobileHUD* GetMobileHUD() const { return m_mobileHUD.get(); }
+    void SetScreenState(EngineScreenState state) { m_screenState = state; }
+    EngineScreenState GetScreenState() const { return m_screenState; }
 
     bool IsInitialized() const { return m_initialized; }
     bool IsRunning() const { return m_running; }
@@ -64,4 +74,6 @@ private:
     std::unique_ptr<RANMobile::NetworkClient> m_networkClient;
     std::unique_ptr<RANMobile::GameDataLoader> m_gameDataLoader;
     std::unique_ptr<LoginScreen> m_loginScreen;
+    std::unique_ptr<RANMobile::MobileHUD> m_mobileHUD;
+    EngineScreenState m_screenState = EngineScreenState::Login;
 };
