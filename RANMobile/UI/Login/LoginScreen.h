@@ -22,6 +22,7 @@ public:
 
     bool OnLoginPressed();
     void Draw();
+    void Draw(RANMobile::MobileRenderer* renderer);
 
 private:
     RANMobile::NetworkClient* m_networkClient = nullptr;

@@ -33,13 +33,21 @@ void LoginScreen::Draw(RANMobile::MobileRenderer* renderer) {
     renderer->DrawUIQuad(px, py, panelW, panelH, 0.08f, 0.11f, 0.18f, 0.92f);
     // Title bar (RAN ONLINE EP7 / FAM HAWAII)
     renderer->DrawUIQuad(px + 20.0f, py + 20.0f, panelW - 40.0f, 56.0f, 0.14f, 0.22f, 0.36f, 1.0f);
+    renderer->DrawUIText(px + 40.0f, py + 32.0f, m_gameTitle, 1.4f, 1.0f, 0.9f, 0.4f, 1.0f);
+    renderer->DrawUIText(px + 40.0f, py + 58.0f, m_serverDisplayName, 1.2f, 0.4f, 0.9f, 1.0f, 1.0f);
     // Username & Password input fields
+    renderer->DrawUIText(px + 30.0f, py + 90.0f, "USERNAME", 1.0f, 0.9f, 0.9f, 0.9f, 1.0f);
     renderer->DrawUIQuad(px + 30.0f, py + 110.0f, panelW - 60.0f, 44.0f, 0.05f, 0.07f, 0.12f, 1.0f);
+    renderer->DrawUIText(px + 30.0f, py + 152.0f, "PASSWORD", 1.0f, 0.9f, 0.9f, 0.9f, 1.0f);
     renderer->DrawUIQuad(px + 30.0f, py + 170.0f, panelW - 60.0f, 44.0f, 0.05f, 0.07f, 0.12f, 1.0f);
     // Server selector: FAM HAWAII
     renderer->DrawUIQuad(px + 30.0f, py + 230.0f, panelW - 60.0f, 44.0f, 0.10f, 0.15f, 0.25f, 1.0f);
+    renderer->DrawUIText(px + 45.0f, py + 244.0f, "SERVER: " + m_serverDisplayName, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
     // Login, Settings, Exit buttons
     renderer->DrawUIQuad(px + 30.0f, py + 300.0f, panelW - 60.0f, 48.0f, 0.18f, 0.45f, 0.75f, 1.0f);
+    renderer->DrawUIText(px + panelW * 0.45f, py + 316.0f, "LOGIN", 1.1f, 1.0f, 1.0f, 1.0f, 1.0f);
     renderer->DrawUIQuad(px + 30.0f, py + 365.0f, (panelW - 75.0f) * 0.5f, 42.0f, 0.20f, 0.24f, 0.32f, 1.0f);
+    renderer->DrawUIText(px + 50.0f, py + 378.0f, "SETTINGS", 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
     renderer->DrawUIQuad(px + 45.0f + (panelW - 75.0f) * 0.5f, py + 365.0f, (panelW - 75.0f) * 0.5f, 42.0f, 0.45f, 0.18f, 0.18f, 1.0f);
+    renderer->DrawUIText(px + 65.0f + (panelW - 75.0f) * 0.5f, py + 378.0f, "EXIT", 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 }

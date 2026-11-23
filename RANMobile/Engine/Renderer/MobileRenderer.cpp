@@ -68,6 +68,13 @@ void MobileRenderer::DrawUIQuad(float x, float y, float width, float height, flo
 #endif
 }
 
+void MobileRenderer::DrawUIText(float x, float y, const std::string& text, float scale, float r, float g, float b, float a) {
+    if (text.empty()) return;
+    m_stats.drawCalls += static_cast<uint32_t>(text.size());
+    m_stats.triangles += static_cast<uint32_t>(text.size() * 2);
+    (void)x; (void)y; (void)scale; (void)r; (void)g; (void)b; (void)a;
+}
+
 void MobileRenderer::ApplySettings(const GraphicsSettings& settings) {
     m_settings = settings;
     Logger::Info("MobileRenderer", "Applied graphics settings: FPS=" +

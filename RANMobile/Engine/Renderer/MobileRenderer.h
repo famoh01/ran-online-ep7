@@ -22,6 +22,7 @@ public:
     void BeginFrame();
     void EndFrame();
     void DrawUIQuad(float x, float y, float width, float height, float r, float g, float b, float a);
+    void DrawUIText(float x, float y, const std::string& text, float scale, float r, float g, float b, float a);
 
     void ApplySettings(const GraphicsSettings& settings);
     const GraphicsSettings& GetSettings() const { return m_settings; }
