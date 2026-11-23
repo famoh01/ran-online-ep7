@@ -69,6 +69,7 @@ private:
     bool m_showPassword = false;
     bool m_showSettingsPanel = false;
     bool m_showExitConfirm = false;
+    bool m_showRegisterInfo = false;
     bool m_soundEnabled = true;
     bool m_musicEnabled = true;
     int m_graphicsLevel = 1; // 0=LOW, 1=MED, 2=HIGH, 3=ULTRA

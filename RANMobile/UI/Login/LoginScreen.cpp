@@ -50,6 +50,16 @@ void LoginScreen::HandleTouchDown(int pointerId, float x, float y) {
         return;
     }
 
+    if (m_showRegisterInfo) {
+        float dlgW = 460.0f, dlgH = 220.0f;
+        float dx = (m_screenW - dlgW) * 0.5f;
+        float dy = (m_screenH - dlgH) * 0.5f;
+        if (HitRect(x, y, dx + 130.0f, dy + 145.0f, 200.0f, 46.0f)) {
+            m_showRegisterInfo = false;
+        }
+        return;
+    }
+
     if (HitRect(x, y, px + 30.0f, py + 110.0f, panelW - 60.0f, 44.0f)) {
         m_focus = LoginFocus::Username;
     } else if (HitRect(x, y, px + panelW - 80.0f, py + 170.0f, 50.0f, 44.0f)) {
@@ -58,9 +68,12 @@ void LoginScreen::HandleTouchDown(int pointerId, float x, float y) {
         m_focus = LoginFocus::Password;
     } else if (HitRect(x, y, px + 30.0f, py + 230.0f, panelW - 60.0f, 44.0f)) {
         m_rememberAccount = !m_rememberAccount;
-    } else if (HitRect(x, y, px + 30.0f, py + 300.0f, panelW - 60.0f, 48.0f)) {
+    } else if (HitRect(x, y, px + 30.0f, py + 300.0f, (panelW - 75.0f) * 0.55f, 48.0f)) {
         m_focus = LoginFocus::None;
         OnLoginPressed();
+    } else if (HitRect(x, y, px + 45.0f + (panelW - 75.0f) * 0.55f, py + 300.0f, (panelW - 75.0f) * 0.45f, 48.0f)) {
+        m_focus = LoginFocus::None;
+        m_showRegisterInfo = true;
     } else if (HitRect(x, y, px + 30.0f, py + 365.0f, (panelW - 75.0f) * 0.5f, 42.0f)) {
         m_focus = LoginFocus::None;
         m_showSettingsPanel = true;
@@ -154,8 +167,11 @@ void LoginScreen::Draw(RANMobile::MobileRenderer* renderer) {
     renderer->DrawUIQuad(px + 30.0f, py + 230.0f, panelW - 60.0f, 44.0f, 0.09f, 0.15f, 0.28f, 1.0f);
     renderer->DrawUIText(px + 45.0f, py + 242.0f, "เลือกเซิร์ฟเวอร์: " + m_serverDisplayName, 0.9f, 1.0f, 1.0f, 1.0f, 1.0f);
 
-    renderer->DrawUIQuad(px + 30.0f, py + 300.0f, panelW - 60.0f, 48.0f, 0.92f, 0.65f, 0.12f, 1.0f);
-    renderer->DrawUIText(px + panelW * 0.38f, py + 314.0f, "เข้าสู่เกม", 1.05f, 0.10f, 0.08f, 0.02f, 1.0f);
+    renderer->DrawUIQuad(px + 30.0f, py + 300.0f, (panelW - 75.0f) * 0.55f, 48.0f, 0.92f, 0.65f, 0.12f, 1.0f);
+    renderer->DrawUIText(px + 65.0f, py + 314.0f, "เข้าสู่เกม", 1.05f, 0.10f, 0.08f, 0.02f, 1.0f);
+
+    renderer->DrawUIQuad(px + 45.0f + (panelW - 75.0f) * 0.55f, py + 300.0f, (panelW - 75.0f) * 0.45f, 48.0f, 0.15f, 0.45f, 0.78f, 1.0f);
+    renderer->DrawUIText(px + 65.0f + (panelW - 75.0f) * 0.55f, py + 314.0f, "สมัครไอดี", 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 
     renderer->DrawUIQuad(px + 30.0f, py + 365.0f, (panelW - 75.0f) * 0.5f, 42.0f, 0.12f, 0.28f, 0.55f, 1.0f);
     renderer->DrawUIText(px + 45.0f, py + 376.0f, "ตั้งค่าเกม", 0.9f, 1.0f, 1.0f, 1.0f, 1.0f);
@@ -192,5 +208,16 @@ void LoginScreen::Draw(RANMobile::MobileRenderer* renderer) {
         renderer->DrawUIText(dx + 95.0f, dy + 134.0f, "ใช่", 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
         renderer->DrawUIQuad(dx + 225.0f, dy + 120.0f, 165.0f, 48.0f, 0.15f, 0.32f, 0.60f, 1.0f);
         renderer->DrawUIText(dx + 280.0f, dy + 134.0f, "ไม่ใช่", 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+    }
+
+    if (m_showRegisterInfo) {
+        float dlgW = 460.0f, dlgH = 220.0f;
+        float dx = (m_screenW - dlgW) * 0.5f;
+        float dy = (m_screenH - dlgH) * 0.5f;
+        renderer->DrawUIQuad(dx, dy, dlgW, dlgH, 0.05f, 0.10f, 0.22f, 0.96f);
+        renderer->DrawUIText(dx + 35.0f, dy + 35.0f, "สมัครไอดี FAM HAWAII", 1.05f, 1.0f, 0.85f, 0.25f, 1.0f);
+        renderer->DrawUIText(dx + 35.0f, dy + 85.0f, "กรุณาสมัครสมาชิกผ่านหน้าเว็บไซต์เซิร์ฟเวอร์", 0.85f, 1.0f, 1.0f, 1.0f, 1.0f);
+        renderer->DrawUIQuad(dx + 130.0f, dy + 145.0f, 200.0f, 46.0f, 0.92f, 0.65f, 0.12f, 1.0f);
+        renderer->DrawUIText(dx + 205.0f, dy + 158.0f, "ปิด", 1.0f, 0.10f, 0.08f, 0.02f, 1.0f);
     }
 }
