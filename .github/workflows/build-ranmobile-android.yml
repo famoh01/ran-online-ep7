@@ -1,0 +1,71 @@
+name: Build RANMobile Android (ARM64) & Verify EP7 Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - "arena/**"
+
+jobs:
+  build-android-arm64:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run Linux C++17 Unit & Integration Tests
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror \
+            RANMobile/Engine/Core/Logger.cpp \
+            RANMobile/Engine/Core/RANMobileEngine.cpp \
+            RANMobile/Engine/Renderer/MobileRenderer.cpp \
+            RANMobile/Engine/Resource/ResourceManager.cpp \
+            RANMobile/Engine/Touch/TouchSystem.cpp \
+            RANMobile/Engine/Camera/MobileCamera.cpp \
+            RANMobile/Engine/Animation/AnimationManager.cpp \
+            RANMobile/Engine/Audio/AudioManager.cpp \
+            RANMobile/Engine/Network/NetworkClient.cpp \
+            RANMobile/Data/Validator/DataValidator.cpp \
+            RANMobile/Data/Importer/EP7AssetImporter.cpp \
+            RANMobile/Data/Converter/RANMobileDataConverter.cpp \
+            RANMobile/Data/Loader/GameDataLoader.cpp \
+            RANMobile/Data/Loader/ThaiPackLoader.cpp \
+            RANMobile/Client/Login/AuthenticationManager.cpp \
+            RANMobile/Client/Character/CharacterSelectManager.cpp \
+            RANMobile/Client/Gameplay/CharacterController.cpp \
+            RANMobile/Client/Combat/TargetManager.cpp \
+            RANMobile/Client/Combat/CombatController.cpp \
+            RANMobile/Client/Inventory/InventoryManager.cpp \
+            RANMobile/Client/Quest/QuestManager.cpp \
+            RANMobile/Client/Map/MapManager.cpp \
+            RANMobile/Client/Chat/ChatManager.cpp \
+            RANMobile/UI/Login/LoginScreen.cpp \
+            RANMobile/UI/Joystick/VirtualJoystick.cpp \
+            RANMobile/UI/Buttons/MobileButton.cpp \
+            RANMobile/UI/Buttons/MobileSkillButton.cpp \
+            RANMobile/UI/HUD/MobileHUD.cpp \
+            RANMobile/UI/Quest/QuestUI.cpp \
+            RANMobile/Tests/test_main.cpp \
+            -lpthread -o ranmobile_tests
+          ./ranmobile_tests
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r26d
+
+      - name: Build RANMobile Native Library (arm64-v8a)
+        run: |
+          cmake -S RANMobile -B build-android-arm64 \
+            -DCMAKE_TOOLCHAIN_FILE=${{ steps.setup-ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake \
+            -DANDROID_ABI=arm64-v8a \
+            -DANDROID_PLATFORM=android-24
+          cmake --build build-android-arm64 -j
+
+      - name: Upload ARM64 Native Library Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: libranmobile-arm64-v8a
+          path: build-android-arm64/libranmobile.so

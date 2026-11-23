@@ -1,0 +1,39 @@
+{
+  "repository": "famoh01/ran-online-ep7",
+  "tag": "ran-ep7-full-v1",
+  "assetCount": 4,
+  "assets": [
+    {
+      "name": "RAN-EP7-Client-TH.zip.part00",
+      "url": "https://github.com/famoh01/ran-online-ep7/releases/download/ran-ep7-full-v1/RAN-EP7-Client-TH.zip.part00",
+      "size": 1572864000,
+      "contentType": "application/octet-stream",
+      "downloadStatus": "BLOCKED",
+      "extractionStatus": "BLOCKED"
+    },
+    {
+      "name": "RAN-EP7-Client-TH.zip.part01",
+      "url": "https://github.com/famoh01/ran-online-ep7/releases/download/ran-ep7-full-v1/RAN-EP7-Client-TH.zip.part01",
+      "size": 1010562339,
+      "contentType": "application/octet-stream",
+      "downloadStatus": "BLOCKED",
+      "extractionStatus": "BLOCKED"
+    },
+    {
+      "name": "RAN-EP7-ServerDBTools.zip",
+      "url": "https://github.com/famoh01/ran-online-ep7/releases/download/ran-ep7-full-v1/RAN-EP7-ServerDBTools.zip",
+      "size": 49791515,
+      "contentType": "application/zip",
+      "downloadStatus": "BLOCKED",
+      "extractionStatus": "BLOCKED"
+    },
+    {
+      "name": "RAN-EP7-ThaiPack-FamHawaii.zip",
+      "url": "https://github.com/famoh01/ran-online-ep7/releases/download/ran-ep7-full-v1/RAN-EP7-ThaiPack-FamHawaii.zip",
+      "size": 1359185,
+      "contentType": "application/octet-stream",
+      "downloadStatus": "BLOCKED",
+      "extractionStatus": "BLOCKED"
+    }
+  ]
+}
