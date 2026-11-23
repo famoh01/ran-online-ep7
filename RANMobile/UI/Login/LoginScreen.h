@@ -30,6 +30,8 @@ public:
     void SetUsername(const std::string& username) { m_username = username; }
     void SetPassword(const std::string& password) { m_password = password; }
     void SetRememberAccount(bool remember) { m_rememberAccount = remember; }
+    void ToggleShowPassword() { m_showPassword = !m_showPassword; }
+    bool IsPasswordVisible() const { return m_showPassword; }
 
     const std::string& GetGameTitle() const { return m_gameTitle; }
     const std::string& GetServerDisplayName() const { return m_serverDisplayName; }
@@ -59,6 +61,7 @@ private:
     std::string m_username;
     std::string m_password;
     bool m_rememberAccount = false;
+    bool m_showPassword = false;
 
     LoginFocus m_focus = LoginFocus::None;
     LoginAuthState m_authState = LoginAuthState::Disconnected;

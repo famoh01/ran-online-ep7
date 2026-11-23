@@ -24,7 +24,9 @@ void LoginScreen::HandleTouchDown(int pointerId, float x, float y) {
 
     if (HitRect(x, y, px + 30.0f, py + 110.0f, panelW - 60.0f, 44.0f)) {
         m_focus = LoginFocus::Username;
-    } else if (HitRect(x, y, px + 30.0f, py + 170.0f, panelW - 60.0f, 44.0f)) {
+    } else if (HitRect(x, y, px + panelW - 80.0f, py + 170.0f, 50.0f, 44.0f)) {
+        m_showPassword = !m_showPassword;
+    } else if (HitRect(x, y, px + 30.0f, py + 170.0f, panelW - 110.0f, 44.0f)) {
         m_focus = LoginFocus::Password;
     } else if (HitRect(x, y, px + 30.0f, py + 230.0f, panelW - 60.0f, 44.0f)) {
         m_rememberAccount = !m_rememberAccount;
@@ -100,32 +102,34 @@ void LoginScreen::Draw(RANMobile::MobileRenderer* renderer) {
     float px = (m_screenW - panelW) * 0.5f;
     float py = (m_screenH - panelH) * 0.5f;
 
-    renderer->DrawUIQuad(px, py, panelW, panelH, 0.08f, 0.11f, 0.18f, 0.92f);
-    renderer->DrawUIQuad(px + 20.0f, py + 20.0f, panelW - 40.0f, 56.0f, 0.14f, 0.22f, 0.36f, 1.0f);
-    renderer->DrawUIText(px + 40.0f, py + 32.0f, m_gameTitle, 1.2f, 1.0f, 0.9f, 0.4f, 1.0f);
-    renderer->DrawUIText(px + 40.0f, py + 56.0f, m_serverDisplayName, 1.0f, 0.4f, 0.9f, 1.0f, 1.0f);
+    renderer->DrawUIQuad(0.0f, 0.0f, m_screenW, m_screenH, 0.05f, 0.12f, 0.28f, 1.0f);
+    renderer->DrawUIText(36.0f, 28.0f, m_gameTitle, 1.3f, 1.0f, 0.85f, 0.25f, 1.0f);
 
-    renderer->DrawUIText(px + 30.0f, py + 90.0f, "USERNAME", 0.9f, 0.9f, 0.9f, 0.9f, 1.0f);
+    renderer->DrawUIQuad(px, py, panelW, panelH, 0.06f, 0.11f, 0.22f, 0.90f);
+    renderer->DrawUIQuad(px + 20.0f, py + 18.0f, panelW - 40.0f, 54.0f, 0.10f, 0.18f, 0.34f, 1.0f);
+    renderer->DrawUIText(px + 40.0f, py + 26.0f, m_serverDisplayName + " SERVER", 1.15f, 1.0f, 0.82f, 0.20f, 1.0f);
+
+    renderer->DrawUIText(px + 30.0f, py + 86.0f, "ชื่อผู้ใช้", 0.9f, 0.85f, 0.92f, 1.0f, 1.0f);
     renderer->DrawUIQuad(px + 30.0f, py + 110.0f, panelW - 60.0f, 44.0f,
-                         m_focus == LoginFocus::Username ? 0.12f : 0.05f, 0.09f, 0.16f, 1.0f);
-    renderer->DrawUIText(px + 40.0f, py + 124.0f, m_username, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+                         m_focus == LoginFocus::Username ? 0.12f : 0.05f, 0.10f, 0.20f, 1.0f);
+    renderer->DrawUIText(px + 40.0f, py + 122.0f, m_username, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 
-    renderer->DrawUIText(px + 30.0f, py + 154.0f, "PASSWORD", 0.9f, 0.9f, 0.9f, 0.9f, 1.0f);
+    renderer->DrawUIText(px + 30.0f, py + 150.0f, "รหัสผ่าน", 0.9f, 0.85f, 0.92f, 1.0f, 1.0f);
     renderer->DrawUIQuad(px + 30.0f, py + 170.0f, panelW - 60.0f, 44.0f,
-                         m_focus == LoginFocus::Password ? 0.12f : 0.05f, 0.09f, 0.16f, 1.0f);
-    renderer->DrawUIText(px + 40.0f, py + 184.0f, GetMaskedPassword(), 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+                         m_focus == LoginFocus::Password ? 0.12f : 0.05f, 0.10f, 0.20f, 1.0f);
+    renderer->DrawUIText(px + 40.0f, py + 182.0f, m_showPassword ? m_password : GetMaskedPassword(), 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 
-    renderer->DrawUIQuad(px + 30.0f, py + 230.0f, panelW - 60.0f, 44.0f, 0.10f, 0.15f, 0.25f, 1.0f);
-    renderer->DrawUIText(px + 45.0f, py + 244.0f, "SERVER: " + m_serverDisplayName, 0.9f, 1.0f, 1.0f, 1.0f, 1.0f);
+    renderer->DrawUIQuad(px + 30.0f, py + 230.0f, panelW - 60.0f, 44.0f, 0.09f, 0.15f, 0.28f, 1.0f);
+    renderer->DrawUIText(px + 45.0f, py + 242.0f, "เลือกเซิร์ฟเวอร์: " + m_serverDisplayName, 0.9f, 1.0f, 1.0f, 1.0f, 1.0f);
 
-    renderer->DrawUIQuad(px + 30.0f, py + 300.0f, panelW - 60.0f, 48.0f, 0.18f, 0.45f, 0.75f, 1.0f);
-    renderer->DrawUIText(px + panelW * 0.42f, py + 316.0f, "LOGIN", 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+    renderer->DrawUIQuad(px + 30.0f, py + 300.0f, panelW - 60.0f, 48.0f, 0.92f, 0.65f, 0.12f, 1.0f);
+    renderer->DrawUIText(px + panelW * 0.38f, py + 314.0f, "เข้าสู่เกม", 1.05f, 0.10f, 0.08f, 0.02f, 1.0f);
 
-    renderer->DrawUIQuad(px + 30.0f, py + 365.0f, (panelW - 75.0f) * 0.5f, 42.0f, 0.20f, 0.24f, 0.32f, 1.0f);
-    renderer->DrawUIText(px + 45.0f, py + 378.0f, "SETTINGS", 0.9f, 1.0f, 1.0f, 1.0f, 1.0f);
+    renderer->DrawUIQuad(px + 30.0f, py + 365.0f, (panelW - 75.0f) * 0.5f, 42.0f, 0.12f, 0.28f, 0.55f, 1.0f);
+    renderer->DrawUIText(px + 45.0f, py + 376.0f, "ตั้งค่าเกม", 0.9f, 1.0f, 1.0f, 1.0f, 1.0f);
 
-    renderer->DrawUIQuad(px + 45.0f + (panelW - 75.0f) * 0.5f, py + 365.0f, (panelW - 75.0f) * 0.5f, 42.0f, 0.45f, 0.18f, 0.18f, 1.0f);
-    renderer->DrawUIText(px + 65.0f + (panelW - 75.0f) * 0.5f, py + 378.0f, "EXIT", 0.9f, 1.0f, 1.0f, 1.0f, 1.0f);
+    renderer->DrawUIQuad(px + 45.0f + (panelW - 75.0f) * 0.5f, py + 365.0f, (panelW - 75.0f) * 0.5f, 42.0f, 0.12f, 0.24f, 0.45f, 1.0f);
+    renderer->DrawUIText(px + 65.0f + (panelW - 75.0f) * 0.5f, py + 376.0f, "ออกจากเกม", 0.9f, 1.0f, 1.0f, 1.0f, 1.0f);
 
-    renderer->DrawUIText(px + 30.0f, py + panelH - 30.0f, m_statusMessage, 0.8f, 0.8f, 0.9f, 1.0f, 1.0f);
+    renderer->DrawUIText(px + 30.0f, py + panelH - 30.0f, "Version : 1.0.0 | " + m_statusMessage, 0.8f, 0.8f, 0.9f, 1.0f, 1.0f);
 }
