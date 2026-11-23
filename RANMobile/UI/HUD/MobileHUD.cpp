@@ -81,3 +81,16 @@ void MobileHUD::OnTouchUp(int32_t pointerId, float x, float y) {
 }
 
 } // namespace RANMobile
+
+#include "../../Engine/Renderer/MobileRenderer.h"
+namespace RANMobile {
+void MobileHUD::Draw(MobileRenderer* renderer) {
+    if (!renderer) return;
+    float w = static_cast<float>(renderer->GetWidth());
+    float h = static_cast<float>(renderer->GetHeight());
+    renderer->DrawUIQuad(20.0f, 16.0f, 280.0f, 76.0f, 0.05f, 0.10f, 0.22f, 0.85f);
+    renderer->DrawUIQuad(60.0f, h - 180.0f, 120.0f, 120.0f, 0.10f, 0.20f, 0.35f, 0.55f);
+    renderer->DrawUIQuad(w - 140.0f, h - 140.0f, 96.0f, 96.0f, 0.85f, 0.58f, 0.12f, 0.85f);
+    renderer->DrawUIText(w - 122.0f, h - 102.0f, "ATK", 0.9f, 1.0f, 1.0f, 1.0f, 1.0f);
+}
+}

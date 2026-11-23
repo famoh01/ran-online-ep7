@@ -87,6 +87,8 @@ void RANMobileEngine::Render() {
     m_renderer->BeginFrame();
     if (m_screenState == EngineScreenState::Login && m_loginScreen) {
         m_loginScreen->Draw(m_renderer.get());
+    } else if (m_screenState == EngineScreenState::InGame && m_mobileHUD) {
+        m_mobileHUD->Draw(m_renderer.get());
     }
     m_renderer->EndFrame();
 }
