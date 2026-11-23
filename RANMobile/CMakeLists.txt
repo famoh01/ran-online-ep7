@@ -53,7 +53,6 @@ if(ANDROID)
     add_library(android_native_app_glue STATIC
         "${NATIVE_APP_GLUE_DIR}/android_native_app_glue.c"
     )
-    set_target_properties(android_native_app_glue PROPERTIES LINKER_LANGUAGE C)
     target_include_directories(android_native_app_glue PUBLIC "${NATIVE_APP_GLUE_DIR}")
 
     add_library(ranmobile SHARED
