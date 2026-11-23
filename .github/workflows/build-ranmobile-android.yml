@@ -66,7 +66,10 @@ jobs:
             RANMobile/UI/HUD/MobileHUD.cpp \
             RANMobile/UI/Quest/QuestUI.cpp \
             RANMobile/Tests/test_main.cpp \
-            -lpthread -o ranmobile_tests
+            -lpthread -o ranmobile_tests 2>&1 | tee -a compile_output.log
+
+      - name: Run Linux C++17 Tests
+        run: |
           set +e
           ./ranmobile_tests > test_output.log 2>&1
           TEST_EXIT=$?
