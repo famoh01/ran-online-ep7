@@ -16,13 +16,13 @@
 
 ## PHASE 3 — MOBILE ENGINE
 - **COMPLETED**: สร้าง `RANMobileEngine`, `MobileRenderer`, `ResourceManager`, `AudioManager`, `AnimationManager`, `Logger`
-- **COMPILE**: PASS
+- **COMPILE**: PASS (Linux C++17) | Android NDK `arm64-v8a` (`libranmobile.so`) FAILED in GitHub Actions Run `45197612403`
 - **TEST**: PASS (`RANMobileEngine` lifecycle, `AudioManager`, `AnimationManager`)
 - **FILES CREATED**: `RANMobile/Engine/Audio/AudioManager.h/.cpp`, `RANMobile/Engine/Animation/AnimationManager.h/.cpp`
-- **FILES MODIFIED**: `RANMobile/CMakeLists.txt`
+- **FILES MODIFIED**: `RANMobile/CMakeLists.txt` (enabled `C CXX` and linked `android_native_app_glue`)
 - **VERIFIED**: Engine Initialize/Start/Update/Render/Shutdown ทำงานจริง
-- **BLOCKED**: `BLOCKED — EXTERNAL ASSET/SERVER NOT AVAILABLE` (OpenGL ES 3.0 / OpenSL ES Render Pass จริงต้องทดสอบบน Android NDK)
-- **REMAINING**: Shader & Mesh GPU upload บน Android
+- **BLOCKED**: `ANDROID BUILD = BLOCKED` (Step 6 `libranmobile.so` failed in CI; APK/AAB not built yet)
+- **REMAINING**: แก้ไขจุดที่ Build `libranmobile.so` ไม่ผ่านบน Android NDK r26d และ Build APK/AAB
 
 ## PHASE 4 — DATA CONVERTER & VALIDATOR
 - **COMPLETED**: สร้าง `RANMobileDataConverter`, `DataValidator`, `GameDataLoader`, `EP7DataTypes.h`
