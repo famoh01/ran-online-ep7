@@ -14,6 +14,25 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Download & Extract Original EP7 Client Data (ran-ep7-full-v1)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p external/ep7_release/original external/ep7_release/client_original external/ep7_release/thaipack_original
+          gh release download ran-ep7-full-v1 \
+            --repo famoh01/ran-online-ep7 \
+            --pattern "RAN-EP7-Client-TH.zip.part*" \
+            --pattern "RAN-EP7-ThaiPack-FamHawaii.zip" \
+            --dir external/ep7_release/original
+          cat external/ep7_release/original/RAN-EP7-Client-TH.zip.part00 \
+              external/ep7_release/original/RAN-EP7-Client-TH.zip.part01 \
+              > external/ep7_release/original/RAN-EP7-Client-TH.zip
+          unzip -t external/ep7_release/original/RAN-EP7-Client-TH.zip > /dev/null
+          unzip -q -o external/ep7_release/original/RAN-EP7-Client-TH.zip -d external/ep7_release/client_original
+          unzip -q -o external/ep7_release/original/RAN-EP7-ThaiPack-FamHawaii.zip -d external/ep7_release/thaipack_original
+          echo "=== EP7 DATA VERIFICATION ==="
+          find external/ep7_release/client_original -maxdepth 3 \( -iname "mapslist.mst" -o -iname "crow.mnsf" -o -iname "item.isf" -o -iname "skill.ssf" -o -iname "quest.lst" \)
+
       - name: Run Linux C++17 Unit & Integration Tests
         run: |
           g++ -std=c++17 -Wall -Wextra -Werror \
@@ -49,24 +68,6 @@ jobs:
             RANMobile/Tests/test_main.cpp \
             -lpthread -o ranmobile_tests
           ./ranmobile_tests
-
-      - name: Download & Extract Original EP7 Client Data (ran-ep7-full-v1)
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          mkdir -p external/ep7_release/original external/ep7_release/client_original
-          gh release download ran-ep7-full-v1 \
-            --repo famoh01/ran-online-ep7 \
-            --pattern "RAN-EP7-Client-TH.zip.part*" \
-            --pattern "RAN-EP7-ThaiPack-FamHawaii.zip" \
-            --dir external/ep7_release/original
-          cat external/ep7_release/original/RAN-EP7-Client-TH.zip.part00 \
-              external/ep7_release/original/RAN-EP7-Client-TH.zip.part01 \
-              > external/ep7_release/original/RAN-EP7-Client-TH.zip
-          unzip -t external/ep7_release/original/RAN-EP7-Client-TH.zip > /dev/null
-          unzip -q -o external/ep7_release/original/RAN-EP7-Client-TH.zip -d external/ep7_release/client_original
-          echo "=== EP7 DATA VERIFICATION ==="
-          find external/ep7_release/client_original -maxdepth 3 \( -iname "mapslist.mst" -o -iname "crow.mnsf" -o -iname "item.isf" -o -iname "skill.ssf" -o -iname "quest.lst" \)
 
       - name: Setup Android NDK
         uses: nttld/setup-ndk@v1
