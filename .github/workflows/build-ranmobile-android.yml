@@ -71,7 +71,7 @@ jobs:
           ./ranmobile_tests 2>&1 | tee test_output.log
 
       - name: Upload Failed Test Log
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: linux-test-failure-log
