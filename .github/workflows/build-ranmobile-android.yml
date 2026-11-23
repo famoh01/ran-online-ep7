@@ -77,6 +77,7 @@ jobs:
 
       - name: Build RANMobile Native Library (arm64-v8a)
         run: |
+          rm -rf build-android-arm64
           cmake -S RANMobile -B build-android-arm64 \
             -DCMAKE_TOOLCHAIN_FILE=${{ steps.setup-ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake \
             -DANDROID_ABI=arm64-v8a \

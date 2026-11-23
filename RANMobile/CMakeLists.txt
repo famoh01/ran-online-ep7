@@ -37,10 +37,23 @@ set(RANMOBILE_SOURCES
 )
 
 if(ANDROID)
-    set(NATIVE_APP_GLUE_DIR "${ANDROID_NDK}/sources/android/native_app_glue")
+    if(CMAKE_ANDROID_NDK)
+        set(NDK_ROOT "${CMAKE_ANDROID_NDK}")
+    elseif(ANDROID_NDK)
+        set(NDK_ROOT "${ANDROID_NDK}")
+    elseif(DEFINED ENV{ANDROID_NDK_HOME})
+        set(NDK_ROOT "$ENV{ANDROID_NDK_HOME}")
+    endif()
+
+    set(NATIVE_APP_GLUE_DIR "${NDK_ROOT}/sources/android/native_app_glue")
+    if(NOT EXISTS "${NATIVE_APP_GLUE_DIR}/android_native_app_glue.c")
+        message(FATAL_ERROR "android_native_app_glue.c not found at: ${NATIVE_APP_GLUE_DIR}")
+    endif()
+
     add_library(android_native_app_glue STATIC
         "${NATIVE_APP_GLUE_DIR}/android_native_app_glue.c"
     )
+    set_target_properties(android_native_app_glue PROPERTIES LINKER_LANGUAGE C)
     target_include_directories(android_native_app_glue PUBLIC "${NATIVE_APP_GLUE_DIR}")
 
     add_library(ranmobile SHARED
