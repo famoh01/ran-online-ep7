@@ -30,6 +30,7 @@ public:
     void SetUsername(const std::string& username) { m_username = username; }
     void SetPassword(const std::string& password) { m_password = password; }
     void SetRememberAccount(bool remember) { m_rememberAccount = remember; }
+    void SetBackgroundTexture(uint32_t texId) { m_bgTexId = texId; }
     void ToggleShowPassword() { m_showPassword = !m_showPassword; }
     bool IsPasswordVisible() const { return m_showPassword; }
 
@@ -73,6 +74,7 @@ private:
     bool m_soundEnabled = true;
     bool m_musicEnabled = true;
     int m_graphicsLevel = 1; // 0=LOW, 1=MED, 2=HIGH, 3=ULTRA
+    uint32_t m_bgTexId = 0;
 
     LoginFocus m_focus = LoginFocus::None;
     LoginAuthState m_authState = LoginAuthState::Disconnected;

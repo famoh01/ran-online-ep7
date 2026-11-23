@@ -147,7 +147,11 @@ void LoginScreen::Draw(RANMobile::MobileRenderer* renderer) {
     float px = (m_screenW - panelW) * 0.5f;
     float py = (m_screenH - panelH) * 0.5f;
 
-    renderer->DrawUIQuad(0.0f, 0.0f, m_screenW, m_screenH, 0.05f, 0.12f, 0.28f, 1.0f);
+    if (m_bgTexId != 0) {
+        renderer->DrawUITexturedQuad(m_bgTexId, 0.0f, 0.0f, m_screenW, m_screenH);
+    } else {
+        renderer->DrawUIQuad(0.0f, 0.0f, m_screenW, m_screenH, 0.05f, 0.12f, 0.28f, 1.0f);
+    }
     renderer->DrawUIText(36.0f, 28.0f, m_gameTitle, 1.3f, 1.0f, 0.85f, 0.25f, 1.0f);
 
     renderer->DrawUIQuad(px, py, panelW, panelH, 0.06f, 0.11f, 0.22f, 0.90f);
