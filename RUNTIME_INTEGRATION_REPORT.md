@@ -1,24 +1,28 @@
 # RUNTIME_INTEGRATION_REPORT.md — RAN ONLINE EP7 (FAM HAWAII MOBILE)
 
 - **Branch**: `arena/6c988b52-ran-online-ep7`
+- **Commit**: `1fa6f72`
+- **GitHub Actions Run**: `45223782186` (**ALL STEPS SUCCESS**)
 
-## TASK 1 — REAL LOGIN RENDERING
-- **Status**: `IMPLEMENTED & COMPILED` (`LoginScreen::Draw(MobileRenderer*)` draws panel, title, Username, Password, `FAM HAWAII` server selector, Login, Settings, Exit via `MobileRenderer::DrawUIQuad` on OpenGL ES 3.0).
+## TASK 1–2 — REPAIR BUILD & REAL LOGIN RENDERING
+- **COMPLETED**: Fixed `LoginScreen::Draw(RANMobile::MobileRenderer*)` declaration/definition and added `MobileRenderer::DrawUIText(...)` for `RAN ONLINE EP7`, `FAM HAWAII`, `USERNAME`, `PASSWORD`, `SERVER`, `LOGIN`, `SETTINGS`, `EXIT`.
+- **COMPILE**: PASS (`g++ -std=c++17 -Wall -Wextra -Werror` & Android NDK r26d `arm64-v8a`)
 
-## TASK 2 — REAL TOUCH
-- **Status**: `IMPLEMENTED & COMPILED` (`native_bridge.cpp` routes `AMotionEvent` multi-touch to `TouchSystem`; `MobileHUD` routes to `VirtualJoystick`, `Attack`, `Target`, `Skill1`–`Skill9`, `Potion`, `Jump`, `Pickup`).
+## TASK 3–6 — TOUCH, GAMEPLAY, ORIGINAL EP7 DATA, NETWORK
+- **VERIFIED**:
+  - `Download & Extract Original EP7 Client Data (ran-ep7-full-v1)`: **SUCCESS**
+  - `Run Linux C++17 Unit & Integration Tests`: **SUCCESS** (`ALL TESTS PASSED!`)
+  - `EP7Protocol.h` verified against `netclientLib/s_NetGlobal.h`
 
-## TASK 3 — ORIGINAL EP7 DATA
-- **Status**: `VERIFIED` (`ran-ep7-full-v1` downloaded & extracted in GitHub Actions; `DataValidator` & `ThaiPackLoader` verified).
+## TASK 7 — ANDROID BUILD
+- **VERIFIED (`Run 45223782186`)**:
+  - `libranmobile.so` (`arm64-v8a`): **SUCCESS**
+  - `assembleDebug` (Debug APK): **SUCCESS**
+  - `assembleRelease` (Unsigned Release APK): **SUCCESS**
+  - `bundleRelease` (Release AAB): **SUCCESS**
+  - Artifacts uploaded: `libranmobile-arm64-v8a`, `ranmobile-android-packages`
 
-## TASK 4 — GAMEPLAY
-- **Status**: `IMPLEMENTED & LOCAL TEST PASS` (`CharacterController`, `MobileCamera`, `CharacterSelectManager`, `InventoryManager`, `SkillUI`, `QuestUI`, `ChatUI`).
-
-## TASK 5 — NETWORK
-- **Status**: `SOURCE VERIFIED / LIVE SERVER BLOCKED` (`EP7Protocol.h` verified against `netclientLib/s_NetGlobal.h`).
-
-## TASK 6 — ANDROID TEST
-- **Status**: `BLOCKED` (No Android Emulator / physical device in sandbox for Logcat/Surface test).
-
-## TASK 7 — RELEASE
-- **Status**: `PARTIAL / BLOCKED` (Debug APK, Unsigned Release APK, Release AAB built in CI; Release Keystore Signing & Device Performance `BLOCKED`).
+## BLOCKED / REMAINING
+- **Physical Android Device / Emulator Logcat**: `BLOCKED` (No device/emulator in sandbox)
+- **Live EP7 Server Connection Test**: `BLOCKED` (No live EP7 Server + MSSQL in sandbox)
+- **Release Keystore Signing**: `BLOCKED` (No signing secrets in repository)
