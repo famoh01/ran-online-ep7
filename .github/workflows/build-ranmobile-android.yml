@@ -67,8 +67,31 @@ jobs:
             RANMobile/UI/Quest/QuestUI.cpp \
             RANMobile/Tests/test_main.cpp \
             -lpthread -o ranmobile_tests
-          set -o pipefail
-          ./ranmobile_tests 2>&1 | tee test_output.log
+          set +e
+          ./ranmobile_tests > test_output.log 2>&1
+          TEST_EXIT=$?
+          set -e
+          echo "TEST_EXIT=$TEST_EXIT" >> $GITHUB_ENV
+          cat test_output.log
+          if [ $TEST_EXIT -ne 0 ]; then
+            ERR_LINE=$(grep -i "Assertion\|Aborted\|Error\|fail" test_output.log | tail -n 5 | tr '\n' ' ')
+            echo "::error::ranmobile_tests failed (exit $TEST_EXIT): $ERR_LINE"
+          fi
+          exit $TEST_EXIT
+
+      - name: Write Test Summary
+        if: always()
+        run: |
+          {
+            echo "### Linux C++17 Test Summary"
+            echo "- Exit Code: ${TEST_EXIT:-unknown}"
+            echo '```'
+            tail -n 60 test_output.log 2>/dev/null || echo "No test_output.log"
+            echo '```'
+            echo "### external/ep7_release"
+            ls -la external/ep7_release 2>/dev/null || echo "Missing external/ep7_release"
+            ls -la external/ep7_release/thaipack_original 2>/dev/null | head -n 20 || echo "Missing thaipack_original"
+          } >> $GITHUB_STEP_SUMMARY
 
       - name: Upload Failed Test Log
         if: always()
