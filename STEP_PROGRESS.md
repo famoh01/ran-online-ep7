@@ -10,9 +10,10 @@
   - รองรับ `.mtf` Decrypt (`TEX_XOR_DATA=0x47`, `TEX_DIFF_DATA=0x03`) และ `.dds` **DXT1 / DXT3 / DXT5** -> RGBA8
   - เพิ่ม `MobileRenderer::UploadRGBA8Texture` และ `MobileRenderer::DeleteTexture` (GLES3 `glGenTextures` / `glTexImage2D` / `glDeleteTextures`)
   - เพิ่ม Unit Test ใน `test_main.cpp` (Test 19) และรวมเข้า `CMakeLists.txt` + CI Build แล้ว
-- **Model/Map Parsers (`EP7WorldCharParser`)**:
-  - ตรวจสอบ Header/Version จาก Source จริง: `.wld` (`0x0108..0x0114` จาก `DxLandManSaveLoad.cpp`), `.chf` (`0x0100/0x0101` จาก `DxSkinCharData.cpp`), `.cps` (`0x00000107` จาก `DxSkinPieceContainer.cpp`)
-  - สร้าง `EP7WorldCharParser.h/.cpp` และรวมเข้า `CMakeLists.txt` + CI Build แล้ว
+- **Model/Map Parsers (`EP7WorldCharParser` + `BinaryReader`)**:
+  - ตรวจสอบ Header/Version จาก Source จริง: `.wld` (`0x0108..0x0114`), `.chf` (`0x0100/0x0101`), `.cps` (`0x00000107`)
+  - เพิ่ม `BinaryReader` พร้อม Bounds Checking, Length Validation, Error Handling และ Unit Test (Test 20: Truncated/Invalid Header/Invalid Version/Out-of-Bounds/Invalid Length)
+  - **ข้อจำกัด**: ยังไม่ได้ทดสอบกับไฟล์ `.wld`/`.chf`/`.cps` ขนาดเต็มบน Android Device (รอเชื่อม Octree/Mesh/Piece เข้า `MobileRenderer`)
 - **Server (`MobileServerHost`)**: รองรับเฉพาะ `EP7_NET_MSG_LOGIN_2` + Local Account (ยัง **ไม่ใช่ Full EP7 Server** — ยังขาด Agent/Field/World/MSSQL)
 
 ## 3. Gameplay Test Status

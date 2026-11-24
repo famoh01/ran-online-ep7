@@ -5,20 +5,48 @@
 
 namespace RANMobile {
 
+class BinaryReader {
+public:
+    explicit BinaryReader(const std::vector<uint8_t>& buf) : m_buf(buf), m_pos(0) {}
+
+    bool CanRead(size_t bytes) const {
+        return bytes <= (m_buf.size() - m_pos);
+    }
+    size_t Offset() const { return m_pos; }
+    size_t Remaining() const { return m_buf.size() - m_pos; }
+
+    bool Skip(size_t bytes) {
+        if (!CanRead(bytes)) return false;
+        m_pos += bytes;
+        return true;
+    }
+
+    bool ReadU32(uint32_t& out);
+    bool ReadBytes(void* dst, size_t bytes);
+    bool ReadLengthPrefixedString(std::string& out, size_t maxLen = 4096);
+
+private:
+    const std::vector<uint8_t>& m_buf;
+    size_t m_pos;
+};
+
 struct EP7WldHeader {
     std::string fileType;
     uint32_t version = 0;
     bool valid = false;
+    std::string error;
 };
 
 struct EP7ChfHeader {
     uint32_t version = 0;
     bool valid = false;
+    std::string error;
 };
 
 struct EP7CpsHeader {
     uint32_t version = 0;
     bool valid = false;
+    std::string error;
 };
 
 class EP7WorldCharParser {
@@ -27,13 +55,8 @@ public:
     static constexpr uint32_t WLD_MAX_VERSION = 0x0114; // DxLandMan::VERSION
     static constexpr uint32_t CPS_VERSION     = 0x00000107; // DxSkinPiece::VERSION
 
-    // Parse .wld CSerialFile header (FILETYPESIZE=128 + uint32 version)
     static EP7WldHeader ParseWldHeader(const std::vector<uint8_t>& data);
-
-    // Parse .chf header (uint32 dwVer: 0x0100, 0x0101, or current VERSION)
     static EP7ChfHeader ParseChfHeader(const std::vector<uint8_t>& data);
-
-    // Parse .cps header (uint32 dwVer <= 0x00000107)
     static EP7CpsHeader ParseCpsHeader(const std::vector<uint8_t>& data);
 };
 

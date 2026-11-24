@@ -19,6 +19,7 @@
 #include "../UI/Quest/QuestUI.h"
 #include "../Server/MobileServerHost.h"
 #include "../Data/Importer/EP7TextureDecoder.h"
+#include "../Data/Importer/EP7WorldCharParser.h"
 #include "../UI/Map/MapUI.h"
 #include "../UI/Chat/ChatUI.h"
 #include "../Client/Map/MapManager.h"
@@ -274,6 +275,29 @@ int main() {
         auto tex = RANMobile::EP7TextureDecoder::DecodeDDS(dds);
         assert(tex.valid && tex.width == 4 && tex.height == 4);
         assert(tex.rgba8[0] == 255 && tex.rgba8[1] == 0 && tex.rgba8[2] == 0 && tex.rgba8[3] == 255);
+    }
+
+    // 20. EP7WorldCharParser & BinaryReader Bounds/Error Handling
+    {
+        std::vector<uint8_t> empty;
+        assert(!RANMobile::EP7WorldCharParser::ParseWldHeader(empty).valid);
+        assert(!RANMobile::EP7WorldCharParser::ParseChfHeader(empty).valid);
+        assert(!RANMobile::EP7WorldCharParser::ParseCpsHeader(empty).valid);
+
+        std::vector<uint8_t> badWld(132, 0); // empty fileType -> invalid header
+        assert(!RANMobile::EP7WorldCharParser::ParseWldHeader(badWld).valid);
+
+        std::vector<uint8_t> badVer(132, 0);
+        badVer[0] = 'L'; badVer[1] = 'A'; badVer[2] = 'N'; badVer[3] = 'D';
+        uint32_t vBad = 0x9999;
+        std::memcpy(badVer.data() + 128, &vBad, 4);
+        assert(!RANMobile::EP7WorldCharParser::ParseWldHeader(badVer).valid);
+
+        std::vector<uint8_t> badLenBuf = { 0xFF, 0x00, 0x00, 0x00, 'A', 'B' }; // len=255 > remaining=2
+        RANMobile::BinaryReader br(badLenBuf);
+        std::string s;
+        assert(!br.ReadLengthPrefixedString(s));
+        assert(!br.Skip(100));
     }
 
     engine.Shutdown();
