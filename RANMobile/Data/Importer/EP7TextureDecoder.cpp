@@ -55,6 +55,47 @@ void DecodeDXT1Block(const uint8_t* block, uint8_t* outRgba, uint32_t stride) {
         }
     }
 }
+
+void DecodeDXT3Block(const uint8_t* block, uint8_t* outRgba, uint32_t stride) {
+    // 8 bytes explicit 4-bit alpha, followed by 8 bytes DXT1 color
+    DecodeDXT1Block(block + 8, outRgba, stride);
+    for (uint32_t y = 0; y < 4; ++y) {
+        uint16_t rowAlpha = ReadU16(block + y * 2);
+        for (uint32_t x = 0; x < 4; ++x) {
+            uint8_t a4 = static_cast<uint8_t>((rowAlpha >> (x * 4)) & 0xF);
+            outRgba[y * stride + x * 4 + 3] = static_cast<uint8_t>(a4 * 17);
+        }
+    }
+}
+
+void DecodeDXT5Block(const uint8_t* block, uint8_t* outRgba, uint32_t stride) {
+    // 8 bytes interpolated alpha, followed by 8 bytes DXT1 color
+    DecodeDXT1Block(block + 8, outRgba, stride);
+    uint8_t a0 = block[0];
+    uint8_t a1 = block[1];
+    uint8_t alphas[8]{};
+    alphas[0] = a0;
+    alphas[1] = a1;
+    if (a0 > a1) {
+        for (int i = 1; i <= 6; ++i)
+            alphas[1 + i] = static_cast<uint8_t>(((7 - i) * a0 + i * a1) / 7);
+    } else {
+        for (int i = 1; i <= 4; ++i)
+            alphas[1 + i] = static_cast<uint8_t>(((5 - i) * a0 + i * a1) / 5);
+        alphas[6] = 0;
+        alphas[7] = 255;
+    }
+    uint64_t bits = 0;
+    for (int i = 0; i < 6; ++i) {
+        bits |= (static_cast<uint64_t>(block[2 + i]) << (8 * i));
+    }
+    for (uint32_t y = 0; y < 4; ++y) {
+        for (uint32_t x = 0; x < 4; ++x) {
+            uint32_t code = static_cast<uint32_t>((bits >> (3 * (y * 4 + x))) & 0x7);
+            outRgba[y * stride + x * 4 + 3] = alphas[code];
+        }
+    }
+}
 } // namespace
 
 bool EP7TextureDecoder::DecryptMTF(const std::vector<uint8_t>& mtfData, std::vector<uint8_t>& outRaw, int& outFileType) {
@@ -98,14 +139,18 @@ DecodedTexture EP7TextureDecoder::DecodeDDS(const std::vector<uint8_t>& ddsData)
     const uint8_t* src = ddsData.data() + 128;
     size_t srcAvail = ddsData.size() - 128;
 
-    if (fourCC == 0x31545844) { // 'DXT1'
+    if (fourCC == 0x31545844 || fourCC == 0x33545844 || fourCC == 0x35545844) { // DXT1 / DXT3 / DXT5
         uint32_t bw = (width + 3) / 4;
         uint32_t bh = (height + 3) / 4;
-        if (srcAvail < static_cast<size_t>(bw) * bh * 8) return tex;
+        size_t blockSize = (fourCC == 0x31545844) ? 8 : 16;
+        if (srcAvail < static_cast<size_t>(bw) * bh * blockSize) return tex;
         for (uint32_t by = 0; by < bh; ++by) {
             for (uint32_t bx = 0; bx < bw; ++bx) {
                 uint8_t blockRgba[4 * 4 * 4]{};
-                DecodeDXT1Block(src + (by * bw + bx) * 8, blockRgba, 16);
+                const uint8_t* blk = src + (by * bw + bx) * blockSize;
+                if (fourCC == 0x31545844) DecodeDXT1Block(blk, blockRgba, 16);
+                else if (fourCC == 0x33545844) DecodeDXT3Block(blk, blockRgba, 16);
+                else DecodeDXT5Block(blk, blockRgba, 16);
                 for (uint32_t y = 0; y < 4 && (by * 4 + y) < height; ++y) {
                     for (uint32_t x = 0; x < 4 && (bx * 4 + x) < width; ++x) {
                         size_t dstIdx = ((by * 4 + y) * width + (bx * 4 + x)) * 4;

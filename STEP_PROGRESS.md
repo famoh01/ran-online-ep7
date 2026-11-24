@@ -1,12 +1,14 @@
 # STEP_PROGRESS.md — FAM HAWAII (RAN ONLINE EP7 MOBILE)
 
-## สถานะล่าสุด (อัปเดตอัตโนมัติ)
-- **Branch**: `arena/6c988b52-ran-online-ep7` (PR #2)
-- **Android Client (`RANMobile`)**:
-  - `app-debug.apk` (ARM64): **PASS** ใน Run `45475236136` (`0e711f8`)
-  - `EP7TextureDecoder.h/.cpp` (PHASE 2): เขียน `.mtf` Decryptor (`TEX_XOR_DATA=0x47`, `TEX_DIFF_DATA=0x03`) + `.dds` DXT1 Decoder เสร็จแล้ว
-- **Android Server (`MobileServerHost`)**:
-  - `MobileServerHost.h/.cpp` (POSIX TCP `0.0.0.0:5001`, `EP7_NET_MSG_LOGIN_2`, local account register/auth): **PASS** ใน Run `45475236136` (ARM64 NDK Build)
-  - หมายเหตุ: ทำงานบนโทรศัพท์ Android ได้โดยไม่ต้องใช้ Windows PC สำหรับการทดสอบ Login/Account เบื้องต้น แต่สำหรับการเชื่อมต่อ MSSQL/World เต็มรูปแบบยังต้องเชื่อม Windows EP7 Server จริง
-- **PHASE 1 (Data & Source Audit)**:
-  - เพิ่ม `.github/workflows/phase1-complete-files-audit.yml` เพื่อดึง `.bak` และ SQL scripts จาก `Ran-Online-EP7-Complete-Files` ผ่าน `git lfs pull` บน Cloud Runner
+## 1. Build Status
+- **Android Client (`app-debug.apk` ARM64 + `libranmobile-arm64-v8a`)**: **PASS** (Run `45475236136`, `ranmobile-android-packages` 1.56 MB, `libranmobile-arm64-v8a` 1.30 MB)
+- **Android Server (`MobileServerHost` ARM64)**: **PASS** (Compile ผ่านใน Run `45475236136`)
+- **Phase 1 Complete Files Audit (`Ran-Online-EP7-Complete-Files` Git LFS)**: **PASS** (Run `45477556185`)
+
+## 2. Integration Status
+- **Texture Pipeline (`EP7TextureDecoder`)**: รองรับ `.mtf` Decrypt (`TEX_XOR_DATA=0x47`, `TEX_DIFF_DATA=0x03`) และ `.dds` **DXT1 / DXT3 / DXT5** -> RGBA8 แล้ว (รอเชื่อม UploadTexture เข้า `MobileRenderer` GLES3)
+- **Model/Map Parsers (`.wld`, `.chf`, `.cps`)**: ยืนยัน Header/Version จาก Source จริง (`DxSkinPiece::VERSION = 0x00000107`) — กำลังพัฒนา C++17 Binary Parser
+- **Server (`MobileServerHost`)**: รองรับเฉพาะ `EP7_NET_MSG_LOGIN_2` + Local Account (ยัง **ไม่ใช่ Full EP7 Server** — ยังขาด Agent/Field/World/MSSQL)
+
+## 3. Gameplay Test Status
+- **Login / CharacterSelect / Map / Combat / Shop / Chat**: **NOT YET TESTED ON DEVICE** (รอเชื่อม Parser + Real Server)
