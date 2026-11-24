@@ -25,14 +25,20 @@ jobs:
             cat /tmp/ep7_orig/RAN-EP7-Client-TH.zip.part00 /tmp/ep7_orig/RAN-EP7-Client-TH.zip.part01 > /tmp/ep7_orig/RAN-EP7-Client-TH.zip
             unzip -tq /tmp/ep7_orig/RAN-EP7-Client-TH.zip >> /tmp/report.txt 2>&1 || true
             unzip -q /tmp/ep7_orig/RAN-EP7-Client-TH.zip -d /tmp/ep7_client || true
+            echo "=== CLIENT TOP-LEVEL FOLDERS ===" >> /tmp/report.txt
+            ls -la /tmp/ep7_client >> /tmp/report.txt
+            echo "=== CLIENT CATEGORY SIZES ===" >> /tmp/report.txt
+            du -sh /tmp/ep7_client/* 2>/dev/null | head -n 30 >> /tmp/report.txt
             echo "=== CLIENT FILE COUNTS ===" >> /tmp/report.txt
             find /tmp/ep7_client -type f | wc -l >> /tmp/report.txt
             find /tmp/ep7_client -type f | sed 's/.*\.//' | tr '[:upper:]' '[:lower:]' | sort | uniq -c | sort -nr | head -n 30 >> /tmp/report.txt
           fi
           if [ -f /tmp/ep7_orig/RAN-EP7-ServerDBTools.zip ]; then
             unzip -q /tmp/ep7_orig/RAN-EP7-ServerDBTools.zip -d /tmp/ep7_serverdb || true
-            echo "=== SERVERDBTOOLS (.exe/.bak/.mdf/.cfg/.ini) ===" >> /tmp/report.txt
-            find /tmp/ep7_serverdb -type f \( -iname "*.exe" -o -iname "*.bak" -o -iname "*.mdf" -o -iname "*.cfg" -o -iname "*.ini" \) | head -n 50 >> /tmp/report.txt
+            echo "=== SERVERDBTOOLS (.exe/.dll/.bak/.mdf/.ldf/.sql/.cfg/.ini) ===" >> /tmp/report.txt
+            find /tmp/ep7_serverdb -type f \( -iname "*.exe" -o -iname "*.dll" -o -iname "*.bak" -o -iname "*.mdf" -o -iname "*.ldf" -o -iname "*.sql" -o -iname "*.cfg" -o -iname "*.ini" \) -exec ls -lh {} + | head -n 80 >> /tmp/report.txt
+            echo "=== SERVERDBTOOLS EXE ARCH ===" >> /tmp/report.txt
+            find /tmp/ep7_serverdb -type f -iname "*.exe" -exec file {} + | head -n 40 >> /tmp/report.txt
           fi
           cat /tmp/report.txt >> $GITHUB_STEP_SUMMARY
         env:
