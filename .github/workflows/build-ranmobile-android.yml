@@ -48,6 +48,7 @@ jobs:
             RANMobile/Data/Validator/DataValidator.cpp \
             RANMobile/Data/Importer/EP7AssetImporter.cpp \
             RANMobile/Data/Importer/EP7TextureDecoder.cpp \
+            RANMobile/Data/Importer/EP7WorldCharParser.cpp \
             RANMobile/Data/Converter/RANMobileDataConverter.cpp \
             RANMobile/Data/Loader/GameDataLoader.cpp \
             RANMobile/Data/Loader/ThaiPackLoader.cpp \

@@ -17,6 +17,7 @@ set(RANMOBILE_SOURCES
     Data/Validator/DataValidator.cpp
     Data/Importer/EP7AssetImporter.cpp
     Data/Importer/EP7TextureDecoder.cpp
+    Data/Importer/EP7WorldCharParser.cpp
     Data/Converter/RANMobileDataConverter.cpp
     Data/Loader/GameDataLoader.cpp
     Data/Loader/ThaiPackLoader.cpp
