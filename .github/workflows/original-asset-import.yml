@@ -11,6 +11,10 @@ on:
 jobs:
   import-original-ep7-assets:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -58,10 +62,11 @@ jobs:
           } > /tmp/part_d.txt
 
           cat /tmp/part_a.txt /tmp/part_b.txt /tmp/part_c.txt /tmp/part_d.txt >> $GITHUB_STEP_SUMMARY
-
-          for f in /tmp/part_a.txt /tmp/part_b.txt /tmp/part_c.txt /tmp/part_d.txt; do
-            MSG=$(sed ':a;N;$!ba;s/\n/%0A/g' "$f")
-            echo "::notice::$MSG"
-          done
+          {
+            echo '```'
+            cat /tmp/part_a.txt /tmp/part_b.txt /tmp/part_c.txt /tmp/part_d.txt
+            echo '```'
+          } > /tmp/asset_report.md
+          gh pr comment 2 --repo famoh01/ran-online-ep7 --body-file /tmp/asset_report.md
         env:
           GH_TOKEN: ${{ github.token }}
