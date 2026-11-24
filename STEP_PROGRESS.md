@@ -2,7 +2,9 @@
 
 ## 1. Build Status
 - **Android Client (`app-debug.apk` ARM64 + `libranmobile-arm64-v8a`)**: **PASS** (Run `45475236136`, `ranmobile-android-packages` 1.56 MB, `libranmobile-arm64-v8a` 1.30 MB)
-- **Android Server (`MobileServerHost` ARM64)**: **PASS** (Compile ผ่านใน Run `45475236136`)
+- **Original Windows EP7 Server (`Smtm2022.sln`)**:
+  - สร้าง `.github/workflows/build-ep7-windows-server.yml` สำหรับ Compile `LoginServer`, `AgentServer`, `FieldServer`, `GameServer` บน `windows-latest`
+  - สร้าง `SERVER_BUILD_STATUS.md`, `SERVER_SOURCE_MANIFEST.csv`, `SERVER_MISSING_FILES.md` แล้ว (รอผล CI Run แรก)
 - **Phase 1 Complete Files Audit (`Ran-Online-EP7-Complete-Files` Git LFS)**: **PASS** (Run `45477556185`)
 
 ## 2. Integration Status
