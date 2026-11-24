@@ -8,6 +8,10 @@ on:
     paths:
       - '.github/workflows/build-ep7-windows-server.yml'
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   build-windows-server:
     runs-on: windows-latest
@@ -19,16 +23,31 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Build LoginServer & Core Server Projects (Win32 Release)
-        continue-on-error: true
         run: |
           mkdir build_logs -Force
-          msbuild LoginServer/LoginServer.vcxproj /p:Configuration=Release /p:Platform=Win32 /m /flp:LogFile=build_logs/LoginServer.log;Verbosity=minimal
-          msbuild AgentServer/AgentServer.vcxproj /p:Configuration=Release /p:Platform=Win32 /m /flp:LogFile=build_logs/AgentServer.log;Verbosity=minimal
-          msbuild FieldServer/FieldServer.vcxproj /p:Configuration=Release /p:Platform=Win32 /m /flp:LogFile=build_logs/FieldServer.log;Verbosity=minimal
-          msbuild GameServer/GameServer.vcxproj /p:Configuration=Release /p:Platform=Win32 /m /flp:LogFile=build_logs/GameServer.log;Verbosity=minimal
+          $summary = @("### Windows Server MSBuild Summary (`$env:GITHUB_SHA`)")
+          foreach ($proj in @("LoginServer/LoginServer.vcxproj", "AgentServer/AgentServer.vcxproj", "FieldServer/FieldServer.vcxproj", "GameServer/GameServer.vcxproj")) {
+            $name = [System.IO.Path]::GetFileNameWithoutExtension($proj)
+            $log = "build_logs/$name.log"
+            msbuild $proj /p:Configuration=Release /p:Platform=Win32 /m /flp:LogFile=$log`;Verbosity=minimal
+            if ($LASTEXITCODE -eq 0) {
+              $summary += "- **$name**: PASS"
+            } else {
+              $err = (Select-String -Path $log -Pattern "error " | Select-Object -First 3 | ForEach-Object { $_.Line.Trim() }) -join " | "
+              $summary += "- **$name**: FAIL (`$err`)"
+            }
+          }
+          $summary -join "`n" | Out-File -FilePath build_logs/summary.txt -Encoding utf8
+          Get-Content build_logs/summary.txt
 
       - name: Upload Windows Server Build Logs
         uses: actions/upload-artifact@v4
         with:
           name: ep7-windows-server-build-logs
           path: build_logs/
+
+      - name: Post Summary to PR #2
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment 2 --body-file build_logs/summary.txt
