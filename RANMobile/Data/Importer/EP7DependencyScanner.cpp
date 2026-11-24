@@ -81,6 +81,11 @@ std::vector<ScannedAsset> EP7DependencyScanner::ScanRecursive(const std::string&
         asset.name = name;
         asset.extension = GetExtension(name);
         auto it = m_fileIndex.find(ToLower(name));
+        if (it == m_fileIndex.end() && asset.extension == ".x") {
+            std::string base = ToLower(name.substr(0, name.size() - 2));
+            it = m_fileIndex.find(base + ".bin");
+            if (it == m_fileIndex.end()) it = m_fileIndex.find(base + ".cfg");
+        }
         if (it != m_fileIndex.end()) {
             asset.found = true;
             asset.resolvedPath = it->second.first;
