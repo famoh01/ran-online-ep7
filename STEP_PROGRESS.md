@@ -9,6 +9,7 @@
 - **Texture Pipeline (`EP7TextureDecoder` + `MobileRenderer`)**:
   - รองรับ `.mtf` Decrypt (`TEX_XOR_DATA=0x47`, `TEX_DIFF_DATA=0x03`) และ `.dds` **DXT1 / DXT3 / DXT5** -> RGBA8
   - เพิ่ม `MobileRenderer::UploadRGBA8Texture` และ `MobileRenderer::DeleteTexture` (GLES3 `glGenTextures` / `glTexImage2D` / `glDeleteTextures`)
+  - เพิ่ม Unit Test ใน `test_main.cpp` (Test 19) และรวมเข้า `CMakeLists.txt` + CI Build แล้ว
 - **Model/Map Parsers (`.wld`, `.chf`, `.cps`)**: ยืนยัน Header/Version จาก Source จริง (`DxSkinPiece::VERSION = 0x00000107`) — กำลังพัฒนา C++17 Binary Parser
 - **Server (`MobileServerHost`)**: รองรับเฉพาะ `EP7_NET_MSG_LOGIN_2` + Local Account (ยัง **ไม่ใช่ Full EP7 Server** — ยังขาด Agent/Field/World/MSSQL)
 

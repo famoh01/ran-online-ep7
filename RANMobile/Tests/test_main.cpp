@@ -18,6 +18,7 @@
 #include "../Data/Loader/ThaiPackLoader.h"
 #include "../UI/Quest/QuestUI.h"
 #include "../Server/MobileServerHost.h"
+#include "../Data/Importer/EP7TextureDecoder.h"
 #include "../UI/Map/MapUI.h"
 #include "../UI/Chat/ChatUI.h"
 #include "../Client/Map/MapManager.h"
@@ -241,6 +242,39 @@ int main() {
     assert(serverHost.IsRunning());
     serverHost.Stop();
     assert(!serverHost.IsRunning());
+
+    // 19. EP7TextureDecoder (.mtf decrypt + .dds DXT1/DXT5 decode)
+    {
+        // Encrypt a 4-byte payload using MemoryTexture.cpp:138-139 rule
+        std::vector<uint8_t> mtf(16, 0);
+        int ver = 1, sz = 4, ftype = 0;
+        std::memcpy(mtf.data(), &ver, 4);
+        std::memcpy(mtf.data() + 4, &sz, 4);
+        std::memcpy(mtf.data() + 8, &ftype, 4);
+        const uint8_t plain[4] = {'D', 'D', 'S', ' '};
+        for (int i = 0; i < 4; ++i) {
+            mtf[12 + i] = static_cast<uint8_t>((plain[i] ^ 0x47) - 0x03);
+        }
+        std::vector<uint8_t> outRaw;
+        int outType = -1;
+        assert(RANMobile::EP7TextureDecoder::DecryptMTF(mtf, outRaw, outType));
+        assert(outType == 0 && outRaw.size() == 4);
+        assert(std::memcmp(outRaw.data(), plain, 4) == 0);
+
+        // Minimal 4x4 DXT1 DDS (128-byte header + 8-byte block)
+        std::vector<uint8_t> dds(136, 0);
+        std::memcpy(dds.data(), "DDS ", 4);
+        uint32_t h = 4, w = 4, fourcc = 0x31545844;
+        std::memcpy(dds.data() + 12, &h, 4);
+        std::memcpy(dds.data() + 16, &w, 4);
+        std::memcpy(dds.data() + 84, &fourcc, 4);
+        // c0 = 0xF800 (red), c1 = 0x001F (blue), idx = 0 (all pixel 0 -> c0)
+        dds[128] = 0x00; dds[129] = 0xF8;
+        dds[130] = 0x1F; dds[131] = 0x00;
+        auto tex = RANMobile::EP7TextureDecoder::DecodeDDS(dds);
+        assert(tex.valid && tex.width == 4 && tex.height == 4);
+        assert(tex.rgba8[0] == 255 && tex.rgba8[1] == 0 && tex.rgba8[2] == 0 && tex.rgba8[3] == 255);
+    }
 
     engine.Shutdown();
     assert(!engine.IsInitialized());
