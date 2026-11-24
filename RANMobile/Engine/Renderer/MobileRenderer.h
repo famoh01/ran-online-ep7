@@ -36,6 +36,7 @@ public:
     float MeasureTextWidth(const std::string& text, float scale);
 
     uint32_t UploadRGBA8Texture(uint32_t width, uint32_t height, const uint8_t* rgba8);
+    void DrawTexturedQuad(uint32_t texId, float x, float y, float width, float height, float alpha = 1.0f);
     void DeleteTexture(uint32_t texId);
 
     static uint32_t DecodeUTF8(const std::string& text, size_t& index);

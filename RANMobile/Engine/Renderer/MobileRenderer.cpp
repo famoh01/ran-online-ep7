@@ -416,6 +416,41 @@ uint32_t MobileRenderer::UploadRGBA8Texture(uint32_t width, uint32_t height, con
 #endif
 }
 
+void MobileRenderer::DrawTexturedQuad(uint32_t texId, float x, float y, float width, float height, float alpha) {
+    if (!m_initialized || texId == 0 || width <= 0.0f || height <= 0.0f) return;
+#ifdef __ANDROID__
+    if (m_texProgram != 0 && m_width > 0 && m_height > 0) {
+        float x0 = (x / static_cast<float>(m_width)) * 2.0f - 1.0f;
+        float x1 = ((x + width) / static_cast<float>(m_width)) * 2.0f - 1.0f;
+        float y0 = 1.0f - (y / static_cast<float>(m_height)) * 2.0f;
+        float y1 = 1.0f - ((y + height) / static_cast<float>(m_height)) * 2.0f;
+        const float verts[] = {
+            x0, y0, 0.0f, 0.0f,
+            x1, y0, 1.0f, 0.0f,
+            x0, y1, 0.0f, 1.0f,
+            x1, y1, 1.0f, 1.0f,
+        };
+        glUseProgram(m_texProgram);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(texId));
+        glUniform1i(glGetUniformLocation(m_texProgram, "uTex"), 0);
+        glUniform4f(glGetUniformLocation(m_texProgram, "uColor"), 1.0f, 1.0f, 1.0f, alpha);
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), verts);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), verts + 2);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+#else
+    (void)x; (void)y; (void)alpha;
+#endif
+    m_stats.drawCalls++;
+    m_stats.triangles += 2;
+}
+
 void MobileRenderer::DeleteTexture(uint32_t texId) {
     if (texId == 0) return;
 #ifdef __ANDROID__
