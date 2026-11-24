@@ -35,6 +35,9 @@ public:
     void DrawUIText(float x, float y, const std::string& text, float scale, float r, float g, float b, float a);
     float MeasureTextWidth(const std::string& text, float scale);
 
+    uint32_t UploadRGBA8Texture(uint32_t width, uint32_t height, const uint8_t* rgba8);
+    void DeleteTexture(uint32_t texId);
+
     static uint32_t DecodeUTF8(const std::string& text, size_t& index);
 
     void ApplySettings(const GraphicsSettings& settings);

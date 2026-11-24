@@ -396,4 +396,32 @@ bool MobileRenderer::IsBoxInFrustum(float minX, float minY, float minZ, float ma
     return distSq <= (m_settings.viewDistance * m_settings.viewDistance);
 }
 
+uint32_t MobileRenderer::UploadRGBA8Texture(uint32_t width, uint32_t height, const uint8_t* rgba8) {
+    if (!m_initialized || width == 0 || height == 0 || !rgba8) return 0;
+#ifdef __ANDROID__
+    GLuint texId = 0;
+    glGenTextures(1, &texId);
+    if (texId == 0) return 0;
+    glBindTexture(GL_TEXTURE_2D, texId);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, static_cast<GLsizei>(width), static_cast<GLsizei>(height),
+                 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba8);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return static_cast<uint32_t>(texId);
+#else
+    return 1; // Non-Android headless test stub
+#endif
+}
+
+void MobileRenderer::DeleteTexture(uint32_t texId) {
+    if (texId == 0) return;
+#ifdef __ANDROID__
+    GLuint id = static_cast<GLuint>(texId);
+    glDeleteTextures(1, &id);
+#endif
+}
+
 } // namespace RANMobile
