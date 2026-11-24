@@ -15,8 +15,8 @@
 | `.abl` | Attach Bone Link | `enginelib/Meshs/DxAttBoneLink.cpp` | DirectX 9 | พอร์ต Parser |
 | `.qst` | Quest Data | `RanLogic/Quest/GLQuestMan.cpp` | Cross-platform | อ่านได้โดยตรง (1,046 ไฟล์ใน ThaiPack) |
 | `.wav` | Audio Waveform | `enginelib/DxSound/DxSoundMan.cpp` | DirectSound | เล่นผ่าน **Oboe / OpenSL ES** บน Android |
-| `.mtf` | Material / Texture Animation | `NOT FOUND IN SOURCE` | - | - |
-| `.aps` | Attach Piece / Skin | `NOT FOUND IN SOURCE` | - | - |
+| `.mtf` | Encrypted Texture (`.dds` / `.tga` ที่เข้ารหัส) | `enginelib/DxCommon/TextureManager.cpp:138`, `MemoryTexture.cpp:144` | Header: `nVersion`, `nSize`, `nFileType` + XOR (`TEX_XOR_DATA`) & `- TEX_DIFF_DATA` | **พอร์ตได้ 100%** (ถอดรหัสเป็น `.dds`/`.tga` แล้วแปลงเป็น ETC2/ASTC) |
+| `.aps` / `.pis` / `.pie` / `.vps` / `.wld0` / `.pie15` / `.enm` | `NOT FOUND AFTER EXTENDED SEARCH` (ค้นหาด้วย `grep -rnE` + `Format\|StringCch\|strcat\|find\|ext` ใน `enginelib/`, `RanClientLib/`, `RanLogic/` แล้วไม่พบ) | - | - | - |
 | `.abf` | Attach Bone File | `enginelib/Meshs/DxAttBoneData.cpp` | DirectX 9 | พอร์ต Parser |
 | `.pis` | Piece / Skin | `NOT FOUND IN SOURCE` | - | - |
 | `.ntk` | NPC Talk Data | `RanLogic/NpcTalk/NpcTalkMan.cpp` | Cross-platform | อ่านได้โดยตรง |
@@ -37,8 +37,8 @@
 - **สันนิษฐาน**: ไฟล์ข้อมูลเกมหลัก (`.wld`, `.lev`, `.isf`, `.ssf`) ใช้รูปแบบ Binary Serialization ของ `CSerialFile` โดยอาจมีการเข้ารหัสบางไฟล์ด้วย `FileCrypt`
 
 ## 3. ชิ้นข้อมูลทดสอบจริง 1 ชุด (Proof-of-Pipeline โดยไม่ต้องมี Server)
-- **แผนที่**: `login.wld` (อ้างอิงจริงใน `RanClientLib/DxLobyStage.cpp:624`) พร้อม Texture `.dds` ที่อ้างอิงภายใน
-- **ตัวละคร**: `chs_kt.chf` (Knight) หรือ `s01_01.chf` (อ้างอิงจริงใน `RanClientLib/DxLobyStage.cpp:387, 658`)
+- **แผนที่**: `login.wld` (`3,098,590` bytes, อ้างอิงใน `RanClientLib/DxLobyStage.cpp:624`) พร้อม Texture `.dds` / `.tga` ที่อ้างอิงภายใน
+- **ตัวละคร**: `s01_01.chf` (อ้างอิงใน `RanClientLib/DxLobyStage.cpp:387`) โหลดผ่าน `DxSkinCharDataContainer::LoadData` -> `DxSkinCharData::LoadFile` (`enginelib/Meshs/DxSkinCharData.cpp`) ซึ่งอ้างอิงไฟล์ `.cps` (Piece), `.x` (Mesh), `.cfg`/`.bin` (Animation), `.abl`/`.abf` (Attach Bone), และ `.dds`/`.mtf` (Texture) ทั้งหมดมี Parser ใน Source จริง (ยกเว้น `.x` ที่ต้องแปลงล่วงหน้าบน Cloud)
 
 ## 4. ประเมินขนาดหลังแปลง & วิธีส่งเข้าแอป
 - **ขนาดต้นฉบับ**: `data` (2.5 GB) + `textures` (3.8 GB) + `sounds` (205 MB) ≈ **6.5 GB**
