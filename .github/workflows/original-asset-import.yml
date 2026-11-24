@@ -1,0 +1,31 @@
+name: Original EP7 Asset Import (Cloud Runner)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  import-original-ep7-assets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download & Verify ran-ep7-full-v1 Release Assets
+        run: |
+          mkdir -p external/ep7_release/original
+          gh release download ran-ep7-full-v1 --repo famoh01/ran-online-ep7 --dir external/ep7_release/original
+          ls -lh external/ep7_release/original
+          sha256sum external/ep7_release/original/* > external/ep7_release/SHA256SUMS.txt
+          cat external/ep7_release/SHA256SUMS.txt
+          if [ -f external/ep7_release/original/RAN-EP7-Client-TH.zip.part00 ] && [ -f external/ep7_release/original/RAN-EP7-Client-TH.zip.part01 ]; then
+            cat external/ep7_release/original/RAN-EP7-Client-TH.zip.part00 external/ep7_release/original/RAN-EP7-Client-TH.zip.part01 > external/ep7_release/original/RAN-EP7-Client-TH.zip
+            unzip -t external/ep7_release/original/RAN-EP7-Client-TH.zip | tail -n 5
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Upload Asset Verification Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ep7-original-asset-checksums
+          path: external/ep7_release/SHA256SUMS.txt
