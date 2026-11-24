@@ -46,8 +46,7 @@ jobs:
           name: ep7-windows-server-build-logs
           path: build_logs/
 
-      - name: Post Summary to PR #2
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Emit Annotations
         run: |
-          gh pr comment 2 --body-file build_logs/summary.txt
+          Get-Content build_logs/summary.txt | ForEach-Object { Write-Output "::notice::$_" }
+          Get-Content build_logs/summary.txt >> $env:GITHUB_STEP_SUMMARY
