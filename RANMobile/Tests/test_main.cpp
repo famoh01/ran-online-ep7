@@ -300,6 +300,17 @@ int main() {
         assert(!br.Skip(100));
     }
 
+    // 21. MobileRenderer Texture Upload / Draw / Cleanup & Invalid Dimensions
+    {
+        auto* renderer = engine.GetRenderer();
+        assert(renderer->UploadRGBA8Texture(0, 4, nullptr) == 0);
+        uint8_t dummyRgba[4 * 4 * 4]{};
+        uint32_t texId = renderer->UploadRGBA8Texture(4, 4, dummyRgba);
+        assert(texId != 0);
+        renderer->DrawTexturedQuad(texId, 10.0f, 10.0f, 32.0f, 32.0f, 1.0f);
+        renderer->DeleteTexture(texId);
+    }
+
     engine.Shutdown();
     assert(!engine.IsInitialized());
 
