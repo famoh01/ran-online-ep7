@@ -17,6 +17,9 @@
 #include "../UI/Skills/SkillUI.h"
 #include "../Data/Loader/ThaiPackLoader.h"
 #include "../UI/Quest/QuestUI.h"
+#include "../Server/MobileServerHost.h"
+#include "../Data/Importer/EP7TextureDecoder.h"
+#include "../Data/Importer/EP7WorldCharParser.h"
 #include "../UI/Map/MapUI.h"
 #include "../UI/Chat/ChatUI.h"
 #include "../Client/Map/MapManager.h"
@@ -192,6 +195,110 @@ int main() {
     RANMobile::SkillUI skillUI;
     skillUI.BindSkillSlot(0, 101);
     assert(skillUI.GetSkillSlot(0)->CanUse());
+
+    // 15. Real LoginScreen Focus, Text Input, Backspace, Password Masking, Render
+    auto* engLogin = engine.GetLoginScreen();
+    assert(engLogin != nullptr);
+    engLogin->HandleTouchDown(0, 640.0f, 220.0f); // Username field
+    assert(engLogin->GetFocus() == LoginFocus::Username);
+    engLogin->HandleTextInput("famuser");
+    engLogin->HandleBackspace();
+    assert(engLogin->GetUsername() == "famuse");
+
+    engLogin->HandleTouchDown(0, 640.0f, 280.0f); // Password field
+    assert(engLogin->GetFocus() == LoginFocus::Password);
+    engLogin->HandleTextInput("secret");
+    assert(engLogin->GetMaskedPassword() == "******");
+    engine.Render();
+    assert(engine.GetRenderer()->GetStats().drawCalls > 0);
+
+    // 16. UTF-8 Thai Font Decoding & Width Measurement
+    std::string thaiSample = "สวัสดี FAM HAWAII 123";
+    size_t utfIdx = 0;
+    assert(RANMobile::MobileRenderer::DecodeUTF8(thaiSample, utfIdx) == 0x0E2A); // ส
+    assert(RANMobile::MobileRenderer::DecodeUTF8(thaiSample, utfIdx) == 0x0E27); // ว
+    assert(RANMobile::MobileRenderer::DecodeUTF8(thaiSample, utfIdx) == 0x0E31); // ั (combining)
+    assert(engine.GetRenderer()->MeasureTextWidth(thaiSample, 1.0f) > 0.0f);
+
+    // 17. Settings & Exit Confirmation Hit Testing
+    engLogin->HandleTouchDown(0, 420.0f, 485.0f); // Settings button
+    assert(engLogin->IsSettingsOpen());
+    engLogin->HandleTouchDown(0, 640.0f, 300.0f); // Sound toggle
+    assert(!engLogin->IsSoundEnabled());
+    engLogin->HandleTouchDown(0, 640.0f, 470.0f); // Close settings
+    assert(!engLogin->IsSettingsOpen());
+
+    engLogin->HandleTouchDown(0, 800.0f, 485.0f); // Exit button
+    assert(engLogin->IsExitConfirmOpen());
+    engLogin->HandleTouchDown(0, 720.0f, 400.0f); // NO
+    assert(!engLogin->IsExitConfirmOpen());
+    assert(!engLogin->WantsExit());
+
+    // 18. Android Server Host (Register, Authenticate, Start/Stop)
+    RANMobile::MobileServerHost serverHost;
+    assert(serverHost.RegisterAccount("hawaii01", "pass1234"));
+    assert(serverHost.Authenticate("hawaii01", "pass1234"));
+    assert(!serverHost.Authenticate("hawaii01", "wrongpass"));
+    assert(serverHost.Start(15001));
+    assert(serverHost.IsRunning());
+    serverHost.Stop();
+    assert(!serverHost.IsRunning());
+
+    // 19. EP7TextureDecoder (.mtf decrypt + .dds DXT1/DXT5 decode)
+    {
+        // Encrypt a 4-byte payload using MemoryTexture.cpp:138-139 rule
+        std::vector<uint8_t> mtf(16, 0);
+        int ver = 1, sz = 4, ftype = 0;
+        std::memcpy(mtf.data(), &ver, 4);
+        std::memcpy(mtf.data() + 4, &sz, 4);
+        std::memcpy(mtf.data() + 8, &ftype, 4);
+        const uint8_t plain[4] = {'D', 'D', 'S', ' '};
+        for (int i = 0; i < 4; ++i) {
+            mtf[12 + i] = static_cast<uint8_t>((plain[i] ^ 0x47) - 0x03);
+        }
+        std::vector<uint8_t> outRaw;
+        int outType = -1;
+        assert(RANMobile::EP7TextureDecoder::DecryptMTF(mtf, outRaw, outType));
+        assert(outType == 0 && outRaw.size() == 4);
+        assert(std::memcmp(outRaw.data(), plain, 4) == 0);
+
+        // Minimal 4x4 DXT1 DDS (128-byte header + 8-byte block)
+        std::vector<uint8_t> dds(136, 0);
+        std::memcpy(dds.data(), "DDS ", 4);
+        uint32_t h = 4, w = 4, fourcc = 0x31545844;
+        std::memcpy(dds.data() + 12, &h, 4);
+        std::memcpy(dds.data() + 16, &w, 4);
+        std::memcpy(dds.data() + 84, &fourcc, 4);
+        // c0 = 0xF800 (red), c1 = 0x001F (blue), idx = 0 (all pixel 0 -> c0)
+        dds[128] = 0x00; dds[129] = 0xF8;
+        dds[130] = 0x1F; dds[131] = 0x00;
+        auto tex = RANMobile::EP7TextureDecoder::DecodeDDS(dds);
+        assert(tex.valid && tex.width == 4 && tex.height == 4);
+        assert(tex.rgba8[0] == 255 && tex.rgba8[1] == 0 && tex.rgba8[2] == 0 && tex.rgba8[3] == 255);
+    }
+
+    // 20. EP7WorldCharParser & BinaryReader Bounds/Error Handling
+    {
+        std::vector<uint8_t> empty;
+        assert(!RANMobile::EP7WorldCharParser::ParseWldHeader(empty).valid);
+        assert(!RANMobile::EP7WorldCharParser::ParseChfHeader(empty).valid);
+        assert(!RANMobile::EP7WorldCharParser::ParseCpsHeader(empty).valid);
+
+        std::vector<uint8_t> badWld(132, 0); // empty fileType -> invalid header
+        assert(!RANMobile::EP7WorldCharParser::ParseWldHeader(badWld).valid);
+
+        std::vector<uint8_t> badVer(132, 0);
+        badVer[0] = 'L'; badVer[1] = 'A'; badVer[2] = 'N'; badVer[3] = 'D';
+        uint32_t vBad = 0x9999;
+        std::memcpy(badVer.data() + 128, &vBad, 4);
+        assert(!RANMobile::EP7WorldCharParser::ParseWldHeader(badVer).valid);
+
+        std::vector<uint8_t> badLenBuf = { 0xFF, 0x00, 0x00, 0x00, 'A', 'B' }; // len=255 > remaining=2
+        RANMobile::BinaryReader br(badLenBuf);
+        std::string s;
+        assert(!br.ReadLengthPrefixedString(s));
+        assert(!br.Skip(100));
+    }
 
     engine.Shutdown();
     assert(!engine.IsInitialized());

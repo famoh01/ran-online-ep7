@@ -1,0 +1,76 @@
+# Triggered on branch push for dependency scan verification
+name: Original EP7 Asset Import (Cloud Runner)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - arena/6c988b52-ran-online-ep7
+    paths:
+      - '.github/workflows/original-asset-import.yml'
+
+jobs:
+  import-original-ep7-assets:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download, Reassemble, Verify & Inspect ran-ep7-full-v1
+        run: |
+          mkdir -p /tmp/ep7_orig /tmp/ep7_client /tmp/ep7_serverdb
+          gh release download ran-ep7-full-v1 --repo famoh01/ran-online-ep7 --dir /tmp/ep7_orig
+
+          if [ -f /tmp/ep7_orig/RAN-EP7-Client-TH.zip.part00 ] && [ -f /tmp/ep7_orig/RAN-EP7-Client-TH.zip.part01 ]; then
+            cat /tmp/ep7_orig/RAN-EP7-Client-TH.zip.part00 /tmp/ep7_orig/RAN-EP7-Client-TH.zip.part01 > /tmp/ep7_orig/RAN-EP7-Client-TH.zip
+            unzip -q /tmp/ep7_orig/RAN-EP7-Client-TH.zip -d /tmp/ep7_client || true
+          fi
+          if [ -f /tmp/ep7_orig/RAN-EP7-ServerDBTools.zip ]; then
+            unzip -q /tmp/ep7_orig/RAN-EP7-ServerDBTools.zip -d /tmp/ep7_serverdb || true
+          fi
+
+          {
+            echo "=== A. SIZES & SHA256 ==="
+            stat -c "%n: %s bytes" /tmp/ep7_orig/RAN-EP7-Client-TH.zip.part00 /tmp/ep7_orig/RAN-EP7-Client-TH.zip.part01 /tmp/ep7_orig/RAN-EP7-Client-TH.zip /tmp/ep7_orig/RAN-EP7-ServerDBTools.zip 2>/dev/null || true
+            sha256sum /tmp/ep7_orig/RAN-EP7-Client-TH.zip.part00 /tmp/ep7_orig/RAN-EP7-Client-TH.zip.part01 /tmp/ep7_orig/RAN-EP7-Client-TH.zip /tmp/ep7_orig/RAN-EP7-ServerDBTools.zip 2>/dev/null || true
+          } > /tmp/part_a.txt
+
+          {
+            echo "=== B. CLIENT TOP-LEVEL FOLDERS (SIZE + FILE COUNT) ==="
+            for d in /tmp/ep7_client/*; do
+              if [ -d "$d" ]; then
+                echo "$(basename "$d"): $(du -sh "$d" | cut -f1) | $(find "$d" -type f | wc -l) files"
+              elif [ -f "$d" ]; then
+                echo "$(basename "$d"): $(stat -c %s "$d") bytes | 1 file"
+              fi
+            done
+          } > /tmp/part_b.txt
+
+          {
+            echo "=== C. TOP 30 EXTENSIONS ==="
+            find /tmp/ep7_client -type f | sed 's/.*\.//' | tr '[:upper:]' '[:lower:]' | sort | uniq -c | sort -nr | head -n 30
+          } > /tmp/part_c.txt
+
+          {
+            echo "=== D. SERVERDBTOOLS (.exe/.dll/.bak/.mdf/.ldf/.sql/.cfg/.ini) ==="
+            find /tmp/ep7_serverdb -type f \( -iname "*.exe" -o -iname "*.dll" -o -iname "*.bak" -o -iname "*.mdf" -o -iname "*.ldf" -o -iname "*.sql" -o -iname "*.cfg" -o -iname "*.ini" \) -exec ls -lh {} + | head -n 40
+            echo "=== D2. EXE ARCH ==="
+            find /tmp/ep7_serverdb -type f -iname "*.exe" -exec file {} + | head -n 25
+          } > /tmp/part_d.txt
+
+          g++ -std=c++17 -Wall -Wextra -Werror RANMobile/Data/Importer/EP7DependencyScanner.cpp RANMobile/Tools/dep_scan_cli.cpp -o /tmp/dep_scan_cli
+          /tmp/dep_scan_cli /tmp/ep7_client login.wld s01_01.chf > /tmp/part_e.txt
+
+          cat /tmp/part_e.txt >> $GITHUB_STEP_SUMMARY
+          {
+            echo '```'
+            head -n 120 /tmp/part_e.txt
+            echo '```'
+          } > /tmp/asset_report.md
+          gh pr comment 2 --repo famoh01/ran-online-ep7 --body-file /tmp/asset_report.md
+        env:
+          GH_TOKEN: ${{ github.token }}

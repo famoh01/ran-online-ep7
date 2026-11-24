@@ -14,6 +14,25 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Download & Extract Original EP7 Client Data (ran-ep7-full-v1)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p external/ep7_release/original external/ep7_release/client_original external/ep7_release/thaipack_original
+          gh release download ran-ep7-full-v1 \
+            --repo famoh01/ran-online-ep7 \
+            --pattern "RAN-EP7-Client-TH.zip.part*" \
+            --pattern "RAN-EP7-ThaiPack-FamHawaii.zip" \
+            --dir external/ep7_release/original
+          cat external/ep7_release/original/RAN-EP7-Client-TH.zip.part00 \
+              external/ep7_release/original/RAN-EP7-Client-TH.zip.part01 \
+              > external/ep7_release/original/RAN-EP7-Client-TH.zip
+          unzip -t external/ep7_release/original/RAN-EP7-Client-TH.zip > /dev/null
+          unzip -q -o external/ep7_release/original/RAN-EP7-Client-TH.zip -d external/ep7_release/client_original
+          unzip -q -o external/ep7_release/original/RAN-EP7-ThaiPack-FamHawaii.zip -d external/ep7_release/thaipack_original
+          echo "=== EP7 DATA VERIFICATION ==="
+          find external/ep7_release/client_original -maxdepth 3 \( -iname "mapslist.mst" -o -iname "crow.mnsf" -o -iname "item.isf" -o -iname "skill.ssf" -o -iname "quest.lst" \)
+
       - name: Run Linux C++17 Unit & Integration Tests
         run: |
           g++ -std=c++17 -Wall -Wextra -Werror \
@@ -28,6 +47,8 @@ jobs:
             RANMobile/Engine/Network/NetworkClient.cpp \
             RANMobile/Data/Validator/DataValidator.cpp \
             RANMobile/Data/Importer/EP7AssetImporter.cpp \
+            RANMobile/Data/Importer/EP7TextureDecoder.cpp \
+            RANMobile/Data/Importer/EP7WorldCharParser.cpp \
             RANMobile/Data/Converter/RANMobileDataConverter.cpp \
             RANMobile/Data/Loader/GameDataLoader.cpp \
             RANMobile/Data/Loader/ThaiPackLoader.cpp \
@@ -46,9 +67,44 @@ jobs:
             RANMobile/UI/Buttons/MobileSkillButton.cpp \
             RANMobile/UI/HUD/MobileHUD.cpp \
             RANMobile/UI/Quest/QuestUI.cpp \
+            RANMobile/Server/MobileServerHost.cpp \
             RANMobile/Tests/test_main.cpp \
-            -lpthread -o ranmobile_tests
-          ./ranmobile_tests
+            -lpthread -o ranmobile_tests 2>&1 | tee -a compile_output.log
+
+      - name: Run Linux C++17 Tests
+        run: |
+          set +e
+          ./ranmobile_tests > test_output.log 2>&1
+          TEST_EXIT=$?
+          set -e
+          echo "TEST_EXIT=$TEST_EXIT" >> $GITHUB_ENV
+          cat test_output.log
+          if [ $TEST_EXIT -ne 0 ]; then
+            ERR_LINE=$(grep -i "Assertion\|Aborted\|Error\|fail" test_output.log | tail -n 5 | tr '\n' ' ')
+            echo "::error::ranmobile_tests failed (exit $TEST_EXIT): $ERR_LINE"
+          fi
+          exit $TEST_EXIT
+
+      - name: Write Test Summary
+        if: always()
+        run: |
+          {
+            echo "### Linux C++17 Test Summary"
+            echo "- Exit Code: ${TEST_EXIT:-unknown}"
+            echo '```'
+            tail -n 60 test_output.log 2>/dev/null || echo "No test_output.log"
+            echo '```'
+            echo "### external/ep7_release"
+            ls -la external/ep7_release 2>/dev/null || echo "Missing external/ep7_release"
+            ls -la external/ep7_release/thaipack_original 2>/dev/null | head -n 20 || echo "Missing thaipack_original"
+          } >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Failed Test Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-test-failure-log
+          path: test_output.log
 
       - name: Setup Android NDK
         uses: nttld/setup-ndk@v1
@@ -58,14 +114,44 @@ jobs:
 
       - name: Build RANMobile Native Library (arm64-v8a)
         run: |
+          rm -rf build-android-arm64
           cmake -S RANMobile -B build-android-arm64 \
             -DCMAKE_TOOLCHAIN_FILE=${{ steps.setup-ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake \
             -DANDROID_ABI=arm64-v8a \
             -DANDROID_PLATFORM=android-24
           cmake --build build-android-arm64 -j
+          file build-android-arm64/libranmobile.so
 
       - name: Upload ARM64 Native Library Artifact
         uses: actions/upload-artifact@v4
         with:
           name: libranmobile-arm64-v8a
           path: build-android-arm64/libranmobile.so
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.5'
+
+      - name: Build Android APK & AAB (assembleDebug, assembleRelease, bundleRelease)
+        working-directory: RANMobile/Android
+        run: |
+          gradle assembleDebug assembleRelease bundleRelease
+          ls -lh app/build/outputs/apk/debug/*.apk
+          ls -lh app/build/outputs/apk/release/*.apk
+          ls -lh app/build/outputs/bundle/release/*.aab
+
+      - name: Upload APK & AAB Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ranmobile-android-packages
+          path: |
+            RANMobile/Android/app/build/outputs/apk/debug/*.apk
+            RANMobile/Android/app/build/outputs/apk/release/*.apk
+            RANMobile/Android/app/build/outputs/bundle/release/*.aab

@@ -16,13 +16,13 @@
 
 ## PHASE 3 — MOBILE ENGINE
 - **COMPLETED**: สร้าง `RANMobileEngine`, `MobileRenderer`, `ResourceManager`, `AudioManager`, `AnimationManager`, `Logger`
-- **COMPILE**: PASS
+- **COMPILE**: PASS (Linux C++17) | **PASS** Android NDK r26d `arm64-v8a` (`libranmobile.so` built & uploaded in GitHub Actions Run `45206977085`, Commit `3b77943`)
 - **TEST**: PASS (`RANMobileEngine` lifecycle, `AudioManager`, `AnimationManager`)
 - **FILES CREATED**: `RANMobile/Engine/Audio/AudioManager.h/.cpp`, `RANMobile/Engine/Animation/AnimationManager.h/.cpp`
-- **FILES MODIFIED**: `RANMobile/CMakeLists.txt`
-- **VERIFIED**: Engine Initialize/Start/Update/Render/Shutdown ทำงานจริง
-- **BLOCKED**: `BLOCKED — EXTERNAL ASSET/SERVER NOT AVAILABLE` (OpenGL ES 3.0 / OpenSL ES Render Pass จริงต้องทดสอบบน Android NDK)
-- **REMAINING**: Shader & Mesh GPU upload บน Android
+- **FILES MODIFIED**: `RANMobile/CMakeLists.txt` (compiled `android_native_app_glue.c` directly into `ranmobile`), `RANMobile/Android/native_bridge.cpp` (`extern "C" android_main`)
+- **VERIFIED**: Engine Initialize/Start/Update/Render/Shutdown ทำงานจริง; GitHub Actions Run `45206977085` **ALL STEPS SUCCESS** (`libranmobile-arm64-v8a` artifact uploaded)
+- **BLOCKED**: `APK/AAB` packaging (ยังไม่รัน Gradle APK/AAB packaging) และ `REAL EP7 SERVER TEST` (ยังไม่ได้เชื่อม EP7 Server จริง)
+- **REMAINING**: แก้ไขจุดที่ Build `libranmobile.so` ไม่ผ่านบน Android NDK r26d และ Build APK/AAB
 
 ## PHASE 4 — DATA CONVERTER & VALIDATOR
 - **COMPLETED**: สร้าง `RANMobileDataConverter`, `DataValidator`, `GameDataLoader`, `EP7DataTypes.h`
