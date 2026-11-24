@@ -17,6 +17,7 @@
 #include "../UI/Skills/SkillUI.h"
 #include "../Data/Loader/ThaiPackLoader.h"
 #include "../UI/Quest/QuestUI.h"
+#include "../Server/MobileServerHost.h"
 #include "../UI/Map/MapUI.h"
 #include "../UI/Chat/ChatUI.h"
 #include "../Client/Map/MapManager.h"
@@ -230,6 +231,16 @@ int main() {
     engLogin->HandleTouchDown(0, 720.0f, 400.0f); // NO
     assert(!engLogin->IsExitConfirmOpen());
     assert(!engLogin->WantsExit());
+
+    // 18. Android Server Host (Register, Authenticate, Start/Stop)
+    RANMobile::MobileServerHost serverHost;
+    assert(serverHost.RegisterAccount("hawaii01", "pass1234"));
+    assert(serverHost.Authenticate("hawaii01", "pass1234"));
+    assert(!serverHost.Authenticate("hawaii01", "wrongpass"));
+    assert(serverHost.Start(15001));
+    assert(serverHost.IsRunning());
+    serverHost.Stop();
+    assert(!serverHost.IsRunning());
 
     engine.Shutdown();
     assert(!engine.IsInitialized());

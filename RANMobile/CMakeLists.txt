@@ -34,6 +34,7 @@ set(RANMOBILE_SOURCES
     UI/Buttons/MobileSkillButton.cpp
     UI/HUD/MobileHUD.cpp
     UI/Quest/QuestUI.cpp
+    Server/MobileServerHost.cpp
 )
 
 if(ANDROID)

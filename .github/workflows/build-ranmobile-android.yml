@@ -65,6 +65,7 @@ jobs:
             RANMobile/UI/Buttons/MobileSkillButton.cpp \
             RANMobile/UI/HUD/MobileHUD.cpp \
             RANMobile/UI/Quest/QuestUI.cpp \
+            RANMobile/Server/MobileServerHost.cpp \
             RANMobile/Tests/test_main.cpp \
             -lpthread -o ranmobile_tests 2>&1 | tee -a compile_output.log
 
