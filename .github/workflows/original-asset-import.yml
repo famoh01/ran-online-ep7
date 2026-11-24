@@ -61,22 +61,13 @@ jobs:
             find /tmp/ep7_serverdb -type f -iname "*.exe" -exec file {} + | head -n 25
           } > /tmp/part_d.txt
 
-          {
-            echo "=== E. TEST SET DEPENDENCIES (login.wld + chs_kt.chf) ==="
-            for target in login.wld chs_kt.chf; do
-              FOUND=$(find /tmp/ep7_client -iname "$target" | head -n 1)
-              echo "--- $target: ${FOUND:-NOT_FOUND} ---"
-              if [ -n "$FOUND" ]; then
-                stat -c "Size: %s bytes" "$FOUND"
-                strings "$FOUND" | grep -E '\.[a-zA-Z0-9_]{2,8}$' | sort -u | head -n 40
-              fi
-            done
-          } > /tmp/part_e.txt
+          g++ -std=c++17 -Wall -Wextra -Werror RANMobile/Data/Importer/EP7DependencyScanner.cpp RANMobile/Tools/dep_scan_cli.cpp -o /tmp/dep_scan_cli
+          /tmp/dep_scan_cli /tmp/ep7_client login.wld s01_01.chf > /tmp/part_e.txt
 
-          cat /tmp/part_a.txt /tmp/part_b.txt /tmp/part_c.txt /tmp/part_d.txt /tmp/part_e.txt >> $GITHUB_STEP_SUMMARY
+          cat /tmp/part_e.txt >> $GITHUB_STEP_SUMMARY
           {
             echo '```'
-            cat /tmp/part_e.txt
+            head -n 120 /tmp/part_e.txt
             echo '```'
           } > /tmp/asset_report.md
           gh pr comment 2 --repo famoh01/ran-online-ep7 --body-file /tmp/asset_report.md
