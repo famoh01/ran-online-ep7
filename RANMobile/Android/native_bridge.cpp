@@ -227,6 +227,7 @@ extern "C" void android_main(struct android_app* state) {
     state->onInputEvent = HandleInputEvent;
 
     if (state->activity && state->activity->assetManager) {
+        ctx.serverHost.Start(5001);
         ctx.wldBytes = LoadAssetBytes(state->activity->assetManager, "login.wld");
         ctx.chfBytes = LoadAssetBytes(state->activity->assetManager, "s01_01.chf");
         ctx.ddsBytes = LoadAssetBytes(state->activity->assetManager, "Sword_03.dds");
@@ -264,6 +265,7 @@ extern "C" void android_main(struct android_app* state) {
             break;
         }
     }
+    ctx.serverHost.Stop();
     ctx.engine.Shutdown();
     TermEGL(&ctx);
 }
