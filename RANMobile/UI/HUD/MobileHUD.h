@@ -9,6 +9,7 @@ namespace RANMobile {
 class MobileHUD {
 public:
     void Initialize(int screenWidth, int screenHeight);
+    void SetScreenSize(int width, int height) { Initialize(width, height); }
     void Update(float deltaTime);
 
     bool OnTouchDown(int32_t pointerId, float x, float y);

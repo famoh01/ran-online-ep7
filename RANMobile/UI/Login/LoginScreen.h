@@ -44,6 +44,7 @@ public:
     bool WantsExit() const { return m_exitRequested; }
     bool WantsEnterGame() const { return m_enterGameRequested; }
     void SetCredentials(const std::string& u, const std::string& p) { m_username = u; m_password = p; }
+    void SetScreenSize(int width, int height) { m_screenWidth = width > 0 ? width : 1280; m_screenHeight = height > 0 ? height : 720; }
     bool IsSettingsOpen() const { return m_showSettingsPanel; }
     bool IsExitConfirmOpen() const { return m_showExitConfirm; }
     bool IsSoundEnabled() const { return m_soundEnabled; }

@@ -97,14 +97,24 @@ void RANMobileEngine::Render() {
     if (m_screenState == EngineScreenState::Login && m_loginScreen) {
         m_loginScreen->Draw(m_renderer.get());
     } else if (m_screenState == EngineScreenState::CharacterSelect) {
-        m_renderer->DrawUIQuad(140.0f, 90.0f, 1000.0f, 540.0f, 0.05f, 0.10f, 0.22f, 0.92f);
-        m_renderer->DrawUIText(180.0f, 120.0f, "CHARACTER SELECT (EP7)", 1.3f, 1.0f, 0.85f, 0.25f, 1.0f);
-        m_renderer->DrawUIQuad(180.0f, 190.0f, 420.0f, 60.0f, 0.12f, 0.28f, 0.55f, 1.0f);
-        m_renderer->DrawUIText(200.0f, 208.0f, "Slot 1: Swordsman (Lv.1) - s01_01.chf", 0.95f, 1.0f, 1.0f, 1.0f, 1.0f);
-        m_renderer->DrawUIQuad(180.0f, 265.0f, 420.0f, 60.0f, 0.10f, 0.20f, 0.38f, 1.0f);
-        m_renderer->DrawUIText(200.0f, 283.0f, "Slot 2: Brawler | Archer | Shaman", 0.9f, 0.85f, 0.9f, 1.0f, 1.0f);
-        m_renderer->DrawUIQuad(450.0f, 520.0f, 380.0f, 64.0f, 0.92f, 0.65f, 0.12f, 1.0f);
-        m_renderer->DrawUIText(495.0f, 540.0f, "START GAME (ENTER MAP)", 1.0f, 0.10f, 0.08f, 0.02f, 1.0f);
+        const float sw = static_cast<float>(m_width);
+        const float sh = static_cast<float>(m_height);
+        const float pw = std::min(1000.0f, sw - 80.0f);
+        const float ph = std::min(540.0f, sh - 80.0f);
+        const float px = (sw - pw) * 0.5f;
+        const float py = (sh - ph) * 0.5f;
+        m_renderer->DrawUIQuad(px, py, pw, ph, 0.05f, 0.10f, 0.22f, 0.92f);
+        m_renderer->DrawUIText(px + 40.0f, py + 30.0f, "CHARACTER SELECT (EP7)", 1.3f, 1.0f, 0.85f, 0.25f, 1.0f);
+        m_renderer->DrawUIQuad(px + 40.0f, py + 100.0f, 440.0f, 60.0f, 0.12f, 0.28f, 0.55f, 1.0f);
+        m_renderer->DrawUIText(px + 60.0f, py + 118.0f, "Slot 1: Swordsman (Lv.1) - s01_01.chf", 0.95f, 1.0f, 1.0f, 1.0f, 1.0f);
+        m_renderer->DrawUIQuad(px + 40.0f, py + 175.0f, 440.0f, 60.0f, 0.10f, 0.20f, 0.38f, 1.0f);
+        m_renderer->DrawUIText(px + 60.0f, py + 193.0f, "Slot 2: Brawler | Archer | Shaman", 0.9f, 0.85f, 0.9f, 1.0f, 1.0f);
+        const float bw = 420.0f;
+        const float bh = 64.0f;
+        const float bx = px + (pw - bw) * 0.5f;
+        const float by = py + ph - bh - 36.0f;
+        m_renderer->DrawUIQuad(bx, by, bw, bh, 0.92f, 0.65f, 0.12f, 1.0f);
+        m_renderer->DrawUIText(bx + 45.0f, by + 20.0f, "START GAME (ENTER MAP)", 1.0f, 0.10f, 0.08f, 0.02f, 1.0f);
     } else if (m_screenState == EngineScreenState::InGame && m_mobileHUD) {
         m_mobileHUD->Draw(m_renderer.get());
     }
@@ -112,8 +122,16 @@ void RANMobileEngine::Render() {
 }
 
 void RANMobileEngine::Resize(int width, int height) {
+    m_width = width > 0 ? width : 1280;
+    m_height = height > 0 ? height : 720;
     if (m_renderer) {
-        m_renderer->Resize(width, height);
+        m_renderer->Resize(m_width, m_height);
+    }
+    if (m_loginScreen) {
+        m_loginScreen->SetScreenSize(m_width, m_height);
+    }
+    if (m_mobileHUD) {
+        m_mobileHUD->SetScreenSize(m_width, m_height);
     }
 }
 
@@ -130,7 +148,17 @@ void RANMobileEngine::Resume() {
 void RANMobileEngine::OnTouchDown(int pointerId, float x, float y) {
     if (m_touchSystem) m_touchSystem->OnTouchDown(pointerId, x, y);
     if (m_screenState == EngineScreenState::CharacterSelect) {
-        if (x >= 450.0f && x <= 830.0f && y >= 520.0f && y <= 584.0f) {
+        const float sw = static_cast<float>(m_width);
+        const float sh = static_cast<float>(m_height);
+        const float pw = std::min(1000.0f, sw - 80.0f);
+        const float ph = std::min(540.0f, sh - 80.0f);
+        const float px = (sw - pw) * 0.5f;
+        const float py = (sh - ph) * 0.5f;
+        const float bw = 420.0f;
+        const float bh = 64.0f;
+        const float bx = px + (pw - bw) * 0.5f;
+        const float by = py + ph - bh - 36.0f;
+        if (x >= bx && x <= bx + bw && y >= by && y <= by + bh) {
             m_screenState = EngineScreenState::InGame;
         }
     } else if (m_screenState == EngineScreenState::InGame && m_mobileHUD) {

@@ -76,4 +76,6 @@ private:
     std::unique_ptr<LoginScreen> m_loginScreen;
     std::unique_ptr<RANMobile::MobileHUD> m_mobileHUD;
     EngineScreenState m_screenState = EngineScreenState::Login;
+    int m_width = 1280;
+    int m_height = 720;
 };
