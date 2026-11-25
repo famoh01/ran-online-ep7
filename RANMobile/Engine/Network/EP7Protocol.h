@@ -110,6 +110,35 @@ struct EP7NetPcGoto {
         nmg.nType = EP7_NET_MSG_GCTRL_GOTO;
     }
 };
+
+struct EP7NativeID {
+    uint16_t wMainID = 0;
+    uint16_t wSubID = 0;
+};
+
+// Verified from RanClientLib/G-Logic/GLContrlCharJoinMsg.h:701-735
+struct EP7NetReqGateOut {
+    EP7NetMsgGeneric nmg;
+    uint32_t dwGateID = 0;
+    uint32_t dwGaeaID = 0;
+
+    EP7NetReqGateOut() {
+        nmg.dwSize = sizeof(EP7NetReqGateOut);
+        nmg.nType = EP7_NET_MSG_GCTRL_REQ_GATEOUT;
+    }
+};
+
+struct EP7NetReqGateOutFB {
+    EP7NetMsgGeneric nmg;
+    uint32_t emFB = 0;
+    EP7NativeID sMapID{};
+    EP7Vec3 vPos{};
+
+    EP7NetReqGateOutFB() {
+        nmg.dwSize = sizeof(EP7NetReqGateOutFB);
+        nmg.nType = EP7_NET_MSG_GCTRL_REQ_GATEOUT + 1; // NET_MSG_GCTRL_REQ_GATEOUT_FB
+    }
+};
 #pragma pack(pop)
 
 } // namespace RANMobile

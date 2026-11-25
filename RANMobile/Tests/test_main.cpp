@@ -341,6 +341,13 @@ int main() {
         req.vCurPos = { 10.0f, 1.0f, 2.0f };
         cc.ApplyServerGoto(req);
         assert(cc.GetPosX() == 10.0f && cc.GetPosY() == 1.0f && cc.GetPosZ() == 2.0f);
+
+        RANMobile::EP7NetReqGateOut gateOut;
+        assert(gateOut.nmg.nType == RANMobile::EP7_NET_MSG_GCTRL_REQ_GATEOUT);
+        assert(gateOut.nmg.dwSize == sizeof(RANMobile::EP7NetReqGateOut));
+
+        RANMobile::EP7NetReqGateOutFB gateOutFb;
+        assert(gateOutFb.nmg.dwSize == sizeof(RANMobile::EP7NetReqGateOutFB));
     }
 
     engine.Shutdown();
