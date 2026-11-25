@@ -27,17 +27,17 @@ jobs:
         with:
           gradle-version: '8.5'
 
-      - name: Build x86_64 Debug APK for Emulator
+      - name: Build arm64-v8a Debug APK for Emulator & Device
         working-directory: RANMobile/Android
         run: |
-          gradle assembleDebug -PabiFilters=x86_64
+          gradle assembleDebug -PabiFilters=arm64-v8a
           ls -lh app/build/outputs/apk/debug/*.apk
 
       - name: Run Emulator Smoke Test (Boot, Launch, Tap, Screencap, Logcat)
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 30
-          arch: x86_64
+          api-level: 29
+          arch: arm64-v8a
           profile: Nexus 5X
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
