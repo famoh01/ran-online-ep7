@@ -24,38 +24,40 @@ jobs:
           git lfs pull --include="Ran Online Database/**"
           Get-ChildItem -Recurse "Ran Online Database" | Select-Object Name, Length
 
-      - name: Verify SQL Server LocalDB & Database Files
+      - name: Restore & Verify EP7 Databases on SQL Server LocalDB
         run: |
           sqllocaldb info
           sqllocaldb start MSSQLLocalDB
           sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "SELECT @@VERSION"
           $bakDir = "C:\ep7_db\Ran Online Database\Ran Online Database Backup Files (.bak)"
           mkdir C:\ep7_db\data -Force
-          mkdir C:\ep7_db\data -Force
           foreach ($db in @("RanUser", "RanGame1", "RanShop", "RanLog")) {
             $bak = Join-Path $bakDir "$db.bak"
             if (Test-Path $bak) {
               Write-Output "FOUND_BAK: $db ($((Get-Item $bak).Length) bytes)"
-              $tsql = @"
-CREATE TABLE #fl (
-  LogicalName NVARCHAR(128), PhysicalName NVARCHAR(260), Type CHAR(1), FileGroupName NVARCHAR(128),
-  Size NUMERIC(20,0), MaxSize NUMERIC(20,0), FileId BIGINT, CreateLSN NUMERIC(25,0),
-  DropLSN NUMERIC(25,0), UniqueId UNIQUEIDENTIFIER, ReadOnlyLSN NUMERIC(25,0), ReadWriteLSN NUMERIC(25,0),
-  BackupSizeInBytes BIGINT, SourceBlockSize INT, FileGroupId INT, LogGroupGUID UNIQUEIDENTIFIER,
-  DifferentialBaseLSN NUMERIC(25,0), DifferentialBaseGUID UNIQUEIDENTIFIER, IsReadOnly BIT, IsPresent BIT,
-  TDEThumbprint VARBINARY(32), SnapshotUrl NVARCHAR(360)
-);
-INSERT INTO #fl EXEC(N'RESTORE FILELISTONLY FROM DISK = N''$bak''');
-DECLARE @cmd NVARCHAR(MAX) = N'RESTORE DATABASE [$db] FROM DISK = N''$bak'' WITH ';
-SELECT @cmd = @cmd + N'MOVE N''' + LogicalName + N''' TO N''C:\ep7_db\data\${db}_' + CAST(FileId AS NVARCHAR(10)) + CASE WHEN Type='L' THEN N'.ldf' ELSE N'.mdf' END + N''', ' FROM #fl;
-SET @cmd = @cmd + N'REPLACE, RECOVERY';
-EXEC(@cmd);
-DROP TABLE #fl;
-"@
-              $tsql | Out-File -FilePath C:\ep7_db\restore.sql -Encoding utf8
-              sqlcmd -S "(localdb)\MSSQLLocalDB" -i C:\ep7_db\restore.sql
+              $lines = sqlcmd -S "(localdb)\MSSQLLocalDB" -W -s "|" -Q "SET NOCOUNT ON; RESTORE FILELISTONLY FROM DISK = N'$bak'"
+              $moves = @()
+              $idx = 0
+              foreach ($line in $lines) {
+                if ($line -match "\|" -and $line -notmatch "^LogicalName\|" -and $line -notmatch "^-+") {
+                  $cols = $line -split "\|"
+                  if ($cols.Count -ge 3) {
+                    $logical = $cols[0].Trim()
+                    $ftype = $cols[2].Trim()
+                    if ($logical -ne "" -and ($ftype -eq "D" -or $ftype -eq "L")) {
+                      $ext = if ($ftype -eq "L") { "_log.ldf" } else { "_$idx.mdf" }
+                      $moves += "MOVE N'$logical' TO N'C:\ep7_db\data\${db}${ext}'"
+                      $idx++
+                    }
+                  }
+                }
+              }
+              $moveClause = $moves -join ", "
+              $restoreSql = "RESTORE DATABASE [$db] FROM DISK = N'$bak' WITH $moveClause, REPLACE, RECOVERY"
+              Write-Output "EXEC: $restoreSql"
+              sqlcmd -S "(localdb)\MSSQLLocalDB" -Q $restoreSql
               if ($LASTEXITCODE -ne 0) { exit 1 }
-              sqlcmd -S "(localdb)\MSSQLLocalDB" -d $db -Q "SELECT TOP 5 name FROM sys.tables ORDER BY name"
+              sqlcmd -S "(localdb)\MSSQLLocalDB" -d $db -Q "SELECT TOP 10 TABLE_NAME FROM INFORMATION_SCHEMA.TABLES ORDER BY TABLE_NAME"
               if ($LASTEXITCODE -ne 0) { exit 1 }
             } else {
               Write-Error "MISSING_BAK: $bak"
