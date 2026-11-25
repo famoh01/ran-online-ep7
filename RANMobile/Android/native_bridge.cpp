@@ -4,12 +4,15 @@
 #include <android/keycodes.h>
 #include <android/log.h>
 #include <android/native_activity.h>
+#include <android/asset_manager.h>
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
 #include <jni.h>
 #include <chrono>
+#include <vector>
 #include "../Engine/Core/RANMobileEngine.h"
 #include "../UI/Login/LoginScreen.h"
+#include "../Data/Importer/EP7WorldCharParser.h"
 
 struct AndroidAppContext {
     RANMobileEngine engine;
