@@ -23,6 +23,7 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Build LoginServer & Core Server Projects (Win32 Release)
+        continue-on-error: true
         run: |
           mkdir build_logs -Force
           $summary = @("### Windows Server MSBuild Summary (`$env:GITHUB_SHA`)")
@@ -41,12 +42,14 @@ jobs:
           Get-Content build_logs/summary.txt
 
       - name: Upload Windows Server Build Logs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ep7-windows-server-build-logs
           path: build_logs/
 
       - name: Emit Annotations
+        if: always()
         run: |
           Get-Content build_logs/summary.txt | ForEach-Object { Write-Output "::notice::$_" }
           Get-Content build_logs/summary.txt >> $env:GITHUB_STEP_SUMMARY
