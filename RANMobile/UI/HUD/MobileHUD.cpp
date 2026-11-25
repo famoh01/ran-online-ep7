@@ -118,7 +118,7 @@ void MobileHUD::Draw(MobileRenderer* renderer) {
     renderer->DrawUIQuad(w - 570.0f, h - 130.0f, 70.0f, 70.0f, 0.55f, 0.20f, 0.20f, 0.9f);
     renderer->DrawUIText(w - 558.0f, h - 102.0f, "BACK", 0.78f, 1.0f, 1.0f, 1.0f, 1.0f);
 
-    renderer->DrawUIText(30.0f, 26.0f, "LV.1 SWORDSMAN | HP 100/100 | MP 50/50 | EXP 0/100", 0.80f, 1.0f, 1.0f, 1.0f, 1.0f);
-    renderer->DrawUIText(30.0f, 52.0f, "MAP: login.wld | POS: (0.0, 0.0, 0.0) [LOCAL]", 0.72f, 0.75f, 0.90f, 1.0f, 1.0f);
+    renderer->DrawUIText(30.0f, 26.0f, "CHAR: NO DATA (SERVER NOT VERIFIED)", 0.80f, 1.0f, 0.85f, 0.45f, 1.0f);
+    renderer->DrawUIText(30.0f, 52.0f, "MAP: login.wld | POS: NO DATA", 0.72f, 0.75f, 0.90f, 1.0f, 1.0f);
 }
 }
