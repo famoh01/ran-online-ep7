@@ -332,6 +332,7 @@ int main() {
         assert(csm.GetSlots().size() == 1 && csm.GetSlots()[0].charId == 1001);
 
         RANMobile::EP7NetPcGoto gotoPkt;
+        assert(gotoPkt.nmg.nType == RANMobile::EP7_NET_MSG_GCTRL_GOTO);
         assert(gotoPkt.nmg.dwSize == sizeof(RANMobile::EP7NetPcGoto));
     }
 

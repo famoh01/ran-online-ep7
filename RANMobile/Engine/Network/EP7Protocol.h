@@ -8,6 +8,7 @@ namespace RANMobile {
 // Verified directly from netclientLib/s_NetGlobal.h
 constexpr int32_t EP7_NET_MSG_BASE = 0;
 constexpr int32_t EP7_NET_MSG_LOBBY = EP7_NET_MSG_BASE + 1013;
+constexpr int32_t EP7_NET_MSG_GCTRL = EP7_NET_MSG_BASE + 2011;
 
 constexpr int32_t EP7_NET_MSG_HEARTBEAT_CLIENT_REQ = 160;
 constexpr int32_t EP7_NET_MSG_HEARTBEAT_CLIENT_ANS = 161;
@@ -16,6 +17,9 @@ constexpr int32_t EP7_NET_MSG_LOGIN_2 = EP7_NET_MSG_LOBBY + 107;
 constexpr int32_t EP7_NET_MSG_LOGIN_FB = EP7_NET_MSG_LOBBY + 108;
 constexpr int32_t EP7_NET_MSG_REQ_CHA_BINFO = EP7_NET_MSG_LOBBY + 302;
 constexpr int32_t EP7_NET_MSG_CHA_BAINFO = EP7_NET_MSG_LOBBY + 306;
+
+constexpr int32_t EP7_NET_MSG_GCTRL_REQ_GATEOUT = EP7_NET_MSG_GCTRL + 131;
+constexpr int32_t EP7_NET_MSG_GCTRL_GOTO = EP7_NET_MSG_GCTRL + 142;
 
 enum EP7LoginFbSub : uint16_t {
     EP7_LOGIN_FB_SUB_OK        = 0,
@@ -103,7 +107,7 @@ struct EP7NetPcGoto {
 
     EP7NetPcGoto() {
         nmg.dwSize = sizeof(EP7NetPcGoto);
-        nmg.nType = 0; // Set to verified NET_MSG_GCTRL_GOTO when opcode constant is imported
+        nmg.nType = EP7_NET_MSG_GCTRL_GOTO;
     }
 };
 #pragma pack(pop)

@@ -123,6 +123,10 @@ void MobileServerHost::HandleClient(int clientFd) {
             EP7NetChaBbaInfo bba;
             bba.nChaSNum = 0; // No fake characters; populated only from real DB records
             ::send(clientFd, &bba, sizeof(bba), 0);
+        } else if (hdr.nType == EP7_NET_MSG_GCTRL_GOTO && n >= static_cast<ssize_t>(sizeof(EP7NetPcGoto))) {
+            EP7NetPcGoto gotoPkt;
+            std::memcpy(&gotoPkt, buf, sizeof(gotoPkt));
+            ::send(clientFd, &gotoPkt, sizeof(gotoPkt), 0);
         }
     }
     ::close(clientFd);
