@@ -1,0 +1,41 @@
+name: EP7 Server & MSSQL Database Verify (Windows Runner)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - arena/6c988b52-ran-online-ep7
+    paths:
+      - '.github/workflows/ep7-server-db-verify.yml'
+
+jobs:
+  verify-ep7-db:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Pull EP7 Database Backups (.bak & .sql) via Git LFS
+        run: |
+          git lfs install
+          $env:GIT_LFS_SKIP_SMUDGE="1"
+          git clone --depth 1 https://github.com/matheomedrana/Ran-Online-EP7-Complete-Files.git C:\ep7_db
+          cd C:\ep7_db
+          git lfs pull --include="Ran Online Database/**"
+          Get-ChildItem -Recurse "Ran Online Database" | Select-Object Name, Length
+
+      - name: Verify SQL Server LocalDB & Database Files
+        run: |
+          sqllocaldb info
+          sqllocaldb start MSSQLLocalDB
+          sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "SELECT @@VERSION"
+          $bakDir = "C:\ep7_db\Ran Online Database\Ran Online Database Backup Files (.bak)"
+          foreach ($db in @("RanUser", "RanGame1", "RanShop", "RanLog")) {
+            $bak = Join-Path $bakDir "$db.bak"
+            if (Test-Path $bak) {
+              Write-Output "FOUND_BAK: $db ($((Get-Item $bak).Length) bytes)"
+              sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "RESTORE HEADERONLY FROM DISK = N'$bak'"
+            } else {
+              Write-Error "MISSING_BAK: $bak"
+            }
+          }
