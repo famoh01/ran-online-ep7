@@ -330,6 +330,9 @@ int main() {
         bba.nChaNum[0] = 1001;
         csm.ParseChaBbaInfo(bba);
         assert(csm.GetSlots().size() == 1 && csm.GetSlots()[0].charId == 1001);
+
+        RANMobile::EP7NetPcGoto gotoPkt;
+        assert(gotoPkt.nmg.dwSize == sizeof(RANMobile::EP7NetPcGoto));
     }
 
     engine.Shutdown();

@@ -87,6 +87,25 @@ struct EP7NetChaBaInfo {
         nmg.nType = EP7_NET_MSG_REQ_CHA_BINFO;
     }
 };
+
+struct EP7Vec3 {
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
+};
+
+// Verified from RanClientLib/G-Logic/GLContrlPcMsg.h:247-265
+struct EP7NetPcGoto {
+    EP7NetMsgGeneric nmg;
+    uint32_t dwActState = 0;
+    EP7Vec3 vCurPos{};
+    EP7Vec3 vTarPos{};
+
+    EP7NetPcGoto() {
+        nmg.dwSize = sizeof(EP7NetPcGoto);
+        nmg.nType = 0; // Set to verified NET_MSG_GCTRL_GOTO when opcode constant is imported
+    }
+};
 #pragma pack(pop)
 
 } // namespace RANMobile
