@@ -17,7 +17,7 @@ android {
         def gitSha = System.getenv('GITHUB_SHA') ? System.getenv('GITHUB_SHA').take(7) : 'dev'
 
         ndk {
-            abiFilters targetAbis
+            abiFilters(*targetAbis)
         }
 
         externalNativeBuild {
