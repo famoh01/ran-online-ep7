@@ -31,27 +31,32 @@ jobs:
           sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "SELECT @@VERSION"
           $bakDir = "C:\ep7_db\Ran Online Database\Ran Online Database Backup Files (.bak)"
           mkdir C:\ep7_db\data -Force
+          $conn = New-Object System.Data.SqlClient.SqlConnection("Server=(localdb)\MSSQLLocalDB;Integrated Security=true;")
+          $conn.Open()
           foreach ($db in @("RanUser", "RanGame1", "RanShop", "RanLog")) {
             $bak = Join-Path $bakDir "$db.bak"
             if (Test-Path $bak) {
               Write-Output "FOUND_BAK: $db ($((Get-Item $bak).Length) bytes)"
-              $rows = sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "SET NOCOUNT ON; RESTORE FILELISTONLY FROM DISK = N'$bak'" -s "|" -h -1 -W
+              $cmd = $conn.CreateCommand()
+              $cmd.CommandText = "RESTORE FILELISTONLY FROM DISK = N'$bak'"
+              $da = New-Object System.Data.SqlClient.SqlDataAdapter($cmd)
+              $dt = New-Object System.Data.DataTable
+              [void]$da.Fill($dt)
               $moves = @()
               $idx = 0
-              foreach ($r in $rows) {
-                $cols = $r -split "\|"
-                if ($cols.Count -ge 3 -and $cols[0].Trim() -ne "") {
-                  $logical = $cols[0].Trim()
-                  $ext = if ($cols[2].Trim() -eq "L") { "_log.ldf" } else { "_$idx.mdf" }
-                  $moves += "MOVE N'$logical' TO N'C:\ep7_db\data\${db}${ext}'"
-                  $idx++
-                }
+              foreach ($row in $dt.Rows) {
+                $logical = $row["LogicalName"].ToString().Trim()
+                $ext = if ($row["Type"].ToString().Trim() -eq "L") { "_log.ldf" } else { "_$idx.mdf" }
+                $moves += "MOVE N'$logical' TO N'C:\ep7_db\data\${db}${ext}'"
+                $idx++
               }
               $moveClause = $moves -join ", "
-              $sql = "RESTORE DATABASE [$db] FROM DISK = N'$bak' WITH $moveClause, REPLACE, RECOVERY"
-              sqlcmd -S "(localdb)\MSSQLLocalDB" -Q $sql
+              $cmd.CommandText = "RESTORE DATABASE [$db] FROM DISK = N'$bak' WITH $moveClause, REPLACE, RECOVERY"
+              $cmd.CommandTimeout = 300
+              [void]$cmd.ExecuteNonQuery()
               sqlcmd -S "(localdb)\MSSQLLocalDB" -d $db -Q "SELECT COUNT(*) AS TableCount FROM INFORMATION_SCHEMA.TABLES"
             } else {
               Write-Error "MISSING_BAK: $bak"
             }
           }
+          $conn.Close()
