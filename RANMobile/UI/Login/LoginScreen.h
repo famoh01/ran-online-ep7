@@ -43,6 +43,7 @@ public:
     const std::string& GetStatusMessage() const { return m_statusMessage; }
     bool WantsExit() const { return m_exitRequested; }
     bool WantsEnterGame() const { return m_enterGameRequested; }
+    void SetCredentials(const std::string& u, const std::string& p) { m_username = u; m_password = p; }
     bool IsSettingsOpen() const { return m_showSettingsPanel; }
     bool IsExitConfirmOpen() const { return m_showExitConfirm; }
     bool IsSoundEnabled() const { return m_soundEnabled; }
