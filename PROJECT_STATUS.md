@@ -2,10 +2,12 @@
 
 - **Repository**: `famoh01/ran-online-ep7`
 - **Branch**: `arena/6c988b52-ran-online-ep7` (PR #2)
-- **Head Commit**: `72bd7f3` (merge `c138f15`)
-- **Latest CI Build**: Run `45627265319` (**PASS**, `apk-latest` updated)
-- **Renderer Test (Physical Device 2400x1080)**: **FAIL (จอดำ)** — UI Flow ผ่าน Login → Character Select → HUD แต่หน้า InGame ดำสนิท ไม่มี Map/Character แสดง
+- **Head Commit**: `22628de`
+- **Latest CI Build**: Run `45653392859` (**PASS**, `apk-latest` `1,510,352` bytes)
+- **Emulator Test (x86_64)**: **FAIL** — Run `45581462611` (`f6abf94`) พังที่ Step 6 `Run Emulator Smoke Test`
+- **Renderer Test (Physical Device 2400x1080)**: **FAIL / PARTIAL** — Header parser ทำงาน แต่ยังไม่แกะ Octree/Bone จริงจาก `DxLandMan`/`DxSkinChar`
 - **Server Connection**: **HARNESS LOCAL ONLY** (`127.0.0.1:5001`) · `LIVE EP7 SERVER ENDPOINT NOT AVAILABLE` · `PROTOCOL NOT VERIFIED`
+- **Gameplay Test**: **NOT TESTED**
 
 ## สถานะแยกตามหมวด (A–F)
 - **A. มีไฟล์จริง**:
