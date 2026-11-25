@@ -196,7 +196,10 @@ void LoginScreen::Draw(RANMobile::MobileRenderer* renderer) {
         renderer->DrawUIText(sx + 45.0f, sy + 197.0f, std::string("กราฟิก: ") + gfxNames[m_graphicsLevel % 4], 0.9f, 1.0f, 1.0f, 1.0f, 1.0f);
         renderer->DrawUIQuad(sx + 30.0f, sy + 240.0f, spW - 60.0f, 44.0f, 0.08f, 0.14f, 0.28f, 1.0f);
         renderer->DrawUIText(sx + 45.0f, sy + 252.0f, "Server: (Not Set) : 5001 | DISCONNECTED", 0.78f, 0.85f, 0.92f, 1.0f, 1.0f);
-        renderer->DrawUIText(sx + 30.0f, sy + 292.0f, "Build: FAM-HAWAII-EP7", 0.72f, 0.75f, 0.80f, 0.85f, 1.0f);
+#ifndef EP7_GIT_SHA
+#define EP7_GIT_SHA "dev"
+#endif
+        renderer->DrawUIText(sx + 30.0f, sy + 292.0f, std::string("Build SHA: ") + EP7_GIT_SHA, 0.75f, 0.75f, 0.85f, 0.90f, 1.0f);
         renderer->DrawUIQuad(sx + 130.0f, sy + 320.0f, 200.0f, 46.0f, 0.92f, 0.65f, 0.12f, 1.0f);
         renderer->DrawUIText(sx + 205.0f, sy + 333.0f, "ปิด", 1.0f, 0.10f, 0.08f, 0.02f, 1.0f);
     }
