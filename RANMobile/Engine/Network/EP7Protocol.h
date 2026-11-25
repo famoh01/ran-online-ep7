@@ -142,6 +142,35 @@ struct EP7NetReqGateOutFB {
         nmg.nType = EP7_NET_MSG_GCTRL_REQ_GATEOUT + 1; // NET_MSG_GCTRL_REQ_GATEOUT_FB
     }
 };
+
+// Verified from RanClientLib/G-Logic/GLContrlPcMsg.h:363-382
+struct EP7NetPcAttack {
+    EP7NetMsgGeneric nmg;
+    uint32_t emTarCrow = 1; // CROW_MOB
+    uint32_t dwTarID = 0;
+    uint32_t dwAniSel = 0;
+    uint32_t dwFlags = 0;
+
+    EP7NetPcAttack() {
+        nmg.dwSize = sizeof(EP7NetPcAttack);
+        nmg.nType = EP7_NET_MSG_GCTRL_ATTACK;
+    }
+};
+
+// Verified from netclientLib/s_NetGlobal.h:3568-3585
+struct EP7NetChat {
+    EP7NetMsgGeneric nmg;
+    uint32_t emType = 0; // CHAT_TYPE_NORMAL
+    char szName[34]{};
+    char szChatMsg[100]{};
+
+    EP7NetChat() {
+        nmg.dwSize = sizeof(EP7NetChat);
+        nmg.nType = EP7_NET_MSG_CHAT;
+        std::memset(szName, 0, sizeof(szName));
+        std::memset(szChatMsg, 0, sizeof(szChatMsg));
+    }
+};
 #pragma pack(pop)
 
 } // namespace RANMobile

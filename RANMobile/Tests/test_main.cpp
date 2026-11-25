@@ -357,6 +357,13 @@ int main() {
         gateOutFb.vPos = { 100.0f, 0.0f, 200.0f };
         assert(mapMgr.ApplyGateOutFeedback(gateOutFb));
         assert(mapMgr.GetMainID() == 22 && mapMgr.GetPlayerX() == 100.0f && mapMgr.GetPlayerZ() == 200.0f);
+
+        auto atk = cc.BuildAttackRequest(1, 505, 0);
+        assert(atk.nmg.nType == RANMobile::EP7_NET_MSG_GCTRL_ATTACK && atk.dwTarID == 505);
+
+        auto chat = cc.BuildChatMessage(0, "FamHawaii", "Hello EP7");
+        assert(chat.nmg.nType == RANMobile::EP7_NET_MSG_CHAT);
+        assert(std::string(chat.szName) == "FamHawaii" && std::string(chat.szChatMsg) == "Hello EP7");
     }
 
     engine.Shutdown();

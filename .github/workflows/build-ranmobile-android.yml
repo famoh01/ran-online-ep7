@@ -155,3 +155,12 @@ jobs:
             RANMobile/Android/app/build/outputs/apk/debug/*.apk
             RANMobile/Android/app/build/outputs/apk/release/*.apk
             RANMobile/Android/app/build/outputs/bundle/release/*.aab
+
+      - name: Publish Direct APK to GitHub Release (apk-latest)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! gh release view apk-latest >/dev/null 2>&1; then
+            gh release create apk-latest --title "RANMobile Latest Debug APK" --notes "Automated Android ARM64 Debug APK"
+          fi
+          gh release upload apk-latest RANMobile/Android/app/build/outputs/apk/debug/*.apk --clobber

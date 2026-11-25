@@ -12,6 +12,8 @@ public:
     void Update(float deltaTime, const VirtualJoystick& joystick, const MobileCamera& camera);
     EP7NetPcGoto BuildGotoPacket(float tarX, float tarY, float tarZ) const;
     void ApplyServerGoto(const EP7NetPcGoto& pkt);
+    EP7NetPcAttack BuildAttackRequest(uint32_t tarCrow, uint32_t tarId, uint32_t aniSel = 0) const;
+    EP7NetChat BuildChatMessage(uint32_t chatType, const char* sender, const char* msg) const;
 
     float GetPosX() const { return m_posX; }
     float GetPosY() const { return m_posY; }

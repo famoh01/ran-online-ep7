@@ -46,4 +46,25 @@ void CharacterController::ApplyServerGoto(const EP7NetPcGoto& pkt) {
     m_posZ = pkt.vCurPos.z;
 }
 
+EP7NetPcAttack CharacterController::BuildAttackRequest(uint32_t tarCrow, uint32_t tarId, uint32_t aniSel) const {
+    EP7NetPcAttack pkt;
+    pkt.emTarCrow = tarCrow;
+    pkt.dwTarID = tarId;
+    pkt.dwAniSel = aniSel;
+    pkt.dwFlags = 0;
+    return pkt;
+}
+
+EP7NetChat CharacterController::BuildChatMessage(uint32_t chatType, const char* sender, const char* msg) const {
+    EP7NetChat pkt;
+    pkt.emType = chatType;
+    if (sender) {
+        std::strncpy(pkt.szName, sender, sizeof(pkt.szName) - 1);
+    }
+    if (msg) {
+        std::strncpy(pkt.szChatMsg, msg, sizeof(pkt.szChatMsg) - 1);
+    }
+    return pkt;
+}
+
 } // namespace RANMobile
