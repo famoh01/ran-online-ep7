@@ -257,9 +257,6 @@ extern "C" void android_main(struct android_app* state) {
         if (ctx.hasWindow && ctx.engine.IsRunning()) {
             ctx.engine.Update(dt);
             ctx.engine.Render();
-            if (!ctx.ddsBytes.empty()) {
-                ctx.mapManager.RenderScene(ctx.engine.GetRenderer(), ctx.wldBytes, ctx.ddsBytes);
-            }
             eglSwapBuffers(ctx.display, ctx.surface);
         }
         if (ctx.engine.GetLoginScreen() && ctx.engine.GetLoginScreen()->WantsExit()) {
@@ -267,7 +264,6 @@ extern "C" void android_main(struct android_app* state) {
             break;
         }
     }
-    ctx.mapManager.ReleaseCachedTextures(ctx.engine.GetRenderer());
     ctx.engine.Shutdown();
     TermEGL(&ctx);
 }
