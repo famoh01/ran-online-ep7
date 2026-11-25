@@ -1,4 +1,5 @@
 #include "LoginScreen.h"
+#include "../../Engine/Network/NetworkClient.h"
 #include "../../Client/Login/AuthenticationManager.h"
 #include "../../Engine/Renderer/MobileRenderer.h"
 #include "../../Engine/Core/Logger.h"
@@ -124,6 +125,9 @@ bool LoginScreen::OnLoginPressed() {
         return false;
     }
     m_authState = LoginAuthState::Authenticating;
+    if (m_networkClient && !m_networkClient->IsConnected()) {
+        m_networkClient->Connect("127.0.0.1", 5001);
+    }
     bool sent = RANMobile::AuthenticationManager::Login(m_networkClient, m_username, m_password);
     if (!sent) {
         m_authState = LoginAuthState::ConnectionError;

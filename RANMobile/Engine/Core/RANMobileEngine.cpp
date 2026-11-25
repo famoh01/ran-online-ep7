@@ -39,6 +39,9 @@ bool RANMobileEngine::Initialize() {
 
     m_loginScreen->Initialize(m_networkClient.get());
     m_mobileHUD->Initialize(1280.0f, 720.0f);
+    if (m_networkClient) {
+        m_networkClient->Connect("127.0.0.1", 5001);
+    }
     m_initialized = true;
     RANMobile::Logger::Info("RANMobileEngine", "RANMobileEngine initialized successfully.");
     return true;

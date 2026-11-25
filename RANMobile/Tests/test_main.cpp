@@ -400,6 +400,22 @@ int main() {
         assert(!host.Authenticate("famtest", "wrongpass"));
     }
 
+    // 25. Login -> CharacterSelect -> InGame state transition flow
+    {
+        RANMobileEngine flowEngine;
+        assert(flowEngine.Initialize());
+        assert(flowEngine.GetScreenState() == EngineScreenState::Login);
+        auto* ls = flowEngine.GetLoginScreen();
+        assert(ls != nullptr);
+        ls->SetCredentials("famtest", "ep7pass");
+        assert(ls->OnLoginPressed());
+        flowEngine.Update(0.016f);
+        assert(flowEngine.GetScreenState() == EngineScreenState::CharacterSelect);
+        flowEngine.OnTouchDown(0, 640.0f, 550.0f);
+        assert(flowEngine.GetScreenState() == EngineScreenState::InGame);
+        flowEngine.Shutdown();
+    }
+
     engine.Shutdown();
     assert(!engine.IsInitialized());
 
