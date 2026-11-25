@@ -142,6 +142,15 @@ jobs:
         with:
           gradle-version: '8.5'
 
+      - name: Bundle Original EP7 Assets (login.wld, s01_01.chf) via Git LFS
+        run: |
+          mkdir -p RANMobile/Android/app/src/main/assets
+          GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 https://github.com/matheomedrana/Ran-Online-EP7-Complete-Files.git /tmp/ep7_assets
+          cd /tmp/ep7_assets
+          git lfs pull --include="**/login.wld,**/s01_01.chf"
+          find . -type f \( -iname "login.wld" -o -iname "s01_01.chf" \) -size +200c -exec cp {} "$GITHUB_WORKSPACE/RANMobile/Android/app/src/main/assets/" \;
+          ls -lh "$GITHUB_WORKSPACE/RANMobile/Android/app/src/main/assets/"
+
       - name: Build Android APK & AAB (assembleDebug, assembleRelease, bundleRelease)
         working-directory: RANMobile/Android
         run: |

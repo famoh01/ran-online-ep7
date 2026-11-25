@@ -34,7 +34,10 @@ jobs:
             $bak = Join-Path $bakDir "$db.bak"
             if (Test-Path $bak) {
               Write-Output "FOUND_BAK: $db ($((Get-Item $bak).Length) bytes)"
-              sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "RESTORE HEADERONLY FROM DISK = N'$bak'"
+              $fl = sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "SET NOCOUNT ON; RESTORE FILELISTONLY FROM DISK = N'$bak'" -h -1 -W
+              Write-Output $fl
+              sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "RESTORE DATABASE [$db] FROM DISK = N'$bak' WITH REPLACE, RECOVERY"
+              sqlcmd -S "(localdb)\MSSQLLocalDB" -d $db -Q "SELECT COUNT(*) AS TableCount FROM INFORMATION_SCHEMA.TABLES"
             } else {
               Write-Error "MISSING_BAK: $bak"
             }
