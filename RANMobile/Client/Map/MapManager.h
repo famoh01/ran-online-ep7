@@ -24,6 +24,7 @@ public:
     EP7NetReqGateOut BuildGateOutRequest(uint32_t gateId, uint32_t gaeaId) const;
     bool ApplyGateOutFeedback(const EP7NetReqGateOutFB& fb);
     EP7WldHeader LoadWldHeader(const std::vector<uint8_t>& wldBytes) const;
+    void ApplyDropCrow(const EP7DropCrow& crow);
 
     uint16_t GetMainID() const { return m_mainID; }
     uint16_t GetSubID() const { return m_subID; }

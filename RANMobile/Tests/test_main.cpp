@@ -364,6 +364,15 @@ int main() {
         auto chat = cc.BuildChatMessage(0, "FamHawaii", "Hello EP7");
         assert(chat.nmg.nType == RANMobile::EP7_NET_MSG_CHAT);
         assert(std::string(chat.szName) == "FamHawaii" && std::string(chat.szChatMsg) == "Hello EP7");
+
+        auto skill = cc.BuildSkillRequest(10, 2, 5.0f, 0.0f, 6.0f);
+        assert(skill.skill_id.wMainID == 10 && skill.skill_id.wSubID == 2);
+
+        RANMobile::EP7DropCrow crow;
+        crow.dwGlobID = 9001;
+        crow.vPos = { 15.0f, 0.0f, 25.0f };
+        mapMgr.ApplyDropCrow(crow);
+        assert(!mapMgr.GetMarkers().empty() && mapMgr.GetMarkers().back().entityId == 9001);
     }
 
     engine.Shutdown();

@@ -171,6 +171,37 @@ struct EP7NetChat {
         std::memset(szChatMsg, 0, sizeof(szChatMsg));
     }
 };
+
+// Verified from RanClientLib/G-Logic/GLContrlSkillMsg.h:155-180
+struct EP7NetPcReqSkill {
+    EP7NetMsgGeneric nmg;
+    EP7NativeID skill_id{};
+    EP7Vec3 vTARPOS{};
+    uint32_t dwFlags = 0;
+    uint8_t bDefenseSkill = 0;
+    uint16_t wTARNUM = 0;
+
+    EP7NetPcReqSkill() {
+        nmg.dwSize = sizeof(EP7NetPcReqSkill);
+        nmg.nType = EP7_NET_MSG_GCTRL + 160; // NET_MSG_GCTRL_REQ_SKILL
+    }
+};
+
+// Verified from RanClientLib/G-Logic/GLCrowData.h:1420-1445
+struct EP7DropCrow {
+    EP7NativeID sNativeID{};
+    EP7NativeID sMapID{};
+    uint32_t dwCeID = 0;
+    uint32_t dwGlobID = 0;
+    EP7Vec3 vPos{};
+    EP7Vec3 vDir{};
+    float fScale = 1.0f;
+    uint32_t dwNowHP = 0;
+    uint16_t wNowMP = 0;
+    uint32_t dwFLAGS = 0;
+    uint32_t emAction = 0;
+    uint32_t dwActState = 0;
+};
 #pragma pack(pop)
 
 } // namespace RANMobile

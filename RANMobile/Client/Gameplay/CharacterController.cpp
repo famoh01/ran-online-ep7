@@ -67,4 +67,11 @@ EP7NetChat CharacterController::BuildChatMessage(uint32_t chatType, const char* 
     return pkt;
 }
 
+EP7NetPcReqSkill CharacterController::BuildSkillRequest(uint16_t skillMain, uint16_t skillSub, float tarX, float tarY, float tarZ) const {
+    EP7NetPcReqSkill pkt;
+    pkt.skill_id = { skillMain, skillSub };
+    pkt.vTARPOS = { tarX, tarY, tarZ };
+    return pkt;
+}
+
 } // namespace RANMobile

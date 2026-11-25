@@ -38,4 +38,13 @@ EP7WldHeader MapManager::LoadWldHeader(const std::vector<uint8_t>& wldBytes) con
     return EP7WorldCharParser::ParseWldHeader(wldBytes);
 }
 
+void MapManager::ApplyDropCrow(const EP7DropCrow& crow) {
+    MapMarker m;
+    m.entityId = crow.dwGlobID;
+    m.x = crow.vPos.x;
+    m.z = crow.vPos.z;
+    m.isNPC = (crow.dwFLAGS != 0);
+    m_markers.push_back(m);
+}
+
 } // namespace RANMobile
