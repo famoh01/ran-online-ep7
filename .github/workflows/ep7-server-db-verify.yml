@@ -36,7 +36,26 @@ jobs:
             $bak = Join-Path $bakDir "$db.bak"
             if (Test-Path $bak) {
               Write-Output "FOUND_BAK: $db ($((Get-Item $bak).Length) bytes)"
-              sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "RESTORE HEADERONLY FROM DISK = N'$bak'"
+              $tsql = @"
+CREATE TABLE #fl (
+  LogicalName NVARCHAR(128), PhysicalName NVARCHAR(260), Type CHAR(1), FileGroupName NVARCHAR(128),
+  Size NUMERIC(20,0), MaxSize NUMERIC(20,0), FileId BIGINT, CreateLSN NUMERIC(25,0),
+  DropLSN NUMERIC(25,0), UniqueId UNIQUEIDENTIFIER, ReadOnlyLSN NUMERIC(25,0), ReadWriteLSN NUMERIC(25,0),
+  BackupSizeInBytes BIGINT, SourceBlockSize INT, FileGroupId INT, LogGroupGUID UNIQUEIDENTIFIER,
+  DifferentialBaseLSN NUMERIC(25,0), DifferentialBaseGUID UNIQUEIDENTIFIER, IsReadOnly BIT, IsPresent BIT,
+  TDEThumbprint VARBINARY(32), SnapshotUrl NVARCHAR(360)
+);
+INSERT INTO #fl EXEC(N'RESTORE FILELISTONLY FROM DISK = N''$bak''');
+DECLARE @cmd NVARCHAR(MAX) = N'RESTORE DATABASE [$db] FROM DISK = N''$bak'' WITH ';
+SELECT @cmd = @cmd + N'MOVE N''' + LogicalName + N''' TO N''C:\ep7_db\data\${db}_' + CAST(FileId AS NVARCHAR(10)) + CASE WHEN Type='L' THEN N'.ldf' ELSE N'.mdf' END + N''', ' FROM #fl;
+SET @cmd = @cmd + N'REPLACE, RECOVERY';
+EXEC(@cmd);
+DROP TABLE #fl;
+"@
+              $tsql | Out-File -FilePath C:\ep7_db\restore.sql -Encoding utf8
+              sqlcmd -S "(localdb)\MSSQLLocalDB" -i C:\ep7_db\restore.sql
+              if ($LASTEXITCODE -ne 0) { exit 1 }
+              sqlcmd -S "(localdb)\MSSQLLocalDB" -d $db -Q "SELECT TOP 5 name FROM sys.tables ORDER BY name"
               if ($LASTEXITCODE -ne 0) { exit 1 }
             } else {
               Write-Error "MISSING_BAK: $bak"

@@ -201,11 +201,36 @@ static int32_t HandleInputEvent(struct android_app* app, AInputEvent* event) {
     return 0;
 }
 
+static std::vector<uint8_t> LoadAssetBytes(AAssetManager* mgr, const char* filename) {
+    std::vector<uint8_t> data;
+    if (!mgr || !filename) return data;
+    AAsset* asset = AAssetManager_open(mgr, filename, AASSET_MODE_BUFFER);
+    if (!asset) return data;
+    off_t len = AAsset_getLength(asset);
+    if (len > 0) {
+        data.resize(static_cast<size_t>(len));
+        AAsset_read(asset, data.data(), static_cast<size_t>(len));
+    }
+    AAsset_close(asset);
+    return data;
+}
+
 extern "C" void android_main(struct android_app* state) {
     AndroidAppContext ctx;
     state->userData = &ctx;
     state->onAppCmd = HandleAppCmd;
     state->onInputEvent = HandleInputEvent;
+
+    if (state->activity && state->activity->assetManager) {
+        auto wld = LoadAssetBytes(state->activity->assetManager, "login.wld");
+        auto chf = LoadAssetBytes(state->activity->assetManager, "s01_01.chf");
+        auto wldHdr = RANMobile::EP7WorldCharParser::ParseWldHeader(wld);
+        auto chfHdr = RANMobile::EP7WorldCharParser::ParseChfHeader(chf);
+        __android_log_print(ANDROID_LOG_INFO, "RANMobile",
+            "EP7 Assets: login.wld=%zu (valid=%d ver=0x%x), s01_01.chf=%zu (valid=%d ver=0x%x)",
+            wld.size(), wldHdr.valid ? 1 : 0, wldHdr.version,
+            chf.size(), chfHdr.valid ? 1 : 0, chfHdr.version);
+    }
 
     auto lastTime = std::chrono::steady_clock::now();
     int events;
