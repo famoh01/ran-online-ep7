@@ -50,13 +50,21 @@ void MapManager::ApplyDropCrow(const EP7DropCrow& crow) {
 bool MapManager::RenderScene(MobileRenderer* renderer, const std::vector<uint8_t>& wldBytes, const std::vector<uint8_t>& ddsBytes) const {
     if (!renderer || !renderer->IsInitialized()) return false;
     auto hdr = LoadWldHeader(wldBytes);
-    auto tex = EP7TextureDecoder::DecodeDDS(ddsBytes);
-    if (!tex.valid) return false;
-    uint32_t texId = renderer->UploadRGBA8Texture(tex.width, tex.height, tex.rgba8.data());
-    if (texId == 0) return false;
-    renderer->DrawTexturedQuad(texId, 0.0f, 0.0f, 128.0f, 128.0f, 1.0f);
-    renderer->DeleteTexture(texId);
+    if (m_cachedTexId == 0 && !ddsBytes.empty()) {
+        auto tex = EP7TextureDecoder::DecodeDDS(ddsBytes);
+        if (!tex.valid) return false;
+        m_cachedTexId = renderer->UploadRGBA8Texture(tex.width, tex.height, tex.rgba8.data());
+    }
+    if (m_cachedTexId == 0) return false;
+    renderer->DrawTexturedQuad(m_cachedTexId, 0.0f, 0.0f, 128.0f, 128.0f, 1.0f);
     return hdr.valid;
+}
+
+void MapManager::ReleaseCachedTextures(MobileRenderer* renderer) {
+    if (renderer && m_cachedTexId != 0) {
+        renderer->DeleteTexture(m_cachedTexId);
+        m_cachedTexId = 0;
+    }
 }
 
 } // namespace RANMobile

@@ -218,6 +218,18 @@ struct EP7NetPcReqBuyFromNpc {
         nmg.nType = EP7_NET_MSG_GCTRL + 210; // NET_MSG_GCTRL_REQ_BUY_FROM_NPC
     }
 };
+
+// Verified from RanClientLib/G-Logic/GLContrlInvenMsg.h:768-780
+struct EP7NetPcReqInvenDrug {
+    EP7NetMsgGeneric nmg;
+    uint16_t wPosX = 0;
+    uint16_t wPosY = 0;
+
+    EP7NetPcReqInvenDrug() {
+        nmg.dwSize = sizeof(EP7NetPcReqInvenDrug);
+        nmg.nType = EP7_NET_MSG_GCTRL + 212; // NET_MSG_GCTRL_REQ_INVENDRUG
+    }
+};
 #pragma pack(pop)
 
 } // namespace RANMobile

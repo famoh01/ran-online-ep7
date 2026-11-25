@@ -82,4 +82,11 @@ EP7NetPcReqBuyFromNpc CharacterController::BuildShopPurchaseRequest(uint16_t ite
     return pkt;
 }
 
+EP7NetPcReqInvenDrug CharacterController::BuildUseDrugRequest(uint16_t posX, uint16_t posY) const {
+    EP7NetPcReqInvenDrug pkt;
+    pkt.wPosX = posX;
+    pkt.wPosY = posY;
+    return pkt;
+}
+
 } // namespace RANMobile

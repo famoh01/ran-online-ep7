@@ -386,6 +386,10 @@ int main() {
         std::memcpy(dds.data() + 84, &dfourcc, 4);
         std::vector<uint8_t> dummyWld;
         assert(!mapMgr.RenderScene(engine.GetRenderer(), dummyWld, dds)); // invalid .wld returns false safely
+        mapMgr.ReleaseCachedTextures(engine.GetRenderer());
+
+        auto drugReq = cc.BuildUseDrugRequest(2, 3);
+        assert(drugReq.wPosX == 2 && drugReq.wPosY == 3);
     }
 
     engine.Shutdown();
