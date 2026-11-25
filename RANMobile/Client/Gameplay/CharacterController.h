@@ -15,6 +15,7 @@ public:
     EP7NetPcAttack BuildAttackRequest(uint32_t tarCrow, uint32_t tarId, uint32_t aniSel = 0) const;
     EP7NetChat BuildChatMessage(uint32_t chatType, const char* sender, const char* msg) const;
     EP7NetPcReqSkill BuildSkillRequest(uint16_t skillMain, uint16_t skillSub, float tarX, float tarY, float tarZ) const;
+    EP7NetPcReqBuyFromNpc BuildShopPurchaseRequest(uint16_t itemMain, uint16_t itemSub, uint32_t npcId, uint16_t buyNum = 1) const;
 
     float GetPosX() const { return m_posX; }
     float GetPosY() const { return m_posY; }

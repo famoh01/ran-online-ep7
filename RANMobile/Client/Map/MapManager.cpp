@@ -47,4 +47,16 @@ void MapManager::ApplyDropCrow(const EP7DropCrow& crow) {
     m_markers.push_back(m);
 }
 
+bool MapManager::RenderScene(MobileRenderer* renderer, const std::vector<uint8_t>& wldBytes, const std::vector<uint8_t>& ddsBytes) const {
+    if (!renderer || !renderer->IsInitialized()) return false;
+    auto hdr = LoadWldHeader(wldBytes);
+    auto tex = EP7TextureDecoder::DecodeDDS(ddsBytes);
+    if (!tex.valid) return false;
+    uint32_t texId = renderer->UploadRGBA8Texture(tex.width, tex.height, tex.rgba8.data());
+    if (texId == 0) return false;
+    renderer->DrawTexturedQuad(texId, 0.0f, 0.0f, 128.0f, 128.0f, 1.0f);
+    renderer->DeleteTexture(texId);
+    return hdr.valid;
+}
+
 } // namespace RANMobile

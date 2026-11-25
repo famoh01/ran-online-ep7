@@ -5,6 +5,8 @@
 #include <vector>
 #include "../../Engine/Network/EP7Protocol.h"
 #include "../../Data/Importer/EP7WorldCharParser.h"
+#include "../../Data/Importer/EP7TextureDecoder.h"
+#include "../../Engine/Renderer/MobileRenderer.h"
 
 namespace RANMobile {
 
@@ -25,6 +27,7 @@ public:
     bool ApplyGateOutFeedback(const EP7NetReqGateOutFB& fb);
     EP7WldHeader LoadWldHeader(const std::vector<uint8_t>& wldBytes) const;
     void ApplyDropCrow(const EP7DropCrow& crow);
+    bool RenderScene(MobileRenderer* renderer, const std::vector<uint8_t>& wldBytes, const std::vector<uint8_t>& ddsBytes) const;
 
     uint16_t GetMainID() const { return m_mainID; }
     uint16_t GetSubID() const { return m_subID; }

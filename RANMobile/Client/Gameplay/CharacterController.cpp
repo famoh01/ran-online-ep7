@@ -74,4 +74,12 @@ EP7NetPcReqSkill CharacterController::BuildSkillRequest(uint16_t skillMain, uint
     return pkt;
 }
 
+EP7NetPcReqBuyFromNpc CharacterController::BuildShopPurchaseRequest(uint16_t itemMain, uint16_t itemSub, uint32_t npcId, uint16_t buyNum) const {
+    EP7NetPcReqBuyFromNpc pkt;
+    pkt.sNID = { itemMain, itemSub };
+    pkt.dwNPCID = npcId;
+    pkt.wBuyNum = buyNum;
+    return pkt;
+}
+
 } // namespace RANMobile

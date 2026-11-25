@@ -373,6 +373,19 @@ int main() {
         crow.vPos = { 15.0f, 0.0f, 25.0f };
         mapMgr.ApplyDropCrow(crow);
         assert(!mapMgr.GetMarkers().empty() && mapMgr.GetMarkers().back().entityId == 9001);
+
+        auto shopReq = cc.BuildShopPurchaseRequest(5, 12, 300, 2);
+        assert(shopReq.sNID.wMainID == 5 && shopReq.dwNPCID == 300 && shopReq.wBuyNum == 2);
+
+        // Parser + TextureDecoder + MobileRenderer integration test
+        std::vector<uint8_t> dds(136, 0);
+        std::memcpy(dds.data(), "DDS ", 4);
+        uint32_t dh = 4, dw = 4, dfourcc = 0x31545844;
+        std::memcpy(dds.data() + 12, &dh, 4);
+        std::memcpy(dds.data() + 16, &dw, 4);
+        std::memcpy(dds.data() + 84, &dfourcc, 4);
+        std::vector<uint8_t> dummyWld;
+        assert(!mapMgr.RenderScene(engine.GetRenderer(), dummyWld, dds)); // invalid .wld returns false safely
     }
 
     engine.Shutdown();

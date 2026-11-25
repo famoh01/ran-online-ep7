@@ -202,6 +202,22 @@ struct EP7DropCrow {
     uint32_t emAction = 0;
     uint32_t dwActState = 0;
 };
+
+// Verified from RanClientLib/G-Logic/GLContrlInvenMsg.h:727-748
+struct EP7NetPcReqBuyFromNpc {
+    EP7NetMsgGeneric nmg;
+    EP7NativeID sNID{};
+    uint32_t dwChannel = 0;
+    uint32_t dwNPCID = 0;
+    uint16_t wPosX = 0;
+    uint16_t wPosY = 0;
+    uint16_t wBuyNum = 1;
+
+    EP7NetPcReqBuyFromNpc() {
+        nmg.dwSize = sizeof(EP7NetPcReqBuyFromNpc);
+        nmg.nType = EP7_NET_MSG_GCTRL + 210; // NET_MSG_GCTRL_REQ_BUY_FROM_NPC
+    }
+};
 #pragma pack(pop)
 
 } // namespace RANMobile
