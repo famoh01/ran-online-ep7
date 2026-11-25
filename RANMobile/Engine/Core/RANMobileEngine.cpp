@@ -74,6 +74,12 @@ void RANMobileEngine::Update(float deltaTime) {
     }
     if (m_loginScreen) {
         m_loginScreen->Update(deltaTime);
+        if (m_screenState == EngineScreenState::Login && m_loginScreen->WantsEnterGame()) {
+            m_screenState = EngineScreenState::InGame;
+        }
+    }
+    if (m_screenState == EngineScreenState::InGame && m_mobileHUD) {
+        m_mobileHUD->Update(deltaTime);
     }
     if (m_networkClient) {
         m_networkClient->Poll(deltaTime);
@@ -111,17 +117,29 @@ void RANMobileEngine::Resume() {
 
 void RANMobileEngine::OnTouchDown(int pointerId, float x, float y) {
     if (m_touchSystem) m_touchSystem->OnTouchDown(pointerId, x, y);
-    if (m_loginScreen) m_loginScreen->HandleTouchDown(pointerId, x, y);
+    if (m_screenState == EngineScreenState::InGame && m_mobileHUD) {
+        m_mobileHUD->OnTouchDown(pointerId, x, y);
+    } else if (m_loginScreen) {
+        m_loginScreen->HandleTouchDown(pointerId, x, y);
+    }
 }
 
 void RANMobileEngine::OnTouchMove(int pointerId, float x, float y) {
     if (m_touchSystem) m_touchSystem->OnTouchMove(pointerId, x, y);
-    if (m_loginScreen) m_loginScreen->HandleTouchMove(pointerId, x, y);
+    if (m_screenState == EngineScreenState::InGame && m_mobileHUD) {
+        m_mobileHUD->OnTouchMove(pointerId, x, y);
+    } else if (m_loginScreen) {
+        m_loginScreen->HandleTouchMove(pointerId, x, y);
+    }
 }
 
 void RANMobileEngine::OnTouchUp(int pointerId, float x, float y) {
     if (m_touchSystem) m_touchSystem->OnTouchUp(pointerId, x, y);
-    if (m_loginScreen) m_loginScreen->HandleTouchUp(pointerId, x, y);
+    if (m_screenState == EngineScreenState::InGame && m_mobileHUD) {
+        m_mobileHUD->OnTouchUp(pointerId, x, y);
+    } else if (m_loginScreen) {
+        m_loginScreen->HandleTouchUp(pointerId, x, y);
+    }
 }
 
 void RANMobileEngine::OnTextInput(const std::string& utf8) {

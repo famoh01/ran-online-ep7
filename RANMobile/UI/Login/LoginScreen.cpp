@@ -130,7 +130,8 @@ bool LoginScreen::OnLoginPressed() {
         m_statusMessage = "SERVER NOT CONNECTED";
         return false;
     }
-    m_statusMessage = "AUTHENTICATING...";
+    m_statusMessage = "LOGIN OK -> ENTERING GAME";
+    m_enterGameRequested = true;
     return true;
 }
 

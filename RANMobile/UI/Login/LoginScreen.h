@@ -42,6 +42,7 @@ public:
     LoginAuthState GetAuthState() const { return m_authState; }
     const std::string& GetStatusMessage() const { return m_statusMessage; }
     bool WantsExit() const { return m_exitRequested; }
+    bool WantsEnterGame() const { return m_enterGameRequested; }
     bool IsSettingsOpen() const { return m_showSettingsPanel; }
     bool IsExitConfirmOpen() const { return m_showExitConfirm; }
     bool IsSoundEnabled() const { return m_soundEnabled; }
@@ -78,6 +79,7 @@ private:
     LoginAuthState m_authState = LoginAuthState::Disconnected;
     std::string m_statusMessage = "DISCONNECTED";
     bool m_exitRequested = false;
+    bool m_enterGameRequested = false;
 
     float m_screenW = 1280.0f;
     float m_screenH = 720.0f;
