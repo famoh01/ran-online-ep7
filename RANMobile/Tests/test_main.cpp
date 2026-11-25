@@ -228,12 +228,12 @@ int main() {
     engLogin->HandleTouchDown(0, 640.0f, 540.0f); // Close settings (sy + 320 + 20)
     assert(!engLogin->IsSettingsOpen());
     // Also verify Settings open/close on 2400x1080 mobile resolution
-    engLogin->Resize(2400, 1080);
+    engLogin->SetScreenSize(2400, 1080);
     engLogin->HandleTouchDown(0, 1050.0f, 705.0f); // Open settings on 2400x1080 (px=930, py=320 -> x=960..1192, y=685..727)
     assert(engLogin->IsSettingsOpen());
     engLogin->HandleTouchDown(0, 1200.0f, 720.0f); // Close settings on 2400x1080 (sy=380, sy+320+20=720)
     assert(!engLogin->IsSettingsOpen());
-    engLogin->Resize(1280, 720);
+    engLogin->SetScreenSize(1280, 720);
 
     engLogin->HandleTouchDown(0, 800.0f, 485.0f); // Exit button
     assert(engLogin->IsExitConfirmOpen());
