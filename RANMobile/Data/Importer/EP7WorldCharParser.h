@@ -49,6 +49,12 @@ struct EP7CpsHeader {
     std::string error;
 };
 
+struct EP7MeshGeometry {
+    std::vector<float> vertices;
+    std::vector<uint16_t> indices;
+    bool valid = false;
+};
+
 class EP7WorldCharParser {
 public:
     static constexpr uint32_t WLD_MIN_VERSION = 0x0108;
@@ -58,6 +64,7 @@ public:
     static EP7WldHeader ParseWldHeader(const std::vector<uint8_t>& data);
     static EP7ChfHeader ParseChfHeader(const std::vector<uint8_t>& data);
     static EP7CpsHeader ParseCpsHeader(const std::vector<uint8_t>& data);
+    static EP7MeshGeometry ExtractWldOctreeMesh(const std::vector<uint8_t>& bytes);
 };
 
 } // namespace RANMobile

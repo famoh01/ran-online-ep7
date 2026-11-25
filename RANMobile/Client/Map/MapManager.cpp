@@ -56,6 +56,12 @@ bool MapManager::RenderScene(MobileRenderer* renderer, const std::vector<uint8_t
         m_cachedTexId = renderer->UploadRGBA8Texture(tex.width, tex.height, tex.rgba8.data());
     }
     if (m_cachedTexId == 0) return false;
+    auto geom = EP7WorldCharParser::ExtractWldOctreeMesh(wldBytes);
+    if (geom.valid) {
+        renderer->DrawMesh3D(geom.vertices.data(), geom.vertices.size() / 3,
+                             geom.indices.data(), geom.indices.size(),
+                             0.25f, 0.45f, 0.30f);
+    }
     renderer->DrawTexturedQuad(m_cachedTexId, 0.0f, 0.0f, 128.0f, 128.0f, 1.0f);
     return hdr.valid;
 }
