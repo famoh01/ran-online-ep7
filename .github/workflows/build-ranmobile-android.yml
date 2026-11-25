@@ -176,4 +176,10 @@ jobs:
           if ! gh release view apk-latest >/dev/null 2>&1; then
             gh release create apk-latest --title "RANMobile Latest Debug APK" --notes "Automated Android ARM64 Debug APK"
           fi
-          gh release upload apk-latest RANMobile/Android/app/build/outputs/apk/debug/*.apk --clobber
+          for i in 1 2 3; do
+            if gh release upload apk-latest RANMobile/Android/app/build/outputs/apk/debug/*.apk --clobber; then
+              break
+            fi
+            echo "Retry $i failed, waiting 5s..."
+            sleep 5
+          done

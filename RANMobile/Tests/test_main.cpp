@@ -234,6 +234,15 @@ int main() {
     engLogin->HandleTouchDown(0, 1200.0f, 720.0f); // Close settings on 2400x1080 (sy=380, sy+320+20=720)
     assert(!engLogin->IsSettingsOpen());
     engLogin->SetScreenSize(1280, 720);
+    // Test Server IP/Port persistence roundtrip + port validation
+    engLogin->SetServerEndpoint("192.168.1.50", 7001);
+    assert(engLogin->SaveServerConfig("/tmp/ran_test_srv.cfg"));
+    engLogin->SetServerEndpoint("127.0.0.1", 99999); // Out of range -> fallback 5001
+    assert(engLogin->GetServerPort() == 5001);
+    assert(engLogin->LoadServerConfig("/tmp/ran_test_srv.cfg"));
+    assert(engLogin->GetServerIp() == "192.168.1.50");
+    assert(engLogin->GetServerPort() == 7001);
+    engLogin->SetServerEndpoint("127.0.0.1", 5001);
 
     engLogin->HandleTouchDown(0, 800.0f, 485.0f); // Exit button
     assert(engLogin->IsExitConfirmOpen());
