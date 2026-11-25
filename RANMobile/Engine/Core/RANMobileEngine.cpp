@@ -66,7 +66,7 @@ void RANMobileEngine::Start() {
 }
 
 void RANMobileEngine::Update(float deltaTime) {
-    if (!m_initialized || !m_running) {
+    if (!m_initialized) {
         return;
     }
     m_totalTime += deltaTime;
