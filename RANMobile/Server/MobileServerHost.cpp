@@ -115,8 +115,10 @@ void MobileServerHost::HandleClient(int clientFd) {
             pkt.szUserid[EP7_USR_ID_LENGTH] = '\0';
             pkt.szPassword[EP7_USR_PASS_LENGTH] = '\0';
             bool ok = Authenticate(pkt.szUserid, pkt.szPassword);
-            uint8_t resp = ok ? 1 : 0;
-            ::send(clientFd, &resp, 1, 0);
+            EP7NetLoginFeedback fb;
+            fb.nResult = ok ? EP7_LOGIN_FB_SUB_OK : EP7_LOGIN_FB_SUB_INCORRECT;
+            fb.nChaRemain = ok ? 4 : 0;
+            ::send(clientFd, &fb, sizeof(fb), 0);
         }
     }
     ::close(clientFd);

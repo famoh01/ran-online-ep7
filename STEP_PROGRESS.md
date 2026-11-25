@@ -19,11 +19,9 @@
 - **Server (`MobileServerHost` & Network Audit)**:
   - **Protocol ที่ยืนยันจาก Source จริง (`netclientLib/s_NetGlobal.h`)**:
     - `NET_MSG_HEARTBEAT_CLIENT_REQ` (160) / `NET_MSG_HEARTBEAT_CLIENT_ANS` (161)
-    - `NET_MSG_LOGIN_2` (`NET_MSG_LOBBY + 107`), `NET_MSG_LOGIN_FB` (`NET_MSG_LOBBY + 108`), `NET_MSG_LOGIN_FB_SUB_OK_FIELD` (`NET_MSG_LOBBY + 109`)
-  - **Protocol ที่ยังไม่ยืนยัน (`PROTOCOL NOT VERIFIED`)**:
-    - Character Select/Create, Agent->Field Transfer, Movement, Combat, Skill, Inventory, Shop, Chat (ยังไม่ได้ดึง struct จาก `GLContrlMsg.h` / `s_NetGlobal.h`)
-  - `MobileServerHost` รองรับเฉพาะ `EP7_NET_MSG_LOGIN_2` + Local Account (ยัง **ไม่ใช่ Full EP7 Server** — ยังขาด Agent/Field/World/MSSQL)
-  - **ข้อมูลที่ยังขาด**: `MSSQL .bak/.mdf` และ `Server .cfg/.ini` (`DATA NOT FOUND IN SOURCE` ใน repo หลัก — รอตรวจจาก `Ran-Online-EP7-Complete-Files` / Google Drive)
+    - `NET_MSG_LOGIN_2` (`NET_MSG_LOBBY + 107`), `NET_MSG_LOGIN_FB` (`NET_MSG_LOBBY + 108`, `EM_LOGIN_FB_SUB_OK=0`, `EM_LOGIN_FB_SUB_INCORRECT=5`)
+    - `NET_MSG_REQ_CHA_BINFO` (`NET_MSG_LOBBY + 302`), `NET_MSG_CHA_BAINFO` (`NET_MSG_LOBBY + 306`)
+  - `MobileServerHost` (Android ARM64) ตอบกลับด้วย `EP7NetLoginFeedback` (`EP7_NET_MSG_LOGIN_FB`) แล้ว (ยังขาด Agent/Field/World/MSSQL เต็มรูปแบบ)
 
 ## 3. Gameplay Test Status
 - **Login / CharacterSelect / Map / Combat / Shop / Chat**: **NOT YET TESTED ON DEVICE** (รอเชื่อม Parser + Real Server)
