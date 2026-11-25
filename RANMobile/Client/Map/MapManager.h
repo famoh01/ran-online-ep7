@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include "../../Engine/Network/EP7Protocol.h"
 
 namespace RANMobile {
 
@@ -19,6 +20,8 @@ public:
     void SetCurrentMap(uint16_t mainID, uint16_t subID, const std::string& mapName);
     void SetPlayerPosition(float x, float z, float yawDeg);
     void UpdateMarkersFromServer(const std::vector<MapMarker>& markers);
+    EP7NetReqGateOut BuildGateOutRequest(uint32_t gateId, uint32_t gaeaId) const;
+    bool ApplyGateOutFeedback(const EP7NetReqGateOutFB& fb);
 
     uint16_t GetMainID() const { return m_mainID; }
     uint16_t GetSubID() const { return m_subID; }

@@ -348,6 +348,15 @@ int main() {
 
         RANMobile::EP7NetReqGateOutFB gateOutFb;
         assert(gateOutFb.nmg.dwSize == sizeof(RANMobile::EP7NetReqGateOutFB));
+
+        RANMobile::MapManager mapMgr;
+        auto goReq = mapMgr.BuildGateOutRequest(7, 42);
+        assert(goReq.dwGateID == 7 && goReq.dwGaeaID == 42);
+        gateOutFb.emFB = 0;
+        gateOutFb.sMapID = { 22, 0 };
+        gateOutFb.vPos = { 100.0f, 0.0f, 200.0f };
+        assert(mapMgr.ApplyGateOutFeedback(gateOutFb));
+        assert(mapMgr.GetMainID() == 22 && mapMgr.GetPlayerX() == 100.0f && mapMgr.GetPlayerZ() == 200.0f);
     }
 
     engine.Shutdown();
