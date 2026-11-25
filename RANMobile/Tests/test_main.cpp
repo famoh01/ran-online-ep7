@@ -392,6 +392,14 @@ int main() {
         assert(drugReq.wPosX == 2 && drugReq.wPosY == 3);
     }
 
+    // 24. Embedded MobileServerHost local account & auth flow
+    {
+        RANMobile::MobileServerHost host;
+        assert(host.RegisterAccount("famtest", "ep7pass"));
+        assert(host.Authenticate("famtest", "ep7pass"));
+        assert(!host.Authenticate("famtest", "wrongpass"));
+    }
+
     engine.Shutdown();
     assert(!engine.IsInitialized());
 

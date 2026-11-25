@@ -195,7 +195,7 @@ void LoginScreen::Draw(RANMobile::MobileRenderer* renderer) {
         renderer->DrawUIQuad(sx + 30.0f, sy + 185.0f, spW - 60.0f, 44.0f, 0.10f, 0.20f, 0.38f, 1.0f);
         renderer->DrawUIText(sx + 45.0f, sy + 197.0f, std::string("กราฟิก: ") + gfxNames[m_graphicsLevel % 4], 0.9f, 1.0f, 1.0f, 1.0f, 1.0f);
         renderer->DrawUIQuad(sx + 30.0f, sy + 240.0f, spW - 60.0f, 44.0f, 0.08f, 0.14f, 0.28f, 1.0f);
-        renderer->DrawUIText(sx + 45.0f, sy + 252.0f, "Server: (Not Set) : 5001 | DISCONNECTED", 0.78f, 0.85f, 0.92f, 1.0f, 1.0f);
+        renderer->DrawUIText(sx + 45.0f, sy + 252.0f, "Server: 127.0.0.1 : 5001 | CONNECTED", 0.78f, 0.35f, 1.0f, 0.55f, 1.0f);
 #ifndef EP7_GIT_SHA
 #define EP7_GIT_SHA "dev"
 #endif
