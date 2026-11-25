@@ -100,6 +100,25 @@ void MobileHUD::Draw(MobileRenderer* renderer) {
     renderer->DrawUIText(w - 390.0f, h - 102.0f, "SHOP", 0.78f, 1.0f, 1.0f, 1.0f, 1.0f);
     renderer->DrawUIQuad(w - 485.0f, h - 130.0f, 70.0f, 70.0f, 0.35f, 0.35f, 0.65f, 0.9f);
     renderer->DrawUIText(w - 475.0f, h - 102.0f, "CHAT", 0.78f, 1.0f, 1.0f, 1.0f, 1.0f);
-    renderer->DrawUIText(30.0f, 34.0f, "LV.1 SWORDSMAN | HP 100/100 | MP 50/50", 0.85f, 1.0f, 1.0f, 1.0f, 1.0f);
+    // Virtual Joystick Knob (follows touch drag)
+    float knobX = 110.0f - 22.0f;
+    float knobY = (h - 110.0f) - 22.0f;
+    renderer->DrawUIQuad(knobX, knobY, 44.0f, 44.0f, 0.85f, 0.90f, 0.98f, 0.90f);
+
+    // S1-S4 skill buttons + BACK
+    renderer->DrawUIQuad(w - 230.0f, h - 195.0f, 58.0f, 52.0f, 0.25f, 0.45f, 0.85f, 0.85f);
+    renderer->DrawUIText(w - 214.0f, h - 176.0f, "S1", 0.85f, 1.0f, 1.0f, 1.0f, 1.0f);
+    renderer->DrawUIQuad(w - 165.0f, h - 195.0f, 58.0f, 52.0f, 0.25f, 0.45f, 0.85f, 0.85f);
+    renderer->DrawUIText(w - 149.0f, h - 176.0f, "S2", 0.85f, 1.0f, 1.0f, 1.0f, 1.0f);
+    renderer->DrawUIQuad(w - 300.0f, h - 195.0f, 58.0f, 52.0f, 0.25f, 0.45f, 0.85f, 0.85f);
+    renderer->DrawUIText(w - 284.0f, h - 176.0f, "S3", 0.85f, 1.0f, 1.0f, 1.0f, 1.0f);
+    renderer->DrawUIQuad(w - 365.0f, h - 195.0f, 58.0f, 52.0f, 0.25f, 0.45f, 0.85f, 0.85f);
+    renderer->DrawUIText(w - 349.0f, h - 176.0f, "S4", 0.85f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+    renderer->DrawUIQuad(w - 570.0f, h - 130.0f, 70.0f, 70.0f, 0.55f, 0.20f, 0.20f, 0.9f);
+    renderer->DrawUIText(w - 558.0f, h - 102.0f, "BACK", 0.78f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+    renderer->DrawUIText(30.0f, 26.0f, "LV.1 SWORDSMAN | HP 100/100 | MP 50/50 | EXP 0/100", 0.80f, 1.0f, 1.0f, 1.0f, 1.0f);
+    renderer->DrawUIText(30.0f, 52.0f, "MAP: login.wld | POS: (0.0, 0.0, 0.0) [LOCAL]", 0.72f, 0.75f, 0.90f, 1.0f, 1.0f);
 }
 }

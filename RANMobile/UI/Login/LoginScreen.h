@@ -45,6 +45,14 @@ public:
     bool WantsEnterGame() const { return m_enterGameRequested; }
     void SetCredentials(const std::string& u, const std::string& p) { m_username = u; m_password = p; }
     void SetScreenSize(int width, int height) { m_screenW = width > 0 ? width : 1280; m_screenH = height > 0 ? height : 720; }
+    void SetServerEndpoint(const std::string& ip, int port) {
+        m_serverIp = ip.empty() ? "127.0.0.1" : ip;
+        m_serverPort = (port >= 1 && port <= 65535) ? port : 5001;
+    }
+    const std::string& GetServerIp() const { return m_serverIp; }
+    int GetServerPort() const { return m_serverPort; }
+    bool SaveServerConfig(const std::string& path = "server_config.cfg") const;
+    bool LoadServerConfig(const std::string& path = "server_config.cfg");
     bool IsSettingsOpen() const { return m_showSettingsPanel; }
     bool IsExitConfirmOpen() const { return m_showExitConfirm; }
     bool IsSoundEnabled() const { return m_soundEnabled; }
@@ -86,4 +94,6 @@ private:
     float m_screenW = 1280.0f;
     float m_screenH = 720.0f;
     int m_activePointerId = -1;
+    std::string m_serverIp = "127.0.0.1";
+    int m_serverPort = 5001;
 };

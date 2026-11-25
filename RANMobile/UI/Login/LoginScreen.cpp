@@ -1,4 +1,6 @@
 #include "LoginScreen.h"
+#include <fstream>
+#include <cstdio>
 #include "../../Engine/Network/NetworkClient.h"
 #include "../../Client/Login/AuthenticationManager.h"
 #include "../../Engine/Renderer/MobileRenderer.h"
@@ -200,7 +202,9 @@ void LoginScreen::Draw(RANMobile::MobileRenderer* renderer) {
         renderer->DrawUIQuad(sx + 30.0f, sy + 185.0f, spW - 60.0f, 44.0f, 0.10f, 0.20f, 0.38f, 1.0f);
         renderer->DrawUIText(sx + 45.0f, sy + 197.0f, std::string("กราฟิก: ") + gfxNames[m_graphicsLevel % 4], 0.9f, 1.0f, 1.0f, 1.0f, 1.0f);
         renderer->DrawUIQuad(sx + 30.0f, sy + 240.0f, spW - 60.0f, 44.0f, 0.08f, 0.14f, 0.28f, 1.0f);
-        renderer->DrawUIText(sx + 45.0f, sy + 252.0f, "Server: 127.0.0.1 : 5001 | CONNECTED", 0.78f, 0.35f, 1.0f, 0.55f, 1.0f);
+        char srvBuf[128];
+        std::snprintf(srvBuf, sizeof(srvBuf), "Server: %s : %d | HARNESS (LOCAL)", m_serverIp.c_str(), m_serverPort);
+        renderer->DrawUIText(sx + 45.0f, sy + 252.0f, srvBuf, 0.78f, 0.95f, 0.80f, 0.35f, 1.0f);
 #ifndef EP7_GIT_SHA
 #define EP7_GIT_SHA "dev"
 #endif
@@ -231,4 +235,23 @@ void LoginScreen::Draw(RANMobile::MobileRenderer* renderer) {
         renderer->DrawUIQuad(dx + 130.0f, dy + 145.0f, 200.0f, 46.0f, 0.92f, 0.65f, 0.12f, 1.0f);
         renderer->DrawUIText(dx + 205.0f, dy + 158.0f, "ปิด", 1.0f, 0.10f, 0.08f, 0.02f, 1.0f);
     }
+}
+
+bool LoginScreen::SaveServerConfig(const std::string& path) const {
+    std::ofstream out(path, std::ios::trunc);
+    if (!out.is_open()) return false;
+    int validPort = (m_serverPort >= 1 && m_serverPort <= 65535) ? m_serverPort : 5001;
+    out << m_serverIp << "\n" << validPort << "\n";
+    return out.good();
+}
+
+bool LoginScreen::LoadServerConfig(const std::string& path) {
+    std::ifstream in(path);
+    if (!in.is_open()) return false;
+    std::string ip;
+    int port = 5001;
+    if (!std::getline(in, ip)) return false;
+    if (!(in >> port)) port = 5001;
+    SetServerEndpoint(ip, port);
+    return true;
 }

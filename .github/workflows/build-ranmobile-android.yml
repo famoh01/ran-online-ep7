@@ -156,6 +156,7 @@ jobs:
         run: |
           gradle assembleDebug assembleRelease bundleRelease
           ls -lh app/build/outputs/apk/debug/*.apk
+          unzip -l app/build/outputs/apk/debug/app-debug.apk | grep -E "login.wld|s01_01.chf|Sword_03.dds"
           ls -lh app/build/outputs/apk/release/*.apk
           ls -lh app/build/outputs/bundle/release/*.aab
 
