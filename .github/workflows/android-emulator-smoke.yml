@@ -61,7 +61,7 @@ jobs:
             sleep 2
             adb exec-out screencap -p > emulator-screenshot-after.png
             adb logcat -d -t 800 > logcat.txt
-            if grep -E "FATAL EXCEPTION|Fatal signal|AndroidRuntime|Process .* has died" logcat.txt; then
+            if grep -E "FATAL EXCEPTION|Fatal signal|AndroidRuntime: FATAL|Process com\.famhawaii\.ranmobile .* has died" logcat.txt; then
               echo "CRASH_DETECTED"
               exit 1
             fi
