@@ -1,4 +1,5 @@
 #include "RANMobileEngine.h"
+#include <algorithm>
 #include "Logger.h"
 #include "../Renderer/MobileRenderer.h"
 #include "../Resource/ResourceManager.h"
