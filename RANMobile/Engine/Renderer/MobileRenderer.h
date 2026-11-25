@@ -37,6 +37,7 @@ public:
 
     uint32_t UploadRGBA8Texture(uint32_t width, uint32_t height, const uint8_t* rgba8);
     void DrawTexturedQuad(uint32_t texId, float x, float y, float width, float height, float alpha = 1.0f);
+    void DrawMesh3D(const float* vertices, size_t vertexCount, const uint16_t* indices, size_t indexCount, float r, float g, float b);
     void DeleteTexture(uint32_t texId);
 
     static uint32_t DecodeUTF8(const std::string& text, size_t& index);

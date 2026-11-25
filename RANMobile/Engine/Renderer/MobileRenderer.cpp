@@ -451,6 +451,24 @@ void MobileRenderer::DrawTexturedQuad(uint32_t texId, float x, float y, float wi
     m_stats.triangles += 2;
 }
 
+void MobileRenderer::DrawMesh3D(const float* vertices, size_t vertexCount, const uint16_t* indices, size_t indexCount, float r, float g, float b) {
+    if (!vertices || vertexCount == 0 || !indices || indexCount == 0) return;
+#ifdef __ANDROID__
+    if (m_uiProgram != 0) {
+        glUseProgram(m_uiProgram);
+        GLint colorLoc = glGetUniformLocation(m_uiProgram, "uColor");
+        if (colorLoc >= 0) glUniform4f(colorLoc, r, g, b, 1.0f);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), vertices);
+        glEnableVertexAttribArray(0);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indexCount), GL_UNSIGNED_SHORT, indices);
+    }
+#else
+    (void)r; (void)g; (void)b;
+#endif
+    m_stats.drawCalls++;
+    m_stats.triangles += static_cast<uint32_t>(indexCount / 3);
+}
+
 void MobileRenderer::DeleteTexture(uint32_t texId) {
     if (texId == 0) return;
 #ifdef __ANDROID__
