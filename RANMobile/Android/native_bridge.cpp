@@ -14,10 +14,12 @@
 #include "../UI/Login/LoginScreen.h"
 #include "../Data/Importer/EP7WorldCharParser.h"
 #include "../Client/Map/MapManager.h"
+#include "../Server/MobileServerHost.h"
 
 struct AndroidAppContext {
     RANMobileEngine engine;
     RANMobile::MapManager mapMgr;
+    RANMobile::MobileServerHost serverHost;
     std::vector<uint8_t> wldBytes;
     std::vector<uint8_t> chfBytes;
     std::vector<uint8_t> ddsBytes;
