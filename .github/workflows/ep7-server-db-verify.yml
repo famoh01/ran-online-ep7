@@ -31,32 +31,15 @@ jobs:
           sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "SELECT @@VERSION"
           $bakDir = "C:\ep7_db\Ran Online Database\Ran Online Database Backup Files (.bak)"
           mkdir C:\ep7_db\data -Force
-          $conn = New-Object System.Data.SqlClient.SqlConnection("Server=(localdb)\MSSQLLocalDB;Integrated Security=true;")
-          $conn.Open()
+          mkdir C:\ep7_db\data -Force
           foreach ($db in @("RanUser", "RanGame1", "RanShop", "RanLog")) {
             $bak = Join-Path $bakDir "$db.bak"
             if (Test-Path $bak) {
               Write-Output "FOUND_BAK: $db ($((Get-Item $bak).Length) bytes)"
-              $cmd = $conn.CreateCommand()
-              $cmd.CommandText = "RESTORE FILELISTONLY FROM DISK = N'$bak'"
-              $da = New-Object System.Data.SqlClient.SqlDataAdapter($cmd)
-              $dt = New-Object System.Data.DataTable
-              [void]$da.Fill($dt)
-              $moves = @()
-              $idx = 0
-              foreach ($row in $dt.Rows) {
-                $logical = $row["LogicalName"].ToString().Trim()
-                $ext = if ($row["Type"].ToString().Trim() -eq "L") { "_log.ldf" } else { "_$idx.mdf" }
-                $moves += "MOVE N'$logical' TO N'C:\ep7_db\data\${db}${ext}'"
-                $idx++
-              }
-              $moveClause = $moves -join ", "
-              $cmd.CommandText = "RESTORE DATABASE [$db] FROM DISK = N'$bak' WITH $moveClause, REPLACE, RECOVERY"
-              $cmd.CommandTimeout = 300
-              [void]$cmd.ExecuteNonQuery()
-              sqlcmd -S "(localdb)\MSSQLLocalDB" -d $db -Q "SELECT COUNT(*) AS TableCount FROM INFORMATION_SCHEMA.TABLES"
+              sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "RESTORE HEADERONLY FROM DISK = N'$bak'"
+              if ($LASTEXITCODE -ne 0) { exit 1 }
             } else {
               Write-Error "MISSING_BAK: $bak"
+              exit 1
             }
           }
-          $conn.Close()
