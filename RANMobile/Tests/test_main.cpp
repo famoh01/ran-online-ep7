@@ -334,6 +334,13 @@ int main() {
         RANMobile::EP7NetPcGoto gotoPkt;
         assert(gotoPkt.nmg.nType == RANMobile::EP7_NET_MSG_GCTRL_GOTO);
         assert(gotoPkt.nmg.dwSize == sizeof(RANMobile::EP7NetPcGoto));
+
+        RANMobile::CharacterController cc;
+        auto req = cc.BuildGotoPacket(12.5f, 0.0f, -4.0f);
+        assert(req.vTarPos.x == 12.5f && req.vTarPos.z == -4.0f);
+        req.vCurPos = { 10.0f, 1.0f, 2.0f };
+        cc.ApplyServerGoto(req);
+        assert(cc.GetPosX() == 10.0f && cc.GetPosY() == 1.0f && cc.GetPosZ() == 2.0f);
     }
 
     engine.Shutdown();

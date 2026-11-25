@@ -32,4 +32,18 @@ void CharacterController::Update(float deltaTime, const VirtualJoystick& joystic
     m_posZ += worldZ * speed * deltaTime;
 }
 
+EP7NetPcGoto CharacterController::BuildGotoPacket(float tarX, float tarY, float tarZ) const {
+    EP7NetPcGoto pkt;
+    pkt.dwActState = m_isRunning ? 1u : 0u;
+    pkt.vCurPos = { m_posX, m_posY, m_posZ };
+    pkt.vTarPos = { tarX, tarY, tarZ };
+    return pkt;
+}
+
+void CharacterController::ApplyServerGoto(const EP7NetPcGoto& pkt) {
+    m_posX = pkt.vCurPos.x;
+    m_posY = pkt.vCurPos.y;
+    m_posZ = pkt.vCurPos.z;
+}
+
 } // namespace RANMobile

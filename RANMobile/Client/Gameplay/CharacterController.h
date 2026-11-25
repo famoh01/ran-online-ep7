@@ -1,4 +1,5 @@
 #pragma once
+#include "../../Engine/Network/EP7Protocol.h"
 
 class VirtualJoystick;
 
@@ -9,6 +10,8 @@ class MobileCamera;
 class CharacterController {
 public:
     void Update(float deltaTime, const VirtualJoystick& joystick, const MobileCamera& camera);
+    EP7NetPcGoto BuildGotoPacket(float tarX, float tarY, float tarZ) const;
+    void ApplyServerGoto(const EP7NetPcGoto& pkt);
 
     float GetPosX() const { return m_posX; }
     float GetPosY() const { return m_posY; }
