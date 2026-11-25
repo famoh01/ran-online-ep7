@@ -13,9 +13,14 @@
 #include "../Engine/Core/RANMobileEngine.h"
 #include "../UI/Login/LoginScreen.h"
 #include "../Data/Importer/EP7WorldCharParser.h"
+#include "../Client/Map/MapManager.h"
 
 struct AndroidAppContext {
     RANMobileEngine engine;
+    RANMobile::MapManager mapMgr;
+    std::vector<uint8_t> wldBytes;
+    std::vector<uint8_t> chfBytes;
+    std::vector<uint8_t> ddsBytes;
     EGLDisplay display = EGL_NO_DISPLAY;
     EGLSurface surface = EGL_NO_SURFACE;
     EGLContext context = EGL_NO_CONTEXT;
@@ -222,14 +227,16 @@ extern "C" void android_main(struct android_app* state) {
     state->onInputEvent = HandleInputEvent;
 
     if (state->activity && state->activity->assetManager) {
-        auto wld = LoadAssetBytes(state->activity->assetManager, "login.wld");
-        auto chf = LoadAssetBytes(state->activity->assetManager, "s01_01.chf");
-        auto wldHdr = RANMobile::EP7WorldCharParser::ParseWldHeader(wld);
-        auto chfHdr = RANMobile::EP7WorldCharParser::ParseChfHeader(chf);
+        ctx.wldBytes = LoadAssetBytes(state->activity->assetManager, "login.wld");
+        ctx.chfBytes = LoadAssetBytes(state->activity->assetManager, "s01_01.chf");
+        ctx.ddsBytes = LoadAssetBytes(state->activity->assetManager, "Sword_03.dds");
+        auto wldHdr = RANMobile::EP7WorldCharParser::ParseWldHeader(ctx.wldBytes);
+        auto chfHdr = RANMobile::EP7WorldCharParser::ParseChfHeader(ctx.chfBytes);
         __android_log_print(ANDROID_LOG_INFO, "RANMobile",
-            "EP7 Assets: login.wld=%zu (valid=%d ver=0x%x), s01_01.chf=%zu (valid=%d ver=0x%x)",
-            wld.size(), wldHdr.valid ? 1 : 0, wldHdr.version,
-            chf.size(), chfHdr.valid ? 1 : 0, chfHdr.version);
+            "EP7 Assets: login.wld=%zu (valid=%d ver=0x%x), s01_01.chf=%zu (valid=%d ver=0x%x), Sword_03.dds=%zu",
+            ctx.wldBytes.size(), wldHdr.valid ? 1 : 0, wldHdr.version,
+            ctx.chfBytes.size(), chfHdr.valid ? 1 : 0, chfHdr.version,
+            ctx.ddsBytes.size());
     }
 
     auto lastTime = std::chrono::steady_clock::now();
