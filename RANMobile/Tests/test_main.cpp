@@ -311,6 +311,21 @@ int main() {
         renderer->DeleteTexture(texId);
     }
 
+    // 22. EP7Protocol Character Selection Packet Layout (netclientLib/s_NetGlobal.h)
+    {
+        RANMobile::EP7NetLoginFeedback fb;
+        assert(fb.nmg.nType == RANMobile::EP7_NET_MSG_LOGIN_FB);
+        assert(fb.nmg.dwSize == sizeof(RANMobile::EP7NetLoginFeedback));
+
+        RANMobile::EP7NetChaBaInfo reqCha;
+        assert(reqCha.nmg.nType == RANMobile::EP7_NET_MSG_REQ_CHA_BINFO);
+        assert(reqCha.nmg.dwSize == sizeof(RANMobile::EP7NetChaBaInfo));
+
+        RANMobile::EP7NetChaBbaInfo bba;
+        assert(bba.nmg.nType == RANMobile::EP7_NET_MSG_CHA_BAINFO);
+        assert(bba.nmg.dwSize == sizeof(RANMobile::EP7NetChaBbaInfo));
+    }
+
     engine.Shutdown();
     assert(!engine.IsInitialized());
 

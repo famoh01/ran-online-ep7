@@ -27,6 +27,7 @@ constexpr size_t EP7_USR_ID_LENGTH = 20;
 constexpr size_t EP7_USR_PASS_LENGTH = 20;
 constexpr size_t EP7_USR_RAND_PASS_LENGTH = 6;
 constexpr size_t EP7_ENCRYPT_KEY = 12;
+constexpr size_t EP7_MAX_ONESERVERCHAR_NUM = 4;
 
 #pragma pack(push, 1)
 struct EP7NetMsgGeneric {
@@ -61,6 +62,29 @@ struct EP7NetLoginFeedback {
     EP7NetLoginFeedback() {
         nmg.dwSize = sizeof(EP7NetLoginFeedback);
         nmg.nType = EP7_NET_MSG_LOGIN_FB;
+    }
+};
+
+// Verified from netclientLib/s_NetGlobal.h:3227-3251
+struct EP7NetChaBbaInfo {
+    EP7NetMsgGeneric nmg;
+    int32_t nChaSNum = 0;
+    int32_t nChaNum[EP7_MAX_ONESERVERCHAR_NUM]{};
+
+    EP7NetChaBbaInfo() {
+        nmg.dwSize = sizeof(EP7NetChaBbaInfo);
+        nmg.nType = EP7_NET_MSG_CHA_BAINFO;
+        std::memset(nChaNum, 0, sizeof(nChaNum));
+    }
+};
+
+struct EP7NetChaBaInfo {
+    EP7NetMsgGeneric nmg;
+    int32_t nChaNum = 0;
+
+    EP7NetChaBaInfo() {
+        nmg.dwSize = sizeof(EP7NetChaBaInfo);
+        nmg.nType = EP7_NET_MSG_REQ_CHA_BINFO;
     }
 };
 #pragma pack(pop)
