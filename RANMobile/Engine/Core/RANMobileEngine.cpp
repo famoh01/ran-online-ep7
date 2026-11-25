@@ -103,8 +103,8 @@ void RANMobileEngine::Render() {
         m_renderer->DrawUIText(200.0f, 208.0f, "Slot 1: Swordsman (Lv.1) - s01_01.chf", 0.95f, 1.0f, 1.0f, 1.0f, 1.0f);
         m_renderer->DrawUIQuad(180.0f, 265.0f, 420.0f, 60.0f, 0.10f, 0.20f, 0.38f, 1.0f);
         m_renderer->DrawUIText(200.0f, 283.0f, "Slot 2: Brawler | Archer | Shaman", 0.9f, 0.85f, 0.9f, 1.0f, 1.0f);
-        m_renderer->DrawUIQuad(480.0f, 520.0f, 320.0f, 64.0f, 0.92f, 0.65f, 0.12f, 1.0f);
-        m_renderer->DrawUIText(545.0f, 540.0f, "START GAME (ENTER MAP)", 1.05f, 0.10f, 0.08f, 0.02f, 1.0f);
+        m_renderer->DrawUIQuad(450.0f, 520.0f, 380.0f, 64.0f, 0.92f, 0.65f, 0.12f, 1.0f);
+        m_renderer->DrawUIText(495.0f, 540.0f, "START GAME (ENTER MAP)", 1.0f, 0.10f, 0.08f, 0.02f, 1.0f);
     } else if (m_screenState == EngineScreenState::InGame && m_mobileHUD) {
         m_mobileHUD->Draw(m_renderer.get());
     }
@@ -130,7 +130,7 @@ void RANMobileEngine::Resume() {
 void RANMobileEngine::OnTouchDown(int pointerId, float x, float y) {
     if (m_touchSystem) m_touchSystem->OnTouchDown(pointerId, x, y);
     if (m_screenState == EngineScreenState::CharacterSelect) {
-        if (x >= 480.0f && x <= 800.0f && y >= 520.0f && y <= 584.0f) {
+        if (x >= 450.0f && x <= 830.0f && y >= 520.0f && y <= 584.0f) {
             m_screenState = EngineScreenState::InGame;
         }
     } else if (m_screenState == EngineScreenState::InGame && m_mobileHUD) {

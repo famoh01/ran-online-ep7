@@ -45,7 +45,7 @@ void LoginScreen::HandleTouchDown(int pointerId, float x, float y) {
             m_musicEnabled = !m_musicEnabled;
         } else if (HitRect(x, y, sx + 30.0f, sy + 185.0f, spW - 60.0f, 44.0f)) {
             m_graphicsLevel = (m_graphicsLevel + 1) % 4;
-        } else if (HitRect(x, y, sx + 130.0f, sy + 250.0f, 200.0f, 46.0f)) {
+        } else if (HitRect(x, y, sx + 130.0f, sy + 320.0f, 200.0f, 46.0f)) {
             m_showSettingsPanel = false;
         }
         return;
