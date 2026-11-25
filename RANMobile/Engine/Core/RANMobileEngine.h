@@ -2,6 +2,7 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 #include <cstdint>
 
 namespace RANMobile {
@@ -12,6 +13,14 @@ namespace RANMobile {
     class NetworkClient;
     class GameDataLoader;
 }
+class LoginScreen;
+namespace RANMobile { class MobileHUD; }
+
+enum class EngineScreenState {
+    Login,
+    CharacterSelect,
+    InGame
+};
 
 class RANMobileEngine {
 public:
@@ -24,7 +33,26 @@ public:
     void Start();
     void Update(float deltaTime);
     void Render();
+    void Resize(int width, int height);
+    void Pause();
+    void Resume();
     void Shutdown();
+
+    void OnTouchDown(int pointerId, float x, float y);
+    void OnTouchMove(int pointerId, float x, float y);
+    void OnTouchUp(int pointerId, float x, float y);
+    void OnTextInput(const std::string& utf8);
+    void OnBackspace();
+
+    LoginScreen* GetLoginScreen() const { return m_loginScreen.get(); }
+    RANMobile::MobileHUD* GetMobileHUD() const { return m_mobileHUD.get(); }
+    void SetScreenState(EngineScreenState state) { m_screenState = state; }
+    EngineScreenState GetScreenState() const { return m_screenState; }
+    void SetEP7Assets(const std::vector<uint8_t>& wldBytes,
+                      const std::vector<uint8_t>& chfBytes,
+                      const std::vector<uint8_t>& ddsBytes);
+    void ToggleDebugOverlay() { m_showDebugOverlay = !m_showDebugOverlay; }
+    bool IsDebugOverlayVisible() const { return m_showDebugOverlay; }
 
     bool IsInitialized() const { return m_initialized; }
     bool IsRunning() const { return m_running; }
@@ -51,4 +79,18 @@ private:
     std::unique_ptr<RANMobile::MobileCamera> m_camera;
     std::unique_ptr<RANMobile::NetworkClient> m_networkClient;
     std::unique_ptr<RANMobile::GameDataLoader> m_gameDataLoader;
+    std::unique_ptr<LoginScreen> m_loginScreen;
+    std::unique_ptr<RANMobile::MobileHUD> m_mobileHUD;
+    EngineScreenState m_screenState = EngineScreenState::Login;
+    int m_width = 1280;
+    int m_height = 720;
+    bool m_showDebugOverlay = true;
+    bool m_wldValid = false;
+    bool m_chfValid = false;
+    int m_wldVerts = 0;
+    int m_wldObjects = 0;
+    int m_wldTex = 0;
+    int m_chfMesh = 0;
+    int m_chfBone = 0;
+    float m_fps = 60.0f;
 };
