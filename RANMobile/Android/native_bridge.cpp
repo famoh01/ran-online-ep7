@@ -258,7 +258,7 @@ extern "C" void android_main(struct android_app* state) {
             ctx.engine.Update(dt);
             ctx.engine.Render();
             if (!ctx.ddsBytes.empty()) {
-                ctx.mapManager.RenderScene(ctx.engine.GetRenderer(), ctx.ddsBytes.data(), ctx.ddsBytes.size());
+                ctx.mapManager.RenderScene(ctx.engine.GetRenderer(), ctx.wldBytes, ctx.ddsBytes);
             }
             eglSwapBuffers(ctx.display, ctx.surface);
         }
