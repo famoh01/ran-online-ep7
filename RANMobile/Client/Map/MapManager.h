@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "../../Engine/Network/EP7Protocol.h"
+#include "../../Data/Importer/EP7WorldCharParser.h"
 
 namespace RANMobile {
 
@@ -22,6 +23,7 @@ public:
     void UpdateMarkersFromServer(const std::vector<MapMarker>& markers);
     EP7NetReqGateOut BuildGateOutRequest(uint32_t gateId, uint32_t gaeaId) const;
     bool ApplyGateOutFeedback(const EP7NetReqGateOutFB& fb);
+    EP7WldHeader LoadWldHeader(const std::vector<uint8_t>& wldBytes) const;
 
     uint16_t GetMainID() const { return m_mainID; }
     uint16_t GetSubID() const { return m_subID; }

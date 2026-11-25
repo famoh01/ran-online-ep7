@@ -34,4 +34,8 @@ bool MapManager::ApplyGateOutFeedback(const EP7NetReqGateOutFB& fb) {
     return true;
 }
 
+EP7WldHeader MapManager::LoadWldHeader(const std::vector<uint8_t>& wldBytes) const {
+    return EP7WorldCharParser::ParseWldHeader(wldBytes);
+}
+
 } // namespace RANMobile
