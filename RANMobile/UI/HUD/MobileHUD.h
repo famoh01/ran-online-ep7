@@ -9,6 +9,7 @@ namespace RANMobile {
 class MobileHUD {
 public:
     void Initialize(int screenWidth, int screenHeight);
+    void SetScreenSize(int width, int height) { Initialize(width, height); }
     void Update(float deltaTime);
 
     bool OnTouchDown(int32_t pointerId, float x, float y);
@@ -25,6 +26,9 @@ public:
 
 private:
     VirtualJoystick m_joystick;
+public:
+    void Draw(class MobileRenderer* renderer);
+private:
     MobileButton m_attackBtn{MobileButtonType::Attack};
     MobileButton m_targetBtn{MobileButtonType::Target};
     MobileButton m_potionBtn{MobileButtonType::Potion};

@@ -3,6 +3,10 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include "../../Engine/Network/EP7Protocol.h"
+#include "../../Data/Importer/EP7WorldCharParser.h"
+#include "../../Data/Importer/EP7TextureDecoder.h"
+#include "../../Engine/Renderer/MobileRenderer.h"
 
 namespace RANMobile {
 
@@ -19,6 +23,12 @@ public:
     void SetCurrentMap(uint16_t mainID, uint16_t subID, const std::string& mapName);
     void SetPlayerPosition(float x, float z, float yawDeg);
     void UpdateMarkersFromServer(const std::vector<MapMarker>& markers);
+    EP7NetReqGateOut BuildGateOutRequest(uint32_t gateId, uint32_t gaeaId) const;
+    bool ApplyGateOutFeedback(const EP7NetReqGateOutFB& fb);
+    EP7WldHeader LoadWldHeader(const std::vector<uint8_t>& wldBytes) const;
+    void ApplyDropCrow(const EP7DropCrow& crow);
+    bool RenderScene(MobileRenderer* renderer, const std::vector<uint8_t>& wldBytes, const std::vector<uint8_t>& ddsBytes) const;
+    void ReleaseCachedTextures(MobileRenderer* renderer);
 
     uint16_t GetMainID() const { return m_mainID; }
     uint16_t GetSubID() const { return m_subID; }
@@ -36,6 +46,7 @@ private:
     float m_playerZ = 0.0f;
     float m_playerYaw = 0.0f;
     std::vector<MapMarker> m_markers;
+    mutable uint32_t m_cachedTexId = 0;
 };
 
 } // namespace RANMobile

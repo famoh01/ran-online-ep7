@@ -1,0 +1,55 @@
+name: Build EP7 Windows Server (Original Source)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - arena/6c988b52-ran-online-ep7
+    paths:
+      - '.github/workflows/build-ep7-windows-server.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  build-windows-server:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build LoginServer & Core Server Projects (Win32 Release)
+        continue-on-error: true
+        run: |
+          mkdir build_logs -Force
+          $summary = @("### Windows Server MSBuild Summary (`$env:GITHUB_SHA`)")
+          foreach ($proj in @("LoginServer/LoginServer.vcxproj", "AgentServer/AgentServer.vcxproj", "FieldServer/FieldServer.vcxproj", "GameServer/GameServer.vcxproj")) {
+            $name = [System.IO.Path]::GetFileNameWithoutExtension($proj)
+            $log = "build_logs/$name.log"
+            msbuild $proj /p:Configuration=Release /p:Platform=Win32 /m /flp:LogFile=$log`;Verbosity=minimal
+            if ($LASTEXITCODE -eq 0) {
+              $summary += "- **$name**: PASS"
+            } else {
+              $err = (Select-String -Path $log -Pattern "error " | Select-Object -First 3 | ForEach-Object { $_.Line.Trim() }) -join " | "
+              $summary += "- **$name**: FAIL (`$err`)"
+            }
+          }
+          $summary -join "`n" | Out-File -FilePath build_logs/summary.txt -Encoding utf8
+          Get-Content build_logs/summary.txt
+
+      - name: Upload Windows Server Build Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ep7-windows-server-build-logs
+          path: build_logs/
+
+      - name: Emit Annotations
+        if: always()
+        run: |
+          Get-Content build_logs/summary.txt | ForEach-Object { Write-Output "::notice::$_" }
+          Get-Content build_logs/summary.txt >> $env:GITHUB_STEP_SUMMARY

@@ -1,0 +1,39 @@
+name: Phase 1 Complete Files Audit (Git LFS + DB + Server Config)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - arena/6c988b52-ran-online-ep7
+    paths:
+      - '.github/workflows/phase1-complete-files-audit.yml'
+
+jobs:
+  audit-complete-files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+
+      - name: Install git-lfs
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git-lfs
+          git lfs install
+
+      - name: Clone Ran-Online-EP7-Complete-Files with LFS (Database & Server Configs)
+        run: |
+          GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 https://github.com/matheomedrana/Ran-Online-EP7-Complete-Files.git /tmp/ep7_complete
+          cd /tmp/ep7_complete
+          git lfs pull --include="Ran Online Database/**"
+          echo "=== Database Files ===" > /tmp/phase1_audit.txt
+          find "Ran Online Database" -type f -exec ls -lh {} + >> /tmp/phase1_audit.txt
+          echo "=== Server Configs (.cfg/.ini) ===" >> /tmp/phase1_audit.txt
+          find . -type f \( -iname "*.cfg" -o -iname "*.ini" \) -exec ls -lh {} + | head -n 100 >> /tmp/phase1_audit.txt
+          cat /tmp/phase1_audit.txt
+
+      - name: Upload Phase 1 Audit Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1-complete-files-audit
+          path: /tmp/phase1_audit.txt
