@@ -1,0 +1,48 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.famhawaii.ranmobile'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.famhawaii.ranmobile"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0-ep7"
+
+        def targetAbis = project.hasProperty('abiFilters') ? project.property('abiFilters').toString().split(',') : ['arm64-v8a']
+        def gitSha = System.getenv('GITHUB_SHA') ? System.getenv('GITHUB_SHA').take(7) : 'dev'
+
+        ndk {
+            abiFilters(*targetAbis)
+        }
+
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++17 -DEP7_GIT_SHA=\\\"${gitSha}\\\""
+            }
+        }
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile '../AndroidManifest.xml'
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "../../CMakeLists.txt"
+            version "3.22.1"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+}

@@ -1,0 +1,8 @@
+Project,BuildFile,Platform,Status,Notes
+LoginServer,LoginServer/LoginServer.vcxproj,Win32,Source_Found,Uses $(DefaultPlatformToolset) + ODBC
+AgentServer,AgentServer/AgentServer.vcxproj,Win32,Source_Found,Uses $(DefaultPlatformToolset) + IOCP
+FieldServer,FieldServer/FieldServer.vcxproj,Win32,Source_Found,Uses $(DefaultPlatformToolset) + IOCP
+GameServer,GameServer/GameServer.vcxproj,Win32,Source_Found,Uses $(DefaultPlatformToolset)
+SessionServer,SessionServer/SessionServer.vcxproj,Win32,Source_Found,Uses $(DefaultPlatformToolset) + ODBC
+netserverLib,netserverLib/netserverLib.vcxproj,Win32,Source_Found,Core IOCP & ODBC supervisor
+Smtm2022,Smtm2022.sln,Win32,Source_Found,VS2022 master solution

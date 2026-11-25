@@ -1,0 +1,12 @@
+Category,Path_Or_Name,Status,Source,Notes
+Source,enginelib/,A_Real_File,famoh01/ran-online-ep7,DirectX9/Win32 original engine
+Source,RanClientLib/,A_Real_File,famoh01/ran-online-ep7,Original EP7 client logic
+Source,RanLogic/,A_Real_File,famoh01/ran-online-ep7,Shared game logic (Item/Skill/Quest/Crow)
+Source,netclientLib/,A_Real_File,famoh01/ran-online-ep7,EP7 network client & protocol
+Source,netserverLib/,A_Real_File,famoh01/ran-online-ep7,EP7 IOCP & ODBC server lib
+Source,RANMobile/,A_Real_File,arena/6c988b52-ran-online-ep7,C++17 Mobile Engine + Android NDK + MobileServerHost
+Data_Release,RAN-EP7-Client-TH.zip,C_Cloud_Release,ran-ep7-full-v1,6.5 GB original Thai EP7 client
+Data_Release,RAN-EP7-ServerDBTools.zip,C_Cloud_Release,ran-ep7-full-v1,Server binaries & FileCrypt.exe
+Data_Release,RAN-EP7-ThaiPack-FamHawaii.zip,A_Real_File_CI,ran-ep7-full-v1,1046 Thai quest/item/UI files
+Data_Missing,MSSQL_Backup_bak_mdf,D_Missing,Not_In_Repo,Check Google Drive or Ran-Online-EP7-Complete-Files
+Config_Missing,Release_Keystore_jks,D_Missing,Not_In_Repo,Required for signed release APK/AAB

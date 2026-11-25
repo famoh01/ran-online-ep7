@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include "../../Engine/Network/EP7Protocol.h"
 
 namespace RANMobile {
 
@@ -17,6 +18,7 @@ class CharacterSelectManager {
 public:
     void ClearSlots();
     void AddSlotFromServer(const EP7CharacterSlot& slot);
+    void ParseChaBbaInfo(const EP7NetChaBbaInfo& pkt);
     const std::vector<EP7CharacterSlot>& GetSlots() const { return m_slots; }
 
     bool SelectSlot(size_t index);
