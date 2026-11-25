@@ -1,4 +1,4 @@
-name: Android Emulator Smoke Test (x86_64)
+name: Android Emulator Smoke Test (x86)
 
 on:
   workflow_dispatch:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   emulator-smoke-test:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -27,17 +27,17 @@ jobs:
         with:
           gradle-version: '8.5'
 
-      - name: Build arm64-v8a Debug APK for Emulator & Device
+      - name: Build x86 Debug APK for Emulator
         working-directory: RANMobile/Android
         run: |
-          gradle assembleDebug -PabiFilters=arm64-v8a
+          gradle assembleDebug -PabiFilters=x86
           ls -lh app/build/outputs/apk/debug/*.apk
 
       - name: Run Emulator Smoke Test (Boot, Launch, Tap, Screencap, Logcat)
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 29
-          arch: arm64-v8a
+          api-level: 24
+          arch: x86
           profile: Nexus 5X
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
