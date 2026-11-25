@@ -402,6 +402,8 @@ int main() {
 
     // 25. Login -> CharacterSelect -> InGame state transition flow
     {
+        RANMobile::MobileServerHost host;
+        assert(host.Start(5001));
         RANMobileEngine flowEngine;
         assert(flowEngine.Initialize());
         assert(flowEngine.GetScreenState() == EngineScreenState::Login);
@@ -414,6 +416,7 @@ int main() {
         flowEngine.OnTouchDown(0, 640.0f, 550.0f);
         assert(flowEngine.GetScreenState() == EngineScreenState::InGame);
         flowEngine.Shutdown();
+        host.Stop();
     }
 
     engine.Shutdown();
