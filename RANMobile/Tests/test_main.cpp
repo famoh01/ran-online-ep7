@@ -225,7 +225,7 @@ int main() {
     assert(engLogin->IsSettingsOpen());
     engLogin->HandleTouchDown(0, 640.0f, 300.0f); // Sound toggle
     assert(!engLogin->IsSoundEnabled());
-    engLogin->HandleTouchDown(0, 640.0f, 470.0f); // Close settings
+    engLogin->HandleTouchDown(0, 640.0f, 540.0f); // Close settings (sy + 320 + 20)
     assert(!engLogin->IsSettingsOpen());
 
     engLogin->HandleTouchDown(0, 800.0f, 485.0f); // Exit button
