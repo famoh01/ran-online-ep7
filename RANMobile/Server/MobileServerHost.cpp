@@ -119,6 +119,10 @@ void MobileServerHost::HandleClient(int clientFd) {
             fb.nResult = ok ? EP7_LOGIN_FB_SUB_OK : EP7_LOGIN_FB_SUB_INCORRECT;
             fb.nChaRemain = ok ? 4 : 0;
             ::send(clientFd, &fb, sizeof(fb), 0);
+        } else if (hdr.nType == EP7_NET_MSG_REQ_CHA_BINFO && n >= static_cast<ssize_t>(sizeof(EP7NetChaBaInfo))) {
+            EP7NetChaBbaInfo bba;
+            bba.nChaSNum = 0; // No fake characters; populated only from real DB records
+            ::send(clientFd, &bba, sizeof(bba), 0);
         }
     }
     ::close(clientFd);

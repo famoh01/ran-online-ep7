@@ -324,6 +324,12 @@ int main() {
         RANMobile::EP7NetChaBbaInfo bba;
         assert(bba.nmg.nType == RANMobile::EP7_NET_MSG_CHA_BAINFO);
         assert(bba.nmg.dwSize == sizeof(RANMobile::EP7NetChaBbaInfo));
+
+        RANMobile::CharacterSelectManager csm;
+        bba.nChaSNum = 1;
+        bba.nChaNum[0] = 1001;
+        csm.ParseChaBbaInfo(bba);
+        assert(csm.GetSlots().size() == 1 && csm.GetSlots()[0].charId == 1001);
     }
 
     engine.Shutdown();
