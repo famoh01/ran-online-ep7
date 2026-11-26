@@ -91,3 +91,14 @@ Please tell me which blockers to clear and how (provide files/toolchain/server a
 - New documented limitation: the Android manifest still hard-locks landscape even though the UI now reflows to a portrait virtual canvas; enabling rotation is deferred and must not be mistaken for a verified portrait device layout.
 - Verified original PC input mappings (DirectInput `DIK_*` / mouse actions in `RanClientLib/DxLobyStage.cpp` and `RanClientLib/G-Logic/GLCharacter.cpp`) are documented as **unimplemented** mobile actions; no gameplay command or packet was invented.
 - B8 untouched: no GameServer/DirectX compatibility change was attempted.
+
+## Phase 3C update (2026-11-26, source-grounded asset/scene work)
+
+- `.wld` geometry unavailable: `GLAGLandMan::LoadWldFile` (`RanClientLib/G-Logic/GLAGLandMan.cpp:22-60`) proves a `DxLandMan::FILEMARK`/version/`SLAND_FILEMARK` layout, but no `.wld` file exists in `external/ep7_release/thaipack_original` or the client path inventory. Full map geometry, collisions, gates and entity placement are therefore **not implemented**; only `.glmap` `SLEVEL_HEAD` metadata is parsed.
+- No original DDS/MTF texture or `mapslist.mst`/`.glmap` file is present in the recovered trees. Texture decoders were validated against source-derived synthetic fixtures and real source constants, not against original binary texture assets. A real texture/map drop is needed for binary-level verification.
+- The recovered 309 `.ntk` and 730 `.qst` files have the original 128-byte `"default"` file-type header but no matching loader path or decoded layout in this checkout. Their payload format is **unknown**; no decoding was guessed.
+- Encoded `mapslist.mst` uses Rijndael version headers or `compbyte` fallback (`IniLoader.cpp:239-253`, `StringFile.cpp:71-100,150-180`). Only the plain-text variant is implemented; an encoded original manifest needs a key/version sample to implement safely.
+- DDS support is a subset: DXT1/3/5 plus six uncompressed mask formats; mip levels, cube/volume textures and the remaining original D3D formats are verified in source but not implemented.
+- Android IME UTF-8 commit is still unimplemented. NDK r26d with `ANDROID_PLATFORM=android-24` has no `AKeyEvent_getUnicodeChar` (proven by CI run `45862660028` compile error); only hardware ASCII key events and focus/keyboard lifecycle are implemented. A Java `InputConnection`/commit callback bridge is required for Thai UTF-8 IME input.
+- DisplayCutout insets are queried through JNI (API 28+), but no device test was performed; `ANDROID_PLATFORM=android-24` runs degrade to zero insets. The manifest still locks landscape; portrait virtual-canvas support is implemented but unverified on device.
+- B1 (no local Android SDK/NDK/JDK), B6/B8 (protocol/server uncertainty, GameServer DirectX header conflict) remain unchanged and untouched.

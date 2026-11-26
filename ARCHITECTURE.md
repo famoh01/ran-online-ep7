@@ -63,3 +63,12 @@ Game content is *data-driven* from the original client files, not from code: map
 ## 5. Phase 1 conclusion / next phase prerequisites
 
 Architecture is sufficiently mapped to begin Phase 2 (review of PR #1/#2) and later engine work. However, the iron rules require stopping at a blocker: verified blockers (local Android SDK/NDK, original binary assets/DB via blocked hosts, no live server) are recorded in `BLOCKERS.md` with the exact items needed. No Phase 2+ work was started and no Draft PR other than this Phase 1 change was opened.
+
+
+## 6. Phase 3C asset/scene extension (2026-11-26)
+
+- New read-only parser layer: `RANMobile/Data/Importer/EP7SerialCodec.h` (source-exact `compbyte` table), `EP7SerialFile.*` (128-byte file type + DWORD file ID, `std::string`), `EP7SceneData.*` (`mapslist.mst` fields 0..19 from `GLMapList::LoadMapList`; `.glmap` `SLEVEL_HEAD` from `GLLevelFile.cpp:629-656`).
+- `EP7TextureDecoder.*` now decodes the original MTF container and DDS DXT1/3/5 level 0 plus a validated uncompressed mask subset, and reproduces the original `TextureManager.cpp` alpha-mode classification.
+- `MobileRenderer` keeps one retained RGBA8 copy per asset key and re-uploads it after `OnSurfaceCreated`; `DrawTexturedQuad` adds an alpha-test cutoff. `RANMobileEngine` owns `EP7SceneRenderer` and exposes `LoadScene()` / `ScenePreview`.
+- `EP7SceneRenderer` is deliberately metadata-and-texture-only: it does not parse `.wld` geometry or simulate gameplay. With currently recovered assets the scene index is empty and the UI states that plainly.
+- Android bridge applies `DisplayCutout` insets through JNI and tracks soft-keyboard visibility on focus/pause/surface loss; IME UTF-8 commit and rotation-policy changes remain deferred (see `BLOCKERS.md`).
