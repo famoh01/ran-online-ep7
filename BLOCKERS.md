@@ -42,3 +42,21 @@ Per the master command's iron rules: when a blocker is found, record it here, st
 ## Decision requested
 
 Please tell me which blockers to clear and how (provide files/toolchain/server access, or explicitly authorize CI-only/documentation-only continuation for the blocked parts). I will then resume at Phase 3 in small Draft PRs, one phase at a time.
+
+## B6. Protocol constant conflict discovered during source recovery (critical, added in pre-Phase 3)
+
+- Evidence: `RANMobile/Engine/Network/EP7Protocol.h` sets `EP7_NET_MSG_LOGIN_2 = 0 + 1013 + 107 = 1120`, taken from a **commented-out** lobby block in `netclientLib/s_NetGlobal.h`. The active source defines `NET_MSG_LOBBY = NET_MSG_BASE + 950` (region base e.g. `TH_PARAM = 989`, default `995`); recovered `Ran-Online-Episode-7-main/Dependency/NetGlobal/s_NetGlobal.h` uses base `888` with the same `+950`. Real `NET_MSG_LOGIN_2` is therefore `2046` (TH), `2052` (default) or `1945` (older recovered source), not `1120`.
+- Impact: even after network connect is implemented, the login packet ID may be rejected by the real PC server. No live server is available to disambiguate.
+- **Needed from user**: the authoritative build flag/server edition for "FamHawaii Ep7" (or a live server capture), plus explicit permission to correct `EP7Protocol.h` in a later phase. Per task rules the constant was **not** changed in this recovery task.
+
+## Recovery-task status (pre-Phase 3, 2026-11-26)
+
+- Downloaded and integrity-verified: `RanOnlineEP7-Client.zip`, `Ran-Online-Episode-7-main.zip`, `RAN-EP7-ThaiPack-FamHawaii.zip` (see `SOURCE_DATA_RECOVERY.md` for SHA-256).
+- Connector failures (not retried): `RanOnlineEP7-Server.zip`, `RAN-EP7-ServerDBTools.zip` — user must provide these bytes if server configs/DB are needed.
+- No game content was fabricated; no PC source/protocol/UI was modified.
+
+## B7. Strict Windows build verification still running (added in recovery task)
+
+- Run `45819356699` (workflow `Strict Build Verification`, commit `0680b8e`), Windows job `139907264786`, started 2026-11-26T12:24:32Z. At report time (~26 min later) the MSBuild step was still in progress; no project exit codes or output-binary checks had been produced.
+- Impact: Windows client/server compilation is **unverified** in this task. The green Android/Linux jobs in the same run are separately verified and must not be treated as Windows proof.
+- **Needed**: re-check that run (or wait for its completion) before Phase 3; the workflow has no `continue-on-error`, so a failing project will fail the job and upload `build_logs/results.txt`.
