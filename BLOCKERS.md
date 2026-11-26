@@ -66,3 +66,9 @@ Please tell me which blockers to clear and how (provide files/toolchain/server a
 - B2/B4 **partially cleared**: `RAN-EP7-ServerDBTools.zip` was recovered with an alternate authorized connector input; 4 `.sql` scripts, 4 `.bak` backups, 4 non-empty `Server*.cfg` files and 15 editor/GM tools are now present locally (`external/ep7_release/serverdb_original/`, git-ignored). The >1 GB client archives and the 19 MB `RanOnlineEP7-Server.zip` remain unavailable.
 - B6 **refined, not yet fixed**: project files define `TH_PARAM` for Thailand builds (`NET_MSG_BASE=989`, active lobby `+950`), so the correct `LOGIN_2` is 2046 (not 1120). No code change was made in this recovery task; Phase 3 must correct the mobile constant and re-verify against the server.
 - B7 update: first strict Windows run `45819356699` **failed** at the MSBuild step; second run `45828309380` was dispatched with error annotations enabled.
+
+## B8. GameServer cannot compile with modern VS2022 headers (added in continuation task)
+
+- Exact errors (CI run `45841659289`, annotations): `LegacyDX_Include\D3d8types.h(160/194/201,14): error C2011` — `_D3DLIGHTTYPE`, `_D3DSHADEMODE`, `_D3DFILLMODE` enum redefinitions.
+- Cause: original `GameServer/stdafx.h` includes both `<d3d9.h>` and `<D3d8types.h>`/D3DX8; modern Windows SDK defines these enums. `GameServer.vcxproj` also uses legacy numeric `<PrecompiledHeader>3</PrecompiledHeader>` (MSB6011) — handled only in a CI-generated project copy, not in committed source.
+- Status: Login/Session/Agent/Field servers and `Smtm2022.sln` build with exit 0; GameServer build is stopped and **unverified**. Needs either the original DirectX 8 SDK/header set or explicit permission for a source-level build-compatibility change (headers/PCH only, no gameplay logic).

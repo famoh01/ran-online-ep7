@@ -159,3 +159,13 @@ Run `45833466593` (commit `aa54bc6`, after passing `SolutionDir`) produced these
 GameServer's exact error: `Microsoft.CppCommon.targets(790,5): error MSB6011: Invalid parameters passed to the Microsoft.Build.CPPTasks.CL task [GameServer.vcxproj]`. Source inspection shows `GameServer/GameServer.vcxproj` uses legacy numeric metadata `<PrecompiledHeader>3</PrecompiledHeader>` in all nine configurations, while the four other server projects use `Use`/`NotUsing`. This is a VS2022 project-compatibility issue, not a gameplay or protocol change.
 
 A command-line `/p:PrecompiledHeader=NotUsing` override did not help (item metadata wins over global properties), confirmed by fast run `45838132580`: same four servers exit 0, GameServer exit 1 with the same MSB6011. Fix committed as `b32f4b2`: CI creates a temporary `GameServer/GameServer.ci.vcxproj` copy with `3 → NotUsing` and builds that; the committed original `.vcxproj` is untouched. Fast verification run `45841659289` is in progress.
+
+### 16.7 Final strict-build result (GameServer stopped with exact error)
+
+Fast run `45841659289` (commit `b32f4b2`): CI-only PCH rewrite removed MSB6011 and GameServer compilation proceeded, then failed with:
+
+- `LegacyDX_Include\D3d8types.h(201,14): error C2011: '_D3DFILLMODE': 'enum' type redefinition`
+- `LegacyDX_Include\D3d8types.h(194,14): error C2011: '_D3DSHADEMODE': 'enum' type redefinition`
+- `LegacyDX_Include\D3d8types.h(160,14): error C2011: '_D3DLIGHTTYPE': 'enum' type redefinition`
+
+Root cause in original source: `GameServer/stdafx.h:73–74` includes both `<d3d9.h>` and `<D3d8types.h>` (with further D3DX8 headers); modern Windows SDK/Vs2022 headers define the same enums. Per the task rule "record the exact error and stop that target", GameServer is **not claimed as compiled**. The other four server projects and the full solution remain verified with real exit code 0. No gameplay/protocol source was edited to force a pass.
