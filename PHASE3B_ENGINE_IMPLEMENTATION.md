@@ -68,7 +68,7 @@ No file is converted, generated, renamed or modified. Formats that require origi
 
 ## 5. Tests and verification
 
-See `TESTING_CHECKLIST.md` for commands and exact outcomes. Locally: compile exit 0 with `-Wall -Wextra -Werror`; native test exit 0 (`ALL TESTS PASSED!`), including new coverage for layout, touch lifecycle, UI kit, login states, asset validation and renderer lifecycle. Android ARM64/APK/AAB verification was delegated to the existing GitHub Actions workflow because this sandbox has no JDK/Gradle/Android SDK/NDK.
+See `TESTING_CHECKLIST.md` for commands and exact outcomes. Locally: compile exit 0 with `-Wall -Wextra -Werror`; native test exit 0 (`ALL TESTS PASSED!`), including new coverage for layout, touch lifecycle, UI kit, login states, asset validation and renderer lifecycle. Android ARM64/APK/AAB verification was delegated to the existing GitHub Actions workflow because this sandbox has no JDK/Gradle/Android SDK/NDK. CI run **45856360196** on commit `c7a1f2d` completed with **success**: native tests, ARM64 `libranmobile.so`, debug/release APK and release AAB all built; artifacts `libranmobile-arm64-v8a` (1,566,032 B) and `ranmobile-android-packages` (1,674,880 B).
 
 ## 6. Known limitations / next phase
 

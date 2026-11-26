@@ -33,12 +33,12 @@ Workflow: `.github/workflows/build-ranmobile-android.yml` (`Build RANMobile Andr
 
 To be dispatched on this branch after the Phase 3B commit. Record here:
 
-- Run ID: _pending_
-- Native C++17 tests step: _pending_
-- ARM64 `libranmobile.so` step: _pending_
-- APK `assembleDebug` / `assembleRelease`: _pending_
-- AAB `bundleRelease`: _pending_
-- Artifacts: _pending_
+- Run ID: **45856360196** on commit `c7a1f2d` — job `build-android-arm64` **success** (all steps 1–14 success).
+- Step 4 `Run Linux C++17 Unit & Integration Tests`: **success** (compile with `-Wall -Wextra -Werror`, including the two new source files).
+- Step 5 `Run Linux C++17 Tests`: **success** (`ALL TESTS PASSED!`).
+- Step 9 `Build RANMobile Native Library (arm64-v8a)`: **success**.
+- Step 13 `Build Android APK & AAB (assembleDebug, assembleRelease, bundleRelease)`: **success**.
+- Artifacts: `libranmobile-arm64-v8a` 1,566,032 B; `ranmobile-android-packages` 1,674,880 B; `linux-test-failure-log` 862 B (uploaded by `if: always()`, not a failure).
 
 The workflow downloads original EP7 release assets on the runner and asserts the recovered ThaiPack (309 `.ntk`, 730 `.qst`). It compiles and packages; it does not render on a device or contact a live server.
 
