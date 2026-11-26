@@ -147,10 +147,14 @@ struct EP7BoneTrack {
     std::vector<EP7ScaleKey> scaleKeys;
 };
 
-// Metadata from the matching .cfg (SANIMCONINFO version 0x0107 layout up to the
-// effect list; the effect payload is intentionally not parsed).
+// Metadata from the matching .cfg (SANIMCONINFO layout up to the effect list; the effect
+// payload and the trailing DxAniScale block are intentionally not parsed).
+//
+// 0x0106 and 0x0107 share this prefix and differ only in that 0x0107 appends a DxAniScale
+// block after the effect list (SANIMCONINFO::SaveFile). See DxSkinAniManSaveLoad.cpp.
 struct EP7AnimInfo {
     static constexpr uint32_t kVersion = 0x0107;
+    static constexpr uint32_t kVersion106 = 0x0106;
     static constexpr uint32_t kNameSize = 128;   // ACF_SZNAME
     static constexpr uint32_t kDiv = 8;          // ACF_DIV
     static constexpr uint32_t kStrike = 9;       // ACF_STRIKE

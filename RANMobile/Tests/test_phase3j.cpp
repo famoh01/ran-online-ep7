@@ -259,10 +259,10 @@ std::vector<uint8_t> AnimationBin() {
 }
 
 // SANIMCONINFO 0x0107 (payload only, header present).
-std::vector<uint8_t> AnimationCfg(bool loop) {
+std::vector<uint8_t> AnimationCfg(bool loop, uint32_t version = 0x0107) {
     ByteWriter w;
     w.Raw(std::vector<uint8_t>(128, 0));
-    w.U32(0x0107);        // SANIMCONINFO version in the header fileId
+    w.U32(version);       // SANIMCONINFO version in the header fileId
     w.FixedStr("st_walk", 128);
     w.FixedStr("m_bone.skt", 128);
     w.U32(loop ? 0x00000010u : 0u);  // m_dwFlag -> kAnimFlagLoop
@@ -284,6 +284,11 @@ std::vector<uint8_t> AnimationCfg(bool loop) {
     for (int i = 0; i < 10; ++i) w.Bool(false);
     for (int i = 0; i < 11; ++i) w.U16(0);
     w.U32(0);      // effect count
+    // SANIMCONINFO::SaveFile writes m_pAniScale->Load(SFile) unconditionally in 0x0107 and
+    // never in 0x0106 (DxSkinAniManSaveLoad.cpp). Both must parse.
+    if (version == 0x0107) {
+        w.U32(0);  // DxAniScale: map size
+    }
     return w.Data();
 }
 
@@ -592,6 +597,28 @@ void TestAnimation() {
     J_CHECK(info.IsLoop());
     J_CHECK(info.startTime == 0);
     J_CHECK(info.endTime == 4800);
+
+    // 0x0106 (SANIMCONINFO_106) shares this prefix and has NO trailing DxAniScale block.
+    // It is a real version used by the shipped client, so both must parse.
+    const RANMobile::EP7AnimInfo info106 =
+        RANMobile::EP7AnimationReader::ParseInfo(AnimationCfg(true, 0x0106), true, false);
+    J_CHECK_MSG(info106.valid, info106.error);
+    J_CHECK(info106.name == info.name);
+    J_CHECK(info106.skeleton == info.skeleton);
+    J_CHECK(info106.endTime == info.endTime);
+    J_CHECK(info106.IsLoop());
+
+    // A 0x0106 payload is not accepted as 0x0107 and vice versa is fine only because the
+    // DxAniScale block is a tail: 0x0106 data must still parse when read as 0x0106.
+    {
+        std::vector<uint8_t> v114 = AnimationCfg(true, 0x0106);
+        v114[128] = 0x14;
+        v114[129] = 0x01;
+        const RANMobile::EP7AnimInfo unsupported = RANMobile::EP7AnimationReader::ParseInfo(v114, true, false);
+        J_CHECK(!unsupported.valid);
+        J_CHECK(unsupported.error.find("0x00000114") != std::string::npos);
+        J_CHECK(unsupported.error.find("0x0106") != std::string::npos);
+    }
 
     // Player: looping wraps, non-looping ends.
     RANMobile::EP7AnimationPlayer player;

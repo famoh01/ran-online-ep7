@@ -385,12 +385,25 @@ EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, boo
         }
     }
 
-    if (version != EP7AnimInfo::kVersion) {
-        // Only the 0x0107 layout is implemented; older layouts differ in fixed-size
-        // struct members (SANIMCONINFO_101.._106) and are documented as unsupported.
-        char message[128];
+    // Supported layouts. 0x0106 (SANIMCONINFO_106) is byte-identical to 0x0107 up to and
+    // including the sound block; the ONLY difference is that 0x0107 appends a DxAniScale
+    // block, which SANIMCONINFO::SaveFile writes unconditionally --
+    //
+    //     SFile << (DWORD)m_listEffAni.size();   // effects
+    //     ... per-effect payload ...
+    //     m_pAniScale->Load( SFile );            // 0x0107 only
+    //
+    // The 0x0106 reader in DxSkinAniManSaveLoad.cpp stops after the effect list.
+    // SOURCE: enginelib/Meshs/DxSkinAniManSaveLoad.cpp (0x0106 and 0x0107 branches),
+    //         enginelib/Meshs/SAnimation.h (SANIMCONINFO_106, SANIMCONINFO),
+    //         EngineSoundLib/DxSound/CharacterSound.h (SChaSoundData size).
+    const bool hasAniScaleBlock = (version == EP7AnimInfo::kVersion);
+    if (version != EP7AnimInfo::kVersion && version != EP7AnimInfo::kVersion106) {
+        // 0x0101..0x0105 exist in SANIMCONINFO_101.._105 but are not implemented here; the
+        // shipped client uses 0x0114/0x0115, which are defined nowhere in this repository.
+        char message[160];
         std::snprintf(message, sizeof(message),
-                      "unsupported animation cfg version 0x%08X (implemented: 0x0107)", version);
+                      "unsupported animation cfg version 0x%08X (implemented: 0x0106, 0x0107)", version);
         info.error = message;
         return info;
     }
@@ -510,6 +523,10 @@ EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, boo
     }
     info.effectCount = effectCount;
     info.effectsSkipped = (effectCount != 0);
+    // Per-effect payloads are not decoded; reaching them would require the DxEffAniData
+    // readers. Parsing stops here either way, which is safe for both layouts: the trailing
+    // DxAniScale block of 0x0107 is simply left unread.
+    (void)hasAniScaleBlock;
 
     info.valid = true;
     return info;

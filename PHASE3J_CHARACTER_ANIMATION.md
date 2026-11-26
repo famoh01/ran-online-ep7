@@ -333,7 +333,7 @@ None of these require changes to Phase 3J files.
 
 ## 9. Tests
 
-`RANMobile/Tests/test_phase3j.cpp` — **208 checks, 0 failures**, and identical results under
+`RANMobile/Tests/test_phase3j.cpp` — **216 checks, 0 failures**, and identical results under
 `-fsanitize=address,undefined` with leak detection.
 
 **Fixture policy:** the buffers are hand-written ABI fixtures that follow the layouts

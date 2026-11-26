@@ -227,9 +227,11 @@ incompatibilities:
 1. **`.cfg` versions beyond the engine source.** `SANIMCONINFO::VERSION` is `0x0107` and
    `enginelib/Meshs/DxSkinAniManSaveLoad.cpp` implements readers for `0x0101`–`0x0107`.
    The shipped files are `0x0106` (engine-compatible) and `0x0114`/`0x0115` (**not in the
-   engine source at all**). `0x0106` is straightforward to add — it is the `_106` layout
-   with `SChaSoundData`; `0x0114`/`0x0115` have no definition anywhere in this repo, so
-   their layout must be recovered from the data itself (§14.7).
+   engine source at all**).
+   **Update:** `0x0106` is now implemented. `SANIMCONINFO_106` and `SANIMCONINFO` (0x0107)
+   share a prefix and differ only by the trailing `DxAniScale` block that
+   `SANIMCONINFO::SaveFile` writes for 0x0107 only. `0x0114`/`0x0115` remain unrecovered
+   (§14.7); the probe now names the exact version it sees.
 2. **`.bin` files are a different container.** They begin with the ASCII magic `"Anim"`,
    not the small version DWORD that `SAnimContainer::LoadAnimFromFile` expects
    (`case 0x0100 / 0x0101 / VERSION(0x0102)`). The engine source contains no such magic,
