@@ -4,11 +4,6 @@ name: Strict Build Verification (Original PC + RANMobile Android)
 # Triggered manually or when this workflow itself changes on the recovery branch.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - arena/075e1725-ran-online-ep7
-    paths:
-      - .github/workflows/strict-build-verification.yml
 
 permissions:
   contents: read
@@ -43,6 +38,16 @@ jobs:
             $code = $LASTEXITCODE
             $results += "$($p.Name)=$code"
             Write-Host "$($p.Name) EXIT=$code"
+            $lines = @()
+            if (Test-Path $log) {
+              $lines = @(Select-String -Path $log -Pattern 'error [A-Z]+\d+:|fatal error|LNK\d+|MSB\d+:' |
+                Select-Object -First 3 | ForEach-Object { $_.Line.Trim() })
+            }
+            foreach ($line in $lines) {
+              $safe = $line -replace "`r", ' ' -replace "`n", ' ' -replace '%', '%25'
+              Write-Host "::error title=$($p.Name)::$safe"
+            }
+            if ($code -eq 0) { Write-Host "::notice title=MSBuild result::$($p.Name) exit=0" }
           }
           $results | Set-Content build_logs/results.txt
           $results | ForEach-Object { Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- $_" }
