@@ -44,6 +44,7 @@ jobs:
           HEAD_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
+          trap 'printf "FAILED command: %s\n" "$BASH_COMMAND" > /tmp/phase3g_error.txt' ERR
           python3 - <<'PY'
           import os, re, sys
           paths = [p.strip() for p in os.environ['INCLUDES'].split(',') if p.strip()]
@@ -79,7 +80,12 @@ jobs:
               exit 1
             fi
             base64 -w0 "$p" > /tmp/phase3g_b64.txt
-            blob_sha=$(gh api --method POST "repos/$REPO/git/blobs" -f content="$(cat /tmp/phase3g_b64.txt)" -f encoding=base64 --jq .sha)
+            python3 - <<'PY'
+          import json
+          with open('/tmp/phase3g_b64.txt') as src, open('/tmp/phase3g_blob.json', 'w') as dst:
+              json.dump({'content': src.read(), 'encoding': 'base64'}, dst)
+          PY
+            blob_sha=$(gh api --method POST "repos/$REPO/git/blobs" --input /tmp/phase3g_blob.json --jq .sha)
             printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$p" "$expected_oid" "$actual_sha" "$actual_size" "$blob_sha" 'git-lfs pull + GitHub blob API' >> /tmp/phase3g_results.tsv
           done < /tmp/phase3g_paths.txt
           gh api --method POST "repos/$REPO/check-runs" \
@@ -92,3 +98,23 @@ jobs:
             -f "output[text]=$(cat /tmp/phase3g_results.tsv)" \
             --jq .id > /tmp/phase3g_check_id.txt
           cat /tmp/phase3g_results.tsv
+
+      - name: Publish failure details
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          detail=$(cat /tmp/phase3g_error.txt 2>/dev/null || echo 'unknown failure')
+          partial=$(cat /tmp/phase3g_results.tsv 2>/dev/null || true)
+          gh api --method POST "repos/$REPO/check-runs" \
+            -f name='phase3g-lfs-retrieval-failed' \
+            -f head_sha="$HEAD_SHA" \
+            -f status=completed \
+            -f conclusion=failure \
+            -f 'output[title]=Phase 3G focused LFS retrieval failed' \
+            -f 'output[summary]=Focused retrieval did not complete.' \
+            -f "output[text]=$detail"$'\n'"$partial" \
+            --jq .id
