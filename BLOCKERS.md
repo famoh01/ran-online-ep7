@@ -208,3 +208,46 @@ Consequences for B9:
   will say so explicitly because every entry reports its method and every failure is printed.
 * The sandbox still has no archives, so the `inflate` path has never been run against
   authentic client data — only against a synthetic archive built to the same spec.
+
+### B11 — New: the authentic client ships animation data this build cannot parse
+
+First authentic-data results, read back from CI check-run annotations (2026-11-26):
+
+```
+[FAIL] cfg  external/ep7_release/client_original/data/animation/a_3boss_01_stay.cfg   — unsupported animation cfg version 0x00000106
+[FAIL] cfg  external/ep7_release/client_original/data/animation/a_6lvl_f.cfg          — unsupported animation cfg version 0x00000114
+[FAIL] cfg  external/ep7_release/client_original/data/animation/a_2017_victors_wings.cfg — unsupported animation cfg version 0x00000115
+[FAIL] bin  external/ep7_release/client_original/data/animation/*.bin                 — starts with magic 'Anim' (0x6D696E41)
+```
+
+This is the first time these parsers have been run against real client bytes, and the
+verdict is **the animation data is not in the format this build implements**. Two distinct
+incompatibilities:
+
+1. **`.cfg` versions beyond the engine source.** `SANIMCONINFO::VERSION` is `0x0107` and
+   `enginelib/Meshs/DxSkinAniManSaveLoad.cpp` implements readers for `0x0101`–`0x0107`.
+   The shipped files are `0x0106` (engine-compatible) and `0x0114`/`0x0115` (**not in the
+   engine source at all**). `0x0106` is straightforward to add — it is the `_106` layout
+   with `SChaSoundData`; `0x0114`/`0x0115` have no definition anywhere in this repo, so
+   their layout must be recovered from the data itself (§14.7).
+2. **`.bin` files are a different container.** They begin with the ASCII magic `"Anim"`,
+   not the small version DWORD that `SAnimContainer::LoadAnimFromFile` expects
+   (`case 0x0100 / 0x0101 / VERSION(0x0102)`). The engine source contains no such magic,
+   so these are not the format `SAnimContainer` reads.
+
+Two readings are possible and the data so far cannot separate them:
+
+* the shipped `.rcc` packs contain an animation format newer than this engine source
+  (several `0x0114`/`0x0115` styles, a `"Anim"` container); or
+* `data/animation/*.bin|.cfg` is a **different dataset** from the one the engine consumes
+  (`Animation.rcc`), and the probe is reading files the engine never opens.
+
+What is *not* yet known, because only the first 10 annotations are retrievable: what the
+`.chf` / `.cps` / `.x` entries in `SkinObject.rcc` did. Those are the categories that matter
+most for "can this render an authentic character", and they are the ones still unproven.
+The aggregated reason histogram added to the probe's summary exists precisely to answer
+this in one line on the next run.
+
+Impact: `verify_ep7_character_assets` now exits **1**, so the "Verify Authentic EP7
+Character Assets" step is red. That is the honest signal — a green step would mean
+authentic data parsed — and it is deliberate, not a regression.

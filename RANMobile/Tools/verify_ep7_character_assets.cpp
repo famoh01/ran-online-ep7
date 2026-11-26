@@ -29,6 +29,7 @@
 // reach the authentic bytes.
 //
 #include <algorithm>
+#include <cctype>
 #include <cstdio>
 #include <map>
 #include <cstring>
@@ -199,6 +200,21 @@ bool VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& byte
 
     if (EndsWithNoCase(ext, ".bin")) {
         ++counters.binTotal;
+        // A .bin that begins with printable ASCII is not an EP7 basestream container at all
+        // (the client's own containers start with a small version DWORD). Name the magic so
+        // an unknown format is self-explanatory rather than just "unsupported version".
+        if (bytes.size() >= 4 && std::isprint(bytes[0]) && std::isprint(bytes[1]) &&
+            std::isprint(bytes[2]) && std::isprint(bytes[3])) {
+            char magic[5] = {static_cast<char>(bytes[0]), static_cast<char>(bytes[1]),
+                             static_cast<char>(bytes[2]), static_cast<char>(bytes[3]), 0};
+            char detail[192];
+            std::snprintf(detail, sizeof(detail),
+                          "not an EP7 basestream container — starts with magic '%s' (0x%02X%02X%02X%02X); "
+                          "the engine only loads SAnimContainer basestreams from Animation.rcc",
+                          magic, bytes[0], bytes[1], bytes[2], bytes[3]);
+            ReportFile("bin", path, false, detail);
+            return false;
+        }
         // Try with the basestream header first (CSerialFile writes one), then without.
         RANMobile::EP7AnimClip clip = RANMobile::EP7AnimationReader::ParseContainer(bytes, true, false);
         if (!clip.valid) clip = RANMobile::EP7AnimationReader::ParseContainer(bytes, false, false);
@@ -356,6 +372,26 @@ int main(int argc, char** argv) {
     std::printf("bin  : %u ok / %u\n", counters.binOk, counters.binTotal);
     std::printf("cfg  : %u ok / %u\n", counters.cfgOk, counters.cfgTotal);
     std::printf("extract failures (could not decompress/decrypt): %u\n", counters.extractFailures);
+
+    // "0 ok / 0" is ambiguous between "all fine" and "never seen". Say which.
+    struct Expectation {
+        const char* ext;
+        uint32_t total;
+    };
+    const Expectation expectations[] = {{".chf", counters.chfTotal}, {".cps", counters.cpsTotal},
+                                        {".x", counters.xTotal},     {".bin", counters.binTotal},
+                                        {".cfg", counters.cfgTotal}};
+    bool anyMissing = false;
+    for (const auto& e : expectations) {
+        if (e.total == 0) {
+            if (!anyMissing) std::printf("\nno sample found for: ");
+            std::printf("%s ", e.ext);
+            anyMissing = true;
+        }
+    }
+    if (anyMissing) {
+        std::printf("\n(that category is untested against real data — not a pass)   \n");
+    }
 
     if (!g_failureReasons.empty()) {
         std::printf("\nfailure reasons (aggregated, so none are lost to log/annotation caps):\n");
