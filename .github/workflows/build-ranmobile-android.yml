@@ -51,6 +51,7 @@ jobs:
             RANMobile/Data/Importer/EP7WorldCharParser.cpp \
             RANMobile/Data/Importer/EP7Animation.cpp \
             RANMobile/Data/Importer/EP7CharacterFile.cpp \
+            RANMobile/Data/Importer/EP7RccArchive.cpp \
             RANMobile/Data/Importer/EP7Skeleton.cpp \
             RANMobile/Data/Importer/EP7SkinPiece.cpp \
             RANMobile/Data/Importer/EP7SkinnedMesh.cpp \
@@ -89,6 +90,7 @@ jobs:
             RANMobile/Engine/Scene/EP7CharacterScene.cpp \
             RANMobile/Data/Importer/EP7Animation.cpp \
             RANMobile/Data/Importer/EP7CharacterFile.cpp \
+            RANMobile/Data/Importer/EP7RccArchive.cpp \
             RANMobile/Data/Importer/EP7Skeleton.cpp \
             RANMobile/Data/Importer/EP7SkinPiece.cpp \
             RANMobile/Data/Importer/EP7SkinnedMesh.cpp \
@@ -105,6 +107,7 @@ jobs:
           g++ -std=c++17 -Wall -Wextra -Werror \
             RANMobile/Data/Importer/EP7Animation.cpp \
             RANMobile/Data/Importer/EP7CharacterFile.cpp \
+            RANMobile/Data/Importer/EP7RccArchive.cpp \
             RANMobile/Data/Importer/EP7Skeleton.cpp \
             RANMobile/Data/Importer/EP7SkinPiece.cpp \
             RANMobile/Data/Importer/EP7SkinnedMesh.cpp \

@@ -17,6 +17,7 @@
 #include "../Data/Importer/EP7ByteFormat.h"
 #include "../Data/Importer/EP7CharacterFile.h"
 #include "../Data/Importer/EP7Math.h"
+#include "../Data/Importer/EP7RccArchive.h"
 #include "../Data/Importer/EP7Skeleton.h"
 #include "../Data/Importer/EP7SkinPiece.h"
 #include "../Data/Importer/EP7SkinnedMesh.h"
@@ -829,7 +830,241 @@ void TestRobustness() {
     }
 
     J_CHECK_MSG(true, "survived the sweep without crashing");
-    std::printf("  swept %zu fixtures (truncations + 4x byte corruptions)\n", fixtures.size());
+    std::printf("  swept %zu fixtures (truncations + 4x byte corruptions) + the .rcc archive\n",
+                fixtures.size());
+}
+
+
+// ---------------------------------------------------------------------------
+// Minimal ZIP writer used ONLY to build an .rcc fixture in memory. Entries are stored
+// (uncompressed) so the test does not depend on an external compressor; the deflate path is
+// covered separately against a real archive generated in CI/desktop tooling.
+// ---------------------------------------------------------------------------
+uint32_t Crc32Test(const uint8_t* data, size_t size) {
+    uint32_t crc = 0xFFFFFFFFu;
+    for (size_t i = 0; i < size; ++i) {
+        crc ^= data[i];
+        for (int k = 0; k < 8; ++k) crc = (crc & 1u) ? (0xEDB88320u ^ (crc >> 1)) : (crc >> 1);
+    }
+    return crc ^ 0xFFFFFFFFu;
+}
+
+struct ZipEntrySpec {
+    std::string name;
+    std::vector<uint8_t> data;
+    bool encrypt = false;  // traditional ZipCrypto with the client password
+};
+
+void PutU16(std::vector<uint8_t>& out, uint16_t v) {
+    out.push_back(static_cast<uint8_t>(v & 0xFF));
+    out.push_back(static_cast<uint8_t>((v >> 8) & 0xFF));
+}
+void PutU32(std::vector<uint8_t>& out, uint32_t v) {
+    for (int i = 0; i < 4; ++i) out.push_back(static_cast<uint8_t>((v >> (8 * i)) & 0xFF));
+}
+
+// ZipCrypto encryption (mirror of the decryption the reader performs).
+std::vector<uint8_t> ZipCryptEncrypt(const std::vector<uint8_t>& plain, const char* password,
+                                     uint16_t checkByte) {
+    uint32_t key[3] = {0x12345678u, 0x23456789u, 0x34567890u};
+    auto crcUpdate = [](uint32_t crc, uint8_t v) {
+        crc ^= v;
+        for (int k = 0; k < 8; ++k) crc = (crc & 1u) ? (0xEDB88320u ^ (crc >> 1)) : (crc >> 1);
+        return crc;
+    };
+    auto update = [&](uint8_t p) {
+        key[0] = crcUpdate(key[0], p);
+        key[1] = (key[1] + (key[0] & 0xFFu)) * 134775813u + 1u;
+        key[2] = crcUpdate(key[2], static_cast<uint8_t>(key[1] >> 24));
+    };
+    for (const char* p = password; *p; ++p) update(static_cast<uint8_t>(*p));
+
+    // 12-byte header: 11 random bytes (we use a fixed pattern) + check byte.
+    std::vector<uint8_t> out;
+    for (int i = 0; i < 12; ++i) {
+        const uint8_t plainByte = (i == 11) ? static_cast<uint8_t>(checkByte) : static_cast<uint8_t>(i * 7 + 3);
+        const uint8_t cipher = static_cast<uint8_t>(plainByte ^ (key[2] >> 8));
+        update(plainByte);
+        out.push_back(cipher);
+    }
+    for (uint8_t plainByte : plain) {
+        const uint8_t cipher = static_cast<uint8_t>(plainByte ^ (key[2] >> 8));
+        update(plainByte);
+        out.push_back(cipher);
+    }
+    return out;
+}
+
+std::vector<uint8_t> BuildZip(const std::vector<ZipEntrySpec>& entries) {
+    std::vector<uint8_t> out;
+    struct Central {
+        ZipEntrySpec spec;
+        uint32_t crc = 0;
+        uint32_t offset = 0;
+        uint32_t storedSize = 0;
+        bool encrypt = false;
+    };
+    std::vector<Central> central;
+
+    for (const auto& spec : entries) {
+        Central c;
+        c.spec = spec;
+        c.crc = Crc32Test(spec.data.data(), spec.data.size());
+        c.offset = static_cast<uint32_t>(out.size());
+        c.encrypt = spec.encrypt;
+
+        std::vector<uint8_t> payload = spec.data;
+        if (spec.encrypt) payload = ZipCryptEncrypt(spec.data, RANMobile::EP7RccArchive::kZipPassword, 0x42);
+        c.storedSize = static_cast<uint32_t>(payload.size());
+
+        // local header (ZIP spec order: sig, ver, flags, method, time, date, crc,
+        // csize, usize, namelen, extralen, name, data)
+        PutU32(out, 0x04034b50u);
+        PutU16(out, 20);                            // version needed
+        PutU16(out, spec.encrypt ? 1 : 0);          // flags
+        PutU16(out, 0);                             // method = stored
+        PutU16(out, spec.encrypt ? 0x4200 : 0);     // mod time (high byte = zipcrypto check)
+        PutU16(out, 0);                             // mod date
+        PutU32(out, c.crc);
+        PutU32(out, c.storedSize);
+        PutU32(out, static_cast<uint32_t>(spec.data.size()));
+        PutU16(out, static_cast<uint16_t>(spec.name.size()));
+        PutU16(out, 0);
+        out.insert(out.end(), spec.name.begin(), spec.name.end());
+        out.insert(out.end(), payload.begin(), payload.end());
+        central.push_back(c);
+    }
+
+    const uint32_t cdOffset = static_cast<uint32_t>(out.size());
+    for (const auto& c : central) {
+        // central directory (ZIP spec order: sig, verMadeBy, verNeeded, flags, method,
+        // time, date, crc, csize, usize, namelen, extralen, commentlen, disk,
+        // intAttrs, extAttrs, localOffset, name)
+        PutU32(out, 0x02014b50u);
+        PutU16(out, 20);                            // version made by
+        PutU16(out, 20);                            // version needed
+        PutU16(out, c.encrypt ? 1 : 0);             // flags
+        PutU16(out, 0);                             // method
+        PutU16(out, c.encrypt ? 0x4200 : 0);        // mod time
+        PutU16(out, 0);                             // mod date
+        PutU32(out, c.crc);
+        PutU32(out, c.storedSize);
+        PutU32(out, static_cast<uint32_t>(c.spec.data.size()));
+        PutU16(out, static_cast<uint16_t>(c.spec.name.size()));
+        PutU16(out, 0);  // extra len
+        PutU16(out, 0);  // comment len
+        PutU16(out, 0);  // disk number
+        PutU16(out, 0);  // internal attrs
+        PutU32(out, 0);  // external attrs
+        PutU32(out, c.offset);
+        out.insert(out.end(), c.spec.name.begin(), c.spec.name.end());
+    }
+    const uint32_t cdSize = static_cast<uint32_t>(out.size()) - cdOffset;
+
+    PutU32(out, 0x06054b50u);
+    PutU16(out, 0);
+    PutU16(out, 0);
+    PutU16(out, static_cast<uint16_t>(central.size()));
+    PutU16(out, static_cast<uint16_t>(central.size()));
+    PutU32(out, cdSize);
+    PutU32(out, cdOffset);
+    PutU16(out, 0);
+    return out;
+}
+
+void TestRccArchive() {
+    Section(".rcc archive reader (SkinObject.rcc / Animation.rcc)");
+
+    const std::string skelText = SkeletonX();
+    const std::string meshText = SkinnedMeshX();
+    std::vector<ZipEntrySpec> specs;
+    specs.push_back({"m_bone.skt", std::vector<uint8_t>(skelText.begin(), skelText.end()), false});
+    specs.push_back({"BODY.X", std::vector<uint8_t>(meshText.begin(), meshText.end()), false});
+    specs.push_back({"npc.chf", CharacterChf(), false});
+    specs.push_back({"secret.cps", PieceCps(0), true});  // ZipCrypto "tkqwlf"
+
+    const std::vector<uint8_t> archiveBytes = BuildZip(specs);
+    RANMobile::EP7RccArchive archive;
+    J_CHECK_MSG(archive.Open(archiveBytes), archive.Error());
+    J_CHECK(archive.EntryCount() == 4);
+
+    // Case-insensitive lookup, exactly like CUnzipper::GOTOFILEPOS.
+    const RANMobile::EP7RccEntry* body = archive.Find("body.x");
+    J_CHECK(body != nullptr);
+    J_CHECK(body && body->method == 0);
+
+    std::vector<uint8_t> out;
+    J_CHECK(archive.ExtractByName("m_bone.skt", out));
+    J_CHECK(out.size() == skelText.size());
+    J_CHECK(std::memcmp(out.data(), skelText.data(), out.size()) == 0);
+
+    // The extracted bytes must feed the real parser.
+    RANMobile::EP7Skeleton skeleton;
+    J_CHECK(skeleton.LoadFromXFile(out));
+    J_CHECK(skeleton.BoneCount() == 5);
+
+    // Encrypted entry decrypts with the client password.
+    J_CHECK(archive.ExtractByName("SECRET.CPS", out));
+    const RANMobile::EP7SkinPieceInfo piece = RANMobile::EP7SkinPieceReader::ParseFromBytes(out, false);
+    J_CHECK_MSG(piece.valid, piece.error);
+
+    // .chf straight out of the pack.
+    J_CHECK(archive.ExtractByName("npc.chf", out));
+    J_CHECK(RANMobile::EP7CharacterFileReader::Parse(out, false).valid);
+
+    // Missing entry.
+    J_CHECK(archive.Find("nope.bin") == nullptr);
+    J_CHECK(!archive.ExtractByName("nope.bin", out));
+
+    // Corrupt CRC must be rejected, never silently accepted.
+    std::vector<uint8_t> corrupt = archiveBytes;
+    for (size_t i = 0; i + 4 <= corrupt.size(); ++i) {
+        if (corrupt[i] == 'B' && corrupt[i + 1] == 'O' && corrupt[i + 2] == 'D' && corrupt[i + 3] == 'Y') {
+            // entry data starts right after the local header (30 + 4 name bytes)
+            corrupt[i + 10] ^= 0xFF;
+            break;
+        }
+    }
+    {
+        RANMobile::EP7RccArchive mutated;
+        if (mutated.Open(corrupt)) {
+            J_CHECK(!mutated.ExtractByName("BODY.X", out));
+        }
+    }
+
+    // Truncated / non-ZIP input.
+    RANMobile::EP7RccArchive empty;
+    J_CHECK(!empty.Open(std::vector<uint8_t>()));
+    J_CHECK(!empty.Error().empty());
+    // The archive reader must be equally robust: corrupt every byte of a ZIP and truncate it.
+    {
+        const std::vector<uint8_t>& zip = archiveBytes;
+
+        for (size_t len = 0; len <= zip.size(); len += 3) {
+            std::vector<uint8_t> cut(zip.begin(), zip.begin() + static_cast<long>(len));
+            RANMobile::EP7RccArchive archive;
+            if (archive.Open(cut)) {
+                std::vector<uint8_t> ignored;
+                for (const auto& entry : archive.Entries()) (void)archive.Extract(entry, ignored);
+            }
+        }
+        for (size_t i = 0; i < zip.size(); ++i) {
+            for (uint8_t value : {0x00, 0x7F, 0xFF}) {
+                std::vector<uint8_t> mutated = zip;
+                mutated[i] = value;
+                RANMobile::EP7RccArchive archive;
+                if (archive.Open(mutated)) {
+                    std::vector<uint8_t> ignored;
+                    for (const auto& entry : archive.Entries()) (void)archive.Extract(entry, ignored);
+                }
+            }
+        }
+    }
+
+    std::vector<uint8_t> garbage(200, 0x5A);
+    RANMobile::EP7RccArchive bogus;
+    J_CHECK(!bogus.Open(garbage));
+    J_CHECK_MSG(true, "archive survived truncation + corruption sweep");
 }
 
 }  // namespace
@@ -845,6 +1080,7 @@ int main() {
     TestCharacterScene();
     TestMath();
     TestRobustness();
+    TestRccArchive();
 
     std::printf("\n%d checks, %d failure(s)\n", g_checks, g_failures);
     if (g_failures == 0) std::printf("PHASE 3J TESTS PASSED\n");

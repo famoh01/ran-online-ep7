@@ -21,6 +21,7 @@ set(RANMOBILE_SOURCES
     Data/Importer/EP7WorldCharParser.cpp
     Data/Importer/EP7Animation.cpp
     Data/Importer/EP7CharacterFile.cpp
+    Data/Importer/EP7RccArchive.cpp
     Data/Importer/EP7Skeleton.cpp
     Data/Importer/EP7SkinPiece.cpp
     Data/Importer/EP7SkinnedMesh.cpp

@@ -15,9 +15,16 @@
 // its report to record what is genuinely verified.
 //
 // USAGE
-//   verify_ep7_character_assets <ep7-data-root> [--max-files N] [--json out.json]
+//   verify_ep7_character_assets <ep7-data-root> [--max-files N]
 //
-// The root is the extracted client folder that contains `skinobject/` and/or `data/`.
+// The root is an extracted client folder. Character assets are NOT loose files in the EP7
+// client: GLOGIC::InitFile (enginelib/G-Logic/GLogic.cpp:40-62) loads them from two
+// ZIP-based packs through CUnzipper::UnzipToMemory —
+//     SkinObject.rcc   .chf / .cps / skeleton .x / mesh .x
+//     Animation.rcc    .bin animation containers / .cfg metadata
+// so this tool first walks the directory tree for loose files and then opens every
+// *.rcc/*.zip it can find and verifies the entries inside them. That is the only way to
+// reach the authentic bytes.
 //
 #include <algorithm>
 #include <cstdio>
@@ -26,6 +33,7 @@
 #include <vector>
 
 #include "../Data/Importer/EP7Animation.h"
+#include "../Data/Importer/EP7RccArchive.h"
 #include "../Data/Importer/EP7CharacterFile.h"
 #include "../Data/Importer/EP7Skeleton.h"
 #include "../Data/Importer/EP7SkinPiece.h"
@@ -92,6 +100,133 @@ void ReportFile(const char* kind, const std::string& path, bool ok, const std::s
 
 }  // namespace
 
+// Verifies one asset buffer. `path` is only used for reporting (it may be
+// "<archive>:/entry/name" for packed entries).
+bool VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& bytes, Counters& counters) {
+    const std::string ext = ExtractExtension(path);
+
+    if (EndsWithNoCase(ext, ".chf")) {
+        ++counters.chfTotal;
+        const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(bytes, false);
+        if (info.valid) {
+            ++counters.chfOk;
+            char detail[256];
+            std::snprintf(detail, sizeof(detail), "v0x%04X pieces=%u skeleton=%s anims=%zu", info.version,
+                          info.PieceCount(), info.skeleton.c_str(), info.animations.size());
+            ReportFile("chf", path, true, detail);
+        } else {
+            ReportFile("chf", path, false, info.error);
+        }
+        return info.valid;
+    }
+
+    if (EndsWithNoCase(ext, ".cps")) {
+        ++counters.cpsTotal;
+        const RANMobile::EP7SkinPieceInfo info = RANMobile::EP7SkinPieceReader::ParseFromBytes(bytes, false);
+        if (info.valid) {
+            ++counters.cpsOk;
+            char detail[320];
+            std::snprintf(detail, sizeof(detail), "v0x%04X type=%d mesh=%s skeleton=%s materials=%zu traces=%zu",
+                          info.fileVersion, static_cast<int>(info.pieceType), info.meshName.c_str(),
+                          info.skeletonFile.c_str(), info.materials.size(), info.traces.size());
+            ReportFile("cps", path, true, detail);
+        } else {
+            ReportFile("cps", path, false, info.error);
+        }
+        return info.valid;
+    }
+
+    if (EndsWithNoCase(ext, ".skt") || EndsWithNoCase(ext, ".abf")) {
+        RANMobile::EP7Skeleton skeleton;
+        ++counters.xTotal;
+        const bool ok = skeleton.LoadFromXFile(bytes);
+        if (ok) {
+            ++counters.xSkeletonOk;
+            char detail[128];
+            std::snprintf(detail, sizeof(detail), "bones=%zu", skeleton.BoneCount());
+            ReportFile("skeleton", path, true, detail);
+        } else {
+            ReportFile("skeleton", path, false, skeleton.Error());
+        }
+        return ok;
+    }
+
+    if (EndsWithNoCase(ext, ".x")) {
+        // The client stores skeletons and skinned meshes both as .x. A skinned mesh is
+        // wrapped in Frame objects too, so "does a skeleton parse?" does NOT identify a
+        // skeleton — the presence of a SkinWeights object does. Order matters: check the
+        // mesh first, then fall back to the skeleton.
+        ++counters.xTotal;
+        const RANMobile::EP7SkinnedMesh mesh =
+            RANMobile::EP7SkinnedMeshReader::Parse(bytes, std::string(), nullptr);
+        if (mesh.valid) {
+            ++counters.xMeshOk;
+            char detail[256];
+            std::snprintf(detail, sizeof(detail), "mesh=%s verts=%u tris=%zu bones=%zu stride=%u decoded=%s",
+                          mesh.name.c_str(), mesh.vertexCount, mesh.faces.size() / 3, mesh.bones.size(),
+                          mesh.vertexStride, mesh.geometryDecoded ? "yes" : "no");
+            ReportFile("x-mesh", path, true, detail);
+            return true;
+        }
+        RANMobile::EP7Skeleton skeleton;
+        if (skeleton.LoadFromXFile(bytes)) {
+            ++counters.xSkeletonOk;
+            char detail[128];
+            std::snprintf(detail, sizeof(detail), "skeleton bones=%zu", skeleton.BoneCount());
+            ReportFile("x-skeleton", path, true, detail);
+            return true;
+        }
+        ReportFile("x", path, false, mesh.error + " | " + skeleton.Error());
+        return false;
+    }
+
+    if (EndsWithNoCase(ext, ".bin")) {
+        ++counters.binTotal;
+        // Try with the basestream header first (CSerialFile writes one), then without.
+        RANMobile::EP7AnimClip clip = RANMobile::EP7AnimationReader::ParseContainer(bytes, true, false);
+        if (!clip.valid) clip = RANMobile::EP7AnimationReader::ParseContainer(bytes, false, false);
+        if (clip.valid) {
+            ++counters.binOk;
+            char detail[256];
+            std::snprintf(detail, sizeof(detail), "v0x%04X mainTracks=%zu upBodyTracks=%zu maxKeyTime=%u",
+                          clip.version, clip.mainTracks.size(), clip.upBodyTracks.size(), clip.MaxKeyTime());
+            ReportFile("bin", path, true, detail);
+        } else {
+            ReportFile("bin", path, false, clip.error);
+        }
+        return clip.valid;
+    }
+
+    if (EndsWithNoCase(ext, ".cfg")) {
+        ++counters.cfgTotal;
+        const RANMobile::EP7AnimInfo info = RANMobile::EP7AnimationReader::ParseInfo(bytes, true, false);
+        if (info.valid) {
+            ++counters.cfgOk;
+            char detail[320];
+            std::snprintf(detail, sizeof(detail), "name=%s skeleton=%s main=%d sub=%d window=%u..%u loop=%s",
+                          info.name.c_str(), info.skeleton.c_str(), info.mainType, info.subType,
+                          info.startTime, info.endTime, info.IsLoop() ? "yes" : "no");
+            ReportFile("cfg", path, true, detail);
+        } else {
+            ReportFile("cfg", path, false, info.error);
+        }
+        return info.valid;
+    }
+
+    return false;
+}
+
+bool IsCharacterAssetName(const std::string& name) {
+    const std::string ext = ExtractExtension(name);
+    return EndsWithNoCase(ext, ".chf") || EndsWithNoCase(ext, ".cps") || EndsWithNoCase(ext, ".x") ||
+           EndsWithNoCase(ext, ".bin") || EndsWithNoCase(ext, ".cfg") || EndsWithNoCase(ext, ".skt") ||
+           EndsWithNoCase(ext, ".abf");
+}
+
+bool IsArchiveName(const std::string& name) {
+    return EndsWithNoCase(name, ".rcc") || EndsWithNoCase(name, ".zip");
+}
+
 int main(int argc, char** argv) {
     if (argc < 2) {
         std::fprintf(stderr,
@@ -109,7 +244,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    // Collect candidate files (recursive, "find" is available on the runner).
+    // Collect every file under the root ("find" is available on the CI runner).
     std::string listCommand = "find '" + root + "' -type f 2>/dev/null";
     std::FILE* pipe = popen(listCommand.c_str(), "r");
     if (!pipe) {
@@ -117,148 +252,72 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    std::vector<std::string> paths;
+    std::vector<std::string> looseFiles;
+    std::vector<std::string> archives;
     char line[4096];
     while (std::fgets(line, sizeof(line), pipe)) {
         std::string path(line);
         while (!path.empty() && (path.back() == '\n' || path.back() == '\r')) path.pop_back();
         if (path.empty()) continue;
-        const std::string ext = ExtractExtension(path);
-        if (EndsWithNoCase(ext, ".chf") || EndsWithNoCase(ext, ".cps") || EndsWithNoCase(ext, ".x") ||
-            EndsWithNoCase(ext, ".bin") || EndsWithNoCase(ext, ".cfg") || EndsWithNoCase(ext, ".skt") ||
-            EndsWithNoCase(ext, ".abf")) {
-            paths.push_back(path);
-            if (paths.size() >= maxFiles) break;
+        if (IsArchiveName(path)) {
+            archives.push_back(path);
+        } else if (IsCharacterAssetName(path)) {
+            looseFiles.push_back(path);
         }
+        if (looseFiles.size() + archives.size() >= maxFiles) break;
     }
     pclose(pipe);
 
-    std::sort(paths.begin(), paths.end());
+    std::sort(looseFiles.begin(), looseFiles.end());
+    std::sort(archives.begin(), archives.end());
 
     std::printf("=== Phase 3J authentic character asset verification ===\n");
     std::printf("root: %s\n", root.c_str());
-    std::printf("candidate files: %zu\n\n", paths.size());
+    std::printf("loose candidate files: %zu\n", looseFiles.size());
+    std::printf("archives (.rcc/.zip): %zu\n\n", archives.size());
 
     Counters counters;
     std::vector<uint8_t> bytes;
     std::string error;
 
-    for (const auto& path : paths) {
+    for (const auto& path : looseFiles) {
         if (!ReadWholeFile(path, bytes, error)) {
             ReportFile("read", path, false, error);
             continue;
         }
-        const std::string ext = ExtractExtension(path);
+        VerifySingleAsset(path, bytes, counters);
+    }
 
-        if (EndsWithNoCase(ext, ".chf")) {
-            ++counters.chfTotal;
-            const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(bytes, false);
-            if (info.valid) {
-                ++counters.chfOk;
-                char detail[256];
-                std::snprintf(detail, sizeof(detail), "v0x%04X pieces=%u skeleton=%s anims=%zu", info.version,
-                              info.PieceCount(), info.skeleton.c_str(), info.animations.size());
-                ReportFile("chf", path, true, detail);
-            } else {
-                ReportFile("chf", path, false, info.error);
-            }
+    // The authentic assets live inside these packs (GLOGIC::InitFile).
+    for (const auto& archivePath : archives) {
+        std::printf("\n--- archive %s\n", archivePath.c_str());
+        if (!ReadWholeFile(archivePath, bytes, error)) {
+            ReportFile("read", archivePath, false, error);
             continue;
         }
-
-        if (EndsWithNoCase(ext, ".cps")) {
-            ++counters.cpsTotal;
-            const RANMobile::EP7SkinPieceInfo info = RANMobile::EP7SkinPieceReader::ParseFromBytes(bytes, false);
-            if (info.valid) {
-                ++counters.cpsOk;
-                char detail[320];
-                std::snprintf(detail, sizeof(detail), "v0x%04X type=%d mesh=%s skeleton=%s materials=%zu traces=%zu",
-                              info.fileVersion, static_cast<int>(info.pieceType), info.meshName.c_str(),
-                              info.skeletonFile.c_str(), info.materials.size(), info.traces.size());
-                ReportFile("cps", path, true, detail);
-            } else {
-                ReportFile("cps", path, false, info.error);
-            }
+        RANMobile::EP7RccArchive archive;
+        if (!archive.Open(bytes)) {
+            ReportFile("archive", archivePath, false, archive.Error());
             continue;
         }
+        std::printf("     %zu entries\n", archive.EntryCount());
 
-        if (EndsWithNoCase(ext, ".skt") || EndsWithNoCase(ext, ".abf")) {
-            // Skeleton-only candidates.
-            RANMobile::EP7Skeleton skeleton;
-            if (skeleton.LoadFromXFile(bytes)) {
-                ++counters.xTotal;
-                ++counters.xSkeletonOk;
-                char detail[128];
-                std::snprintf(detail, sizeof(detail), "bones=%zu", skeleton.BoneCount());
-                ReportFile("skeleton", path, true, detail);
-            } else {
-                ++counters.xTotal;
-                ReportFile("skeleton", path, false, skeleton.Error());
-            }
-            continue;
-        }
+        size_t checked = 0;
+        for (const auto& entry : archive.Entries()) {
+            if (!IsCharacterAssetName(entry.name)) continue;
+            if (checked >= maxFiles) break;
+            ++checked;
 
-        if (EndsWithNoCase(ext, ".x")) {
-            // Could be a skeleton or a skinned mesh.
-            ++counters.xTotal;
-            RANMobile::EP7Skeleton skeleton;
-            if (skeleton.LoadFromXFile(bytes)) {
-                ++counters.xSkeletonOk;
-                char detail[128];
-                std::snprintf(detail, sizeof(detail), "skeleton bones=%zu", skeleton.BoneCount());
-                ReportFile("x-skeleton", path, true, detail);
+            const std::string label = archivePath + ":" + entry.name;
+            std::vector<uint8_t> entryBytes;
+            if (!archive.Extract(entry, entryBytes)) {
+                ReportFile("extract", label, false, "entry is corrupt, encrypted with another "
+                                                    "password, or uses an unsupported method");
                 continue;
             }
-            const RANMobile::EP7SkinnedMesh mesh = RANMobile::EP7SkinnedMeshReader::Parse(bytes, std::string(), nullptr);
-            if (mesh.valid) {
-                ++counters.xMeshOk;
-                char detail[256];
-                std::snprintf(detail, sizeof(detail), "mesh=%s verts=%u tris=%zu bones=%zu stride=%u decoded=%s",
-                              mesh.name.c_str(), mesh.vertexCount, mesh.faces.size() / 3, mesh.bones.size(),
-                              mesh.vertexStride, mesh.geometryDecoded ? "yes" : "no");
-                ReportFile("x-mesh", path, true, detail);
-            } else {
-                ReportFile("x", path, false, skeleton.Error() + " | " + mesh.error);
-            }
-            continue;
+            VerifySingleAsset(label, entryBytes, counters);
         }
-
-        if (EndsWithNoCase(ext, ".bin")) {
-            ++counters.binTotal;
-            // Try with the basestream header first (CSerialFile writes one), then without.
-            RANMobile::EP7AnimClip clip = RANMobile::EP7AnimationReader::ParseContainer(bytes, true, false);
-            if (!clip.valid) {
-                clip = RANMobile::EP7AnimationReader::ParseContainer(bytes, false, false);
-            }
-            if (clip.valid) {
-                ++counters.binOk;
-                char detail[256];
-                std::snprintf(detail, sizeof(detail), "v0x%04X mainTracks=%zu upBodyTracks=%zu maxKeyTime=%u",
-                              clip.version, clip.mainTracks.size(), clip.upBodyTracks.size(), clip.MaxKeyTime());
-                ReportFile("bin", path, true, detail);
-            } else {
-                ReportFile("bin", path, false, clip.error);
-            }
-            continue;
-        }
-
-        if (EndsWithNoCase(ext, ".cfg")) {
-            ++counters.cfgTotal;
-            RANMobile::EP7AnimInfo info = RANMobile::EP7AnimationReader::ParseInfo(bytes, true, false);
-            if (!info.valid) {
-                info = RANMobile::EP7AnimationReader::ParseInfo(bytes, false, false);
-            }
-            if (info.valid) {
-                ++counters.cfgOk;
-                char detail[320];
-                std::snprintf(detail, sizeof(detail), "name=%s skeleton=%s main=%d sub=%d window=%u..%u loop=%s",
-                              info.name.c_str(), info.skeleton.c_str(), info.mainType, info.subType,
-                              info.startTime, info.endTime, info.IsLoop() ? "yes" : "no");
-                ReportFile("cfg", path, true, detail);
-            } else {
-                ReportFile("cfg", path, false, info.error);
-            }
-            continue;
-        }
+        if (checked == 0) std::printf("     (no character assets inside)\n");
     }
 
     std::printf("\n=== SUMMARY (verified against authentic files only) ===\n");

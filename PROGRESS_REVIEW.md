@@ -141,7 +141,8 @@ exaggeration and strict evidence.
 | `Engine/Scene/EP7CharacterScene.{h,cpp}` — loader, instances, culling, diagnostics | complete |
 | `UI/Character/CharacterPreviewOverlay.{h,cpp}` — touch preview UX | complete |
 | `Tools/verify_ep7_character_assets.cpp` — real-data probe | complete, CI-wired |
-| `Tests/test_phase3j.cpp` | 188 checks, 0 failures |
+| `Data/Importer/EP7RccArchive.{h,cpp}` — `.rcc` reader (inflate + ZipCrypto) | complete |
+| `Tests/test_phase3j.cpp` | 208 checks, 0 failures |
 | CMake + workflow wiring | complete |
 | GPU skinning | **not implemented** (B10) |
 | Renderer draw pass for characters | **not implemented** here (PR #4 owns it) |
@@ -163,6 +164,15 @@ Six of these were real layout/semantic errors, not typos, and each was caught by
 6. The animation clock was advanced in *seconds*; the original advances
    `delta × UNITANIKEY_PERSEC` (4800). The player also now reproduces the two-unit early-end
    rule.
+
+7. The verification tool assumed character assets are loose files. They are not:
+   `GLOGIC::InitFile` loads them from `SkinObject.rcc` / `Animation.rcc` through
+   `CUnzipper`, with ZipCrypto password `"tkqwlf"`. A tree walk reports "0 candidates" on a
+   perfectly good client extraction. Added `EP7RccArchive` (inflate + ZipCrypto, 208-test
+   coverage) and the probe now opens the packs.
+8. A skinned mesh `.x` also begins with `Frame` objects, so "the skeleton parser accepted it"
+   does not prove it is a skeleton — the probe must try the mesh reader first. Caught by the
+   end-to-end `.rcc` run, where `body.x` was initially reported as a 2-bone skeleton.
 
 Also corrected: `.chf`/`.cps` fixture headers (file ID vs payload version), `.cps` material
 records genuinely carry a block size (back-patched by `EndBlock`), and `.cfg`'s

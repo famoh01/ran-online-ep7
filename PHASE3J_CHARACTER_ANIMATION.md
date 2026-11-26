@@ -35,6 +35,7 @@ skinning and a mobile rendering foundation. What is delivered:
 | Scene integration (instances, lifecycle, culling) | Yes | `Engine/Scene/EP7CharacterScene.{h,cpp}` |
 | Touch UX overlay + diagnostics | Yes | `UI/Character/CharacterPreviewOverlay.{h,cpp}` |
 | Real-asset verification tool | Yes | `Tools/verify_ep7_character_assets.cpp` |
+| `.rcc` pack reader (inflate + ZipCrypto) | Yes | `Data/Importer/EP7RccArchive.{h,cpp}` |
 
 ---
 
@@ -62,6 +63,39 @@ origin/arena/075e1725-ran-online-ep7         7b355b3c  PR #3, Draft
 
 Every structure below was read out of the original client/server tree in this repository.
 No structure was invented.
+
+### 3.0 Where the authentic character bytes actually live (`SkinObject.rcc`, `Animation.rcc`)
+
+This is the most consequential discovery of the phase, and it invalidated the first version
+of the verification tool.
+
+`GLOGIC::InitFile` (`enginelib/G-Logic/GLogic.cpp:40-62`) does **not** read character assets
+from the file system:
+
+```
+strANIMATION_ZIPFILE = DxSkinAniMan::GetPath()  + "Animation.rcc";
+strSKINOBJ_ZIPFILE   = DxSkinObject::GetPath()  + "SkinObject.rcc";
+CUnzipper::LOADFILE_RCC(strANIMATION_ZIPFILE);
+CUnzipper::LOADFILE_RCC(strSKINOBJ_ZIPFILE);
+```
+
+and every character load goes through
+`GLOGIC::openfile_basestream(bENGLIB_ZIPFILE, zipName, fullPath, fileName)` →
+`CUnzipper::UnzipToMemory` (`enginelib/Common/Unzipper.cpp:569`). Three consequences:
+
+1. A directory walk of an extracted client finds **zero** character assets — they are all
+   inside two ZIP archives. A verification tool that only walks the tree would report
+   "0 candidates" and look like success.
+2. Entry lookup is **case-insensitive** and keyed on `zipName + entryName`
+   (`CUnzipper::LOADFILE_RCC` / `GOTOFILEPOS` both `std::transform(..., tolower)`).
+3. Encrypted entries use **traditional ZipCrypto with the password `"tkqwlf"`**
+   (`unzOpenCurrentFilePassword(m_uzFile, "tkqwlf")`).
+
+`EP7RccArchive` therefore implements exactly that subset: central-directory parsing, stored
+and deflate entries (a self-contained canonical-Huffman inflater), ZipCrypto decryption with
+the client password, and CRC-32 verification on every extraction. It is a reader, not a
+general ZIP library: no zip64, no multi-disk, no AES, no writing — and every offset is
+bounds-checked.
 
 ### 3.1 Serialisation (`enginelib/Common/`)
 
@@ -299,7 +333,7 @@ None of these require changes to Phase 3J files.
 
 ## 9. Tests
 
-`RANMobile/Tests/test_phase3j.cpp` — **188 checks, 0 failures**, and identical results under
+`RANMobile/Tests/test_phase3j.cpp` — **208 checks, 0 failures**, and identical results under
 `-fsanitize=address,undefined` with leak detection.
 
 **Fixture policy:** the buffers are hand-written ABI fixtures that follow the layouts
@@ -312,6 +346,7 @@ and every fixture is labelled as such in the file header.
 | `skeleton` | hierarchy, sibling head-insert, UPBODY propagation, palette order, combined transforms, malformed/truncated/binary rejection |
 | `skinned mesh` | layout detection, stride, positions/normals/UVs, bone binding, element-order corruption, out-of-range skin index, out-of-range face index, unknown bone name, missing mesh, empty buffer, bind-pose identity, weight renormalisation |
 | `.cps` | versions 0x0104–0x0107 gate, all fields, old-version rejection, truncation, empty |
+| `.rcc` archive | case-insensitive lookup, stored entries, in-memory ZipCrypto decrypt with `"tkqwlf"` that then feeds the real `.cps`/`.chf` parsers, CRC corruption rejection, missing entry, garbage/empty input, plus a truncation and byte-corruption sweep of the archive |
 | `.chf` | 0x0102 full parse, defaults, unknown version, `pieceCount > 13`, truncation, empty |
 | animation | `.bin` 0x0102 track, bone binding, `MaxKeyTime`, `.cfg` 0x0107 fields + loop flag, looping wrap, 4800-unit clock, two-unit early end, truncation, wrong version |
 | scene integration | asset load through the resolver, cross-file consistency, spawn/pose/skin, clip-by-name, animation actually moves vertices, measured diagnostics, AABB culling, destroy, and **refusal to spawn from an unloadable asset** |
@@ -322,15 +357,25 @@ and every fixture is labelled as such in the file header.
 
 ## 10. Real-asset verification (CI)
 
-`RANMobile/Tools/verify_ep7_character_assets.cpp` walks an extracted client tree and runs
-every `.chf/.cps/.skt/.x/.bin/.cfg` through the real parsers, printing per-file success or
-the parser's error string and a summary. It is wired into the CI workflow (after the
+`RANMobile/Tools/verify_ep7_character_assets.cpp` walks an extracted client tree, runs every
+loose `.chf/.cps/.skt/.x/.bin/.cfg` through the real parsers, then opens every `.rcc`/`.zip`
+it finds and runs the same parsers on the character entries inside (§3.0). It prints
+per-entry success or the parser's error string and a summary. It is wired into the CI workflow (after the
 original client archive is extracted to `external/ep7_release/client_original`) and its log
 is uploaded and summarised. If the directory is missing it prints "nothing verified" instead
 of reporting success.
 
-**Result in this sandbox: 0 candidate files (no authentic assets available — B2). Nothing
-about real-asset compatibility is claimed here.**
+**Result in this sandbox: no authentic archives exist (B2/B9), so nothing is claimed about
+real-asset compatibility.** The tool was exercised end-to-end against a synthetic
+client-shaped tree (`SkinObject.rcc` + `Animation.rcc`) built from the ABI fixtures in §9:
+all 7 entries parsed (`chf 1/1`, `cps 2/2`, `x 1 skeleton + 1 mesh`, `bin 1/1`, `cfg 1/1`),
+and it was checked against a real Python-generated ZIP using both stored and deflated
+entries plus a CRC-corruption case.
+
+That end-to-end run caught a real classification bug worth recording: a skinned mesh `.x`
+also begins with `Frame` objects, so "does a skeleton parser accept it?" is **not** a valid
+skeleton test — the mesh reader must be tried first (presence of `SkinWeights` is the
+discriminator).
 
 ---
 
@@ -350,8 +395,8 @@ about real-asset compatibility is claimed here.**
 
 ## 12. What is NOT done (explicit non-claims)
 
-1. **No authentic character has been rendered.** No `.chf/.cps/.x/.bin/.cfg` bytes exist
-   here (B2).
+1. **No authentic character has been rendered.** No `.chf/.cps/.x/.bin/.cfg` bytes and no
+   `SkinObject.rcc`/`Animation.rcc` archives exist here (B2/B9).
 2. **GPU skinning is not implemented** on this branch (§7).
 3. **No `EP7SceneRenderer`/`MobileRenderer` draw path for characters.** PR #4's renderer is
    not on this branch; §8 defines the hooks instead.
@@ -368,6 +413,9 @@ about real-asset compatibility is claimed here.**
 10. **`.x` binary (`bin`/`bzib`/`tzip`) files are rejected**, not decoded.
 11. **Vertex declarations beyond the 12/24/32-byte layouts are not decoded** (reported as
     `Unknown`).
+11b. **The `.rcc` reader does not handle zip64, multi-disk archives, AES encryption or any
+    compression method other than stored/deflate.** If the shipped packs use any of those,
+    extraction fails loudly rather than guessing.
 12. **`DxSkinPieceContainer` 0x0104/0x0105 trace/effect ordering** is implemented from the
     unified read path; only the 0x0106/0x0107 weapon-slot difference is version-gated. Files
     written by older exporters remain unverified until the probe runs on real data.

@@ -62,6 +62,7 @@ New directories and files. Nothing existing was moved or replaced.
 RANMobile/
 ├── Data/Importer/
 │   ├── EP7ByteFormat.h      (header-only) bounds-checked basestream + compbyte
+│   ├── EP7RccArchive.{h,cpp}  .rcc pack reader (ZIP central dir, inflate, ZipCrypto)
 │   ├── EP7Math.h            (header-only) Vec3/Quat/Mat4, D3DX row-vector order
 │   ├── EP7XFile.{h,cpp}     .x text tokenizer (rejects binary encodings)
 │   ├── EP7Skeleton.{h,cpp}  .x Frame hierarchy -> bones, pose accumulation
@@ -79,6 +80,9 @@ RANMobile/
 
 ### Layering rules this layer follows
 
+0. **Pack-aware asset access.** Authentic character data lives in `SkinObject.rcc` /
+   `Animation.rcc` (`GLOGIC::InitFile`), not on disk, so `EP7RccArchive` is the byte source
+   for anything that reads `.chf/.cps/.x/.bin/.cfg`.
 1. **Parsers never touch I/O.** Every reader takes bytes + a `bool compByteEncoded`, or an
    `ep7byte::Stream`. `EP7CharacterLoader` resolves names through a
    `bool (*)(void* userData, const std::string&, std::vector<uint8_t>&)` callback, so Android

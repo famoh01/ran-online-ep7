@@ -142,11 +142,14 @@ Flags match the CI workflow's existing host build exactly.
 
 | Target | Result |
 |---|---|
-| `RANMobile/Tests/test_phase3j.cpp` | **188 checks, 0 failures** |
+| `RANMobile/Tests/test_phase3j.cpp` | **208 checks, 0 failures** |
 | same, `-fsanitize=address,undefined`, `detect_leaks=1` | **clean, no reports** |
 | `RANMobile/Tests/test_main.cpp` (Phase 3G–3I regression) | compiles clean with the 8 new sources linked; runtime stops at the **pre-existing** `assert(tpStats.found)` (line 186) because `external/ep7_release/thaipack_original` does not exist in this sandbox — unchanged behaviour, not a Phase 3J regression |
 
-Coverage details: see `PHASE3J_CHARACTER_ANIMATION.md` §9.
+Coverage details: see `PHASE3J_CHARACTER_ANIMATION.md` §9. The suite includes `.rcc`
+archive tests: case-insensitive lookup, stored entries, in-memory ZipCrypto decryption with
+the client password `"tkqwlf"` feeding the real `.cps`/`.chf` parsers, CRC-corruption
+rejection, and a truncation/byte-corruption sweep of the archive itself.
 
 ### 11.3 Robustness sweep (part of the suite)
 
@@ -162,7 +165,10 @@ New workflow steps in `.github/workflows/build-ranmobile-android.yml`:
    `-Wall -Wextra -Werror`, writes `phase3j_test_output.log`.
 2. `Verify Authentic EP7 Character Assets` — builds
    `RANMobile/Tools/verify_ep7_character_assets.cpp` and runs it against
-   `external/ep7_release/client_original`, writing `phase3j_authentic_assets.log`.
+   `external/ep7_release/client_original`, writing `phase3j_authentic_assets.log`. The tool
+   walks loose files **and** opens every `.rcc`/`.zip` it finds, because the authentic
+   character data lives inside `SkinObject.rcc` / `Animation.rcc` (see BLOCKERS.md B9
+   addendum).
 3. Both logs are added to the job summary and to the `linux-test-failure-log` artifact.
 
 The existing 33-source host build now includes the 8 Phase 3J sources.

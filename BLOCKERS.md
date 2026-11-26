@@ -181,3 +181,30 @@ evidence. Two blockers are added and one existing blocker still governs the outc
 
 PR #3 (`7b355b3c`) and PR #4 (`76b2c1c3`) were verified untouched with `git ls-remote`
 before and after this work. Nothing was merged to `main` and no existing branch was rewritten.
+
+### B9 addendum — the authentic assets are inside `SkinObject.rcc` / `Animation.rcc`
+
+Follow-up discovery while building the verification tool (2026-11-26):
+
+`GLOGIC::InitFile` (`enginelib/G-Logic/GLogic.cpp:40-62`) loads character data exclusively
+through `CUnzipper::LOADFILE_RCC` on two ZIP archives
+(`SkinObject.rcc`, `Animation.rcc`), and every asset open goes through
+`CUnzipper::UnzipToMemory` (`enginelib/Common/Unzipper.cpp:569`) with the ZipCrypto password
+`"tkqwlf"`. A plain directory walk therefore finds no character assets at all.
+
+Consequences for B9:
+
+* The first version of `verify_ep7_character_assets` only walked the tree and would have
+  reported "0 candidate files" on a perfectly good client extraction — a false negative that
+  could be mistaken for "nothing to verify". This is fixed: the tool now opens every
+  `.rcc`/`.zip` it finds.
+* `Data/Importer/EP7RccArchive.{h,cpp}` was added (central directory, stored + deflate,
+  ZipCrypto with the client password, CRC-32 verification, full bounds checking) so the real
+  bytes are reachable in CI. It is covered by the test suite (208 checks total) including
+  ZipCrypto decryption feeding the real `.cps`/`.chf` parsers, and it was additionally
+  validated against a real Python-generated ZIP with stored and deflated entries.
+* Still unverified: whether the shipped packs use zip64, AES, or methods other than
+  stored/deflate. If they do, extraction fails loudly and this blocker stays open; the CI log
+  will say so explicitly because every entry reports its method and every failure is printed.
+* The sandbox still has no archives, so the `inflate` path has never been run against
+  authentic client data — only against a synthetic archive built to the same spec.

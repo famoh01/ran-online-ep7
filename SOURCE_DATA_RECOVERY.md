@@ -304,6 +304,24 @@ version mismatch skips `dwBLOCKSIZE` bytes. `SaveFile` (`:108`) wraps the body i
   clamps to `[m_dwSTime, m_dwETime]`, sets `bEndAnim` inside the last `m_UNITTIME*2` for
   non-looping clips, and freezes at `m_dwETime` when `bEndFreeze`.
 
+### 14.6b Asset packaging — the character data is inside ZIP archives
+
+* `GLOGIC::InitFile` (`GLogic.cpp:40-62`) registers two packs:
+  `DxSkinObject::GetPath() + "SkinObject.rcc"` and
+  `DxSkinAniMan::GetPath() + "Animation.rcc"`, and calls `CUnzipper::LOADFILE_RCC` on both.
+* Every character asset open goes through
+  `GLOGIC::openfile_basestream(bENGLIB_ZIPFILE, ...)` → `CUnzipper::UnzipToMemory`
+  (`Unzipper.cpp:569`).
+* Entry lookup is case-insensitive: both `LOADFILE_RCC` and `GOTOFILEPOS` lowercase the
+  composed key `zipName + entryName`.
+* Encrypted entries are opened with `unzOpenCurrentFilePassword(m_uzFile, "tkqwlf")`
+  (traditional ZipCrypto).
+* Therefore `.chf/.cps/.skt/.x/.bin/.cfg` are **not** loose files in a client install; an
+  asset tool must read the `.rcc` archives.
+* Implemented as `RANMobile/Data/Importer/EP7RccArchive.{h,cpp}` (central directory, stored
+  + deflate via a self-contained canonical-Huffman inflater, ZipCrypto, CRC-32, bounds
+  checks). Not implemented: zip64, multi-disk, AES, other methods.
+
 ### 14.7 Still unrecovered (Phase 3J scope)
 
 * `.cps` effect payloads (`DxEffAniData` subclasses) — count parsed, bodies skipped.
