@@ -66,13 +66,14 @@ static void InitEGL(AndroidAppContext* ctx, ANativeWindow* window) {
     EGLint w = 1280, h = 720;
     eglQuerySurface(ctx->display, ctx->surface, EGL_WIDTH, &w);
     eglQuerySurface(ctx->display, ctx->surface, EGL_HEIGHT, &h);
-    ctx->engine.Initialize();
-    ctx->engine.Resize(w, h);
-    ctx->engine.Start();
+    // Recreate renderer resources for this exact EGL surface. This also runs
+    // on surface recreation after an APP_CMD_TERM_WINDOW / INIT_WINDOW cycle.
+    ctx->engine.OnSurfaceCreated(w, h);
     ctx->hasWindow = true;
 }
 
 static void TermEGL(AndroidAppContext* ctx) {
+    ctx->engine.OnSurfaceLost();
     if (ctx->display != EGL_NO_DISPLAY) {
         eglMakeCurrent(ctx->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         if (ctx->context != EGL_NO_CONTEXT) eglDestroyContext(ctx->display, ctx->context);
@@ -96,6 +97,11 @@ static void HandleAppCmd(struct android_app* app, int32_t cmd) {
         ctx->engine.Pause();
     } else if (cmd == APP_CMD_RESUME) {
         ctx->engine.Resume();
+    } else if (cmd == APP_CMD_CONFIG_CHANGED && ctx->hasWindow && ctx->display != EGL_NO_DISPLAY) {
+        EGLint w = 0, h = 0;
+        eglQuerySurface(ctx->display, ctx->surface, EGL_WIDTH, &w);
+        eglQuerySurface(ctx->display, ctx->surface, EGL_HEIGHT, &h);
+        if (w > 0 && h > 0) ctx->engine.Resize(w, h);
     }
 }
 
@@ -160,8 +166,18 @@ static int32_t HandleInputEvent(struct android_app* app, AInputEvent* event) {
                 }
             }
         } else if (masked == AMOTION_EVENT_ACTION_MOVE) {
-            ctx->engine.OnTouchMove(pointerId, x, y);
-        } else if (masked == AMOTION_EVENT_ACTION_UP || masked == AMOTION_EVENT_ACTION_POINTER_UP || masked == AMOTION_EVENT_ACTION_CANCEL) {
+            // Deliver every active pointer, not just the pointer that caused
+            // the event, so pinch and two-thumb UI interactions stay in sync.
+            const size_t count = static_cast<size_t>(AMotionEvent_getPointerCount(event));
+            for (size_t i = 0; i < count; ++i) {
+                const int32_t moveId = AMotionEvent_getPointerId(event, i);
+                ctx->engine.OnTouchMove(moveId,
+                                        AMotionEvent_getX(event, i),
+                                        AMotionEvent_getY(event, i));
+            }
+        } else if (masked == AMOTION_EVENT_ACTION_CANCEL) {
+            ctx->engine.OnTouchCancel(pointerId, x, y);
+        } else if (masked == AMOTION_EVENT_ACTION_UP || masked == AMOTION_EVENT_ACTION_POINTER_UP) {
             ctx->engine.OnTouchUp(pointerId, x, y);
         }
         return 1;

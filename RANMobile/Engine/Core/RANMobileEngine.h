@@ -11,6 +11,7 @@ namespace RANMobile {
     class MobileCamera;
     class NetworkClient;
     class GameDataLoader;
+    struct AssetPipelineReport;
 }
 class LoginScreen;
 namespace RANMobile { class MobileHUD; }
@@ -28,11 +29,18 @@ public:
 
     bool Initialize();
     bool LoadGameData(const std::string& path);
+    const RANMobile::AssetPipelineReport* GetAssetPipelineReport() const;
 
     void Start();
     void Update(float deltaTime);
     void Render();
     void Resize(int width, int height);
+
+    // Android surface lifecycle: rendering is separated from UI state so a
+    // destroyed EGL surface does not need a full engine restart.
+    void OnSurfaceCreated(int width, int height);
+    void OnSurfaceLost();
+
     void Pause();
     void Resume();
     void Shutdown();
@@ -40,6 +48,7 @@ public:
     void OnTouchDown(int pointerId, float x, float y);
     void OnTouchMove(int pointerId, float x, float y);
     void OnTouchUp(int pointerId, float x, float y);
+    void OnTouchCancel(int pointerId, float x, float y);
     void OnTextInput(const std::string& utf8);
     void OnBackspace();
 
@@ -50,6 +59,7 @@ public:
 
     bool IsInitialized() const { return m_initialized; }
     bool IsRunning() const { return m_running; }
+    bool HasRenderSurface() const { return m_renderSurfaceReady; }
 
     float GetTotalTime() const { return m_totalTime; }
     uint64_t GetFrameCount() const { return m_frameCount; }
@@ -64,6 +74,7 @@ public:
 private:
     bool m_initialized = false;
     bool m_running = false;
+    bool m_renderSurfaceReady = false;
     float m_totalTime = 0.0f;
     uint64_t m_frameCount = 0;
 
@@ -75,5 +86,6 @@ private:
     std::unique_ptr<RANMobile::GameDataLoader> m_gameDataLoader;
     std::unique_ptr<LoginScreen> m_loginScreen;
     std::unique_ptr<RANMobile::MobileHUD> m_mobileHUD;
+    std::unique_ptr<RANMobile::AssetPipelineReport> m_assetReport;
     EngineScreenState m_screenState = EngineScreenState::Login;
 };

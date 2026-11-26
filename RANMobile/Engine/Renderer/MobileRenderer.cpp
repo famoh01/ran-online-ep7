@@ -65,6 +65,20 @@ static GLuint CompileShader(GLenum type, const char* src) {
     }
     return shader;
 }
+
+static void CheckGLError(const char* operation) {
+    GLenum err = glGetError();
+    if (err == GL_NO_ERROR) return;
+    const char* name = "UNKNOWN";
+    switch (err) {
+        case GL_INVALID_ENUM: name = "GL_INVALID_ENUM"; break;
+        case GL_INVALID_VALUE: name = "GL_INVALID_VALUE"; break;
+        case GL_INVALID_OPERATION: name = "GL_INVALID_OPERATION"; break;
+        case GL_OUT_OF_MEMORY: name = "GL_OUT_OF_MEMORY"; break;
+        default: break;
+    }
+    Logger::Error("MobileRenderer", std::string(operation) + " failed: " + name);
+}
 #endif
 
 uint32_t MobileRenderer::DecodeUTF8(const std::string& text, size_t& index) {
@@ -105,9 +119,128 @@ bool MobileRenderer::LoadFontFile(const std::string& path, std::vector<uint8_t>&
     return f.read(reinterpret_cast<char*>(outBuffer.data()), sz).good();
 }
 
+void MobileRenderer::UpdateProjection() {
+    // Map virtual design coordinates to the physical surface without stretching.
+    // The matrix is rebuilt only on resize, never per draw call.
+    const float pw = static_cast<float>(m_layout.GetPhysicalWidth());
+    const float ph = static_cast<float>(m_layout.GetPhysicalHeight());
+    const float sx = m_layout.GetScale();
+    const float sy = m_layout.GetScale();
+    const float ox = m_layout.GetOffsetX();
+    const float oy = m_layout.GetOffsetY();
+    for (float& v : m_projection) v = 0.0f;
+    m_projection[0] = (pw > 0.0f) ? 2.0f * sx / pw : 0.0f;
+    m_projection[5] = (ph > 0.0f) ? -2.0f * sy / ph : 0.0f;
+    m_projection[10] = -1.0f;
+    m_projection[12] = (pw > 0.0f) ? 2.0f * ox / pw - 1.0f : 0.0f;
+    m_projection[13] = (ph > 0.0f) ? 1.0f - 2.0f * oy / ph : 0.0f;
+    m_projection[15] = 1.0f;
+}
+
+void MobileRenderer::ResetGlyphAtlas() {
+    m_glyphCache.clear();
+    m_atlasX = 1;
+    m_atlasY = 1;
+    m_atlasRowH = 0;
+}
+
+bool MobileRenderer::CreateGPUResources() {
+#ifdef __ANDROID__
+    GLuint vs = CompileShader(GL_VERTEX_SHADER, kUIVertexShader);
+    GLuint fs = CompileShader(GL_FRAGMENT_SHADER, kUIFragmentShader);
+    if (!vs || !fs) {
+        if (vs) glDeleteShader(vs);
+        if (fs) glDeleteShader(fs);
+        Logger::Error("MobileRenderer", "UI shader compilation failed; rendering disabled for this surface");
+        return false;
+    }
+    m_uiProgram = glCreateProgram();
+    glAttachShader(m_uiProgram, vs);
+    glAttachShader(m_uiProgram, fs);
+    glLinkProgram(m_uiProgram);
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+    GLint linked = 0;
+    glGetProgramiv(m_uiProgram, GL_LINK_STATUS, &linked);
+    if (!linked) {
+        char log[512];
+        glGetProgramInfoLog(m_uiProgram, sizeof(log), nullptr, log);
+        Logger::Error("MobileRenderer", std::string("UI program link failed: ") + log);
+        glDeleteProgram(m_uiProgram);
+        m_uiProgram = 0;
+        return false;
+    }
+    m_uProjLoc = glGetUniformLocation(m_uiProgram, "uProj");
+    m_uColorLoc = glGetUniformLocation(m_uiProgram, "uColor");
+    m_uUseTexLoc = glGetUniformLocation(m_uiProgram, "uUseTexture");
+
+    glGenVertexArrays(1, &m_uiVAO);
+    glGenBuffers(1, &m_uiVBO);
+    glBindVertexArray(m_uiVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_uiVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 16, nullptr, GL_DYNAMIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(2 * sizeof(float)));
+    glBindVertexArray(0);
+
+    glGenTextures(1, &m_fontAtlasTex);
+    glBindTexture(GL_TEXTURE_2D, m_fontAtlasTex);
+    std::vector<uint8_t> zeros(static_cast<size_t>(kAtlasSize * kAtlasSize), 0);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, kAtlasSize, kAtlasSize, 0, GL_RED, GL_UNSIGNED_BYTE, zeros.data());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glViewport(0, 0, m_layout.GetPhysicalWidth(), m_layout.GetPhysicalHeight());
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glClearColor(0.03f, 0.06f, 0.13f, 1.0f);
+    CheckGLError("CreateGPUResources");
+#endif
+    m_gpuReady = true;
+    return true;
+}
+
+void MobileRenderer::DestroyGPUResources(bool deleteObjects) {
+#ifdef __ANDROID__
+    if (deleteObjects) {
+        for (uint32_t tex : m_ownedTextures) {
+            GLuint id = static_cast<GLuint>(tex);
+            glDeleteTextures(1, &id);
+        }
+        if (m_fontAtlasTex) glDeleteTextures(1, &m_fontAtlasTex);
+        if (m_uiVBO) glDeleteBuffers(1, &m_uiVBO);
+        if (m_uiVAO) glDeleteVertexArrays(1, &m_uiVAO);
+        if (m_uiProgram) glDeleteProgram(m_uiProgram);
+    }
+    // After context loss the old handles are invalid; drop them without GL calls.
+    m_fontAtlasTex = 0;
+    m_uiVBO = 0;
+    m_uiVAO = 0;
+    m_uiProgram = 0;
+    m_uProjLoc = -1;
+    m_uColorLoc = -1;
+    m_uUseTexLoc = -1;
+#else
+    (void)deleteObjects;
+#endif
+    m_ownedTextures.clear();
+    m_gpuReady = false;
+    ResetGlyphAtlas();
+}
+
+bool MobileRenderer::HasGPUContext() const {
+    return m_initialized && m_gpuReady;
+}
+
 bool MobileRenderer::Initialize(int width, int height) {
-    m_width = width > 0 ? width : 1280;
-    m_height = height > 0 ? height : 720;
+    if (m_initialized) return true;
+
+    m_layout.SetPhysicalSize(width, height);
+    UpdateProjection();
     m_settings.ApplyPreset(GraphicsQuality::Medium);
 
     const char* primaryPaths[] = {
@@ -137,85 +270,84 @@ bool MobileRenderer::Initialize(int width, int height) {
             break;
         }
     }
-
-#ifdef __ANDROID__
-    glViewport(0, 0, m_width, m_height);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glClearColor(0.05f, 0.07f, 0.12f, 1.0f);
-
-    GLuint vs = CompileShader(GL_VERTEX_SHADER, kUIVertexShader);
-    GLuint fs = CompileShader(GL_FRAGMENT_SHADER, kUIFragmentShader);
-    if (vs && fs) {
-        m_uiProgram = glCreateProgram();
-        glAttachShader(m_uiProgram, vs);
-        glAttachShader(m_uiProgram, fs);
-        glLinkProgram(m_uiProgram);
-        glDeleteShader(vs);
-        glDeleteShader(fs);
-        m_uProjLoc = glGetUniformLocation(m_uiProgram, "uProj");
-        m_uColorLoc = glGetUniformLocation(m_uiProgram, "uColor");
-        m_uUseTexLoc = glGetUniformLocation(m_uiProgram, "uUseTexture");
+    if (!m_hasThaiFont) {
+        Logger::Warn("MobileRenderer", "No Thai system font found; Thai glyphs use metric-only fallback");
     }
 
-    glGenVertexArrays(1, &m_uiVAO);
-    glGenBuffers(1, &m_uiVBO);
-    glBindVertexArray(m_uiVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, m_uiVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 16, nullptr, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(2 * sizeof(float)));
-    glBindVertexArray(0);
-
-    glGenTextures(1, &m_fontAtlasTex);
-    glBindTexture(GL_TEXTURE_2D, m_fontAtlasTex);
-    std::vector<uint8_t> zeros(kAtlasSize * kAtlasSize, 0);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, kAtlasSize, kAtlasSize, 0, GL_RED, GL_UNSIGNED_BYTE, zeros.data());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glBindTexture(GL_TEXTURE_2D, 0);
-#endif
+    if (!CreateGPUResources()) {
+        Logger::Error("MobileRenderer", "Renderer initialization failed at GPU resource creation");
+        return false;
+    }
 
     m_initialized = true;
-    Logger::Info("MobileRenderer", "Initialized OpenGL ES 3.0 Renderer (" +
-                 std::to_string(m_width) + "x" + std::to_string(m_height) + ")");
+    Logger::Info("MobileRenderer", "Initialized GLES3 UI renderer, physical " +
+                 std::to_string(m_layout.GetPhysicalWidth()) + "x" +
+                 std::to_string(m_layout.GetPhysicalHeight()) + ", design " +
+                 std::to_string(static_cast<int>(m_layout.GetDesignWidth())) + "x" +
+                 std::to_string(static_cast<int>(m_layout.GetDesignHeight())));
     return true;
 }
 
+void MobileRenderer::OnSurfaceCreated(int width, int height) {
+    m_layout.SetPhysicalSize(width, height);
+    UpdateProjection();
+    if (!m_initialized) {
+        Initialize(width, height);
+        return;
+    }
+    // A new EGL surface means all previous GL handles are invalid.
+    DestroyGPUResources(false);
+    if (!CreateGPUResources()) {
+        Logger::Error("MobileRenderer", "Surface recreation failed; frame rendering suspended");
+        return;
+    }
+    Logger::Info("MobileRenderer", "Surface recreated " +
+                 std::to_string(width) + "x" + std::to_string(height) + "; glyph atlas reset");
+}
+
+void MobileRenderer::OnSurfaceLost() {
+    if (!m_initialized) return;
+    DestroyGPUResources(false);
+    Logger::Info("MobileRenderer", "Surface lost; GPU resources released and glyph cache cleared");
+}
+
 void MobileRenderer::Resize(int width, int height) {
-    m_width = width > 0 ? width : 1280;
-    m_height = height > 0 ? height : 720;
+    m_layout.SetPhysicalSize(width, height);
+    UpdateProjection();
 #ifdef __ANDROID__
     if (m_initialized) {
-        glViewport(0, 0, m_width, m_height);
+        glViewport(0, 0, m_layout.GetPhysicalWidth(), m_layout.GetPhysicalHeight());
+        CheckGLError("Resize/glViewport");
     }
 #endif
 }
 
 void MobileRenderer::Shutdown() {
-#ifdef __ANDROID__
-    if (m_fontAtlasTex) { glDeleteTextures(1, &m_fontAtlasTex); m_fontAtlasTex = 0; }
-    if (m_uiVBO) { glDeleteBuffers(1, &m_uiVBO); m_uiVBO = 0; }
-    if (m_uiVAO) { glDeleteVertexArrays(1, &m_uiVAO); m_uiVAO = 0; }
-    if (m_uiProgram) { glDeleteProgram(m_uiProgram); m_uiProgram = 0; }
-#endif
-    m_glyphCache.clear();
+    if (!m_initialized) return;
+    DestroyGPUResources(true);
+    m_primaryFontData.clear();
+    m_thaiFontData.clear();
+    m_glyphScratch.clear();
+    m_hasPrimaryFont = false;
+    m_hasThaiFont = false;
     m_initialized = false;
+    Logger::Info("MobileRenderer", "Renderer shut down");
 }
 
-void MobileRenderer::BeginFrame() {
+bool MobileRenderer::BeginFrame() {
     m_stats = RenderStats{};
 #ifdef __ANDROID__
-    if (m_initialized) {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    }
+    if (!m_initialized || !HasGPUContext()) return false;
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    CheckGLError("BeginFrame/glClear");
 #endif
+    return HasGPUContext();
 }
 
 void MobileRenderer::EndFrame() {
+#ifdef __ANDROID__
+    if (m_initialized && HasGPUContext()) CheckGLError("EndFrame");
+#endif
 }
 
 const GlyphInfo* MobileRenderer::GetOrLoadGlyph(uint32_t codepoint) {
@@ -242,6 +374,7 @@ const GlyphInfo* MobileRenderer::GetOrLoadGlyph(uint32_t codepoint) {
     float scale = stbtt_ScaleForPixelHeight(font, kBaseFontPx);
     int adv = 0, lsb = 0;
     stbtt_GetCodepointHMetrics(font, static_cast<int>(codepoint), &adv, &lsb);
+    (void)lsb;
     info.advance = adv * scale;
 
     int x0, y0, x1, y1;
@@ -261,12 +394,16 @@ const GlyphInfo* MobileRenderer::GetOrLoadGlyph(uint32_t codepoint) {
         }
         if (m_atlasY + gh + 2 < kAtlasSize) {
 #ifdef __ANDROID__
-            std::vector<uint8_t> bmp(static_cast<size_t>(gw * gh), 0);
-            stbtt_MakeCodepointBitmap(font, bmp.data(), gw, gh, gw, scale, scale, static_cast<int>(codepoint));
-            glBindTexture(GL_TEXTURE_2D, m_fontAtlasTex);
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, m_atlasX, m_atlasY, gw, gh, GL_RED, GL_UNSIGNED_BYTE, bmp.data());
-            glBindTexture(GL_TEXTURE_2D, 0);
+            if (HasGPUContext()) {
+                m_glyphScratch.assign(static_cast<size_t>(gw * gh), 0);
+                stbtt_MakeCodepointBitmap(font, m_glyphScratch.data(), gw, gh, gw, scale, scale,
+                                          static_cast<int>(codepoint));
+                glBindTexture(GL_TEXTURE_2D, m_fontAtlasTex);
+                glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+                glTexSubImage2D(GL_TEXTURE_2D, 0, m_atlasX, m_atlasY, gw, gh, GL_RED,
+                                GL_UNSIGNED_BYTE, m_glyphScratch.data());
+                glBindTexture(GL_TEXTURE_2D, 0);
+            }
 #endif
             info.u0 = static_cast<float>(m_atlasX) / kAtlasSize;
             info.v0 = static_cast<float>(m_atlasY) / kAtlasSize;
@@ -274,7 +411,7 @@ const GlyphInfo* MobileRenderer::GetOrLoadGlyph(uint32_t codepoint) {
             info.v1 = static_cast<float>(m_atlasY + gh) / kAtlasSize;
             m_atlasX += gw + 2;
             if (gh > m_atlasRowH) m_atlasRowH = gh;
-            info.valid = true;
+            info.valid = HasGPUContext();
         }
     }
 
@@ -286,17 +423,9 @@ void MobileRenderer::DrawUIQuad(float x, float y, float width, float height, flo
     m_stats.drawCalls++;
     m_stats.triangles += 2;
 #ifdef __ANDROID__
-    if (!m_initialized || !m_uiProgram) return;
+    if (!HasGPUContext()) return;
     glUseProgram(m_uiProgram);
-    float L = 0.0f, R = static_cast<float>(m_width);
-    float T = 0.0f, B = static_cast<float>(m_height);
-    float proj[16] = {
-        2.0f / (R - L), 0.0f, 0.0f, 0.0f,
-        0.0f, 2.0f / (T - B), 0.0f, 0.0f,
-        0.0f, 0.0f, -1.0f, 0.0f,
-        -(R + L) / (R - L), -(T + B) / (T - B), 0.0f, 1.0f
-    };
-    glUniformMatrix4fv(m_uProjLoc, 1, GL_FALSE, proj);
+    glUniformMatrix4fv(m_uProjLoc, 1, GL_FALSE, m_projection);
     glUniform4f(m_uColorLoc, r, g, b, a);
     glUniform1i(m_uUseTexLoc, 0);
 
@@ -330,17 +459,9 @@ void MobileRenderer::DrawUIText(float x, float y, const std::string& text, float
             m_stats.drawCalls++;
             m_stats.triangles += 2;
 #ifdef __ANDROID__
-            if (m_initialized && m_uiProgram && m_fontAtlasTex) {
+            if (HasGPUContext()) {
                 glUseProgram(m_uiProgram);
-                float L = 0.0f, R = static_cast<float>(m_width);
-                float T = 0.0f, B = static_cast<float>(m_height);
-                float proj[16] = {
-                    2.0f / (R - L), 0.0f, 0.0f, 0.0f,
-                    0.0f, 2.0f / (T - B), 0.0f, 0.0f,
-                    0.0f, 0.0f, -1.0f, 0.0f,
-                    -(R + L) / (R - L), -(T + B) / (T - B), 0.0f, 1.0f
-                };
-                glUniformMatrix4fv(m_uProjLoc, 1, GL_FALSE, proj);
+                glUniformMatrix4fv(m_uProjLoc, 1, GL_FALSE, m_projection);
                 glUniform4f(m_uColorLoc, r, g, b, a);
                 glUniform1i(m_uUseTexLoc, 1);
                 glActiveTexture(GL_TEXTURE0);
@@ -399,6 +520,7 @@ bool MobileRenderer::IsBoxInFrustum(float minX, float minY, float minZ, float ma
 uint32_t MobileRenderer::UploadRGBA8Texture(uint32_t width, uint32_t height, const uint8_t* rgba8) {
     if (!m_initialized || width == 0 || height == 0 || !rgba8) return 0;
 #ifdef __ANDROID__
+    if (!HasGPUContext()) return 0;
     GLuint texId = 0;
     glGenTextures(1, &texId);
     if (texId == 0) return 0;
@@ -410,18 +532,30 @@ uint32_t MobileRenderer::UploadRGBA8Texture(uint32_t width, uint32_t height, con
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, static_cast<GLsizei>(width), static_cast<GLsizei>(height),
                  0, GL_RGBA, GL_UNSIGNED_BYTE, rgba8);
     glBindTexture(GL_TEXTURE_2D, 0);
+    CheckGLError("UploadRGBA8Texture");
+    m_ownedTextures.push_back(static_cast<uint32_t>(texId));
     return static_cast<uint32_t>(texId);
 #else
-    return 1; // Non-Android headless test stub
+    uint32_t stubId = static_cast<uint32_t>(m_ownedTextures.size() + 1);
+    m_ownedTextures.push_back(stubId);
+    return stubId;
 #endif
 }
 
 void MobileRenderer::DeleteTexture(uint32_t texId) {
     if (texId == 0) return;
+    for (auto it = m_ownedTextures.begin(); it != m_ownedTextures.end(); ++it) {
+        if (*it == texId) {
 #ifdef __ANDROID__
-    GLuint id = static_cast<GLuint>(texId);
-    glDeleteTextures(1, &id);
+            if (HasGPUContext()) {
+                GLuint id = static_cast<GLuint>(texId);
+                glDeleteTextures(1, &id);
+            }
 #endif
+            m_ownedTextures.erase(it);
+            return;
+        }
+    }
 }
 
 } // namespace RANMobile

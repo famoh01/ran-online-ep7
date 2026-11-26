@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include "../Foundation/MobileUIKit.h"
 
 namespace RANMobile {
     class NetworkClient;
@@ -20,7 +21,10 @@ enum class LoginAuthState {
     Authenticating,
     LoginAccepted,
     LoginRejected,
-    ConnectionError
+    ConnectionError,
+    // Request was written to the socket, but no EP7 response handler exists.
+    // This is deliberately NOT a successful login.
+    AwaitingServerResponse
 };
 
 class LoginScreen {
@@ -47,10 +51,21 @@ public:
     bool IsSoundEnabled() const { return m_soundEnabled; }
     bool IsMusicEnabled() const { return m_musicEnabled; }
     int GetGraphicsLevel() const { return m_graphicsLevel; }
+    bool IsPortraitLayout() const { return m_screenH > m_screenW; }
+
+    // Presentation-only state; never marks a login as accepted.
+    void SetAuthState(LoginAuthState state, const std::string& message);
+    void SetSafeAreaInsets(float left, float top, float right, float bottom);
+
+    // Exposed for focused input tests; coordinates are virtual design units.
+    RANMobile::UI::UIRect GetPasswordToggleRect() const;
+    RANMobile::UI::UIRect GetLoginButtonRect() const;
 
     void HandleTouchDown(int pointerId, float x, float y);
     void HandleTouchMove(int pointerId, float x, float y);
     void HandleTouchUp(int pointerId, float x, float y);
+    void HandleTouchCancel(int pointerId);
+    void CancelInteraction() { m_activePointerId = -1; m_pressedControl = LoginControl::None; }
     void HandleTextInput(const std::string& utf8);
     void HandleBackspace();
     void Update(float deltaTime);
@@ -60,6 +75,32 @@ public:
     void Draw(RANMobile::MobileRenderer* renderer);
 
 private:
+    enum class LoginControl {
+        None, Username, Password, PasswordToggle, Remember, Login, Register,
+        Settings, Exit, Sound, Music, Graphics, CloseDialog, ConfirmExit, CancelExit
+    };
+
+    struct LoginLayout {
+        float canvasW = 1280.0f;
+        float canvasH = 720.0f;
+        bool portrait = false;
+        RANMobile::UI::UIRect panel;
+        RANMobile::UI::UIRect username;
+        RANMobile::UI::UIRect password;
+        RANMobile::UI::UIRect passwordToggle;
+        RANMobile::UI::UIRect remember;
+        RANMobile::UI::UIRect login;
+        RANMobile::UI::UIRect reg;
+        RANMobile::UI::UIRect settings;
+        RANMobile::UI::UIRect exit;
+        RANMobile::UI::UIRect status;
+    };
+
+    LoginLayout ComputeLayout() const;
+    LoginControl HitControl(float x, float y, const LoginLayout& layout) const;
+    void ApplyControl(LoginControl control);
+    void DrawDialogs(RANMobile::MobileRenderer* renderer, const LoginLayout& layout);
+
     RANMobile::NetworkClient* m_networkClient = nullptr;
     std::string m_gameTitle = "RAN ONLINE EP7";
     std::string m_serverDisplayName = "FAM HAWAII";
@@ -81,5 +122,11 @@ private:
 
     float m_screenW = 1280.0f;
     float m_screenH = 720.0f;
+    float m_animationTime = 0.0f;
+    float m_safeLeft = 0.0f;
+    float m_safeTop = 0.0f;
+    float m_safeRight = 0.0f;
+    float m_safeBottom = 0.0f;
     int m_activePointerId = -1;
+    LoginControl m_pressedControl = LoginControl::None;
 };

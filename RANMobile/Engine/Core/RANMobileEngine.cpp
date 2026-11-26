@@ -6,6 +6,7 @@
 #include "../Camera/MobileCamera.h"
 #include "../Network/NetworkClient.h"
 #include "../../Data/Loader/GameDataLoader.h"
+#include "../../Data/Importer/EP7AssetPipeline.h"
 #include "../../UI/Login/LoginScreen.h"
 #include "../../UI/HUD/MobileHUD.h"
 
@@ -36,9 +37,12 @@ bool RANMobileEngine::Initialize() {
         RANMobile::Logger::Error("RANMobileEngine", "Failed to initialize MobileRenderer");
         return false;
     }
+    m_renderSurfaceReady = m_renderer->HasGPUContext();
+    m_touchSystem->SetViewport(m_renderer->GetWidth(), m_renderer->GetHeight());
 
     m_loginScreen->Initialize(m_networkClient.get());
-    m_mobileHUD->Initialize(1280.0f, 720.0f);
+    m_mobileHUD->Initialize(static_cast<float>(m_renderer->GetDesignWidth()),
+                            static_cast<float>(m_renderer->GetDesignHeight()));
     m_initialized = true;
     RANMobile::Logger::Info("RANMobileEngine", "RANMobileEngine initialized successfully.");
     return true;
@@ -50,7 +54,17 @@ bool RANMobileEngine::LoadGameData(const std::string& path) {
         return false;
     }
     RANMobile::Logger::Info("RANMobileEngine", "Loading EP7 Game Data from: " + path);
-    return m_gameDataLoader->LoadFromDirectory(path);
+    const bool validated = m_gameDataLoader->LoadFromDirectory(path);
+
+    // Asset inspection is read-only; it never generates substitute assets.
+    auto report = std::make_unique<RANMobile::AssetPipelineReport>(
+        RANMobile::EP7AssetPipeline::ScanDirectory(path, m_resourceManager.get()));
+    m_assetReport = std::move(report);
+    return validated;
+}
+
+const RANMobile::AssetPipelineReport* RANMobileEngine::GetAssetPipelineReport() const {
+    return m_assetReport.get();
 }
 
 void RANMobileEngine::Start() {
@@ -81,10 +95,12 @@ void RANMobileEngine::Update(float deltaTime) {
 }
 
 void RANMobileEngine::Render() {
-    if (!m_initialized || !m_running || !m_renderer) {
+    if (!m_initialized || !m_running || !m_renderer || !m_renderSurfaceReady) {
         return;
     }
-    m_renderer->BeginFrame();
+    if (!m_renderer->BeginFrame()) {
+        return;
+    }
     if (m_screenState == EngineScreenState::Login && m_loginScreen) {
         m_loginScreen->Draw(m_renderer.get());
     } else if (m_screenState == EngineScreenState::InGame && m_mobileHUD) {
@@ -96,7 +112,34 @@ void RANMobileEngine::Render() {
 void RANMobileEngine::Resize(int width, int height) {
     if (m_renderer) {
         m_renderer->Resize(width, height);
+        m_renderSurfaceReady = m_renderer->HasGPUContext();
     }
+    if (m_touchSystem) {
+        m_touchSystem->SetViewport(width, height);
+    }
+}
+
+void RANMobileEngine::OnSurfaceCreated(int width, int height) {
+    if (!m_initialized && !Initialize()) {
+        return;
+    }
+    m_renderer->OnSurfaceCreated(width, height);
+    m_renderSurfaceReady = m_renderer->HasGPUContext();
+    m_touchSystem->SetViewport(width, height);
+    m_mobileHUD->Initialize(static_cast<float>(m_renderer->GetDesignWidth()),
+                            static_cast<float>(m_renderer->GetDesignHeight()));
+    Start();
+    RANMobile::Logger::Info("RANMobileEngine", "Surface created; renderer and input viewport updated");
+}
+
+void RANMobileEngine::OnSurfaceLost() {
+    if (!m_initialized) return;
+    m_renderSurfaceReady = false;
+    m_running = false;
+    if (m_renderer) m_renderer->OnSurfaceLost();
+    if (m_touchSystem) m_touchSystem->Clear();
+    if (m_loginScreen) m_loginScreen->CancelInteraction();
+    RANMobile::Logger::Info("RANMobileEngine", "Surface lost; rendering paused, UI state preserved");
 }
 
 void RANMobileEngine::Pause() {
@@ -104,24 +147,41 @@ void RANMobileEngine::Pause() {
 }
 
 void RANMobileEngine::Resume() {
-    if (m_initialized) {
+    if (m_initialized && m_renderSurfaceReady) {
         m_running = true;
     }
 }
 
 void RANMobileEngine::OnTouchDown(int pointerId, float x, float y) {
     if (m_touchSystem) m_touchSystem->OnTouchDown(pointerId, x, y);
-    if (m_loginScreen) m_loginScreen->HandleTouchDown(pointerId, x, y);
+    if (m_loginScreen) {
+        m_loginScreen->HandleTouchDown(pointerId,
+                                       m_touchSystem ? m_touchSystem->ToDesignX(x) : x,
+                                       m_touchSystem ? m_touchSystem->ToDesignY(y) : y);
+    }
 }
 
 void RANMobileEngine::OnTouchMove(int pointerId, float x, float y) {
     if (m_touchSystem) m_touchSystem->OnTouchMove(pointerId, x, y);
-    if (m_loginScreen) m_loginScreen->HandleTouchMove(pointerId, x, y);
+    if (m_loginScreen) {
+        m_loginScreen->HandleTouchMove(pointerId,
+                                       m_touchSystem ? m_touchSystem->ToDesignX(x) : x,
+                                       m_touchSystem ? m_touchSystem->ToDesignY(y) : y);
+    }
 }
 
 void RANMobileEngine::OnTouchUp(int pointerId, float x, float y) {
     if (m_touchSystem) m_touchSystem->OnTouchUp(pointerId, x, y);
-    if (m_loginScreen) m_loginScreen->HandleTouchUp(pointerId, x, y);
+    if (m_loginScreen) {
+        m_loginScreen->HandleTouchUp(pointerId,
+                                     m_touchSystem ? m_touchSystem->ToDesignX(x) : x,
+                                     m_touchSystem ? m_touchSystem->ToDesignY(y) : y);
+    }
+}
+
+void RANMobileEngine::OnTouchCancel(int pointerId, float x, float y) {
+    if (m_touchSystem) m_touchSystem->OnTouchCancel(pointerId, x, y);
+    if (m_loginScreen) m_loginScreen->HandleTouchCancel(pointerId);
 }
 
 void RANMobileEngine::OnTextInput(const std::string& utf8) {
@@ -138,6 +198,7 @@ void RANMobileEngine::Shutdown() {
     }
     RANMobile::Logger::Info("RANMobileEngine", "Shutting down RANMobileEngine...");
     m_running = false;
+    m_renderSurfaceReady = false;
     if (m_networkClient) m_networkClient->Disconnect();
     if (m_renderer) m_renderer->Shutdown();
     if (m_resourceManager) m_resourceManager->UnloadAll();

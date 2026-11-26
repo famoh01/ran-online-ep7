@@ -16,6 +16,7 @@ set(RANMOBILE_SOURCES
     Engine/Network/NetworkClient.cpp
     Data/Validator/DataValidator.cpp
     Data/Importer/EP7AssetImporter.cpp
+    Data/Importer/EP7AssetPipeline.cpp
     Data/Importer/EP7TextureDecoder.cpp
     Data/Importer/EP7WorldCharParser.cpp
     Data/Converter/RANMobileDataConverter.cpp
@@ -30,6 +31,7 @@ set(RANMOBILE_SOURCES
     Client/Quest/QuestManager.cpp
     Client/Map/MapManager.cpp
     Client/Chat/ChatManager.cpp
+    UI/Foundation/MobileUIKit.cpp
     UI/Login/LoginScreen.cpp
     UI/Joystick/VirtualJoystick.cpp
     UI/Buttons/MobileButton.cpp

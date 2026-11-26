@@ -1,5 +1,6 @@
 #include "../Engine/Core/RANMobileEngine.h"
 #include "../Engine/Renderer/MobileRenderer.h"
+#include "../Engine/Resource/ResourceManager.h"
 #include "../Engine/Camera/MobileCamera.h"
 #include "../Engine/Touch/TouchSystem.h"
 #include "../UI/Login/LoginScreen.h"
@@ -32,10 +33,13 @@
 #include "../Engine/Network/EP7Protocol.h"
 #include "../Data/Validator/DataValidator.h"
 #include "../Data/Converter/RANMobileDataConverter.h"
+#include "../Data/Importer/EP7AssetPipeline.h"
 
 #include <cassert>
 #include <iostream>
 #include <cmath>
+#include <filesystem>
+#include <fstream>
 
 int main() {
     std::cout << "=== RAN ONLINE EP7 — FAM HAWAII MOBILE: UNIT & INTEGRATION TESTS ===\n";
@@ -298,6 +302,141 @@ int main() {
         std::string s;
         assert(!br.ReadLengthPrefixedString(s));
         assert(!br.Skip(100));
+    }
+
+    // 21. RenderLayout: aspect-fit, orientation and safe-area conversion
+    {
+        RANMobile::RenderLayout layout;
+        layout.SetPhysicalSize(1280, 720);
+        assert(std::fabs(layout.GetScale() - 1.0f) < 1e-4f);
+        assert(std::fabs(layout.ToDesignX(640.0f) - 640.0f) < 1e-4f);
+        layout.SetPhysicalSize(1920, 1080);
+        assert(std::fabs(layout.GetScale() - 1.5f) < 1e-4f);
+        assert(std::fabs(layout.ToDesignX(960.0f) - 640.0f) < 1e-4f);
+        assert(std::fabs(layout.ToPhysicalY(360.0f) - 540.0f) < 1e-4f);
+        layout.SetPhysicalSize(1080, 1920);
+        assert(layout.IsPortrait());
+        assert(std::fabs(layout.GetDesignWidth() - 720.0f) < 1e-4f);
+        assert(std::fabs(layout.GetDesignHeight() - 1280.0f) < 1e-4f);
+        assert(std::fabs(layout.GetScale() - 1.5f) < 1e-4f);
+        layout.SetSafeAreaInsets(0.0f, 60.0f, 0.0f, 0.0f);
+        assert(layout.GetSafeTop() > 0.0f);
+        assert(layout.IsInsideDesignCanvas(540.0f, 960.0f));
+    }
+
+    // 22. TouchSystem: pointer lifecycle, multi-touch and design conversion
+    {
+        RANMobile::TouchSystem touches;
+        touches.SetViewport(1920, 1080);
+        touches.OnTouchDown(1, 960.0f, 540.0f);
+        touches.OnTouchDown(2, 480.0f, 270.0f);
+        assert(touches.GetActiveTouchCount() == 2);
+        assert(std::fabs(touches.GetTouch(1)->designX - 640.0f) < 1e-4f);
+        assert(std::fabs(touches.GetTouch(2)->designY - 180.0f) < 1e-4f);
+        touches.OnTouchMove(2, 1440.0f, 810.0f);
+        assert(std::fabs(touches.GetTouch(2)->designX - 960.0f) < 1e-4f);
+        assert(std::fabs(touches.GetTouch(2)->deltaX - 960.0f) < 1e-4f);
+        touches.OnTouchMove(99, 10.0f, 10.0f); // unknown pointer ignored
+        assert(touches.GetTouch(99) == nullptr);
+        touches.OnTouchCancel(1, 960.0f, 540.0f);
+        assert(touches.GetActiveTouchCount() == 1);
+        assert(touches.GetLastPhase(1) == RANMobile::TouchPhase::Cancel);
+        touches.OnTouchUp(2, 1440.0f, 810.0f);
+        assert(touches.GetActiveTouchCount() == 0);
+        assert(touches.GetLastPhase(2) == RANMobile::TouchPhase::Up);
+    }
+
+    // 23. Reusable UI foundation: hit testing and target sizing
+    {
+        const RANMobile::UI::UIRect rect{10.0f, 20.0f, 48.0f, 48.0f};
+        assert(RANMobile::UI::HitTest(rect, 30.0f, 40.0f));
+        assert(!RANMobile::UI::HitTest(rect, 70.0f, 40.0f));
+        const auto centered = RANMobile::UI::CenteredRect(1280.0f, 720.0f, 420.0f, 200.0f);
+        assert(std::fabs(centered.x - 430.0f) < 1e-4f);
+        const auto inset = RANMobile::UI::InsetRect(rect, 4.0f);
+        assert(std::fabs(inset.width - 40.0f) < 1e-4f);
+        RANMobile::UI::MobileUITheme theme;
+        assert(theme.minTargetSize >= 48.0f);
+    }
+
+    // 24. Login UI: show/hide password, validation, accurate connection state
+    {
+        auto* ui = engine.GetLoginScreen();
+        ui->SetSafeAreaInsets(0.0f, 0.0f, 0.0f, 0.0f);
+        const auto toggle = ui->GetPasswordToggleRect();
+        assert(toggle.width >= 48.0f || toggle.height >= 44.0f);
+        assert(!ui->IsPasswordVisible());
+        ui->HandleTouchDown(21, toggle.x + toggle.width * 0.5f, toggle.y + toggle.height * 0.5f);
+        assert(ui->IsPasswordVisible());
+        ui->HandleTouchUp(21, toggle.x, toggle.y);
+
+        ui->SetUsername("");
+        ui->SetPassword("");
+        assert(!ui->OnLoginPressed());
+        assert(ui->GetAuthState() == LoginAuthState::LoginRejected);
+        assert(ui->GetStatusMessage() == "ENTER USERNAME AND PASSWORD");
+
+        ui->SetUsername("famuser");
+        ui->SetPassword("secret");
+        assert(!ui->OnLoginPressed()); // no NetworkClient::Connect call in this phase
+        assert(ui->GetAuthState() == LoginAuthState::ConnectionError);
+        assert(ui->GetStatusMessage() == "SERVER NOT CONNECTED");
+        assert(ui->GetAuthState() != LoginAuthState::LoginAccepted);
+
+        // Portrait reflow keeps controls inside the design canvas.
+        engine.Resize(720, 1280);
+        engine.Render();
+        assert(ui->IsPortraitLayout());
+        const auto portraitLogin = ui->GetLoginButtonRect();
+        assert(portraitLogin.x >= 0.0f && portraitLogin.x + portraitLogin.width <= 720.0f);
+        assert(portraitLogin.height >= 48.0f);
+        engine.Resize(1280, 720);
+        engine.Render();
+        assert(!ui->IsPortraitLayout());
+    }
+
+    // 25. Asset pipeline: source-format validation without fabricated assets
+    {
+        auto missing = RANMobile::EP7AssetPipeline::ScanDirectory("/nonexistent_ep7_assets");
+        assert(!missing.rootExists);
+        assert(!missing.ToString().empty());
+
+        namespace fs = std::filesystem;
+        const fs::path tmp = fs::temp_directory_path() / "ranmobile_phase3b_assets";
+        std::error_code ec;
+        fs::remove_all(tmp, ec);
+        fs::create_directories(tmp / "texture", ec);
+        { std::ofstream(tmp / "bad.dds", std::ios::binary) << "NOPE"; }
+        {
+            std::ofstream out(tmp / "texture" / "ok.dds", std::ios::binary);
+            const char header[4] = {'D', 'D', 'S', ' '};
+            out.write(header, 4);
+            for (int i = 4; i < 128; ++i) out.put('\0');
+        }
+        { std::ofstream(tmp / "notes.txt") << "not an EP7 asset"; }
+
+        RANMobile::ResourceManager resources;
+        const auto report = RANMobile::EP7AssetPipeline::ScanDirectory(tmp.string(), &resources);
+        assert(report.rootExists);
+        assert(report.filesScanned == 3);
+        assert(report.accepted == 1);
+        assert(report.rejected == 2);
+        assert(resources.GetResourceCount() == 1);
+        assert(report.acceptedByFormat.count(".dds") == 1);
+        fs::remove_all(tmp, ec);
+    }
+
+    // 26. Renderer lifecycle: surface loss suspends frames, recreation restores them
+    {
+        auto* renderer = engine.GetRenderer();
+        assert(renderer->HasGPUContext());
+        renderer->OnSurfaceLost();
+        assert(!renderer->HasGPUContext());
+        assert(!renderer->BeginFrame());
+        renderer->OnSurfaceCreated(1280, 720);
+        assert(renderer->HasGPUContext());
+        assert(renderer->BeginFrame());
+        renderer->EndFrame();
     }
 
     engine.Shutdown();

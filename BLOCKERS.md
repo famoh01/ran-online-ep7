@@ -81,3 +81,13 @@ Please tell me which blockers to clear and how (provide files/toolchain/server a
 - Recovered template CFG files contain `service_provider 3` (`SP_CHINA`) and come from a source lineage described as different from the Thai client package; they cannot establish the live build flags.
 - **Needed from user**: authoritative deployed server build configuration/edition or a real login-packet capture, plus explicit permission to change the mobile protocol/constants/handshake in a separate later phase. Per task rules, no such change was made and no live handshake was claimed.
 - Non-strict CI compile check `build.yml` `Release_Thailand|Win32` run `45850495046` was in progress at report time. This is compile-only evidence; B8 (GameServer C2011 DirectX header conflict) remains unchanged and un-bypassed.
+
+## Phase 3B update (2026-11-26, implementation phase)
+
+- B1 unchanged: no local JDK/Gradle/Android SDK/NDK, so Android ARM64/APK/AAB verification must run in GitHub Actions. Local g++ native tests are the only sandbox-side execution.
+- B6 unchanged and deliberately not addressed: `LoginScreen` now reports `AwaitingServerResponse` / `SERVER NOT CONNECTED` accurately and never sets `LoginAccepted` from a local action. No protocol constant, payload or handshake was changed.
+- New documented limitation (not a fabricated substitute): `EP7AssetPipeline` counts and registers source-format assets but does **not** decode DirectX formats (`.x`, `.mxf`, `.egp`, `.mtf`, `.wld`, …) for rendering. `MobileRenderer` remains a UI renderer; no original map/character scene is claimed.
+- New documented limitation: Android `DisplayCutout`/safe-area values are not queried from Java; `LoginScreen::SetSafeAreaInsets()` exists but defaults to zero. Soft-keyboard IME UTF-8 commit is still not delivered; only hardware key events are mapped in `native_bridge.cpp`.
+- New documented limitation: the Android manifest still hard-locks landscape even though the UI now reflows to a portrait virtual canvas; enabling rotation is deferred and must not be mistaken for a verified portrait device layout.
+- Verified original PC input mappings (DirectInput `DIK_*` / mouse actions in `RanClientLib/DxLobyStage.cpp` and `RanClientLib/G-Logic/GLCharacter.cpp`) are documented as **unimplemented** mobile actions; no gameplay command or packet was invented.
+- B8 untouched: no GameServer/DirectX compatibility change was attempted.
