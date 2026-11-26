@@ -1,8 +1,9 @@
 #pragma once
 
-#include <string>
-#include <memory>
 #include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace RANMobile {
     class MobileRenderer;
@@ -11,6 +12,7 @@ namespace RANMobile {
     class MobileCamera;
     class NetworkClient;
     class GameDataLoader;
+    class CharacterController;
     struct AssetPipelineReport;
     class EP7SceneRenderer;
     enum class EP7ValidationMode;
@@ -36,6 +38,7 @@ public:
     bool LoadScene(const std::string& root);
     bool LoadScene(const std::string& root, RANMobile::EP7ValidationMode mode);
     bool LoadSceneWithManifest(const std::string& root, const std::string& manifestPath);
+    bool LoadStandaloneWorld(const std::string& root, const std::string& wldFileName);
     const RANMobile::AssetPipelineReport* GetAssetPipelineReport() const;
     RANMobile::EP7SceneRenderer* GetSceneRenderer() const { return m_scene.get(); }
     std::string GetSceneStatus() const;
@@ -67,6 +70,7 @@ public:
 
     LoginScreen* GetLoginScreen() const { return m_loginScreen.get(); }
     RANMobile::MobileHUD* GetMobileHUD() const { return m_mobileHUD.get(); }
+    RANMobile::CharacterController* GetCharacterController() const { return m_character.get(); }
     void SetScreenState(EngineScreenState state) { m_screenState = state; }
     EngineScreenState GetScreenState() const { return m_screenState; }
 
@@ -90,6 +94,9 @@ public:
     RANMobile::GameDataLoader* GetGameDataLoader() const { return m_gameDataLoader.get(); }
 
 private:
+    void SyncCameraOnWorldLoad();
+    void UpdatePinchState();
+
     bool m_initialized = false;
     bool m_running = false;
     bool m_renderSurfaceReady = false;
@@ -102,10 +109,17 @@ private:
     std::unique_ptr<RANMobile::MobileCamera> m_camera;
     std::unique_ptr<RANMobile::NetworkClient> m_networkClient;
     std::unique_ptr<RANMobile::GameDataLoader> m_gameDataLoader;
+    std::unique_ptr<RANMobile::CharacterController> m_character;
     std::unique_ptr<LoginScreen> m_loginScreen;
     std::unique_ptr<RANMobile::MobileHUD> m_mobileHUD;
     std::unique_ptr<RANMobile::AssetPipelineReport> m_assetReport;
     std::unique_ptr<RANMobile::EP7SceneRenderer> m_scene;
+
+    std::vector<int32_t> m_cameraPointers;
+    float m_lastPinchDist = 0.0f;
+    float m_lastPinchMidX = 0.0f;
+    float m_lastPinchMidY = 0.0f;
+
     bool m_showDiagnostics = false;
     EngineScreenState m_screenState = EngineScreenState::Login;
 };

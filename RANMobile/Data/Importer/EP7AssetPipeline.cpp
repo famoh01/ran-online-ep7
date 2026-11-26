@@ -22,13 +22,15 @@ struct FormatRule {
 
 // Extensions are taken from SOURCE_ASSET_INVENTORY.md and the original loaders.
 constexpr FormatRule kSupportedFormats[] = {
-    {".mst", "Map list"},        {".wld", "Map"},          {".lev", "Map"},
+    {".mst", "Map list"},        {".wld", "Map"},          {".wld0", "Map"},
+    {".lev", "Map"},             {".pie", "Piece"},        {".pis", "Piece"},
     {".mnsf", "Monster"},        {".ntk", "NPC talk"},     {".isf", "Item"},
     {".ssf", "Skill"},           {".qst", "Quest"},        {".lst", "Quest list"},
     {".x", "Model"},             {".mxf", "Model"},        {".cps", "Character"},
     {".chf", "Character"},       {".dds", "Texture"},      {".mtf", "Texture"},
-    {".tga", "Texture"},         {".bin", "Animation"},    {".egp", "Effect"},
-    {".wav", "Sound"},           {".ogg", "Sound"}
+    {".tga", "Texture"},         {".jpg", "Texture"},      {".jpeg", "Texture"},
+    {".bin", "Animation"},       {".egp", "Effect"},       {".wav", "Sound"},
+    {".ogg", "Sound"}
 };
 
 const FormatRule* FindRule(const std::string& extension) {

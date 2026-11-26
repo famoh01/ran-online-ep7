@@ -8,7 +8,8 @@ namespace RANMobile {
 enum class EP7TextureFormat {
     Unknown, DXT1, DXT3, DXT5,
     A8R8G8B8, X8R8G8B8, R8G8B8,
-    A1R5G5B5, X1R5G5B5, A4R4G4B4, R5G6B5
+    A1R5G5B5, X1R5G5B5, A4R4G4B4, R5G6B5,
+    TGA, JPEG
 };
 
 // Original TextureContainer distinguishes these modes by D3D format and by
@@ -38,7 +39,7 @@ struct DDSHeaderInfo {
 struct DecodedTexture {
     uint32_t width = 0;
     uint32_t height = 0;
-    std::vector<uint8_t> rgba8; // width * height * 4
+    std::vector<uint8_t> rgba8; // width * height * 4, top-down row-major
     DDSHeaderInfo header;
     EP7AlphaMode alphaMode = EP7AlphaMode::None;
     bool valid = false;
@@ -62,9 +63,21 @@ public:
                                           EP7TextureFormat format,
                                           bool pixelAlpha);
 
-    // Decodes DDS level 0 (DXT1/3/5 plus verified uncompressed formats) to RGBA8.
+    // Decodes DDS level 0 (DXT1/3/5 plus verified uncompressed formats) to top-down RGBA8.
     static DecodedTexture DecodeDDS(const std::vector<uint8_t>& ddsData,
                                     const std::string& sourceName = std::string());
+
+    // Decodes uncompressed/RLE TGA (8/15/16/24/32-bit, top-down or bottom-up) to top-down RGBA8.
+    static DecodedTexture DecodeTGA(const std::vector<uint8_t>& tgaData,
+                                    const std::string& sourceName = std::string());
+
+    // Decodes baseline 8-bit JPEG (SOF0 grayscale or YCbCr 4:4:4/4:2:2/4:2:0) to top-down RGBA8.
+    static DecodedTexture DecodeJPEG(const std::vector<uint8_t>& jpgData,
+                                     const std::string& sourceName = std::string());
+
+    // Dispatches .mtf, .dds, .tga, or .jpg/.jpeg using extension + magic bytes.
+    static DecodedTexture DecodeTextureFile(const std::vector<uint8_t>& rawData,
+                                            const std::string& sourceName);
 };
 
 } // namespace RANMobile

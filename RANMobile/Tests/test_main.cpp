@@ -38,6 +38,7 @@
 #include "../Data/Importer/EP7SerialCodec.h"
 #include "../Data/Importer/EP7SerialFile.h"
 #include "../Data/Importer/EP7SceneData.h"
+#include "../Data/Importer/EP7WorldParser.h"
 #include "../Engine/Scene/EP7SceneRenderer.h"
 
 #include <cassert>
@@ -1338,6 +1339,371 @@ int main() {
             std::cout << "[PHASE 3H] Authentic Phase 3G verification PASSED (24/24 manifest objects, 13,714 B mapslist.mst, 12,654 B innerzone_01.Lev, 1024x512 loading_032.dds)\n";
         } else {
             std::cout << "[PHASE 3H] Authentic Phase 3G local files absent; manifest checks skipped (CI mode)\n";
+        }
+    }
+
+    // 36. Phase 3I: TGA (16/24/32-bpp, RLE, top-down/bottom-up, 16-bit alpha) & baseline JPEG SOF0 + DecodeTextureFile
+    {
+        // Uncompressed 2x1 32-bpp BGRA top-down TGA
+        std::vector<uint8_t> tga32(18 + 8, 0);
+        tga32[2] = 2; // uncompressed true-color
+        tga32[12] = 2; tga32[14] = 1; tga32[16] = 32; tga32[17] = 0x28; // top-down + 8 alpha bits
+        // pixel 0: B=10, G=20, R=30, A=40; pixel 1: B=200, G=150, R=100, A=255
+        tga32[18] = 10; tga32[19] = 20; tga32[20] = 30; tga32[21] = 40;
+        tga32[22] = 200; tga32[23] = 150; tga32[24] = 100; tga32[25] = 255;
+        const auto d32 = RANMobile::EP7TextureDecoder::DecodeTextureFile(tga32, "fx_alpha.tga");
+        assert(d32.valid && d32.width == 2 && d32.height == 1);
+        assert(d32.rgba8[0] == 30 && d32.rgba8[1] == 20 && d32.rgba8[2] == 10 && d32.rgba8[3] == 40);
+        assert(d32.rgba8[4] == 100 && d32.rgba8[5] == 150 && d32.rgba8[6] == 200 && d32.rgba8[7] == 255);
+        assert(d32.alphaMode == RANMobile::EP7AlphaMode::Soft);
+
+        // RLE 2x2 24-bpp bottom-up TGA: row0(bottom)=red(2), row1(top)=green(2)
+        std::vector<uint8_t> tgaRle(18, 0);
+        tgaRle[2] = 10; // RLE true-color
+        tgaRle[12] = 2; tgaRle[14] = 2; tgaRle[16] = 24; tgaRle[17] = 0x00; // bottom-up
+        tgaRle.push_back(0x81); tgaRle.push_back(0); tgaRle.push_back(0); tgaRle.push_back(255); // run=2 red (BGR)
+        tgaRle.push_back(0x81); tgaRle.push_back(0); tgaRle.push_back(255); tgaRle.push_back(0); // run=2 green (BGR)
+        const auto dRle = RANMobile::EP7TextureDecoder::DecodeTGA(tgaRle, "rle_24.tga");
+        assert(dRle.valid && dRle.width == 2 && dRle.height == 2);
+        // top row should be green, bottom row should be red
+        assert(dRle.rgba8[0] == 0 && dRle.rgba8[1] == 255 && dRle.rgba8[2] == 0 && dRle.rgba8[3] == 255);
+        assert(dRle.rgba8[8] == 255 && dRle.rgba8[9] == 0 && dRle.rgba8[10] == 0 && dRle.rgba8[11] == 255);
+
+        // 16-bpp TGA with 1-bit alpha attribute (descriptor & 0x0F == 1)
+        std::vector<uint8_t> tga16(18 + 4, 0);
+        tga16[2] = 2; tga16[12] = 2; tga16[14] = 1; tga16[16] = 16; tga16[17] = 0x21; // top-down + 1 alpha bit
+        // pixel 0: alpha=0 (0x0000); pixel 1: alpha=1 + white (0xFFFF)
+        tga16[18] = 0x00; tga16[19] = 0x00;
+        tga16[20] = 0xFF; tga16[21] = 0xFF;
+        const auto d16 = RANMobile::EP7TextureDecoder::DecodeTGA(tga16, "cutout16.tga");
+        assert(d16.valid && d16.header.hasAlpha);
+        assert(d16.rgba8[3] == 0 && d16.rgba8[7] == 255);
+
+        // Minimal 8x8 grayscale baseline SOF0 JPEG (all-black DC=0, EOB=0, DQT=1)
+        std::vector<uint8_t> jpg;
+        auto putBE16 = [&](uint16_t v) { jpg.push_back(uint8_t(v >> 8)); jpg.push_back(uint8_t(v & 0xFF)); };
+        jpg.push_back(0xFF); jpg.push_back(0xD8); // SOI
+        jpg.push_back(0xFF); jpg.push_back(0xDB); putBE16(67); jpg.push_back(0);
+        for (int i = 0; i < 64; ++i) jpg.push_back(1);
+        jpg.push_back(0xFF); jpg.push_back(0xC0); putBE16(11); jpg.push_back(8); putBE16(8); putBE16(8);
+        jpg.push_back(1); jpg.push_back(1); jpg.push_back(0x11); jpg.push_back(0);
+        // DHT DC id=0: 1 symbol (0x00 -> code 0 len 1)
+        jpg.push_back(0xFF); jpg.push_back(0xC4); putBE16(2 + 17 + 1); jpg.push_back(0x00);
+        jpg.push_back(1); for (int i = 1; i < 16; ++i) jpg.push_back(0); jpg.push_back(0x00);
+        // DHT AC id=0: 1 symbol (0x00 EOB -> code 0 len 1)
+        jpg.push_back(0xFF); jpg.push_back(0xC4); putBE16(2 + 17 + 1); jpg.push_back(0x10);
+        jpg.push_back(1); for (int i = 1; i < 16; ++i) jpg.push_back(0); jpg.push_back(0x00);
+        // SOS: 1 comp, DC/AC 0, spectral 0..63, bit stream: 0 (DC len 0) + 0 (EOB) -> 0b00000000 = 0x00
+        jpg.push_back(0xFF); jpg.push_back(0xDA); putBE16(8);
+        jpg.push_back(1); jpg.push_back(1); jpg.push_back(0x00); jpg.push_back(0); jpg.push_back(63); jpg.push_back(0);
+        jpg.push_back(0x00);
+        jpg.push_back(0xFF); jpg.push_back(0xD9); // EOI
+        const auto dJpg = RANMobile::EP7TextureDecoder::DecodeTextureFile(jpg, "mini.jpg");
+        assert(dJpg.valid && dJpg.width == 8 && dJpg.height == 8);
+        assert(dJpg.header.format == RANMobile::EP7TextureFormat::JPEG);
+        assert(dJpg.rgba8[0] == 128 && dJpg.rgba8[3] == 255); // Y=128 midpoint gray
+
+        // Negative checks: empty, truncated TGA, progressive SOF2 JPEG
+        assert(!RANMobile::EP7TextureDecoder::DecodeTextureFile({}, "empty.tga").valid);
+        assert(!RANMobile::EP7TextureDecoder::DecodeTGA(std::vector<uint8_t>(10, 0), "bad.tga").valid);
+        std::vector<uint8_t> progJpg = {0xFF, 0xD8, 0xFF, 0xC2, 0x00, 0x04, 0x08, 0x00};
+        assert(!RANMobile::EP7TextureDecoder::DecodeJPEG(progJpg).valid);
+    }
+
+    // 37. Phase 3I: MobileCamera LH View/Proj + 6-Plane Frustum Culling + MobileRenderer 3D Mesh Registry & EGL Reset
+    {
+        RANMobile::MobileCamera cam3d;
+        cam3d.SetDistanceBounds(2.0f, 500.0f);
+        cam3d.SetProjectionParams(60.0f, 16.0f / 9.0f, 1.0f, 1000.0f);
+        cam3d.Reset(0.0f, 0.0f, 20.0f, 0.0f, 0.0f, 10.0f);
+
+        float ex = 0.0f, ey = 0.0f, ez = 0.0f;
+        cam3d.GetEyePosition(ex, ey, ez);
+        assert(std::fabs(ex) < 1e-4f && std::fabs(ey) < 1e-4f && std::fabs(ez - (-10.0f)) < 1e-4f);
+
+        float vp[16]{};
+        cam3d.ComputeViewProjectionMatrix(vp);
+        // Point (0, 0, -10 + 1) = (0, 0, -9) is right at nearZ=1 -> z_ndc == -1
+        const float nearZ = -9.0f;
+        const float zClipNear = vp[2] * 0 + vp[6] * 0 + vp[10] * nearZ + vp[14];
+        const float wClipNear = vp[3] * 0 + vp[7] * 0 + vp[11] * nearZ + vp[15];
+        assert(std::fabs((zClipNear / wClipNear) - (-1.0f)) < 1e-4f);
+
+        // Point (0, 0, -10 + 1000) = (0, 0, 990) is right at farZ=1000 -> z_ndc == +1
+        const float farPt = 990.0f;
+        const float zClipFar = vp[2] * 0 + vp[6] * 0 + vp[10] * farPt + vp[14];
+        const float wClipFar = vp[3] * 0 + vp[7] * 0 + vp[11] * farPt + vp[15];
+        assert(std::fabs((zClipFar / wClipFar) - 1.0f) < 1e-4f);
+
+        auto* renderer = engine.GetRenderer();
+        renderer->SetCameraMatrices(cam3d);
+        assert(renderer->IsBoxInFrustum(-2.0f, -2.0f, 8.0f, 2.0f, 2.0f, 12.0f));     // at target -> IN
+        assert(!renderer->IsBoxInFrustum(-2.0f, -2.0f, -40.0f, 2.0f, 2.0f, -25.0f)); // behind camera -> CULLED
+        assert(!renderer->IsBoxInFrustum(400.0f, -2.0f, 8.0f, 410.0f, 2.0f, 12.0f)); // outside right plane -> CULLED
+
+        // Register 3D mesh & world texture, survive OnSurfaceLost/OnSurfaceCreated, render 3D pass
+        const std::vector<RANMobile::EP7WorldVertex> triVerts = {
+            {0.0f, 1.0f, 10.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0xFFFFFFFFu},
+            {1.0f, -1.0f, 10.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f, 0xFFFFFFFFu},
+            {-1.0f, -1.0f, 10.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0xFFFFFFFFu}
+        };
+        const std::vector<uint16_t> triIdx = {0, 1, 2};
+        const size_t meshBefore = renderer->GetMesh3DCount();
+        const uint32_t mHandle = renderer->RegisterMesh3D(triVerts, triIdx);
+        assert(mHandle != 0 && renderer->GetMesh3DCount() == meshBefore + 1);
+        const std::vector<uint8_t> whiteTex(4 * 4 * 4, 255);
+        assert(renderer->LoadWorldTexture("test3i_white", 4, 4, whiteTex));
+        const uint32_t texId = renderer->GetAssetTexture("test3i_white");
+        assert(texId != 0);
+
+        // Simulate EGL context loss & recreation -> mesh & texture both remain intact
+        renderer->OnSurfaceLost();
+        assert(!renderer->HasGPUContext());
+        renderer->OnSurfaceCreated(1280, 720);
+        assert(renderer->HasGPUContext());
+        assert(renderer->GetMesh3DCount() == meshBefore + 1);
+        assert(renderer->GetAssetTexture("test3i_white") != 0);
+
+        assert(renderer->BeginFrame());
+        RANMobile::WorldLightingState lightSt;
+        assert(renderer->BeginWorldPass(cam3d, lightSt));
+        RANMobile::EP7AABB inBox{{-1.0f, -1.0f, 9.5f}, {1.0f, 1.0f, 10.5f}, true};
+        RANMobile::EP7AABB behindBox{{-1.0f, -1.0f, -35.0f}, {1.0f, 1.0f, -25.0f}, true};
+        renderer->DrawMesh3D(mHandle, renderer->GetAssetTexture("test3i_white"),
+                             RANMobile::EP7Mat4::Identity(), inBox);
+        renderer->DrawMesh3D(mHandle, 0, RANMobile::EP7Mat4::Identity(), behindBox);
+        renderer->EndWorldPass();
+        renderer->EndFrame();
+        assert(renderer->GetStats().drawCalls == 1u);
+        assert(renderer->GetStats().triangles == 1u);
+        assert(renderer->GetStats().culledObjects == 1u);
+
+        renderer->UnregisterMesh3D(mHandle);
+        renderer->UnloadAssetTexture("test3i_white");
+        renderer->ClearCamera3D();
+    }
+
+    // 38. Phase 3I: EP7WorldParser negative guards + Multi-Touch ScenePreview/InGame camera & HUD DPI routing
+    {
+        assert(!RANMobile::EP7WorldParser::ParseWld({}).valid);
+        assert(!RANMobile::EP7WorldParser::ParseFullLevel({}).valid);
+        RANMobile::EP7PieceAsset badPiece;
+        std::string pieceErr;
+        assert(!RANMobile::EP7WorldParser::ParsePieceFile("bad.pie", {}, badPiece, &pieceErr));
+        assert(!pieceErr.empty());
+
+        // Multi-touch camera orbit & two-finger pinch in ScenePreview
+        engine.SetScreenState(EngineScreenState::ScenePreview);
+        engine.Resize(1920, 1080);
+        auto* cam = engine.GetCamera();
+        cam->SetDistanceBounds(5.0f, 200.0f);
+        cam->Reset(10.0f, 20.0f, 50.0f, 0.0f, 0.0f, 0.0f);
+        const float startYaw = cam->GetYaw();
+        engine.OnTouchDown(10, 800.0f, 400.0f);
+        engine.OnTouchMove(10, 920.0f, 440.0f);
+        engine.Update(0.5f);
+        assert(cam->GetYaw() > startYaw);
+        engine.OnTouchDown(11, 1020.0f, 440.0f);
+        engine.OnTouchMove(11, 1220.0f, 440.0f); // spread fingers -> zoom in
+        assert(cam->GetDistance() < 50.0f);
+        engine.OnTouchUp(10, 920.0f, 440.0f);
+        engine.OnTouchUp(11, 1220.0f, 440.0f);
+
+        // InGame HUD + simultaneous camera touch + design-space draw calls
+        engine.SetScreenState(EngineScreenState::InGame);
+        engine.Render();
+        assert(engine.GetRenderer()->GetStats().drawCalls > 0);
+        engine.Resize(1280, 720);
+        engine.SetScreenState(EngineScreenState::Login);
+    }
+
+    // 39. Phase 3I: Authentic EP7 3D world, pieces, level, textures & end-to-end 3D render verification
+    {
+        namespace fs = std::filesystem;
+        const fs::path p3iManifest = "external/recovery/phase3i/retrieval_manifest.tsv";
+        const char* forceP3I = std::getenv("RANMOBILE_REQUIRE_AUTHENTIC_PHASE3I");
+        const bool requireP3I = (forceP3I != nullptr && std::string(forceP3I) == "1");
+        const bool hasP3I = fs::exists(p3iManifest);
+        if (requireP3I) {
+            assert(hasP3I);
+        }
+
+        if (hasP3I) {
+            const auto readBin = [](const fs::path& p) {
+                std::ifstream in(p, std::ios::binary | std::ios::ate);
+                assert(in.is_open());
+                const std::streamsize sz = in.tellg();
+                assert(sz >= 0);
+                in.seekg(0, std::ios::beg);
+                std::vector<uint8_t> out(static_cast<size_t>(sz));
+                if (sz > 0) assert(in.read(reinterpret_cast<char*>(out.data()), sz));
+                return out;
+            };
+
+            // Verify all 63 Phase 3I manifest entries against SHA-256 + exact byte length
+            const auto manifest = RANMobile::EP7HashVerify::LoadManifest(p3iManifest.string());
+            assert(manifest.loaded && manifest.entries.size() == 63u);
+            for (const auto& entry : manifest.entries) {
+                assert(!entry.localPath.empty() && fs::exists(entry.localPath));
+                const auto bytes = readBin(entry.localPath);
+                const auto hv = RANMobile::EP7HashVerify::VerifyBytesAgainstManifest(
+                    manifest, entry.repoPath, bytes);
+                assert(hv.valid);
+            }
+
+            // Authentic login.wld (0x0108, 3,098,590 B exact EOF)
+            if (fs::exists("external/recovery/phase3g/authentic/login.wld")) {
+                const auto lwBytes = readBin("external/recovery/phase3g/authentic/login.wld");
+                const auto lw = RANMobile::EP7WorldParser::ParseWld(lwBytes);
+                assert(lw.valid);
+                assert(lw.version == 0x0108u);
+                assert(lw.wldBytesConsumed == 3098590u && lw.wldBytesConsumed == lw.wldFileBytes);
+                assert(lw.terrainBatches.size() == 191u);
+                assert(lw.TotalTerrainVertices() == 15570u);
+                assert(lw.TotalTerrainTriangles() == 10817u);
+                assert(lw.lights.size() == 1u);
+                assert(lw.fog.enabled && std::fabs(lw.fog.fogStart - 1800.0f) < 0.1f &&
+                       std::fabs(lw.fog.fogEnd - 2000.0f) < 0.1f);
+                assert(lw.worldBounds.valid && std::fabs(lw.worldBounds.max.x) < 1e5f);
+            }
+
+            // Authentic innerzone_01.wld + innerzone_01.wld0 (0x0113, exact EOF on both)
+            const auto izWld = readBin("external/recovery/phase3i/authentic/innerzone_01.wld");
+            const auto izWld0 = readBin("external/recovery/phase3i/authentic/innerzone_01.wld0");
+            auto iz = RANMobile::EP7WorldParser::ParseWld(izWld, izWld0);
+            assert(iz.valid && iz.version == 0x0113u);
+            assert(iz.wldBytesConsumed == 1190775u && iz.wld0BytesConsumed == 5808480u);
+            assert(iz.terrainBatches.size() == 140u);
+            assert(iz.TotalTerrainVertices() == 77960u);
+            assert(iz.TotalTerrainTriangles() == 50243u);
+            assert(iz.lights.size() == 49u);
+            assert(iz.navVertexCount == 11364u && iz.navCellCount == 4205u);
+            assert(iz.pieceInstances.size() == 579u);
+            assert(iz.fog.enabled && std::fabs(iz.fog.fogStart - 720.0f) < 0.1f &&
+                   std::fabs(iz.fog.fogEnd - 790.0f) < 0.1f);
+
+            RANMobile::EP7WorldParser::ResolveAndAttachPieces(
+                iz, "external/recovery/phase3i/authentic/piece");
+            assert(iz.pieceAssets.size() == 12u);
+            assert(iz.missingPieceFiles.empty());
+            for (const auto& pa : iz.pieceAssets) {
+                assert(pa.valid && !pa.batches.empty());
+            }
+
+            // Authentic innerzone_01.Lev (0x0200, 12,654 B exact EOF)
+            if (fs::exists("external/recovery/phase3g/authentic/innerzone_01.Lev")) {
+                const auto levBytes = readBin("external/recovery/phase3g/authentic/innerzone_01.Lev");
+                const auto lev = RANMobile::EP7WorldParser::ParseFullLevel(levBytes);
+                assert(lev.valid && lev.bytesConsumed == 12654u);
+                assert(lev.mobSpawns.size() == 44u && lev.gates.size() == 10u);
+            }
+
+            // All 12 authentic .pie / .pis pieces + all 12 Phase 3I textures
+            size_t pieceFilesVerified = 0;
+            for (const auto& entry : fs::directory_iterator("external/recovery/phase3i/authentic/piece")) {
+                if (!entry.is_regular_file()) continue;
+                const auto bytes = readBin(entry.path());
+                RANMobile::EP7PieceAsset piece;
+                assert(RANMobile::EP7WorldParser::ParsePieceFile(
+                    entry.path().filename().string(), bytes, piece));
+                assert(piece.valid && piece.bytesConsumed == bytes.size());
+                ++pieceFilesVerified;
+            }
+            assert(pieceFilesVerified == 12u);
+
+            size_t texturesDecoded = 0;
+            for (const auto& entry : fs::directory_iterator("external/recovery/phase3i/authentic/textures")) {
+                if (!entry.is_regular_file()) continue;
+                const auto bytes = readBin(entry.path());
+                const auto dec = RANMobile::EP7TextureDecoder::DecodeTextureFile(
+                    bytes, entry.path().filename().string());
+                assert(dec.valid && dec.width > 0 && dec.height > 0);
+                ++texturesDecoded;
+            }
+            assert(texturesDecoded == 12u);
+
+            // End-to-end 3D scene load, multi-pass render, frustum culling, and EGL surface recovery
+            if (fs::exists("external/recovery/phase3g/authentic/mapslist.mst") &&
+                fs::exists("external/recovery/phase3g/authentic/innerzone_01.Lev") &&
+                fs::exists("external/recovery/phase3g/authentic/loading_032.dds")) {
+                const fs::path stage3d = fs::temp_directory_path() / "ranmobile_phase3i_3d_stage";
+                std::error_code ec;
+                fs::remove_all(stage3d, ec);
+                fs::create_directories(stage3d / "data" / "glogic" / "level", ec);
+                fs::create_directories(stage3d / "data" / "map", ec);
+                fs::create_directories(stage3d / "data" / "piece", ec);
+                fs::create_directories(stage3d / "textures" / "gui", ec);
+                fs::create_directories(stage3d / "textures" / "map", ec);
+                fs::copy_file("external/recovery/phase3g/authentic/mapslist.mst",
+                              stage3d / "data" / "glogic" / "mapslist.mst", ec);
+                fs::copy_file("external/recovery/phase3g/authentic/innerzone_01.Lev",
+                              stage3d / "data" / "glogic" / "level" / "innerzone_01.Lev", ec);
+                fs::copy_file("external/recovery/phase3g/authentic/loading_032.dds",
+                              stage3d / "textures" / "gui" / "loading_032.dds", ec);
+                fs::copy_file("external/recovery/phase3i/authentic/innerzone_01.wld",
+                              stage3d / "data" / "map" / "innerzone_01.wld", ec);
+                fs::copy_file("external/recovery/phase3i/authentic/innerzone_01.wld0",
+                              stage3d / "data" / "map" / "innerzone_01.wld0", ec);
+                for (const auto& entry : fs::directory_iterator("external/recovery/phase3i/authentic/piece")) {
+                    if (entry.is_regular_file()) {
+                        fs::copy_file(entry.path(), stage3d / "data" / "piece" / entry.path().filename(), ec);
+                    }
+                }
+                for (const auto& entry : fs::directory_iterator("external/recovery/phase3i/authentic/textures")) {
+                    if (entry.is_regular_file()) {
+                        fs::copy_file(entry.path(), stage3d / "textures" / "map" / entry.path().filename(), ec);
+                    }
+                }
+
+                assert(engine.LoadScene(stage3d.string()));
+                const auto* sr = engine.GetSceneRenderer();
+                assert(sr->IsLoaded() && sr->HasWorld3D() && sr->HasPreviewTexture());
+                assert(sr->GetCurrentWorldFile() == "innerzone_01.wld");
+                assert(sr->GetWorldData().pieceAssets.size() == 12u);
+                assert(sr->GetWorldData().missingPieceFiles.empty());
+                assert(sr->GetLoadedTextureCount() >= 5u);
+                assert(sr->GetRegisteredMeshCount() > 140u);
+
+                engine.SetScreenState(EngineScreenState::ScenePreview);
+                engine.SetDiagnosticsVisible(true);
+                engine.Render();
+                const auto stats1 = engine.GetRenderer()->GetStats();
+                assert(stats1.drawCalls > 100u && stats1.triangles > 10000u && stats1.culledObjects > 0u);
+
+                // Rotate camera + move into InGame with HUD and test EGL surface recreation
+                engine.OnTouchDown(1, 500.0f, 360.0f);
+                engine.OnTouchMove(1, 680.0f, 320.0f);
+                engine.OnTouchUp(1, 680.0f, 320.0f);
+                engine.Update(1.0f / 30.0f);
+                engine.SetScreenState(EngineScreenState::InGame);
+                engine.OnSurfaceLost();
+                engine.OnSurfaceCreated(1080, 1920);
+                engine.Render();
+                assert(engine.GetRenderer()->GetStats().drawCalls > 100u);
+
+                engine.SetDiagnosticsVisible(false);
+                engine.SetScreenState(EngineScreenState::Login);
+                engine.Resize(1280, 720);
+                engine.GetSceneRenderer()->Unload(engine.GetRenderer());
+
+                if (fs::exists("external/recovery/phase3g/authentic/login.wld")) {
+                    fs::copy_file("external/recovery/phase3g/authentic/login.wld",
+                                  stage3d / "data" / "map" / "login.wld", ec);
+                    assert(engine.LoadStandaloneWorld(stage3d.string(), "login.wld"));
+                    assert(sr->HasWorld3D() && sr->GetCurrentWorldFile() == "login.wld");
+                    engine.SetScreenState(EngineScreenState::ScenePreview);
+                    engine.Render();
+                    assert(engine.GetRenderer()->GetStats().drawCalls > 50u);
+                    engine.SetScreenState(EngineScreenState::Login);
+                    engine.GetSceneRenderer()->Unload(engine.GetRenderer());
+                }
+
+                fs::remove_all(stage3d, ec);
+            }
+
+            std::cout << "[PHASE 3I] Authentic Phase 3I verification PASSED (63/63 manifest objects, login.wld + innerzone_01.{wld,wld0,Lev} exact EOF, 12/12 .pie/.pis, 12/12 textures, 3D multi-pass render)\n";
+        } else {
+            std::cout << "[PHASE 3I] Authentic Phase 3I local files absent; manifest checks skipped (CI mode)\n";
         }
     }
 

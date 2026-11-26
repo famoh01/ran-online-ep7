@@ -23,6 +23,7 @@ set(RANMOBILE_SOURCES
     Data/Importer/EP7SceneData.cpp
     Data/Importer/EP7TextureDecoder.cpp
     Data/Importer/EP7WorldCharParser.cpp
+    Data/Importer/EP7WorldParser.cpp
     Data/Converter/RANMobileDataConverter.cpp
     Data/Loader/GameDataLoader.cpp
     Data/Loader/ThaiPackLoader.cpp

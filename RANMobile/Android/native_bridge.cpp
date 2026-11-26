@@ -273,7 +273,7 @@ static int32_t HandleInputEvent(struct android_app* app, AInputEvent* event) {
 
         if (masked == AMOTION_EVENT_ACTION_DOWN || masked == AMOTION_EVENT_ACTION_POINTER_DOWN) {
             ctx->engine.OnTouchDown(pointerId, x, y);
-            if (ctx->engine.GetLoginScreen()) {
+            if (ctx->engine.GetScreenState() == EngineScreenState::Login && ctx->engine.GetLoginScreen()) {
                 const LoginFocus focus = ctx->engine.GetLoginScreen()->GetFocus();
                 if (focus == LoginFocus::Username || focus == LoginFocus::Password) {
                     FocusAndroidTextField(ctx->engine.GetLoginScreen(), focus);

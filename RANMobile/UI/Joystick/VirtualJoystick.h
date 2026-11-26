@@ -20,6 +20,9 @@ public:
     float GetAxisX() const { return m_axisX; }
     float GetAxisY() const { return m_axisY; }
     float GetMagnitude() const { return m_magnitude; }
+    float GetCenterX() const { return m_centerX; }
+    float GetCenterY() const { return m_centerY; }
+    float GetRadius() const { return m_radius; }
     bool IsRunning() const { return m_magnitude > 0.65f; }
     bool IsActive() const { return m_active; }
 
