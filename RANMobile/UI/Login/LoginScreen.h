@@ -46,6 +46,8 @@ public:
     const std::string& GetGameTitle() const { return m_gameTitle; }
     const std::string& GetServerDisplayName() const { return m_serverDisplayName; }
     const std::string& GetUsername() const { return m_username; }
+    // Used only by the local Android IME bridge to seed its InputConnection.
+    const std::string& GetPassword() const { return m_password; }
     std::string GetMaskedPassword() const;
     bool GetRememberAccount() const { return m_rememberAccount; }
     LoginFocus GetFocus() const { return m_focus; }

@@ -151,6 +151,8 @@ static void ApplyDisplayCutoutInsets(ANativeActivity* activity, AndroidAppContex
     activity->vm->DetachCurrentThread();
 }
 
+static void ReleaseAndroidInput();
+
 static void HandleAppCmd(struct android_app* app, int32_t cmd) {
     auto* ctx = static_cast<AndroidAppContext*>(app->userData);
     if (!ctx) return;
