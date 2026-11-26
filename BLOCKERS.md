@@ -229,15 +229,19 @@ incompatibilities:
    The shipped files are `0x0106` (engine-compatible) and `0x0114`/`0x0115` (**not in the
    engine source at all**).
    **Update:** all versions the engine source defines are now implemented —
-   `0x0101`–`0x0107`, including the per-version sound-block differences
-   (`SChaSoundData_102`/`_103`/`SChaSoundData`). First complete measurement:
+   `0x0101`–`0x0107`, including the per-version block sizes (302 / 564 / 732 / 840 /
+   840 / 800 / 800) and the fact that 0x0101–0x0104 **end at the header block** with no
+   effect list. Final measurement:
 
    ```
-   pack entries: 2768 parsed, 8892 failed
+   pack entries: 3217 parsed, 8443 failed
      6228 x bin  magic "Anim"
-     2058 x cfg  0x0110   689 x 0x0104   385 x 0x0105   328 x 0x0108
-       34 x cfg  0x0109    10 x 0x0102    10 x 0x0103
+     2058 x cfg  0x0110   1303 x 0x0111   1016 x 0x0114     569 x 0x0115
+      328 x cfg  0x0108    226 x 0x0112     34 x 0x0109
    ```
+
+   Every remaining failure is a format with **no definition in this repository**, not a
+   defect against the engine source.
 
    `0x0108`–`0x0110`, `0x0114`, `0x0115` have no definition in this repository, and the
    `"Anim"` magic appears in no loader. Those two layouts must be recovered from the data
