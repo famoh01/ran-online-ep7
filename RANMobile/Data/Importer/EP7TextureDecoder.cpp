@@ -1,10 +1,18 @@
 #include "EP7TextureDecoder.h"
-#include <cstring>
 #include <algorithm>
+#include <cstring>
 
 namespace RANMobile {
 
 namespace {
+
+constexpr uint32_t kDDSD_MIPMAPCOUNT = 0x00020000;
+constexpr uint32_t kDDPF_ALPHAPIXELS = 0x00000001;
+constexpr uint32_t kDDPF_FOURCC = 0x00000004;
+constexpr uint32_t kFCC_DXT1 = 0x31545844;
+constexpr uint32_t kFCC_DXT3 = 0x33545844;
+constexpr uint32_t kFCC_DXT5 = 0x35545844;
+
 inline uint32_t ReadU32(const uint8_t* p) {
     uint32_t v = 0;
     std::memcpy(&v, p, 4);
@@ -15,6 +23,31 @@ inline uint16_t ReadU16(const uint8_t* p) {
     uint16_t v = 0;
     std::memcpy(&v, p, 2);
     return v;
+}
+
+struct MaskChannel {
+    uint32_t mask = 0;
+    uint32_t shift = 0;
+    uint32_t max = 0;
+};
+
+MaskChannel DescribeMask(uint32_t mask) {
+    MaskChannel ch;
+    ch.mask = mask;
+    if (mask == 0) return ch;
+    while ((mask & 1u) == 0u) {
+        mask >>= 1;
+        ++ch.shift;
+    }
+    ch.max = mask;
+    return ch;
+}
+
+uint8_t ReadChannel(uint32_t pixel, const MaskChannel& ch) {
+    if (ch.mask == 0) return 255;
+    uint32_t value = (pixel & ch.mask) >> ch.shift;
+    if (ch.max == 0) return 0;
+    return static_cast<uint8_t>((value * 255u + ch.max / 2u) / ch.max);
 }
 
 void DecodeRGB565(uint16_t c, uint8_t& r, uint8_t& g, uint8_t& b) {
@@ -57,7 +90,6 @@ void DecodeDXT1Block(const uint8_t* block, uint8_t* outRgba, uint32_t stride) {
 }
 
 void DecodeDXT3Block(const uint8_t* block, uint8_t* outRgba, uint32_t stride) {
-    // 8 bytes explicit 4-bit alpha, followed by 8 bytes DXT1 color
     DecodeDXT1Block(block + 8, outRgba, stride);
     for (uint32_t y = 0; y < 4; ++y) {
         uint16_t rowAlpha = ReadU16(block + y * 2);
@@ -69,7 +101,6 @@ void DecodeDXT3Block(const uint8_t* block, uint8_t* outRgba, uint32_t stride) {
 }
 
 void DecodeDXT5Block(const uint8_t* block, uint8_t* outRgba, uint32_t stride) {
-    // 8 bytes interpolated alpha, followed by 8 bytes DXT1 color
     DecodeDXT1Block(block + 8, outRgba, stride);
     uint8_t a0 = block[0];
     uint8_t a1 = block[1];
@@ -86,9 +117,7 @@ void DecodeDXT5Block(const uint8_t* block, uint8_t* outRgba, uint32_t stride) {
         alphas[7] = 255;
     }
     uint64_t bits = 0;
-    for (int i = 0; i < 6; ++i) {
-        bits |= (static_cast<uint64_t>(block[2 + i]) << (8 * i));
-    }
+    for (int i = 0; i < 6; ++i) bits |= (static_cast<uint64_t>(block[2 + i]) << (8 * i));
     for (uint32_t y = 0; y < 4; ++y) {
         for (uint32_t x = 0; x < 4; ++x) {
             uint32_t code = static_cast<uint32_t>((bits >> (3 * (y * 4 + x))) & 0x7);
@@ -96,9 +125,15 @@ void DecodeDXT5Block(const uint8_t* block, uint8_t* outRgba, uint32_t stride) {
         }
     }
 }
+
+bool ContainsToken(const std::string& name, const char* token) {
+    return name.find(token) != std::string::npos;
+}
+
 } // namespace
 
-bool EP7TextureDecoder::DecryptMTF(const std::vector<uint8_t>& mtfData, std::vector<uint8_t>& outRaw, int& outFileType) {
+bool EP7TextureDecoder::DecryptMTF(const std::vector<uint8_t>& mtfData,
+                                   std::vector<uint8_t>& outRaw, int& outFileType) {
     if (mtfData.size() <= TEX_HEADER_SIZE) return false;
     int nVersion = 0;
     int nSize = 0;
@@ -107,9 +142,10 @@ bool EP7TextureDecoder::DecryptMTF(const std::vector<uint8_t>& mtfData, std::vec
     std::memcpy(&nSize, mtfData.data() + 4, 4);
     std::memcpy(&nFileType, mtfData.data() + 8, 4);
 
-    if (nSize <= 0 || static_cast<size_t>(nSize) > mtfData.size() - TEX_HEADER_SIZE) {
-        return false;
-    }
+    // Original DecryptTexture() requires TEX_VERSION and exact file size
+    // (enginelib/DxCommon/MemoryTexture.cpp:76-88).
+    if (nVersion != TEX_VERSION) return false;
+    if (nSize <= 0 || mtfData.size() != static_cast<size_t>(nSize) + TEX_HEADER_SIZE) return false;
 
     outFileType = nFileType;
     outRaw.resize(static_cast<size_t>(nSize));
@@ -122,45 +158,154 @@ bool EP7TextureDecoder::DecryptMTF(const std::vector<uint8_t>& mtfData, std::vec
     return true;
 }
 
-DecodedTexture EP7TextureDecoder::DecodeDDS(const std::vector<uint8_t>& ddsData) {
+DDSHeaderInfo EP7TextureDecoder::InspectDDS(const std::vector<uint8_t>& data) {
+    DDSHeaderInfo info;
+    if (data.size() < 128 || std::memcmp(data.data(), "DDS ", 4) != 0) {
+        info.error = "NOT A DDS FILE";
+        return info;
+    }
+    info.flags = ReadU32(data.data() + 8);
+    info.height = ReadU32(data.data() + 12);
+    info.width = ReadU32(data.data() + 16);
+    info.depth = ReadU32(data.data() + 24);
+    info.mipMapCount = (info.flags & kDDSD_MIPMAPCOUNT) ? ReadU32(data.data() + 28) : 1;
+    if (info.width == 0 || info.height == 0 || info.width > 4096 || info.height > 4096) {
+        info.error = "INVALID DIMENSIONS";
+        return info;
+    }
+    if (info.depth > 1) {
+        info.error = "VOLUME TEXTURES UNSUPPORTED";
+        return info;
+    }
+    const uint32_t pfSize = ReadU32(data.data() + 76);
+    if (pfSize != 32) {
+        info.error = "INVALID PIXEL FORMAT SIZE";
+        return info;
+    }
+    info.pixelFlags = ReadU32(data.data() + 80);
+    info.fourCC = ReadU32(data.data() + 84);
+    const uint32_t bpp = ReadU32(data.data() + 88);
+    const uint32_t alphaMask = ReadU32(data.data() + 104);
+    info.hasAlpha = (info.pixelFlags & kDDPF_ALPHAPIXELS) != 0 && alphaMask != 0;
+
+    if (info.pixelFlags & kDDPF_FOURCC) {
+        if (info.fourCC == kFCC_DXT1) info.format = EP7TextureFormat::DXT1;
+        else if (info.fourCC == kFCC_DXT3) info.format = EP7TextureFormat::DXT3;
+        else if (info.fourCC == kFCC_DXT5) info.format = EP7TextureFormat::DXT5;
+        else {
+            info.error = "UNSUPPORTED FOURCC";
+            return info;
+        }
+    } else if (bpp == 32 && alphaMask == 0xFF000000 && ReadU32(data.data() + 92) == 0xFF0000) {
+        info.format = EP7TextureFormat::A8R8G8B8;
+    } else if (bpp == 32 && alphaMask == 0) {
+        info.format = EP7TextureFormat::X8R8G8B8;
+    } else if (bpp == 24) {
+        info.format = EP7TextureFormat::R8G8B8;
+    } else if (bpp == 16 && ReadU32(data.data() + 92) == 0xF800 && ReadU32(data.data() + 96) == 0x07E0) {
+        info.format = EP7TextureFormat::R5G6B5;
+    } else if (bpp == 16 && alphaMask == 0x8000) {
+        info.format = EP7TextureFormat::A1R5G5B5;
+    } else if (bpp == 16 && alphaMask == 0xF000) {
+        info.format = EP7TextureFormat::A4R4G4B4;
+    } else {
+        info.error = "UNSUPPORTED UNCOMPRESSED FORMAT";
+        return info;
+    }
+    info.valid = true;
+    return info;
+}
+
+EP7AlphaMode EP7TextureDecoder::AlphaModeFromName(const std::string& name,
+                                                   EP7TextureFormat format,
+                                                   bool pixelAlpha) {
+    // Mirrors TextureContainer::LoadImageData (enginelib/DxCommon/TextureManager.cpp:246-314).
+    const bool a = ContainsToken(name, "_a.");
+    const bool a1 = ContainsToken(name, "_a1.");
+    const bool a2 = ContainsToken(name, "_a2.");
+    if (format == EP7TextureFormat::DXT5) {
+        if (a1) return EP7AlphaMode::Soft01;
+        if (a2) return EP7AlphaMode::Soft02;
+        return EP7AlphaMode::Soft;
+    }
+    if (format == EP7TextureFormat::DXT1) {
+        return (a || a1 || a2) ? EP7AlphaMode::Hard : EP7AlphaMode::None;
+    }
+    if (format == EP7TextureFormat::DXT3 || format == EP7TextureFormat::A8R8G8B8 ||
+        format == EP7TextureFormat::A1R5G5B5 || format == EP7TextureFormat::A4R4G4B4) {
+        return EP7AlphaMode::Hard;
+    }
+    if (pixelAlpha) return EP7AlphaMode::Hard;
+    return EP7AlphaMode::None;
+}
+
+DecodedTexture EP7TextureDecoder::DecodeDDS(const std::vector<uint8_t>& ddsData,
+                                             const std::string& sourceName) {
     DecodedTexture tex;
-    if (ddsData.size() < 128) return tex;
-    if (std::memcmp(ddsData.data(), "DDS ", 4) != 0) return tex;
-
-    uint32_t height = ReadU32(ddsData.data() + 12);
-    uint32_t width = ReadU32(ddsData.data() + 16);
-    uint32_t fourCC = ReadU32(ddsData.data() + 84);
-    if (width == 0 || height == 0 || width > 4096 || height > 4096) return tex;
-
-    tex.width = width;
-    tex.height = height;
-    tex.rgba8.assign(static_cast<size_t>(width) * height * 4, 255);
+    tex.header = InspectDDS(ddsData);
+    if (!tex.header.valid) {
+        tex.error = tex.header.error;
+        return tex;
+    }
+    tex.width = tex.header.width;
+    tex.height = tex.header.height;
+    tex.alphaMode = AlphaModeFromName(sourceName, tex.header.format, tex.header.hasAlpha);
+    tex.rgba8.assign(static_cast<size_t>(tex.width) * tex.height * 4, 255);
 
     const uint8_t* src = ddsData.data() + 128;
-    size_t srcAvail = ddsData.size() - 128;
+    const size_t avail = ddsData.size() - 128;
+    const bool compressed = tex.header.format == EP7TextureFormat::DXT1 ||
+                            tex.header.format == EP7TextureFormat::DXT3 ||
+                            tex.header.format == EP7TextureFormat::DXT5;
+    const size_t neededLevel0 = compressed
+        ? static_cast<size_t>((tex.width + 3) / 4) * ((tex.height + 3) / 4) *
+          (tex.header.format == EP7TextureFormat::DXT1 ? 8 : 16)
+        : static_cast<size_t>(tex.width) * tex.height * 4;
+    if (avail < neededLevel0) {
+        tex.error = "TRUNCATED LEVEL 0 DATA";
+        tex.rgba8.clear();
+        return tex;
+    }
 
-    if (fourCC == 0x31545844 || fourCC == 0x33545844 || fourCC == 0x35545844) { // DXT1 / DXT3 / DXT5
-        uint32_t bw = (width + 3) / 4;
-        uint32_t bh = (height + 3) / 4;
-        size_t blockSize = (fourCC == 0x31545844) ? 8 : 16;
-        if (srcAvail < static_cast<size_t>(bw) * bh * blockSize) return tex;
+    if (compressed) {
+        const uint32_t bw = (tex.width + 3) / 4;
+        const uint32_t bh = (tex.height + 3) / 4;
+        const size_t blockSize = tex.header.format == EP7TextureFormat::DXT1 ? 8 : 16;
         for (uint32_t by = 0; by < bh; ++by) {
             for (uint32_t bx = 0; bx < bw; ++bx) {
                 uint8_t blockRgba[4 * 4 * 4]{};
                 const uint8_t* blk = src + (by * bw + bx) * blockSize;
-                if (fourCC == 0x31545844) DecodeDXT1Block(blk, blockRgba, 16);
-                else if (fourCC == 0x33545844) DecodeDXT3Block(blk, blockRgba, 16);
+                if (tex.header.format == EP7TextureFormat::DXT1) DecodeDXT1Block(blk, blockRgba, 16);
+                else if (tex.header.format == EP7TextureFormat::DXT3) DecodeDXT3Block(blk, blockRgba, 16);
                 else DecodeDXT5Block(blk, blockRgba, 16);
-                for (uint32_t y = 0; y < 4 && (by * 4 + y) < height; ++y) {
-                    for (uint32_t x = 0; x < 4 && (bx * 4 + x) < width; ++x) {
-                        size_t dstIdx = ((by * 4 + y) * width + (bx * 4 + x)) * 4;
-                        std::memcpy(&tex.rgba8[dstIdx], &blockRgba[(y * 4 + x) * 4], 4);
+                for (uint32_t y = 0; y < 4 && (by * 4 + y) < tex.height; ++y) {
+                    for (uint32_t x = 0; x < 4 && (bx * 4 + x) < tex.width; ++x) {
+                        const size_t dst = ((by * 4 + y) * tex.width + (bx * 4 + x)) * 4;
+                        std::memcpy(&tex.rgba8[dst], &blockRgba[(y * 4 + x) * 4], 4);
                     }
                 }
             }
         }
-        tex.valid = true;
+    } else {
+        const MaskChannel r = DescribeMask(ReadU32(ddsData.data() + 92));
+        const MaskChannel g = DescribeMask(ReadU32(ddsData.data() + 96));
+        const MaskChannel b = DescribeMask(ReadU32(ddsData.data() + 100));
+        const MaskChannel a = DescribeMask(ReadU32(ddsData.data() + 104));
+        const uint32_t bytesPerPixel = ReadU32(ddsData.data() + 88) / 8;
+        for (uint32_t y = 0; y < tex.height; ++y) {
+            for (uint32_t x = 0; x < tex.width; ++x) {
+                const size_t off = (static_cast<size_t>(y) * tex.width + x) * bytesPerPixel;
+                uint32_t pixel = 0;
+                std::memcpy(&pixel, src + off, bytesPerPixel);
+                uint8_t* dst = &tex.rgba8[(static_cast<size_t>(y) * tex.width + x) * 4];
+                dst[0] = ReadChannel(pixel, r);
+                dst[1] = ReadChannel(pixel, g);
+                dst[2] = ReadChannel(pixel, b);
+                dst[3] = a.mask ? ReadChannel(pixel, a) : 255;
+            }
+        }
     }
+    tex.valid = true;
     return tex;
 }
 

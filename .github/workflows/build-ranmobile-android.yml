@@ -42,11 +42,15 @@ jobs:
             RANMobile/Engine/Resource/ResourceManager.cpp \
             RANMobile/Engine/Touch/TouchSystem.cpp \
             RANMobile/Engine/Camera/MobileCamera.cpp \
+            RANMobile/Engine/Scene/EP7SceneRenderer.cpp \
             RANMobile/Engine/Animation/AnimationManager.cpp \
             RANMobile/Engine/Audio/AudioManager.cpp \
             RANMobile/Engine/Network/NetworkClient.cpp \
             RANMobile/Data/Validator/DataValidator.cpp \
             RANMobile/Data/Importer/EP7AssetImporter.cpp \
+            RANMobile/Data/Importer/EP7AssetPipeline.cpp \
+            RANMobile/Data/Importer/EP7SerialFile.cpp \
+            RANMobile/Data/Importer/EP7SceneData.cpp \
             RANMobile/Data/Importer/EP7TextureDecoder.cpp \
             RANMobile/Data/Importer/EP7WorldCharParser.cpp \
             RANMobile/Data/Converter/RANMobileDataConverter.cpp \
@@ -61,6 +65,7 @@ jobs:
             RANMobile/Client/Quest/QuestManager.cpp \
             RANMobile/Client/Map/MapManager.cpp \
             RANMobile/Client/Chat/ChatManager.cpp \
+            RANMobile/UI/Foundation/MobileUIKit.cpp \
             RANMobile/UI/Login/LoginScreen.cpp \
             RANMobile/UI/Joystick/VirtualJoystick.cpp \
             RANMobile/UI/Buttons/MobileButton.cpp \

@@ -1,0 +1,194 @@
+name: Strict Build Verification (Original PC + RANMobile Android)
+
+# No continue-on-error: real MSBuild/Gradle exit codes fail the job.
+# Triggered manually or when this workflow itself changes on the recovery branch.
+on:
+  workflow_dispatch:
+    inputs:
+      skip_solution:
+        description: 'Skip the already-verified full solution build (per-project retry only)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  original-windows-source:
+    name: Original PC Client + Servers (strict MSBuild)
+    runs-on: windows-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Build original Smtm2022 solution and each server project (real exit codes)
+        shell: pwsh
+        env:
+          SKIP_SOLUTION: ${{ inputs.skip_solution }}
+        run: |
+          New-Item -ItemType Directory -Force -Path build_logs | Out-Null
+          $results = @()
+          $slnDir = (Get-Location).Path + '\'
+          $projects = @(
+            @{ Name='Smtm2022.sln'; Path='Smtm2022.sln' },
+            @{ Name='LoginServer'; Path='LoginServer/LoginServer.vcxproj' },
+            @{ Name='SessionServer'; Path='SessionServer/SessionServer.vcxproj' },
+            @{ Name='AgentServer'; Path='AgentServer/AgentServer.vcxproj' },
+            @{ Name='FieldServer'; Path='FieldServer/FieldServer.vcxproj' },
+            @{ Name='GameServer'; Path='GameServer/GameServer.vcxproj' }
+          )
+          foreach ($p in $projects) {
+            if ($env:SKIP_SOLUTION -eq 'true' -and $p.Name -eq 'Smtm2022.sln') { continue }
+            $log = "build_logs/$($p.Name).log"
+            Write-Host "=== BUILD $($p.Name) ==="
+            $target = $p.Path
+            if ($p.Name -eq 'GameServer') {
+              # Legacy numeric PCH metadata '3' is rejected by modern MSVC (MSB6011).
+              # Build a temporary CI-only copy; the committed original .vcxproj stays untouched.
+              $xml = [System.IO.File]::ReadAllText($target)
+              $xml = $xml.Replace('<PrecompiledHeader>3</PrecompiledHeader>', '<PrecompiledHeader>NotUsing</PrecompiledHeader>')
+              $target = 'GameServer/GameServer.ci.vcxproj'
+              [System.IO.File]::WriteAllText($target, $xml, (New-Object System.Text.UTF8Encoding($false)))
+            }
+            msbuild $target /m /v:m /p:Configuration=Release /p:Platform=Win32 /p:SolutionDir="$slnDir" /flp:"LogFile=$log;Verbosity=detailed"
+            $code = $LASTEXITCODE
+            $results += "$($p.Name)=$code"
+            Write-Host "$($p.Name) EXIT=$code"
+            if ($code -ne 0) {
+              $lines = @()
+              if (Test-Path $log) {
+                $lines = @(Select-String -Path $log -Pattern 'error [A-Z]+\d+:|fatal error' |
+                  Select-Object -First 3 | ForEach-Object { $_.Line.Trim() })
+              }
+              foreach ($line in $lines) {
+                $safe = $line -replace "`r", ' ' -replace "`n", ' ' -replace '%', '%25'
+                Write-Host "::error title=$($p.Name)::$safe"
+              }
+              Write-Host "::error title=MSBuild result::$($p.Name) exit=$code"
+            } else {
+              Write-Host "::notice title=MSBuild result::$($p.Name) exit=0"
+            }
+          }
+          $results | Set-Content build_logs/results.txt
+          $results | ForEach-Object { Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- $_" }
+          $failed = @($results | Where-Object { $_ -notmatch '=0$' })
+          if ($failed.Count -gt 0) { throw "MSBuild failed: $($failed -join ', ')" }
+
+      - name: Verify original output binaries exist
+        shell: pwsh
+        env:
+          SKIP_SOLUTION: ${{ inputs.skip_solution }}
+        run: |
+          $exes = @(Get-ChildItem -Path . -Recurse -Filter *.exe -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -match '(_RBuildData|_DBuildData|_Bin|\\Bin\\|\\Release\\)' })
+          if ($env:SKIP_SOLUTION -eq 'true') {
+            $exes = @($exes | Where-Object { $_.Name -match '^(Login|Session|Agent|Field|Game)Server' -or $_.FullName -match '\\server\\' })
+          }
+          if ($exes.Count -eq 0) { throw 'No original PC/server .exe output found' }
+          $exes | Sort-Object FullName | ForEach-Object {
+            $line = "$($_.FullName.Replace((Get-Location).Path + '\','')) | $($_.Length) bytes"
+            Write-Host "::notice title=Verified output::$line"
+            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- $line"
+          }
+
+      - name: Preserve build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: strict-original-windows-build-logs
+          path: build_logs/
+
+  ranmobile-linux-tests:
+    name: RANMobile native tests (real data counts)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch small original ThaiPack from authorized release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p external/ep7_release/original external/ep7_release/thaipack_original
+          gh release download ran-ep7-full-v1 --repo famoh01/ran-online-ep7 \
+            --pattern "RAN-EP7-ThaiPack-FamHawaii.zip" --dir external/ep7_release/original
+          unzip -q -o external/ep7_release/original/RAN-EP7-ThaiPack-FamHawaii.zip \
+            -d external/ep7_release/thaipack_original
+          test "$(find external/ep7_release/thaipack_original -name '*.ntk' | wc -l)" -eq 309
+          test "$(find external/ep7_release/thaipack_original -name '*.qst' | wc -l)" -eq 730
+
+      - name: Compile and run Linux C++17 tests
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror \
+            RANMobile/Engine/Core/Logger.cpp RANMobile/Engine/Core/RANMobileEngine.cpp \
+            RANMobile/Engine/Renderer/MobileRenderer.cpp RANMobile/Engine/Resource/ResourceManager.cpp \
+            RANMobile/Engine/Touch/TouchSystem.cpp RANMobile/Engine/Camera/MobileCamera.cpp \
+            RANMobile/Engine/Animation/AnimationManager.cpp RANMobile/Engine/Audio/AudioManager.cpp \
+            RANMobile/Engine/Network/NetworkClient.cpp RANMobile/Data/Validator/DataValidator.cpp \
+            RANMobile/Data/Importer/EP7AssetImporter.cpp RANMobile/Data/Importer/EP7TextureDecoder.cpp \
+            RANMobile/Data/Importer/EP7WorldCharParser.cpp RANMobile/Data/Converter/RANMobileDataConverter.cpp \
+            RANMobile/Data/Loader/GameDataLoader.cpp RANMobile/Data/Loader/ThaiPackLoader.cpp \
+            RANMobile/Client/Login/AuthenticationManager.cpp RANMobile/Client/Character/CharacterSelectManager.cpp \
+            RANMobile/Client/Gameplay/CharacterController.cpp RANMobile/Client/Combat/TargetManager.cpp \
+            RANMobile/Client/Combat/CombatController.cpp RANMobile/Client/Inventory/InventoryManager.cpp \
+            RANMobile/Client/Quest/QuestManager.cpp RANMobile/Client/Map/MapManager.cpp \
+            RANMobile/Client/Chat/ChatManager.cpp RANMobile/UI/Login/LoginScreen.cpp \
+            RANMobile/UI/Joystick/VirtualJoystick.cpp RANMobile/UI/Buttons/MobileButton.cpp \
+            RANMobile/UI/Buttons/MobileSkillButton.cpp RANMobile/UI/HUD/MobileHUD.cpp \
+            RANMobile/UI/Quest/QuestUI.cpp RANMobile/Server/MobileServerHost.cpp \
+            RANMobile/Tests/test_main.cpp -lpthread -o ranmobile_tests
+          ./ranmobile_tests | tee linux_test_output.txt
+
+  ranmobile-android-strict:
+    name: Android ARM64 + APK + AAB (strict)
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r26d
+
+      - name: Build ARM64 native library and verify output
+        run: |
+          cmake -S RANMobile -B build-android-arm64 \
+            -DCMAKE_TOOLCHAIN_FILE=${{ steps.setup-ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake \
+            -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-24
+          cmake --build build-android-arm64 -j
+          test -s build-android-arm64/libranmobile.so
+          sha256sum build-android-arm64/libranmobile.so | tee -a $GITHUB_STEP_SUMMARY
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.5'
+
+      - name: Build Debug APK, Release APK, Release AAB and verify outputs
+        working-directory: RANMobile/Android
+        run: |
+          gradle assembleDebug assembleRelease bundleRelease --no-daemon
+          APK_D=app/build/outputs/apk/debug/app-debug.apk
+          APK_R=app/build/outputs/apk/release/app-release-unsigned.apk
+          AAB_R=app/build/outputs/bundle/release/app-release.aab
+          for f in "$APK_D" "$APK_R" "$AAB_R"; do
+            test -s "$f" || { echo "MISSING OR EMPTY: $f"; exit 1; }
+            echo "$(sha256sum "$f")" | tee -a $GITHUB_STEP_SUMMARY
+          done
+
+      - name: Upload verified Android artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: strict-ranmobile-android-packages
+          path: |
+            RANMobile/Android/app/build/outputs/apk/debug/*.apk
+            RANMobile/Android/app/build/outputs/apk/release/*.apk
+            RANMobile/Android/app/build/outputs/bundle/release/*.aab

@@ -11,9 +11,10 @@
         android:label="RAN ONLINE EP7 - FAM HAWAII"
         android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
         <activity
-            android:name="android.app.NativeActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:name=".RanNativeActivity"
+            android:configChanges="orientation|keyboard|keyboardHidden|screenSize"
             android:screenOrientation="landscape"
+            android:windowSoftInputMode="adjustResize|stateHidden"
             android:exported="true">
             <meta-data android:name="android.app.lib_name" android:value="ranmobile" />
             <intent-filter>

@@ -1,5 +1,6 @@
 #include "../Engine/Core/RANMobileEngine.h"
 #include "../Engine/Renderer/MobileRenderer.h"
+#include "../Engine/Resource/ResourceManager.h"
 #include "../Engine/Camera/MobileCamera.h"
 #include "../Engine/Touch/TouchSystem.h"
 #include "../UI/Login/LoginScreen.h"
@@ -32,10 +33,17 @@
 #include "../Engine/Network/EP7Protocol.h"
 #include "../Data/Validator/DataValidator.h"
 #include "../Data/Converter/RANMobileDataConverter.h"
+#include "../Data/Importer/EP7AssetPipeline.h"
+#include "../Data/Importer/EP7SerialCodec.h"
+#include "../Data/Importer/EP7SerialFile.h"
+#include "../Data/Importer/EP7SceneData.h"
+#include "../Engine/Scene/EP7SceneRenderer.h"
 
 #include <cassert>
 #include <iostream>
 #include <cmath>
+#include <filesystem>
+#include <fstream>
 
 int main() {
     std::cout << "=== RAN ONLINE EP7 — FAM HAWAII MOBILE: UNIT & INTEGRATION TESTS ===\n";
@@ -248,7 +256,7 @@ int main() {
     {
         // Encrypt a 4-byte payload using MemoryTexture.cpp:138-139 rule
         std::vector<uint8_t> mtf(16, 0);
-        int ver = 1, sz = 4, ftype = 0;
+        int ver = 0x100 /* TEX_VERSION */, sz = 4, ftype = 0 /* TEXTURE_DDS */;
         std::memcpy(mtf.data(), &ver, 4);
         std::memcpy(mtf.data() + 4, &sz, 4);
         std::memcpy(mtf.data() + 8, &ftype, 4);
@@ -265,9 +273,12 @@ int main() {
         // Minimal 4x4 DXT1 DDS (128-byte header + 8-byte block)
         std::vector<uint8_t> dds(136, 0);
         std::memcpy(dds.data(), "DDS ", 4);
-        uint32_t h = 4, w = 4, fourcc = 0x31545844;
+        uint32_t flags = 0, h = 4, w = 4, pfSize = 32, pfFlags = 4, fourcc = 0x31545844;
+        std::memcpy(dds.data() + 8, &flags, 4);
         std::memcpy(dds.data() + 12, &h, 4);
         std::memcpy(dds.data() + 16, &w, 4);
+        std::memcpy(dds.data() + 76, &pfSize, 4);
+        std::memcpy(dds.data() + 80, &pfFlags, 4);
         std::memcpy(dds.data() + 84, &fourcc, 4);
         // c0 = 0xF800 (red), c1 = 0x001F (blue), idx = 0 (all pixel 0 -> c0)
         dds[128] = 0x00; dds[129] = 0xF8;
@@ -298,6 +309,374 @@ int main() {
         std::string s;
         assert(!br.ReadLengthPrefixedString(s));
         assert(!br.Skip(100));
+    }
+
+    // 27. Original DDS header metadata, uncompressed decode and alpha rules
+    {
+        std::vector<uint8_t> dds(132, 0);
+        std::memcpy(dds.data(), "DDS ", 4);
+        uint32_t flags = 0x00020000, h = 1, w = 1, depth = 1, mips = 2;
+        uint32_t pfSize = 32, pfFlags = 1, fourcc = 0;
+        uint32_t bpp = 32, rm = 0x00FF0000, gm = 0x0000FF00, bm = 0x000000FF, am = 0xFF000000;
+        std::memcpy(dds.data() + 8, &flags, 4);
+        std::memcpy(dds.data() + 12, &h, 4);
+        std::memcpy(dds.data() + 16, &w, 4);
+        std::memcpy(dds.data() + 24, &depth, 4);
+        std::memcpy(dds.data() + 28, &mips, 4);
+        std::memcpy(dds.data() + 76, &pfSize, 4);
+        std::memcpy(dds.data() + 80, &pfFlags, 4);
+        std::memcpy(dds.data() + 84, &fourcc, 4);
+        std::memcpy(dds.data() + 88, &bpp, 4);
+        std::memcpy(dds.data() + 92, &rm, 4);
+        std::memcpy(dds.data() + 96, &gm, 4);
+        std::memcpy(dds.data() + 100, &bm, 4);
+        std::memcpy(dds.data() + 104, &am, 4);
+        uint32_t pixel = 0x10203040;
+        std::memcpy(dds.data() + 128, &pixel, 4);
+
+        const auto info = RANMobile::EP7TextureDecoder::InspectDDS(dds);
+        assert(info.valid && info.width == 1 && info.height == 1);
+        assert(info.format == RANMobile::EP7TextureFormat::A8R8G8B8);
+        assert(info.mipMapCount == 2 && info.hasAlpha);
+        const auto decoded = RANMobile::EP7TextureDecoder::DecodeDDS(dds, "sample_a.dds");
+        assert(decoded.valid && decoded.rgba8.size() == 4);
+        // With A8R8G8B8 masks, pixel 0x10203040 decodes to R=0x20 G=0x30 B=0x40 A=0x10.
+        assert(decoded.rgba8[0] == 0x20 && decoded.rgba8[1] == 0x30 &&
+               decoded.rgba8[2] == 0x40 && decoded.rgba8[3] == 0x10);
+        assert(decoded.alphaMode == RANMobile::EP7AlphaMode::Hard);
+        assert(RANMobile::EP7TextureDecoder::AlphaModeFromName(
+                   "cutout_a1.dds", RANMobile::EP7TextureFormat::DXT1, false) ==
+               RANMobile::EP7AlphaMode::Hard);
+        assert(RANMobile::EP7TextureDecoder::AlphaModeFromName(
+                   "blend_a2.dds", RANMobile::EP7TextureFormat::DXT5, false) ==
+               RANMobile::EP7AlphaMode::Soft02);
+        assert(RANMobile::EP7TextureDecoder::AlphaModeFromName(
+                   "opaque.dds", RANMobile::EP7TextureFormat::DXT1, false) ==
+               RANMobile::EP7AlphaMode::None);
+        assert(RANMobile::EP7TextureDecoder::AlphaModeFromName(
+                   "decal_a.dds", RANMobile::EP7TextureFormat::DXT3, false) ==
+               RANMobile::EP7AlphaMode::Hard);
+
+        dds[76] = 0; // corrupt DDS_PIXELFORMAT size
+        assert(!RANMobile::EP7TextureDecoder::InspectDDS(dds).valid);
+    }
+
+    // 28. Original CSerialFile byte coding and real ThaiPack serialized files
+    {
+        std::vector<uint8_t> original(256);
+        for (size_t i = 0; i < original.size(); ++i) original[i] = static_cast<uint8_t>(i);
+        std::vector<uint8_t> encoded = original;
+        for (size_t i = 0; i < encoded.size(); ++i) {
+            encoded[i] = RANMobile::EP7Serial::kEncodeTable[i];
+        }
+        RANMobile::EP7Serial::DecodeInPlace(encoded.data(), encoded.size());
+        assert(encoded == original);
+
+        // Synthetic CSerialFile with the exact header layout used by GLLevelFile.
+        std::vector<uint8_t> serial(128 + 4, 0);
+        const std::string serialType = "GLLEVEL";
+        std::memcpy(serial.data(), serialType.data(), serialType.size());
+        const uint32_t serialVersion = 0x0104;
+        std::memcpy(serial.data() + 128, &serialVersion, 4);
+        const std::string payloadText = "hello";
+        const uint32_t payloadLength = static_cast<uint32_t>(payloadText.size() + 1);
+        for (int i = 0; i < 4; ++i) {
+            serial.push_back(RANMobile::EP7Serial::kEncodeTable[
+                static_cast<uint8_t>(payloadLength >> (8 * i))]);
+        }
+        for (size_t i = 0; i <= payloadText.size(); ++i) {
+            const char c = i < payloadText.size() ? payloadText[i] : '\0';
+            serial.push_back(RANMobile::EP7Serial::kEncodeTable[static_cast<uint8_t>(c)]);
+        }
+        const auto view = RANMobile::EP7SerialFile::Read(serial);
+        assert(view.valid && view.fileType == serialType);
+        assert(view.version == serialVersion && RANMobile::EP7SerialFile::IsEncodedVersion(view.version));
+        size_t pos = 0;
+        std::string decodedText;
+        assert(RANMobile::EP7SerialFile::ReadString(view.payload, pos, decodedText, 32));
+        assert(decodedText == payloadText);
+    }
+
+    // 29. mapslist.mst parser: field order from GLMapList::LoadMapList
+    {
+        const std::string text =
+            "; comment\n[MAP_LIST_INFO]\nMapKeySize=20\n[MAP_LIST]\n"
+            "MAP=1,preview.glmap,1,0,0,1,0,0,0,0,0,0,0,0,0,0,Preview Map,bgm,preview.dds,0\n"
+            "MAP=0,unused.glmap,2,0,0,1,0,0,0,0,0,0,0,0,0,0,Unused,bgm,none.dds,0\n";
+        const auto report = RANMobile::EP7MapListParser::Parse(text);
+        assert(report.valid && report.mapKeySize == 20);
+        assert(report.entries.size() == 1);
+        assert(report.entries[0].file == "preview.glmap");
+        assert(report.entries[0].mapName == "Preview Map");
+        assert(report.entries[0].loadingImage == "preview.dds");
+        const auto malformed = RANMobile::EP7MapListParser::Parse(
+            "[MAP_LIST_INFO]\nMapKeySize=20\n[MAP_LIST]\nMAP=1,short.glmap\n");
+        assert(!malformed.valid && !malformed.errors.empty());
+    }
+
+    // 30. .glmap SLEVEL_HEAD parser and real scene metadata preview fixture
+    {
+        namespace fs = std::filesystem;
+        const fs::path tmp = fs::temp_directory_path() / "ranmobile_phase3c_scene";
+        std::error_code ec;
+        fs::remove_all(tmp, ec);
+        fs::create_directories(tmp / "map", ec);
+
+        const std::string wldFile = "preview.wld";
+        const std::string mapName = "Preview Map";
+        std::vector<uint8_t> block;
+        const auto appendU32 = [&block](uint32_t v) {
+            for (int i = 0; i < 4; ++i) block.push_back(static_cast<uint8_t>(v >> (8 * i)));
+        };
+        const auto appendString = [&](const std::string& value) {
+            appendU32(static_cast<uint32_t>(value.size() + 1));
+            block.insert(block.end(), value.begin(), value.end());
+            block.push_back(0);
+        };
+        appendString(wldFile);
+        appendString(mapName);
+        appendU32(1); // BRIGHT
+        appendU32(0); // QUAD_DEFAULT_DIV
+
+        std::vector<uint8_t> payload;
+        const auto appendPayloadU32 = [&payload](uint32_t v) {
+            for (int i = 0; i < 4; ++i) payload.push_back(static_cast<uint8_t>(v >> (8 * i)));
+        };
+        appendPayloadU32(0x0101); // SLEVEL_HEAD::VERSION
+        appendPayloadU32(static_cast<uint32_t>(block.size()));
+        payload.insert(payload.end(), block.begin(), block.end());
+        std::vector<uint8_t> glmap(128, 0);
+        const std::string type = "GLLEVEL";
+        std::memcpy(glmap.data(), type.data(), type.size());
+        const uint32_t fileVersion = 0x0104; // GLLevelFile::VERSION
+        for (int i = 0; i < 4; ++i) glmap.push_back(static_cast<uint8_t>(fileVersion >> (8 * i)));
+        for (uint8_t b : payload) glmap.push_back(RANMobile::EP7Serial::kEncodeTable[b]);
+
+        const auto header = RANMobile::EP7LevelHeaderParser::Parse(glmap);
+        assert(header.valid && header.wldFile == wldFile && header.mapName == mapName);
+        assert(header.fileVersion == 0x0104 && header.headVersion == 0x0101);
+
+        {
+            std::ofstream out(tmp / "mapslist.mst");
+            out << "[MAP_LIST_INFO]\nMapKeySize=20\n[MAP_LIST]\n"
+                << "MAP=1,preview.glmap,1,0,0,1,0,0,0,0,0,0,0,0,0,0,Preview Map,bgm,preview.dds,0\n";
+        }
+        {
+            std::ofstream out(tmp / "map" / "preview.glmap", std::ios::binary);
+            out.write(reinterpret_cast<const char*>(glmap.data()), glmap.size());
+        }
+        {
+            std::vector<uint8_t> dds(136, 0);
+            std::memcpy(dds.data(), "DDS ", 4);
+            uint32_t flags = 0, h = 4, w = 4, pfSize = 32, pfFlags = 4, fourcc = 0x31545844;
+            std::memcpy(dds.data() + 8, &flags, 4);
+            std::memcpy(dds.data() + 12, &h, 4);
+            std::memcpy(dds.data() + 16, &w, 4);
+            std::memcpy(dds.data() + 76, &pfSize, 4);
+            std::memcpy(dds.data() + 80, &pfFlags, 4);
+            std::memcpy(dds.data() + 84, &fourcc, 4);
+            dds[128] = 0; dds[129] = 0xF8; dds[130] = 0x1F; dds[131] = 0;
+            std::ofstream out(tmp / "preview.dds", std::ios::binary);
+            out.write(reinterpret_cast<const char*>(dds.data()), dds.size());
+        }
+
+        RANMobile::EP7SceneRenderer scene;
+        auto* renderer = engine.GetRenderer();
+        const size_t texturesBefore = renderer->GetAssetTextureCount();
+        assert(scene.Load(tmp.string(), renderer, engine.GetResourceManager()));
+        assert(scene.IsLoaded() && scene.HasPreviewTexture());
+        assert(scene.GetIndex().scenes.size() == 1);
+        assert(scene.GetIndex().scenes[0].wldFile == wldFile);
+        assert(renderer->GetAssetTextureCount() == texturesBefore + 1);
+        engine.SetScreenState(EngineScreenState::ScenePreview);
+        const float designW = renderer->GetDesignWidth();
+        const float designH = renderer->GetDesignHeight();
+        engine.SetSafeAreaInsets(24.0f, 48.0f, 24.0f, 24.0f);
+        assert(renderer->GetDesignWidth() == designW && renderer->GetDesignHeight() == designH);
+        engine.Render();
+        engine.SetDiagnosticsVisible(true);
+        engine.Render();
+        engine.SetDiagnosticsVisible(false);
+        engine.SetScreenState(EngineScreenState::Login);
+        scene.Unload(renderer);
+        assert(renderer->GetAssetTextureCount() == texturesBefore);
+        fs::remove_all(tmp, ec);
+    }
+
+    // 21. RenderLayout: aspect-fit, orientation and safe-area conversion
+    {
+        RANMobile::RenderLayout layout;
+        layout.SetPhysicalSize(1280, 720);
+        assert(std::fabs(layout.GetScale() - 1.0f) < 1e-4f);
+        assert(std::fabs(layout.ToDesignX(640.0f) - 640.0f) < 1e-4f);
+        layout.SetPhysicalSize(1920, 1080);
+        assert(std::fabs(layout.GetScale() - 1.5f) < 1e-4f);
+        assert(std::fabs(layout.ToDesignX(960.0f) - 640.0f) < 1e-4f);
+        assert(std::fabs(layout.ToPhysicalY(360.0f) - 540.0f) < 1e-4f);
+        layout.SetPhysicalSize(1080, 1920);
+        assert(layout.IsPortrait());
+        assert(std::fabs(layout.GetDesignWidth() - 720.0f) < 1e-4f);
+        assert(std::fabs(layout.GetDesignHeight() - 1280.0f) < 1e-4f);
+        assert(std::fabs(layout.GetScale() - 1.5f) < 1e-4f);
+        layout.SetSafeAreaInsets(0.0f, 60.0f, 0.0f, 0.0f);
+        assert(layout.GetSafeTop() > 0.0f);
+        assert(layout.IsInsideDesignCanvas(540.0f, 960.0f));
+    }
+
+    // 22. TouchSystem: pointer lifecycle, multi-touch and design conversion
+    {
+        RANMobile::TouchSystem touches;
+        touches.SetViewport(1920, 1080);
+        touches.OnTouchDown(1, 960.0f, 540.0f);
+        touches.OnTouchDown(2, 480.0f, 270.0f);
+        assert(touches.GetActiveTouchCount() == 2);
+        assert(std::fabs(touches.GetTouch(1)->designX - 640.0f) < 1e-4f);
+        assert(std::fabs(touches.GetTouch(2)->designY - 180.0f) < 1e-4f);
+        touches.OnTouchMove(2, 1440.0f, 810.0f);
+        assert(std::fabs(touches.GetTouch(2)->designX - 960.0f) < 1e-4f);
+        assert(std::fabs(touches.GetTouch(2)->deltaX - 960.0f) < 1e-4f);
+        touches.OnTouchMove(99, 10.0f, 10.0f); // unknown pointer ignored
+        assert(touches.GetTouch(99) == nullptr);
+        touches.OnTouchCancel(1, 960.0f, 540.0f);
+        assert(touches.GetActiveTouchCount() == 1);
+        assert(touches.GetLastPhase(1) == RANMobile::TouchPhase::Cancel);
+        touches.OnTouchUp(2, 1440.0f, 810.0f);
+        assert(touches.GetActiveTouchCount() == 0);
+        assert(touches.GetLastPhase(2) == RANMobile::TouchPhase::Up);
+    }
+
+    // 23. Reusable UI foundation: hit testing and target sizing
+    {
+        const RANMobile::UI::UIRect rect{10.0f, 20.0f, 48.0f, 48.0f};
+        assert(RANMobile::UI::HitTest(rect, 30.0f, 40.0f));
+        assert(!RANMobile::UI::HitTest(rect, 70.0f, 40.0f));
+        const auto centered = RANMobile::UI::CenteredRect(1280.0f, 720.0f, 420.0f, 200.0f);
+        assert(std::fabs(centered.x - 430.0f) < 1e-4f);
+        const auto inset = RANMobile::UI::InsetRect(rect, 4.0f);
+        assert(std::fabs(inset.width - 40.0f) < 1e-4f);
+        RANMobile::UI::MobileUITheme theme;
+        assert(theme.minTargetSize >= 48.0f);
+    }
+
+    // 24. Login UI: show/hide password, validation, accurate connection state
+    {
+        auto* ui = engine.GetLoginScreen();
+        ui->SetSafeAreaInsets(0.0f, 0.0f, 0.0f, 0.0f);
+        const auto toggle = ui->GetPasswordToggleRect();
+        assert(toggle.width >= 48.0f || toggle.height >= 44.0f);
+        assert(!ui->IsPasswordVisible());
+        ui->HandleTouchDown(21, toggle.x + toggle.width * 0.5f, toggle.y + toggle.height * 0.5f);
+        assert(ui->IsPasswordVisible());
+        ui->HandleTouchUp(21, toggle.x, toggle.y);
+
+        ui->SetUsername("");
+        ui->SetPassword("");
+        assert(!ui->OnLoginPressed());
+        assert(ui->GetAuthState() == LoginAuthState::LoginRejected);
+        assert(ui->GetStatusMessage() == "ENTER USERNAME AND PASSWORD");
+
+        ui->SetUsername("famuser");
+        ui->SetPassword("secret");
+        assert(!ui->OnLoginPressed()); // no NetworkClient::Connect call in this phase
+        assert(ui->GetAuthState() == LoginAuthState::ConnectionError);
+        assert(ui->GetStatusMessage() == "SERVER NOT CONNECTED");
+        assert(ui->GetAuthState() != LoginAuthState::LoginAccepted);
+
+        // Portrait reflow keeps controls inside the design canvas.
+        engine.Resize(720, 1280);
+        engine.Render();
+        assert(ui->IsPortraitLayout());
+        const auto portraitLogin = ui->GetLoginButtonRect();
+        assert(portraitLogin.x >= 0.0f && portraitLogin.x + portraitLogin.width <= 720.0f);
+        assert(portraitLogin.height >= 48.0f);
+        engine.Resize(1280, 720);
+        engine.Render();
+        assert(!ui->IsPortraitLayout());
+    }
+
+    // 25. Asset pipeline: source-format validation without fabricated assets
+    {
+        auto missing = RANMobile::EP7AssetPipeline::ScanDirectory("/nonexistent_ep7_assets");
+        assert(!missing.rootExists);
+        assert(!missing.ToString().empty());
+
+        namespace fs = std::filesystem;
+        const fs::path tmp = fs::temp_directory_path() / "ranmobile_phase3b_assets";
+        std::error_code ec;
+        fs::remove_all(tmp, ec);
+        fs::create_directories(tmp / "texture", ec);
+        { std::ofstream(tmp / "bad.dds", std::ios::binary) << "NOPE"; }
+        {
+            std::ofstream out(tmp / "texture" / "ok.dds", std::ios::binary);
+            const char header[4] = {'D', 'D', 'S', ' '};
+            out.write(header, 4);
+            for (int i = 4; i < 128; ++i) out.put('\0');
+        }
+        { std::ofstream(tmp / "notes.txt") << "not an EP7 asset"; }
+
+        RANMobile::ResourceManager resources;
+        const auto report = RANMobile::EP7AssetPipeline::ScanDirectory(tmp.string(), &resources);
+        assert(report.rootExists);
+        assert(report.filesScanned == 3);
+        assert(report.accepted == 1);
+        assert(report.rejected == 2);
+        assert(resources.GetResourceCount() == 1);
+        assert(report.acceptedByFormat.count(".dds") == 1);
+        fs::remove_all(tmp, ec);
+    }
+
+    // 26. Renderer lifecycle: surface loss suspends frames, recreation restores them
+    {
+        auto* renderer = engine.GetRenderer();
+        assert(renderer->HasGPUContext());
+        renderer->OnSurfaceLost();
+        assert(!renderer->HasGPUContext());
+        assert(!renderer->BeginFrame());
+        renderer->OnSurfaceCreated(1280, 720);
+        assert(renderer->HasGPUContext());
+        assert(renderer->BeginFrame());
+        renderer->EndFrame();
+    }
+
+    // 31. Android IME UTF-8 text path: full-field replacement, codepoint-aware
+    // deletion, focus transitions and keyboard-responsive layout.
+    {
+        auto* ui = engine.GetLoginScreen();
+        const std::string thai = u8"สวัสดีEP7";
+        ui->SetFocus(LoginFocus::Username);
+        ui->SetFieldText(LoginFocus::Username, thai);
+        assert(ui->GetUsername() == thai);
+
+        ui->HandleTextInput(u8"ก");
+        const std::string mixed = thai + u8"ก";
+        assert(ui->GetUsername() == mixed);
+        ui->HandleBackspace();
+        assert(ui->GetUsername() == thai);
+
+        const std::string overLong = std::string(25, 'A');
+        ui->SetFieldText(LoginFocus::Username, overLong);
+        assert(ui->GetUsername().size() == 20);
+
+        ui->SetFocus(LoginFocus::Password);
+        ui->SetFieldText(LoginFocus::Password, u8"密码🔑");
+        assert(ui->GetMaskedPassword() == "***");
+
+        ui->SetKeyboardVisible(true);
+        assert(ui->IsKeyboardVisible());
+        const auto keyboardLayout = ui->GetLoginButtonRect();
+        assert(keyboardLayout.y + keyboardLayout.height <= 540.0f);
+        ui->SetKeyboardVisible(false);
+        assert(!ui->IsKeyboardVisible());
+
+        ui->SetFocus(LoginFocus::None);
+        engine.OnIMEActionDone();
+        assert(ui->GetAuthState() != LoginAuthState::LoginAccepted);
+        ui->SetUsername("");
+        ui->SetPassword("");
+        ui->SetFocus(LoginFocus::Username);
+        engine.OnIMEActionDone();
+        assert(ui->GetAuthState() == LoginAuthState::LoginRejected);
+        ui->SetFocus(LoginFocus::None);
     }
 
     engine.Shutdown();
