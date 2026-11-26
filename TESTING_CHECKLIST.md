@@ -100,3 +100,14 @@ Android CI:
 - Android native check on verified conflict cases: authentic binary `mapslist.mst` → `valid=NO`, encoded-manifest diagnostic; authentic `innerzone_01.Lev` → `valid=0`, `UNSUPPORTED GLLEVEL VERSION`. Both are expected compatibility findings, not test failures.
 - Regression baseline: `./external/recovery/phase3d_tests` → exit 0, `ALL TESTS PASSED!`. No game source changed.
 - Not performed: local Git LFS fetch, APK/AAB build, device/emulator run, live server login, WLD geometry render, original EXE execution.
+
+## 9. Phase 3H verification (2026-11-26, authentic binary map list & LEV importer)
+
+- Local C++17 build: `g++ -std=c++17 -Wall -Wextra -Werror` across all 37 `RANMobile/` `.cpp` files + `RANMobile/Tests/test_main.cpp` → **exit 0**, 0 warnings (`external/recovery/phase3h_compile.log`, 0 B).
+- Local unit, adversarial, and authentic Phase 3G tests:
+  - `./external/recovery/phase3h_tests` → **exit 0**, `ALL TESTS PASSED!`.
+  - `RANMOBILE_REQUIRE_AUTHENTIC_PHASE3G=1 ./external/recovery/phase3h_tests` → **exit 0**, `[PHASE 3H] Authentic Phase 3G verification PASSED (24/24 manifest objects, 13,714 B mapslist.mst, 12,654 B innerzone_01.Lev, 1024x512 loading_032.dds)` (`external/recovery/phase3h_test_output.txt`).
+  - Verified sections: #30 (`StrictAuthentic` default rejects legacy `0x0104`/INI; explicit `LegacySourceCompat` succeeds), #32 (ByteCrypt bijection/round-trip across `None`/`Old`/`MapsList`/`LevelNew` + FIPS 180-4 SHA-256 vectors + mismatch rejection), #33 (synthetic binary `GLMAPS_LIST 0x0200` + `glmap 0x0200 / SLEVEL_HEAD 0x0102` + case-insensitive asset resolution + manifest tamper rejection), #34 (adversarial suite: truncated headers, INI/JSON rejection, invalid bools, out-of-range IDs/names, path traversal, duplicate IDs/filenames, trailing bytes, `dwNum=0`/`>1000`, block size mismatches, missing-`.Lev` rejection), and #35 (24/24 Phase 3G manifest SHA-256 validation, 13,714/13,714 B authentic `mapslist.mst`, 174/12,654 B authentic `innerzone_01.Lev` + 12,480 B `LOAD_200` remainder check, `login.wld` `LAND.MAN 0x0108`, staged `LoadSceneWithManifest` decoding `loading_032.dds` 1024×512, `requireAllReferencedLevels` failure, and 1-byte `.Lev`/`.dds` corruption rejection).
+- Android CI: GitHub Actions Run **`45882553115`** (`job 140125196382`, duration 3m37s) on commit `2ea77ce3f364a7404d86b351e46febaf9399534a` (`arena/be1e147d-ran-online-ep7`) → **`success`** across Linux C++17 tests, ARM64 NDK `r26d` (`android-24`) build, and Gradle `assembleDebug`/`assembleRelease`/`bundleRelease`. Artifacts: `libranmobile-arm64-v8a` **2,032,860 B**, `ranmobile-android-packages` **1,938,104 B**.
+- Not performed / still unverified: on-device or emulator Android execution, `LOAD_200` subsections beyond `SLEVEL_HEAD`, `.wld` geometry parsing/rendering, live server login, and original `.exe` execution.
+
