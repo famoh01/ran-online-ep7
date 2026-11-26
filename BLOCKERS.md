@@ -29,6 +29,16 @@ Per the master command's iron rules: when a blocker is found, record it here, st
 - Impact: Phase 4 (server/GM compatibility) cannot validate Auth/DB/GM tools against the real schema and configs.
 - **Needed from user**: the actual DB scripts/backups and server cfg files (uploaded to the workspace), or confirmation to document requirements from source code only.
 
+## B5. Raw CI logs and artifact bytes cannot be downloaded here (added in Phase 2)
+
+- Evidence: `gh run view 45809902810 --log` fails with EOF on `results-receiver.actions.githubusercontent.com:443`; GitHub API does provide job/step conclusions and artifact names/sizes (`ranmobile-android-packages` 1,585,823 B; `libranmobile-arm64-v8a` 1,343,383 B; test log 496 B).
+- Impact: CI success/failure and artifact existence are verified, but the actual test output, compiler warnings and artifact contents cannot be inspected in this sandbox. The claim "tests passed" rests on step conclusions and the test source's `ALL TESTS PASSED!` path, not on raw logs.
+- **Needed from user**: access to the log/artifact hosts, or paste/export of the run summary + `test_output.log` from a machine with access. If unavailable, accept API-level build status as the evidence ceiling.
+
+## Phase 2 re-verification note
+
+2026-11-26: B1–B4 were re-confirmed directly (Android env vars/tools absent; release asset host SSL failure; Drive archive sizes over connector cap; backup repo files are LFS pointers with batch API HTTP 403). No new access attempts were made after these failures, per instruction. The functional gaps found in code review (`NetworkClient::Connect()` never called, no character-select screen, no IME Thai text path, no world asset pipeline) are documented in `PROGRESS_REVIEW.md` as work for the next phase; they are not access blockers.
+
 ## Decision requested
 
-Please tell me which blockers to clear and how (provide files/toolchain/server access, or explicitly authorize CI-only/documentation-only continuation for the blocked parts). I will then resume at Phase 2 in small Draft PRs, one phase at a time.
+Please tell me which blockers to clear and how (provide files/toolchain/server access, or explicitly authorize CI-only/documentation-only continuation for the blocked parts). I will then resume at Phase 3 in small Draft PRs, one phase at a time.
