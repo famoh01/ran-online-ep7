@@ -126,3 +126,9 @@ Please tell me which blockers to clear and how (provide files/toolchain/server a
 - **Remaining scene/geometry gaps**: Only `innerzone_01.Lev`, `mapslist.mst`, `login.wld`, and `loading_032.dds` are present locally; the remaining 103 referenced `.Lev` files and `innerzone_01.wld`/`.wld0` geometry files were not downloaded, and no `.wld` geometry parser or playable 3D scene renderer exists yet.
 - **Unchanged blockers**: B1 (no local Android SDK/NDK/JDK or emulator/device execution), B3 (live server auth/login verification), B6/B8 (network protocol uncertainty and GameServer DirectX header conflict), and Android Thai IME hardware/device testing remain unchanged. PR #3 (`arena/075e1725-ran-online-ep7`, `7b355b3`) remains OPEN/DRAFT and untouched.
 
+## Phase 3I update (2026-11-26, authentic 3D world parser & GLES3 scene renderer)
+
+- **Resolved in Phase 3I**: `.wld`/`.wld0` octree geometry parsing (`0x0108`–`0x0114`), `.pie`/`.pis` piece asset parsing, full `.Lev` `LOAD_200` subsection parsing (`GLMobScheduleMan`, `DxLandGateMan`, `DXLANDEFF`, `GLLANDMARK`, `SLEVEL_ETC_FUNC`), TGA (8/16/24/32-bpp + RLE + 16-bpp alpha) and baseline `SOF0` JPEG texture decoding, LH GLES3 3D rendering (`MobileRenderer`), 6-plane frustum + scaled view-distance culling (`MobileCamera`), 4-pass scene streaming (`EP7SceneRenderer`), design-space HUD coordinates (`MobileHUD`), and multi-touch camera/HUD routing (`RANMobileEngine`) are implemented and verified against `63/63` authentic Phase 3I binary objects + Android CI (`45894091238`).
+- **Remaining gaps**: Animated skinned character rendering (`.chf`/`.cps`/`.abl`/`.bin`) is not yet integrated into the 3D scene pass; B1 (no physical Android emulator/device render test in sandbox), B3/B6 (live server auth/login), and B8 (GameServer DirectX header conflict) remain unchanged. PR #3 remains OPEN/DRAFT and untouched.
+
+

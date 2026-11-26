@@ -111,3 +111,16 @@ Android CI:
 - Android CI: GitHub Actions Run **`45882553115`** (`job 140125196382`, duration 3m37s) on commit `2ea77ce3f364a7404d86b351e46febaf9399534a` (`arena/be1e147d-ran-online-ep7`) → **`success`** across Linux C++17 tests, ARM64 NDK `r26d` (`android-24`) build, and Gradle `assembleDebug`/`assembleRelease`/`bundleRelease`. Artifacts: `libranmobile-arm64-v8a` **2,032,860 B**, `ranmobile-android-packages` **1,938,104 B**.
 - Not performed / still unverified: on-device or emulator Android execution, `LOAD_200` subsections beyond `SLEVEL_HEAD`, `.wld` geometry parsing/rendering, live server login, and original `.exe` execution.
 
+## 10. Phase 3I verification (2026-11-26, 3D world parser, TGA/JPEG decoders & GLES3 scene renderer)
+
+- Local C++17 build: `g++ -std=c++17 -O2 -Wall -Wextra -Werror` across all `RANMobile/` sources (including `EP7WorldParser.cpp`) + `RANMobile/Tests/test_main.cpp` → **exit 0**, 0 warnings.
+- Local `__ANDROID__` GLES3 syntax/warning check (`MobileRenderer.cpp`, `EP7SceneRenderer.cpp`, `RANMobileEngine.cpp` with `-D__ANDROID__ -Wall -Wextra -Werror`) → **exit 0**, 0 warnings.
+- Local unit + authentic Phase 3G/3I tests (`RANMOBILE_REQUIRE_AUTHENTIC_PHASE3G=1 RANMOBILE_REQUIRE_AUTHENTIC_PHASE3I=1`): **exit 0**, `ALL TESTS PASSED!` across sections **1–39**:
+  - #36: TGA (`16/24/32`-bpp, RLE, top-down/bottom-up, 16-bpp 1-bit alpha attribute) & baseline `SOF0` JPEG decode + malformed/progressive-`SOF2` rejection.
+  - #37: `MobileCamera` LH `LookAtLH` / `PerspectiveFovLH`, 6-plane Gribb-Hartmann frustum culling, `MobileRenderer` 3D mesh registry, `DrawMesh3D` culling stats, and `OnSurfaceLost()`/`OnSurfaceCreated()` GPU restoration.
+  - #38: `EP7WorldParser` negative/corrupt boundary checks, multi-touch `ScenePreview` 1-finger orbit + 2-finger pinch/pan, and design-space `MobileHUD` `InGame` rendering.
+  - #39: `63/63` Phase 3I manifest SHA-256 verification, `login.wld` (`3,098,590/3,098,590` B exact EOF), `innerzone_01.{wld,wld0,Lev}` (`1,190,775` / `5,808,480` / `12,654` B exact EOF), `12/12` `.pie`/`.pis` pieces, `12/12` Phase 3I textures, staged end-to-end 3D scene load (`140` terrain batches, `579` piece instances, `49` lights), multi-pass `ScenePreview` + `InGame` rendering, `OnSurfaceLost`/`OnSurfaceCreated` recovery, and standalone `login.wld` 3D load/render.
+- Android CI: GitHub Actions Run **`45894091238`** (`job 140163582802`, commit `21f510092e5a1fb81bce7c36bcb20d17e4304056`) → **`success`** across Linux C++17 tests, NDK `r26d` `arm64-v8a` `libranmobile.so` (**2,933,235 B**), and Gradle `assembleDebug`/`assembleRelease`/`bundleRelease` (**2,341,433 B**).
+- Not performed / still unverified: on-device or emulator Android execution, `.chf`/`.cps`/`.bin` skinned character rendering, live server login, and original `.exe` execution.
+
+
