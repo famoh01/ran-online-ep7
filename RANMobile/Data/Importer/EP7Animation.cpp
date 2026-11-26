@@ -529,23 +529,32 @@ EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, boo
         return info;
     }
 
+    // The effect list only exists from 0x0105 onwards. For 0x0101..0x0104 the loader reads
+    // the header struct and STOPS --
+    //     SFile.ReadBuffer ( &OldAnimInfo, sizeof(SANIMCONINFO_104) );
+    // with no dwSize and no per-effect payloads (DxSkinAniManSaveLoad.cpp).
+    // CONFIRMED against authentic data: 689 files of 0x0104 are exactly 840 bytes, 10 of
+    // 0x0102 exactly 564 and 10 of 0x0103 exactly 732 -- the file ends at the header block.
+    if (version < 0x0105) {
+        info.effectCount = 0;
+        info.effectsSkipped = false;
+        info.valid = true;
+        return info;
+    }
+
     uint32_t effectCount = 0;
     if (!stream.ReadU32(effectCount)) {
-        // Diagnose precisely: a file that ends exactly at the header block simply has no
-        // effect list, which is legal (not every style has effects).
         char message[200];
         std::snprintf(message, sizeof(message),
-                      "cfg ends after the 0x%04X header block (%u bytes of payload) with no "
-                      "effect count; file may be truncated",
-                      version, infoSize);
+                      "cfg 0x%04X is truncated: the %u-byte header block is followed by no "
+                      "effect count", version, infoSize);
         info.error = message;
         return info;
     }
     info.effectCount = effectCount;
-    // Per-effect payloads (DxEffAniData::LoadFile) and the 0x0107 trailing DxAniScale block
-    // are not decoded: that needs the effect readers. Nothing after this point is used, so
-    // parsing stops here for every version.
     info.effectsSkipped = (effectCount != 0);
+    // Per-effect payloads (DxEffAniData::LoadFile) and the 0x0107 trailing DxAniScale block
+    // are not decoded: that needs the effect readers. Nothing after this point is used.
 
     info.valid = true;
     return info;

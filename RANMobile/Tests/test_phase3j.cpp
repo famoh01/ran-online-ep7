@@ -319,7 +319,11 @@ std::vector<uint8_t> AnimationCfg(bool loop, uint32_t version = 0x0107) {
         default:     strike(true);  sound(388); break;
     }
 
-    w.U32(0);  // effect count -- every version has one after the header block
+    // The effect count exists only from 0x0105; 0x0101..0x0104 end at the header block
+    // (confirmed against authentic files: 0x0104 ones are exactly 840 bytes).
+    if (version >= 0x0105) {
+        w.U32(0);  // effect count
+    }
     if (version == 0x0107) {
         w.U32(0);  // DxAniScale: map size (0x0107 only)
     }
@@ -642,9 +646,10 @@ void TestAnimation() {
         static const std::map<uint32_t, size_t> kExpected = {
             {0x0101, 302}, {0x0102, 564}, {0x0103, 732}, {0x0104, 840},
             {0x0105, 840}, {0x0106, 800}, {0x0107, 800}};
-        // 0x0107 additionally carries the trailing DxAniScale DWORD, hence the extra 4.
-        const size_t trailing = (version == 0x0107) ? 4 : 0;
-        J_CHECK(cfgBytes.size() - 132 - 4 - trailing == kExpected.at(version));
+        // Exact file sizes: 0x0101..0x0104 end at the header block; 0x0105/0x0106 add the
+        // effect count and 0x0107 adds the DxAniScale DWORD.
+        const size_t trailing = (version >= 0x0105 ? 4 : 0) + (version == 0x0107 ? 4 : 0);
+        J_CHECK(cfgBytes.size() - 132 == kExpected.at(version) + trailing);
         const RANMobile::EP7AnimInfo infoV =
             RANMobile::EP7AnimationReader::ParseInfo(cfgBytes, true, false);
         if (!infoV.valid) {
