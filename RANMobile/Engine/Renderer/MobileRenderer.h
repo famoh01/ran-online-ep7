@@ -16,6 +16,13 @@ struct RenderStats {
     uint32_t instancedBatches = 0;
 };
 
+struct CachedAssetTexture {
+    uint32_t width = 0;
+    uint32_t height = 0;
+    std::vector<uint8_t> rgba8; // retained for re-upload after Android surface recreation
+    uint32_t gpuId = 0;
+};
+
 struct GlyphInfo {
     float u0 = 0.0f, v0 = 0.0f, u1 = 0.0f, v1 = 0.0f;
     float w = 0.0f, h = 0.0f;
@@ -46,7 +53,21 @@ public:
     uint32_t UploadRGBA8Texture(uint32_t width, uint32_t height, const uint8_t* rgba8);
     void DeleteTexture(uint32_t texId);
 
+    // Asset-backed texture cache: one CPU copy per key, re-uploaded on surface recreation.
+    bool LoadAssetTexture(const std::string& key, uint32_t width, uint32_t height,
+                          const std::vector<uint8_t>& rgba8);
+    uint32_t GetAssetTexture(const std::string& key) const;
+    bool HasAssetTexture(const std::string& key) const;
+    void UnloadAssetTexture(const std::string& key);
+    size_t GetAssetTextureCount() const { return m_assetTextures.size(); }
+    void DrawTexturedQuad(float x, float y, float width, float height, uint32_t texId,
+                          float r, float g, float b, float a, float alphaCutoff = 0.0f);
+
     static uint32_t DecodeUTF8(const std::string& text, size_t& index);
+
+    void SetSafeAreaInsets(float left, float top, float right, float bottom) {
+        m_layout.SetSafeAreaInsets(left, top, right, bottom);
+    }
 
     void ApplySettings(const GraphicsSettings& settings);
     const GraphicsSettings& GetSettings() const { return m_settings; }
@@ -84,6 +105,7 @@ private:
     bool m_hasThaiFont = false;
     std::unordered_map<uint32_t, GlyphInfo> m_glyphCache;
     std::vector<uint32_t> m_ownedTextures;
+    std::unordered_map<std::string, CachedAssetTexture> m_assetTextures;
     int m_atlasX = 1;
     int m_atlasY = 1;
     int m_atlasRowH = 0;
@@ -96,6 +118,7 @@ private:
     int32_t m_uProjLoc = -1;
     int32_t m_uColorLoc = -1;
     int32_t m_uUseTexLoc = -1;
+    int32_t m_uAlphaCutoffLoc = -1;
 #endif
 };
 

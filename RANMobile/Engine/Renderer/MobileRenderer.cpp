@@ -36,6 +36,7 @@ precision mediump float;
 uniform vec4 uColor;
 uniform int uUseTexture;
 uniform sampler2D uTex;
+uniform float uAlphaCutoff;
 in vec2 vUV;
 out vec4 FragColor;
 void main() {
@@ -47,6 +48,7 @@ void main() {
     } else {
         FragColor = uColor;
     }
+    if (FragColor.a < uAlphaCutoff) discard;
 }
 )";
 
@@ -173,6 +175,7 @@ bool MobileRenderer::CreateGPUResources() {
     m_uProjLoc = glGetUniformLocation(m_uiProgram, "uProj");
     m_uColorLoc = glGetUniformLocation(m_uiProgram, "uColor");
     m_uUseTexLoc = glGetUniformLocation(m_uiProgram, "uUseTexture");
+    m_uAlphaCutoffLoc = glGetUniformLocation(m_uiProgram, "uAlphaCutoff");
 
     glGenVertexArrays(1, &m_uiVAO);
     glGenBuffers(1, &m_uiVBO);
@@ -201,6 +204,14 @@ bool MobileRenderer::CreateGPUResources() {
     CheckGLError("CreateGPUResources");
 #endif
     m_gpuReady = true;
+    // Re-create any asset textures whose CPU pixels are retained for this purpose.
+    for (auto& entry : m_assetTextures) {
+        const CachedAssetTexture& cached = entry.second;
+        entry.second.gpuId = UploadRGBA8Texture(cached.width, cached.height, cached.rgba8.data());
+        if (entry.second.gpuId == 0) {
+            Logger::Error("MobileRenderer", "Failed to restore asset texture: " + entry.first);
+        }
+    }
     return true;
 }
 
@@ -224,10 +235,12 @@ void MobileRenderer::DestroyGPUResources(bool deleteObjects) {
     m_uProjLoc = -1;
     m_uColorLoc = -1;
     m_uUseTexLoc = -1;
+    m_uAlphaCutoffLoc = -1;
 #else
     (void)deleteObjects;
 #endif
     m_ownedTextures.clear();
+    for (auto& entry : m_assetTextures) entry.second.gpuId = 0;
     m_gpuReady = false;
     ResetGlyphAtlas();
 }
@@ -328,6 +341,7 @@ void MobileRenderer::Shutdown() {
     m_primaryFontData.clear();
     m_thaiFontData.clear();
     m_glyphScratch.clear();
+    m_assetTextures.clear();
     m_hasPrimaryFont = false;
     m_hasThaiFont = false;
     m_initialized = false;
@@ -428,6 +442,7 @@ void MobileRenderer::DrawUIQuad(float x, float y, float width, float height, flo
     glUniformMatrix4fv(m_uProjLoc, 1, GL_FALSE, m_projection);
     glUniform4f(m_uColorLoc, r, g, b, a);
     glUniform1i(m_uUseTexLoc, 0);
+    glUniform1f(m_uAlphaCutoffLoc, 0.0f);
 
     float verts[16] = {
         x, y, 0.0f, 0.0f,
@@ -464,6 +479,7 @@ void MobileRenderer::DrawUIText(float x, float y, const std::string& text, float
                 glUniformMatrix4fv(m_uProjLoc, 1, GL_FALSE, m_projection);
                 glUniform4f(m_uColorLoc, r, g, b, a);
                 glUniform1i(m_uUseTexLoc, 1);
+                glUniform1f(m_uAlphaCutoffLoc, 0.0f);
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, m_fontAtlasTex);
 
@@ -556,6 +572,76 @@ void MobileRenderer::DeleteTexture(uint32_t texId) {
             return;
         }
     }
+}
+
+
+bool MobileRenderer::LoadAssetTexture(const std::string& key, uint32_t width, uint32_t height,
+                                      const std::vector<uint8_t>& rgba8) {
+    if (key.empty() || width == 0 || height == 0 ||
+        rgba8.size() < static_cast<size_t>(width) * height * 4) return false;
+    auto it = m_assetTextures.find(key);
+    if (it != m_assetTextures.end()) {
+        if (it->second.width == width && it->second.height == height &&
+            it->second.rgba8 == rgba8 && it->second.gpuId != 0) return true;
+        if (it->second.gpuId != 0) DeleteTexture(it->second.gpuId);
+    }
+    CachedAssetTexture cached;
+    cached.width = width;
+    cached.height = height;
+    cached.rgba8 = rgba8;
+    cached.gpuId = UploadRGBA8Texture(width, height, cached.rgba8.data());
+    if (cached.gpuId == 0) return false;
+    m_assetTextures[key] = std::move(cached);
+    return true;
+}
+
+uint32_t MobileRenderer::GetAssetTexture(const std::string& key) const {
+    auto it = m_assetTextures.find(key);
+    return it == m_assetTextures.end() ? 0 : it->second.gpuId;
+}
+
+bool MobileRenderer::HasAssetTexture(const std::string& key) const {
+    return GetAssetTexture(key) != 0;
+}
+
+void MobileRenderer::UnloadAssetTexture(const std::string& key) {
+    auto it = m_assetTextures.find(key);
+    if (it == m_assetTextures.end()) return;
+    if (it->second.gpuId != 0) DeleteTexture(it->second.gpuId);
+    m_assetTextures.erase(it);
+}
+
+void MobileRenderer::DrawTexturedQuad(float x, float y, float width, float height,
+                                      uint32_t texId, float r, float g, float b, float a,
+                                      float alphaCutoff) {
+    if (texId == 0) return;
+    m_stats.drawCalls++;
+    m_stats.triangles += 2;
+#ifdef __ANDROID__
+    if (!HasGPUContext()) return;
+    glUseProgram(m_uiProgram);
+    glUniformMatrix4fv(m_uProjLoc, 1, GL_FALSE, m_projection);
+    glUniform4f(m_uColorLoc, r, g, b, a);
+    glUniform1i(m_uUseTexLoc, 2);
+    glUniform1f(m_uAlphaCutoffLoc, alphaCutoff);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(texId));
+    float verts[16] = {
+        x, y, 0.0f, 0.0f,
+        x + width, y, 1.0f, 0.0f,
+        x, y + height, 0.0f, 1.0f,
+        x + width, y + height, 1.0f, 1.0f
+    };
+    glBindVertexArray(m_uiVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_uiVBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(verts), verts);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+#else
+    (void)x; (void)y; (void)width; (void)height; (void)r; (void)g; (void)b; (void)a;
+    (void)alphaCutoff;
+#endif
 }
 
 } // namespace RANMobile

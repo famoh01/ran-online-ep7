@@ -7,6 +7,7 @@
 #include "../Network/NetworkClient.h"
 #include "../../Data/Loader/GameDataLoader.h"
 #include "../../Data/Importer/EP7AssetPipeline.h"
+#include "../Scene/EP7SceneRenderer.h"
 #include "../../UI/Login/LoginScreen.h"
 #include "../../UI/HUD/MobileHUD.h"
 
@@ -30,6 +31,7 @@ bool RANMobileEngine::Initialize() {
     m_camera = std::make_unique<RANMobile::MobileCamera>();
     m_networkClient = std::make_unique<RANMobile::NetworkClient>();
     m_gameDataLoader = std::make_unique<RANMobile::GameDataLoader>();
+    m_scene = std::make_unique<RANMobile::EP7SceneRenderer>();
     m_loginScreen = std::make_unique<LoginScreen>();
     m_mobileHUD = std::make_unique<RANMobile::MobileHUD>();
 
@@ -65,6 +67,23 @@ bool RANMobileEngine::LoadGameData(const std::string& path) {
 
 const RANMobile::AssetPipelineReport* RANMobileEngine::GetAssetPipelineReport() const {
     return m_assetReport.get();
+}
+
+bool RANMobileEngine::LoadScene(const std::string& root) {
+    if (!m_initialized || !m_scene) {
+        RANMobile::Logger::Error("RANMobileEngine", "Cannot LoadScene before Initialize()");
+        return false;
+    }
+    return m_scene->Load(root, m_renderer.get(), m_resourceManager.get());
+}
+
+void RANMobileEngine::SetSafeAreaInsets(float left, float top, float right, float bottom) {
+    if (m_renderer) m_renderer->SetSafeAreaInsets(left, top, right, bottom);
+    if (m_loginScreen) m_loginScreen->SetSafeAreaInsets(left, top, right, bottom);
+}
+
+std::string RANMobileEngine::GetSceneStatus() const {
+    return m_scene ? m_scene->GetStatus() : std::string("NO SCENE SYSTEM");
 }
 
 void RANMobileEngine::Start() {
@@ -105,6 +124,13 @@ void RANMobileEngine::Render() {
         m_loginScreen->Draw(m_renderer.get());
     } else if (m_screenState == EngineScreenState::InGame && m_mobileHUD) {
         m_mobileHUD->Draw(m_renderer.get());
+    } else if (m_screenState == EngineScreenState::ScenePreview && m_scene) {
+        m_scene->Draw(m_renderer.get());
+    }
+    if (m_showDiagnostics) {
+        m_renderer->DrawUIText(12.0f, 12.0f,
+                               "EP7 DIAGNOSTICS | " + GetSceneStatus(), 0.62f,
+                               0.65f, 0.82f, 0.92f, 0.75f);
     }
     m_renderer->EndFrame();
 }
@@ -200,6 +226,7 @@ void RANMobileEngine::Shutdown() {
     m_running = false;
     m_renderSurfaceReady = false;
     if (m_networkClient) m_networkClient->Disconnect();
+    if (m_scene) m_scene->Unload(m_renderer.get());
     if (m_renderer) m_renderer->Shutdown();
     if (m_resourceManager) m_resourceManager->UnloadAll();
     m_initialized = false;

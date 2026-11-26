@@ -34,6 +34,10 @@
 #include "../Data/Validator/DataValidator.h"
 #include "../Data/Converter/RANMobileDataConverter.h"
 #include "../Data/Importer/EP7AssetPipeline.h"
+#include "../Data/Importer/EP7SerialCodec.h"
+#include "../Data/Importer/EP7SerialFile.h"
+#include "../Data/Importer/EP7SceneData.h"
+#include "../Engine/Scene/EP7SceneRenderer.h"
 
 #include <cassert>
 #include <iostream>
@@ -252,7 +256,7 @@ int main() {
     {
         // Encrypt a 4-byte payload using MemoryTexture.cpp:138-139 rule
         std::vector<uint8_t> mtf(16, 0);
-        int ver = 1, sz = 4, ftype = 0;
+        int ver = 0x100 /* TEX_VERSION */, sz = 4, ftype = 0 /* TEXTURE_DDS */;
         std::memcpy(mtf.data(), &ver, 4);
         std::memcpy(mtf.data() + 4, &sz, 4);
         std::memcpy(mtf.data() + 8, &ftype, 4);
@@ -269,9 +273,12 @@ int main() {
         // Minimal 4x4 DXT1 DDS (128-byte header + 8-byte block)
         std::vector<uint8_t> dds(136, 0);
         std::memcpy(dds.data(), "DDS ", 4);
-        uint32_t h = 4, w = 4, fourcc = 0x31545844;
+        uint32_t flags = 0, h = 4, w = 4, pfSize = 32, pfFlags = 4, fourcc = 0x31545844;
+        std::memcpy(dds.data() + 8, &flags, 4);
         std::memcpy(dds.data() + 12, &h, 4);
         std::memcpy(dds.data() + 16, &w, 4);
+        std::memcpy(dds.data() + 76, &pfSize, 4);
+        std::memcpy(dds.data() + 80, &pfFlags, 4);
         std::memcpy(dds.data() + 84, &fourcc, 4);
         // c0 = 0xF800 (red), c1 = 0x001F (blue), idx = 0 (all pixel 0 -> c0)
         dds[128] = 0x00; dds[129] = 0xF8;
@@ -302,6 +309,198 @@ int main() {
         std::string s;
         assert(!br.ReadLengthPrefixedString(s));
         assert(!br.Skip(100));
+    }
+
+    // 27. Original DDS header metadata, uncompressed decode and alpha rules
+    {
+        std::vector<uint8_t> dds(132, 0);
+        std::memcpy(dds.data(), "DDS ", 4);
+        uint32_t flags = 0x00020000, h = 1, w = 1, depth = 1, mips = 2;
+        uint32_t pfSize = 32, pfFlags = 1, fourcc = 0;
+        uint32_t bpp = 32, rm = 0x00FF0000, gm = 0x0000FF00, bm = 0x000000FF, am = 0xFF000000;
+        std::memcpy(dds.data() + 8, &flags, 4);
+        std::memcpy(dds.data() + 12, &h, 4);
+        std::memcpy(dds.data() + 16, &w, 4);
+        std::memcpy(dds.data() + 24, &depth, 4);
+        std::memcpy(dds.data() + 28, &mips, 4);
+        std::memcpy(dds.data() + 76, &pfSize, 4);
+        std::memcpy(dds.data() + 80, &pfFlags, 4);
+        std::memcpy(dds.data() + 84, &fourcc, 4);
+        std::memcpy(dds.data() + 88, &bpp, 4);
+        std::memcpy(dds.data() + 92, &rm, 4);
+        std::memcpy(dds.data() + 96, &gm, 4);
+        std::memcpy(dds.data() + 100, &bm, 4);
+        std::memcpy(dds.data() + 104, &am, 4);
+        uint32_t pixel = 0x10203040;
+        std::memcpy(dds.data() + 128, &pixel, 4);
+
+        const auto info = RANMobile::EP7TextureDecoder::InspectDDS(dds);
+        assert(info.valid && info.width == 1 && info.height == 1);
+        assert(info.format == RANMobile::EP7TextureFormat::A8R8G8B8);
+        assert(info.mipMapCount == 2 && info.hasAlpha);
+        const auto decoded = RANMobile::EP7TextureDecoder::DecodeDDS(dds, "sample_a.dds");
+        assert(decoded.valid && decoded.rgba8.size() == 4);
+        // With A8R8G8B8 masks, pixel 0x10203040 decodes to R=0x20 G=0x30 B=0x40 A=0x10.
+        assert(decoded.rgba8[0] == 0x20 && decoded.rgba8[1] == 0x30 &&
+               decoded.rgba8[2] == 0x40 && decoded.rgba8[3] == 0x10);
+        assert(decoded.alphaMode == RANMobile::EP7AlphaMode::Hard);
+        assert(RANMobile::EP7TextureDecoder::AlphaModeFromName(
+                   "cutout_a1.dds", RANMobile::EP7TextureFormat::DXT1, false) ==
+               RANMobile::EP7AlphaMode::Hard);
+        assert(RANMobile::EP7TextureDecoder::AlphaModeFromName(
+                   "blend_a2.dds", RANMobile::EP7TextureFormat::DXT5, false) ==
+               RANMobile::EP7AlphaMode::Soft02);
+        assert(RANMobile::EP7TextureDecoder::AlphaModeFromName(
+                   "opaque.dds", RANMobile::EP7TextureFormat::DXT1, false) ==
+               RANMobile::EP7AlphaMode::None);
+        assert(RANMobile::EP7TextureDecoder::AlphaModeFromName(
+                   "decal_a.dds", RANMobile::EP7TextureFormat::DXT3, false) ==
+               RANMobile::EP7AlphaMode::Hard);
+
+        dds[76] = 0; // corrupt DDS_PIXELFORMAT size
+        assert(!RANMobile::EP7TextureDecoder::InspectDDS(dds).valid);
+    }
+
+    // 28. Original CSerialFile byte coding and real ThaiPack serialized files
+    {
+        std::vector<uint8_t> original(256);
+        for (size_t i = 0; i < original.size(); ++i) original[i] = static_cast<uint8_t>(i);
+        std::vector<uint8_t> encoded = original;
+        for (size_t i = 0; i < encoded.size(); ++i) {
+            encoded[i] = RANMobile::EP7Serial::kEncodeTable[i];
+        }
+        RANMobile::EP7Serial::DecodeInPlace(encoded.data(), encoded.size());
+        assert(encoded == original);
+
+        // Synthetic CSerialFile with the exact header layout used by GLLevelFile.
+        std::vector<uint8_t> serial(128 + 4, 0);
+        const std::string serialType = "GLLEVEL";
+        std::memcpy(serial.data(), serialType.data(), serialType.size());
+        const uint32_t serialVersion = 0x0104;
+        std::memcpy(serial.data() + 128, &serialVersion, 4);
+        const std::string payloadText = "hello";
+        const uint32_t payloadLength = static_cast<uint32_t>(payloadText.size() + 1);
+        for (int i = 0; i < 4; ++i) {
+            serial.push_back(RANMobile::EP7Serial::kEncodeTable[
+                static_cast<uint8_t>(payloadLength >> (8 * i))]);
+        }
+        for (size_t i = 0; i <= payloadText.size(); ++i) {
+            const char c = i < payloadText.size() ? payloadText[i] : '\0';
+            serial.push_back(RANMobile::EP7Serial::kEncodeTable[static_cast<uint8_t>(c)]);
+        }
+        const auto view = RANMobile::EP7SerialFile::Read(serial);
+        assert(view.valid && view.fileType == serialType);
+        assert(view.version == serialVersion && RANMobile::EP7SerialFile::IsEncodedVersion(view.version));
+        size_t pos = 0;
+        std::string decodedText;
+        assert(RANMobile::EP7SerialFile::ReadString(view.payload, pos, decodedText, 32));
+        assert(decodedText == payloadText);
+    }
+
+    // 29. mapslist.mst parser: field order from GLMapList::LoadMapList
+    {
+        const std::string text =
+            "; comment\n[MAP_LIST_INFO]\nMapKeySize=20\n[MAP_LIST]\n"
+            "MAP=1,preview.glmap,1,0,0,1,0,0,0,0,0,0,0,0,0,0,Preview Map,bgm,preview.dds,0\n"
+            "MAP=0,unused.glmap,2,0,0,1,0,0,0,0,0,0,0,0,0,0,Unused,bgm,none.dds,0\n";
+        const auto report = RANMobile::EP7MapListParser::Parse(text);
+        assert(report.valid && report.mapKeySize == 20);
+        assert(report.entries.size() == 1);
+        assert(report.entries[0].file == "preview.glmap");
+        assert(report.entries[0].mapName == "Preview Map");
+        assert(report.entries[0].loadingImage == "preview.dds");
+        const auto malformed = RANMobile::EP7MapListParser::Parse(
+            "[MAP_LIST_INFO]\nMapKeySize=20\n[MAP_LIST]\nMAP=1,short.glmap\n");
+        assert(!malformed.valid && !malformed.errors.empty());
+    }
+
+    // 30. .glmap SLEVEL_HEAD parser and real scene metadata preview fixture
+    {
+        namespace fs = std::filesystem;
+        const fs::path tmp = fs::temp_directory_path() / "ranmobile_phase3c_scene";
+        std::error_code ec;
+        fs::remove_all(tmp, ec);
+        fs::create_directories(tmp / "map", ec);
+
+        const std::string wldFile = "preview.wld";
+        const std::string mapName = "Preview Map";
+        std::vector<uint8_t> block;
+        const auto appendU32 = [&block](uint32_t v) {
+            for (int i = 0; i < 4; ++i) block.push_back(static_cast<uint8_t>(v >> (8 * i)));
+        };
+        const auto appendString = [&](const std::string& value) {
+            appendU32(static_cast<uint32_t>(value.size() + 1));
+            block.insert(block.end(), value.begin(), value.end());
+            block.push_back(0);
+        };
+        appendString(wldFile);
+        appendString(mapName);
+        appendU32(1); // BRIGHT
+        appendU32(0); // QUAD_DEFAULT_DIV
+
+        std::vector<uint8_t> payload;
+        const auto appendPayloadU32 = [&payload](uint32_t v) {
+            for (int i = 0; i < 4; ++i) payload.push_back(static_cast<uint8_t>(v >> (8 * i)));
+        };
+        appendPayloadU32(0x0101); // SLEVEL_HEAD::VERSION
+        appendPayloadU32(static_cast<uint32_t>(block.size()));
+        payload.insert(payload.end(), block.begin(), block.end());
+        std::vector<uint8_t> glmap(128, 0);
+        const std::string type = "GLLEVEL";
+        std::memcpy(glmap.data(), type.data(), type.size());
+        const uint32_t fileVersion = 0x0104; // GLLevelFile::VERSION
+        for (int i = 0; i < 4; ++i) glmap.push_back(static_cast<uint8_t>(fileVersion >> (8 * i)));
+        for (uint8_t b : payload) glmap.push_back(RANMobile::EP7Serial::kEncodeTable[b]);
+
+        const auto header = RANMobile::EP7LevelHeaderParser::Parse(glmap);
+        assert(header.valid && header.wldFile == wldFile && header.mapName == mapName);
+        assert(header.fileVersion == 0x0104 && header.headVersion == 0x0101);
+
+        {
+            std::ofstream out(tmp / "mapslist.mst");
+            out << "[MAP_LIST_INFO]\nMapKeySize=20\n[MAP_LIST]\n"
+                << "MAP=1,preview.glmap,1,0,0,1,0,0,0,0,0,0,0,0,0,0,Preview Map,bgm,preview.dds,0\n";
+        }
+        {
+            std::ofstream out(tmp / "map" / "preview.glmap", std::ios::binary);
+            out.write(reinterpret_cast<const char*>(glmap.data()), glmap.size());
+        }
+        {
+            std::vector<uint8_t> dds(136, 0);
+            std::memcpy(dds.data(), "DDS ", 4);
+            uint32_t flags = 0, h = 4, w = 4, pfSize = 32, pfFlags = 4, fourcc = 0x31545844;
+            std::memcpy(dds.data() + 8, &flags, 4);
+            std::memcpy(dds.data() + 12, &h, 4);
+            std::memcpy(dds.data() + 16, &w, 4);
+            std::memcpy(dds.data() + 76, &pfSize, 4);
+            std::memcpy(dds.data() + 80, &pfFlags, 4);
+            std::memcpy(dds.data() + 84, &fourcc, 4);
+            dds[128] = 0; dds[129] = 0xF8; dds[130] = 0x1F; dds[131] = 0;
+            std::ofstream out(tmp / "preview.dds", std::ios::binary);
+            out.write(reinterpret_cast<const char*>(dds.data()), dds.size());
+        }
+
+        RANMobile::EP7SceneRenderer scene;
+        auto* renderer = engine.GetRenderer();
+        const size_t texturesBefore = renderer->GetAssetTextureCount();
+        assert(scene.Load(tmp.string(), renderer, engine.GetResourceManager()));
+        assert(scene.IsLoaded() && scene.HasPreviewTexture());
+        assert(scene.GetIndex().scenes.size() == 1);
+        assert(scene.GetIndex().scenes[0].wldFile == wldFile);
+        assert(renderer->GetAssetTextureCount() == texturesBefore + 1);
+        engine.SetScreenState(EngineScreenState::ScenePreview);
+        const float designW = renderer->GetDesignWidth();
+        const float designH = renderer->GetDesignHeight();
+        engine.SetSafeAreaInsets(24.0f, 48.0f, 24.0f, 24.0f);
+        assert(renderer->GetDesignWidth() == designW && renderer->GetDesignHeight() == designH);
+        engine.Render();
+        engine.SetDiagnosticsVisible(true);
+        engine.Render();
+        engine.SetDiagnosticsVisible(false);
+        engine.SetScreenState(EngineScreenState::Login);
+        scene.Unload(renderer);
+        assert(renderer->GetAssetTextureCount() == texturesBefore);
+        fs::remove_all(tmp, ec);
     }
 
     // 21. RenderLayout: aspect-fit, orientation and safe-area conversion

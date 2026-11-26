@@ -12,6 +12,7 @@ namespace RANMobile {
     class NetworkClient;
     class GameDataLoader;
     struct AssetPipelineReport;
+    class EP7SceneRenderer;
 }
 class LoginScreen;
 namespace RANMobile { class MobileHUD; }
@@ -19,7 +20,8 @@ namespace RANMobile { class MobileHUD; }
 enum class EngineScreenState {
     Login,
     CharacterSelect,
-    InGame
+    InGame,
+    ScenePreview
 };
 
 class RANMobileEngine {
@@ -29,7 +31,10 @@ public:
 
     bool Initialize();
     bool LoadGameData(const std::string& path);
+    bool LoadScene(const std::string& root);
     const RANMobile::AssetPipelineReport* GetAssetPipelineReport() const;
+    RANMobile::EP7SceneRenderer* GetSceneRenderer() const { return m_scene.get(); }
+    std::string GetSceneStatus() const;
 
     void Start();
     void Update(float deltaTime);
@@ -56,6 +61,11 @@ public:
     RANMobile::MobileHUD* GetMobileHUD() const { return m_mobileHUD.get(); }
     void SetScreenState(EngineScreenState state) { m_screenState = state; }
     EngineScreenState GetScreenState() const { return m_screenState; }
+
+    void SetSafeAreaInsets(float left, float top, float right, float bottom);
+
+    void SetDiagnosticsVisible(bool visible) { m_showDiagnostics = visible; }
+    bool IsDiagnosticsVisible() const { return m_showDiagnostics; }
 
     bool IsInitialized() const { return m_initialized; }
     bool IsRunning() const { return m_running; }
@@ -87,5 +97,7 @@ private:
     std::unique_ptr<LoginScreen> m_loginScreen;
     std::unique_ptr<RANMobile::MobileHUD> m_mobileHUD;
     std::unique_ptr<RANMobile::AssetPipelineReport> m_assetReport;
+    std::unique_ptr<RANMobile::EP7SceneRenderer> m_scene;
+    bool m_showDiagnostics = false;
     EngineScreenState m_screenState = EngineScreenState::Login;
 };

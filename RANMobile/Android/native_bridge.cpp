@@ -17,6 +17,7 @@ struct AndroidAppContext {
     EGLSurface surface = EGL_NO_SURFACE;
     EGLContext context = EGL_NO_CONTEXT;
     bool hasWindow = false;
+    bool keyboardVisible = false;
 };
 
 static void InitEGL(AndroidAppContext* ctx, ANativeWindow* window) {
@@ -86,14 +87,98 @@ static void TermEGL(AndroidAppContext* ctx) {
     ctx->hasWindow = false;
 }
 
+// Apply Android DisplayCutout safe-area insets (API 28+) through JNI. Missing
+// classes, older APIs and JNI errors degrade to zero insets without crashing.
+static void ApplyDisplayCutoutInsets(ANativeActivity* activity, AndroidAppContext* ctx) {
+    if (!activity || !activity->vm || !ctx) return;
+    JNIEnv* env = nullptr;
+    if (activity->vm->AttachCurrentThread(&env, nullptr) != JNI_OK || !env) return;
+
+    float insets[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    jclass actCls = env->GetObjectClass(activity->clazz);
+    jmethodID getWin = env->GetMethodID(actCls, "getWindow", "()Landroid/view/Window;");
+    if (getWin) {
+        jobject win = env->CallObjectMethod(activity->clazz, getWin);
+        if (win) {
+            jclass winCls = env->GetObjectClass(win);
+            jmethodID getDecor = env->GetMethodID(winCls, "getDecorView", "()Landroid/view/View;");
+            if (getDecor) {
+                jobject decor = env->CallObjectMethod(win, getDecor);
+                if (decor) {
+                    jclass viewCls = env->GetObjectClass(decor);
+                    jmethodID getRootInsets = env->GetMethodID(
+                        viewCls, "getRootWindowInsets", "()Landroid/view/WindowInsets;");
+                    if (getRootInsets) {
+                        jobject wi = env->CallObjectMethod(decor, getRootInsets);
+                        if (wi) {
+                            jclass wiCls = env->GetObjectClass(wi);
+                            jmethodID getCutout = env->GetMethodID(
+                                wiCls, "getDisplayCutout", "()Landroid/view/DisplayCutout;");
+                            if (getCutout) {
+                                jobject cutout = env->CallObjectMethod(wi, getCutout);
+                                if (cutout) {
+                                    jclass cutCls = env->GetObjectClass(cutout);
+                                    const char* names[4] = {
+                                        "getSafeInsetLeft", "getSafeInsetTop",
+                                        "getSafeInsetRight", "getSafeInsetBottom"
+                                    };
+                                    for (int i = 0; i < 4; ++i) {
+                                        jmethodID m = env->GetMethodID(cutCls, names[i], "()I");
+                                        if (m) insets[i] = static_cast<float>(
+                                            env->CallIntMethod(cutout, m));
+                                    }
+                                    env->DeleteLocalRef(cutout);
+                                }
+                                env->DeleteLocalRef(wi);
+                            }
+                            env->DeleteLocalRef(wiCls);
+                        }
+                    }
+                    env->DeleteLocalRef(decor);
+                }
+            }
+            env->DeleteLocalRef(win);
+        }
+    }
+    if (env->ExceptionCheck()) env->ExceptionClear();
+    ctx->engine.SetSafeAreaInsets(insets[0], insets[1], insets[2], insets[3]);
+    activity->vm->DetachCurrentThread();
+}
+
+static void AppendUTF8(std::string& out, int32_t codepoint) {
+    if (codepoint <= 0 || codepoint > 0x10FFFF) return;
+    if (codepoint < 0x80) {
+        out.push_back(static_cast<char>(codepoint));
+    } else if (codepoint < 0x800) {
+        out.push_back(static_cast<char>(0xC0 | (codepoint >> 6)));
+        out.push_back(static_cast<char>(0x80 | (codepoint & 0x3F)));
+    } else if (codepoint < 0x10000) {
+        out.push_back(static_cast<char>(0xE0 | (codepoint >> 12)));
+        out.push_back(static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F)));
+        out.push_back(static_cast<char>(0x80 | (codepoint & 0x3F)));
+    } else {
+        out.push_back(static_cast<char>(0xF0 | (codepoint >> 18)));
+        out.push_back(static_cast<char>(0x80 | ((codepoint >> 12) & 0x3F)));
+        out.push_back(static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F)));
+        out.push_back(static_cast<char>(0x80 | (codepoint & 0x3F)));
+    }
+}
+
+static void ShowAndroidKeyboard(ANativeActivity* activity, bool show);
+
 static void HandleAppCmd(struct android_app* app, int32_t cmd) {
     auto* ctx = static_cast<AndroidAppContext*>(app->userData);
     if (!ctx) return;
     if (cmd == APP_CMD_INIT_WINDOW && app->window != nullptr) {
         InitEGL(ctx, app->window);
+        ApplyDisplayCutoutInsets(app->activity, ctx);
     } else if (cmd == APP_CMD_TERM_WINDOW) {
+        ShowAndroidKeyboard(app->activity, false);
+        ctx->keyboardVisible = false;
         TermEGL(ctx);
     } else if (cmd == APP_CMD_PAUSE) {
+        ShowAndroidKeyboard(app->activity, false);
+        ctx->keyboardVisible = false;
         ctx->engine.Pause();
     } else if (cmd == APP_CMD_RESUME) {
         ctx->engine.Resume();
@@ -102,6 +187,7 @@ static void HandleAppCmd(struct android_app* app, int32_t cmd) {
         eglQuerySurface(ctx->display, ctx->surface, EGL_WIDTH, &w);
         eglQuerySurface(ctx->display, ctx->surface, EGL_HEIGHT, &h);
         if (w > 0 && h > 0) ctx->engine.Resize(w, h);
+        ApplyDisplayCutoutInsets(app->activity, ctx);
     }
 }
 
@@ -159,10 +245,11 @@ static int32_t HandleInputEvent(struct android_app* app, AInputEvent* event) {
             ctx->engine.OnTouchDown(pointerId, x, y);
             if (ctx->engine.GetLoginScreen()) {
                 auto focus = ctx->engine.GetLoginScreen()->GetFocus();
-                if (focus == LoginFocus::Username || focus == LoginFocus::Password) {
-                    ShowAndroidKeyboard(app->activity, true);
-                } else {
-                    ShowAndroidKeyboard(app->activity, false);
+                const bool wantsKeyboard = focus == LoginFocus::Username ||
+                                           focus == LoginFocus::Password;
+                if (wantsKeyboard != ctx->keyboardVisible) {
+                    ShowAndroidKeyboard(app->activity, wantsKeyboard);
+                    ctx->keyboardVisible = wantsKeyboard;
                 }
             }
         } else if (masked == AMOTION_EVENT_ACTION_MOVE) {
@@ -209,6 +296,15 @@ static int32_t HandleInputEvent(struct android_app* app, AInputEvent* event) {
         } else if (keyCode == AKEYCODE_SPACE) {
             ctx->engine.OnTextInput(" ");
             return 1;
+        }
+        const int32_t unicode = AKeyEvent_getUnicodeChar(event, 0);
+        if (unicode > 0x7F) {
+            std::string utf8;
+            AppendUTF8(utf8, unicode);
+            if (!utf8.empty()) {
+                ctx->engine.OnTextInput(utf8);
+                return 1;
+            }
         }
     }
     return 0;
