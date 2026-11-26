@@ -11,8 +11,10 @@
 // exactly what parsed and what did not.
 //
 // It never invents data: if a file fails, it is reported as failed with the parser's
-// error string. The tool exits non-zero only on impossible internal states, so CI can use
-// its report to record what is genuinely verified.
+// error string. Exit codes distinguish the three honest outcomes:
+//   0 = authentic character entries were found and every one parsed
+//   1 = entries were found but at least one failed to parse or could not be extracted
+//   2 = nothing authentic was found, so nothing was verified
 //
 // USAGE
 //   verify_ep7_character_assets <ep7-data-root> [--max-files N]
@@ -90,6 +92,7 @@ struct Counters {
     uint32_t xTotal = 0, xSkeletonOk = 0, xMeshOk = 0;
     uint32_t binTotal = 0, binOk = 0;
     uint32_t cfgTotal = 0, cfgOk = 0;
+    uint32_t extractFailures = 0;
     uint32_t firstVersionSeenNonZero = 0;
 };
 
@@ -311,8 +314,19 @@ int main(int argc, char** argv) {
             const std::string label = archivePath + ":" + entry.name;
             std::vector<uint8_t> entryBytes;
             if (!archive.Extract(entry, entryBytes)) {
-                ReportFile("extract", label, false, "entry is corrupt, encrypted with another "
-                                                    "password, or uses an unsupported method");
+                // Report the method/flag/size triple: if the shipped packs ever use zip64,
+                // AES or a method other than stored/deflate, this line says so instead of
+                // leaving a mystery.
+                char detail[256];
+                std::snprintf(detail, sizeof(detail),
+                              "could not extract (method=%u flags=0x%04X csize=%u usize=%u) — corrupt, "
+                              "another password, or an unsupported method",
+                              entry.method, entry.flags, entry.compressedSize, entry.uncompressedSize);
+                ReportFile("extract", label, false, detail);
+                // An entry we could not even decompress is an UNVERIFIED character asset. It
+                // must count against the pass rate; otherwise "2 entries, 1 unreadable" would
+                // still print "parsed 1 of 1" and exit 0.
+                ++counters.extractFailures;
                 continue;
             }
             VerifySingleAsset(label, entryBytes, counters);
@@ -327,15 +341,23 @@ int main(int argc, char** argv) {
                 counters.xSkeletonOk + counters.xMeshOk, counters.xTotal);
     std::printf("bin  : %u ok / %u\n", counters.binOk, counters.binTotal);
     std::printf("cfg  : %u ok / %u\n", counters.cfgOk, counters.cfgTotal);
+    std::printf("extract failures (could not decompress/decrypt): %u\n", counters.extractFailures);
 
     const uint32_t parsed = counters.chfOk + counters.cpsOk + counters.xSkeletonOk + counters.xMeshOk +
                             counters.binOk + counters.cfgOk;
     const uint32_t attempted = counters.chfTotal + counters.cpsTotal + counters.xTotal + counters.binTotal +
-                               counters.cfgTotal;
+                               counters.cfgTotal + counters.extractFailures;
     std::printf("\nparsed %u of %u candidate authentic files\n", parsed, attempted);
     if (attempted == 0) {
         std::printf("NOTE: no authentic candidate files found under the given root.\n");
         std::printf("      Nothing was verified. This is reported, not silently treated as success.\n");
     }
-    return 0;
+
+    // Exit codes are deliberately distinct so CI and callers cannot mistake "found nothing"
+    // for "everything passed":
+    //   0 = at least one authentic entry was found and every one of them parsed
+    //   1 = authentic entries were found but at least one failed to parse
+    //   2 = no authentic candidate was found at all; nothing was verified
+    if (attempted == 0) return 2;
+    return (parsed == attempted && counters.extractFailures == 0) ? 0 : 1;
 }

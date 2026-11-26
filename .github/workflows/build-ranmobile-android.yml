@@ -114,12 +114,47 @@ jobs:
             RANMobile/Data/Importer/EP7XFile.cpp \
             RANMobile/Tools/verify_ep7_character_assets.cpp \
             -o verify_ep7_character_assets
+          # exit 0 = all authentic entries parsed, 1 = at least one failed, 2 = nothing found.
+          # 1 fails the step (real incompatibility). 2 warns loudly but does not fail, because
+          # a missing/unpacked client must not be reported as a parser defect. In every case
+          # the code and the counts are echoed, so "success" can never hide "found nothing".
           if [ -d external/ep7_release/client_original ]; then
+            set +e
             ./verify_ep7_character_assets external/ep7_release/client_original \
               2>&1 | tee phase3j_authentic_assets.log
+            verify_status=${PIPESTATUS[0]}
+            set -e
           else
             echo "external/ep7_release/client_original missing; nothing verified." \
               | tee phase3j_authentic_assets.log
+            verify_status=2
+          fi
+          echo "verify_ep7_character_assets exit status: ${verify_status}"
+          if [ "${verify_status}" -eq 1 ]; then
+            echo "::error title=Phase 3J authentic assets::authentic character entries were found but at least one FAILED to parse -- see the annotations below."
+          elif [ "${verify_status}" -eq 2 ]; then
+            echo "::warning title=Phase 3J authentic assets::no authentic character entry was found under the client root; nothing was verified."
+          fi
+
+          # The log is uploaded as an artifact, but artifacts expire and downloading one
+          # needs credentials. Mirror the OUTCOME into a check-run annotation so the result
+          # is readable from the PR page and via the API. `::notice::` / `::warning::` only
+          # create annotations; they never change the step's exit code.
+          ok_count=$(grep -c '^  \[ OK \] ' phase3j_authentic_assets.log || true)
+          arc_count=$(grep -c '^--- archive ' phase3j_authentic_assets.log || true)
+          bad_count=$(grep -c '^  \[FAIL\] ' phase3j_authentic_assets.log || true)
+          # Failures are the actionable lines; cap them so a broken pack cannot flood the
+          # check run (GitHub limits annotations per step).
+          grep '^  \[FAIL\] ' phase3j_authentic_assets.log 2>/dev/null | head -20 | \
+            while IFS= read -r line; do
+              echo "::warning title=Phase 3J authentic asset FAILED::${line}"
+            done
+          if [ "${verify_status}" -eq 0 ] && [ "$ok_count" -gt 0 ]; then
+            echo "::notice title=Phase 3J authentic assets::$ok_count authentic character entries parsed from $arc_count archive(s), 0 failures."
+          elif [ "$ok_count" -eq 0 ]; then
+            echo "::warning title=Phase 3J authentic assets::no authentic character entry was parsed (archives found: $arc_count, failures: $bad_count). Real-data compatibility is NOT proven."
+          else
+            echo "::warning title=Phase 3J authentic assets::$ok_count authentic character entries parsed from $arc_count archive(s), but $bad_count entr(ies) FAILED. Real-data compatibility is only partially proven."
           fi
 
       - name: Run Linux C++17 Tests

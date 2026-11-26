@@ -372,6 +372,15 @@ all 7 entries parsed (`chf 1/1`, `cps 2/2`, `x 1 skeleton + 1 mesh`, `bin 1/1`, 
 and it was checked against a real Python-generated ZIP using both stored and deflated
 entries plus a CRC-corruption case.
 
+The tool exits **0** when authentic character entries were found and every one parsed,
+**1** when entries were found but at least one failed to parse or could not be extracted,
+and **2** when nothing authentic was found at all. CI treats those three outcomes
+differently — see §11 — so a green run can never be mistaken for "real data verified" when
+the client tree was simply absent. An entry that cannot be decompressed counts as a failed
+candidate rather than disappearing from the tally; that specific bug was found while
+corrupting a test archive, where a pack with one unreadable entry still reported
+"parsed 1 of 1" and exited 0.
+
 That end-to-end run caught a real classification bug worth recording: a skinned mesh `.x`
 also begins with `Frame` objects, so "does a skeleton parser accept it?" is **not** a valid
 skeleton test — the mesh reader must be tried first (presence of `SkinWeights` is the

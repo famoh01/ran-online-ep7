@@ -168,7 +168,11 @@ New workflow steps in `.github/workflows/build-ranmobile-android.yml`:
    `external/ep7_release/client_original`, writing `phase3j_authentic_assets.log`. The tool
    walks loose files **and** opens every `.rcc`/`.zip` it finds, because the authentic
    character data lives inside `SkinObject.rcc` / `Animation.rcc` (see BLOCKERS.md B9
-   addendum).
+   addendum). The tool's exit code is part of the contract: `0` = every authentic entry
+   parsed, `1` = at least one failed (fails the step), `2` = nothing authentic found (loud
+   warning, step still green because an absent client is not a parser defect). The counts,
+   the exit code and every failure are also emitted as check-run annotations, so the verdict
+   is readable from the PR page even though the uploaded log needs credentials.
 3. Both logs are added to the job summary and to the `linux-test-failure-log` artifact.
 
 The existing 33-source host build now includes the 8 Phase 3J sources.
