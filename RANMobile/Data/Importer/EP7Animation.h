@@ -161,7 +161,6 @@ struct EP7AnimInfo {
     static constexpr uint32_t kStrike = 9;       // ACF_STRIKE
 
     uint32_t version = 0;   // header fileId of the layout that was parsed
-    int32_t playFrameCount = 0;  // SChaSoundData::m_PlayFrameCount (0 when there is no block)
     std::string name;       // m_szName
     std::string skeleton;   // m_szSkeletion
     uint32_t flag = 0;

@@ -397,10 +397,30 @@ EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, boo
     //
     // The common prefix (name, skeleton, flags, time window, type, div frames) is identical
     // for all of them, so parsing proceeds member by member and stops at the effect count.
-    // Per-effect payloads (DxEffAniData::LoadFile) and the 0x0107 DxAniScale block are not
-    // decoded, which is why stopping there is safe for every version.
-    const bool hasStrikeTable = version >= 0x0104;
-    const bool hasSoundBlock = version >= 0x0102;
+    // On-disk size of the SANIMCONINFO header part, per version. These are NOT sums of
+    // packed fields: the engine reads 0x0101..0x0104 with
+    //     SFile.ReadBuffer ( &OldAnimInfo, sizeof(SANIMCONINFO_10x) )
+    // i.e. the whole MSVC-padded struct, and 0x0105..0x0107 field by field but with
+    // `sizeof(SChaSoundData_103)` / `sizeof(SChaSoundData)` for the sound member, which
+    // includes that struct's own tail padding.
+    //
+    //   SANIMCONINFO_101  304   = 302 prefix + 2 struct tail padding
+    //   SANIMCONINFO_102  564   = 304 + SChaSoundData_102 (260)
+    //   SANIMCONINFO_103  732   = 304 + SChaSoundData_103 (428)
+    //   SANIMCONINFO_104  844   = 304 + strike 110 + 428, aligned
+    //   0x0105            840   = 302 + strike 110 + 428
+    //   0x0106/0x0107     800   = 302 + strike 110 + 388
+    //
+    // SOURCE: enginelib/Meshs/DxSkinAniManSaveLoad.cpp, enginelib/Meshs/SAnimation.h,
+    //         EngineSoundLib/DxSound/CharacterSound.h.
+    static constexpr uint32_t kInfoSize0101 = 304;
+    static constexpr uint32_t kInfoSize0102 = 564;
+    static constexpr uint32_t kInfoSize0103 = 732;
+    static constexpr uint32_t kInfoSize0104 = 844;
+    static constexpr uint32_t kInfoSize0105 = 840;
+    static constexpr uint32_t kInfoSize0106 = 800;
+    static constexpr uint32_t kInfoSize0107 = 800;
+
     if (version < 0x0101 || version > EP7AnimInfo::kVersion) {
         // The shipped client uses 0x0108..0x0110 and 0x0114/0x0115 as well; none of those
         // appear in the engine source, so their layout is unknown and guessing would risk
@@ -470,95 +490,38 @@ EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, boo
         }
     }
 
-    uint16_t soundSlots = 10;      // MAXPLAYFRAME - 1
-    bool soundHasType = true;      // SChaSoundData_103 carries m_PlayType[MAXPLAYFRAME-1]
-    if (!hasSoundBlock) {
-        // 0x0101 has no sound block at all; the file ends after the div frames.
-        info.valid = true;
+    // Everything from here to the end of the header is the strike table and the sound
+    // block, whose size depends on the version AND on MSVC struct padding. Rather than
+    // re-deriving those layouts field by field (and getting the padding wrong), skip to
+    // exactly the offset the engine reaches. The engine copies those bytes verbatim and
+    // this port uses none of them.
+    uint32_t infoSize = 0;
+    switch (version) {
+        case 0x0101: infoSize = kInfoSize0101; break;
+        case 0x0102: infoSize = kInfoSize0102; break;
+        case 0x0103: infoSize = kInfoSize0103; break;
+        case 0x0104: infoSize = kInfoSize0104; break;
+        case 0x0105: infoSize = kInfoSize0105; break;
+        case 0x0106: infoSize = kInfoSize0106; break;
+        default:     infoSize = kInfoSize0107; break;
+    }
+    // Prefix consumed so far: 128 + 128 + 4*5 (flag + 4 times) + 4*2 (types) + 2 + 8*2.
+    const uint32_t consumed = 128 + 128 + 20 + 8 + 2 + 16;
+    if (infoSize < consumed) {
+        info.error = "internal: cfg info size smaller than its prefix";
         return info;
     }
-    if (version == 0x0102) {
-        soundSlots = 6;            // MAXPLAYFRAME_102 - 1
-        soundHasType = false;      // SChaSoundData_102 has no m_PlayType
-    } else if (version >= 0x0106) {
-        soundHasType = false;      // SChaSoundData dropped m_PlayType
-    }
-
-    if (hasStrikeTable) {
-    if (!stream.ReadU16(info.strikeCount)) {
-        info.error = "truncated cfg strike count";
+    if (stream.Remaining() < infoSize - consumed) {
+        char message[160];
+        std::snprintf(message, sizeof(message),
+                      "truncated cfg: layout 0x%04X needs %u bytes after the prefix, %zu available",
+                      version, infoSize - consumed, stream.Remaining());
+        info.error = message;
         return info;
     }
-    for (uint32_t i = 0; i < EP7AnimInfo::kStrike; ++i) {
-        int32_t piece = 0;
-        int32_t effect = 0;
-        uint32_t frame = 0;
-        if (!stream.ReadI32(piece) || !stream.ReadI32(effect) || !stream.ReadU32(frame)) {
-            info.error = "truncated cfg strike table";
-            return info;
-        }
-        info.strikeEff[i].piece = piece;
-        info.strikeEff[i].effect = effect;
-        info.strikeEff[i].frame = frame;
-    }
-    }  // hasStrikeTable
-
-    // Sound block, laid out field by field as the loaders read it (NOT the in-memory struct
-    // sizes, which include alignment padding):
-    //
-    //   SChaSoundData_102 : int; char[6][32]; WORD m_BufferCount[6]; BOOL m_bLoop[6];
-    //                       WORD m_PlayType[6]; WORD m_PlayFrame[7]
-    //   SChaSoundData_103 : int; char[10][32]; WORD m_BufferCount[10]; BOOL m_bLoop[10];
-    //                       WORD m_PlayType[10]; WORD m_PlayFrame[11]
-    //   SChaSoundData     : int; char[10][32]; BOOL m_bLoop[10]; WORD m_PlayFrame[11]
-    //
-    // SOURCE: EngineSoundLib/DxSound/CharacterSound.h, as read by DxSkinAniManSaveLoad.cpp.
-    {
-        int32_t playFrameCount = 0;
-        if (!stream.ReadI32(playFrameCount)) {
-            info.error = "truncated sound data";
-            return info;
-        }
-        info.playFrameCount = playFrameCount;
-        for (uint16_t i = 0; i < soundSlots; ++i) {
-            if (!stream.Skip(32)) {
-                info.error = "truncated sound file names";
-                return info;
-            }
-        }
-        if (soundHasType) {
-            for (uint16_t i = 0; i < soundSlots; ++i) {
-                uint16_t ignored = 0;
-                if (!stream.ReadU16(ignored)) {
-                    info.error = "truncated sound buffer counts";
-                    return info;
-                }
-            }
-        }
-        for (uint16_t i = 0; i < soundSlots; ++i) {
-            uint32_t loop = 0;
-            if (!stream.ReadU32(loop)) {
-                info.error = "truncated sound loop flags";
-                return info;
-            }
-        }
-        if (soundHasType) {
-            for (uint16_t i = 0; i < soundSlots; ++i) {
-                uint16_t playType = 0;
-                if (!stream.ReadU16(playType)) {
-                    info.error = "truncated sound play types";
-                    return info;
-                }
-            }
-        }
-        // m_PlayFrame is a fixed array of MAXPLAYFRAME (= count + 1) entries.
-        for (uint16_t i = 0; i < soundSlots + 1; ++i) {
-            uint16_t frame = 0;
-            if (!stream.ReadU16(frame)) {
-                info.error = "truncated sound play frames";
-                return info;
-            }
-        }
+    if (!stream.Skip(infoSize - consumed)) {
+        info.error = "truncated cfg tail";
+        return info;
     }
 
     uint32_t effectCount = 0;
@@ -567,10 +530,10 @@ EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, boo
         return info;
     }
     info.effectCount = effectCount;
+    // Per-effect payloads (DxEffAniData::LoadFile) and the 0x0107 trailing DxAniScale block
+    // are not decoded: that needs the effect readers. Nothing after this point is used, so
+    // parsing stops here for every version.
     info.effectsSkipped = (effectCount != 0);
-    // Per-effect payloads (DxEffAniData::LoadFile) are not decoded: that needs the effect
-    // readers. The trailing DxAniScale block of 0x0107 is likewise left unread. Stopping
-    // here is safe for every supported version because nothing after this point is used.
 
     info.valid = true;
     return info;

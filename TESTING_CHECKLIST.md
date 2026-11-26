@@ -142,7 +142,7 @@ Flags match the CI workflow's existing host build exactly.
 
 | Target | Result |
 |---|---|
-| `RANMobile/Tests/test_phase3j.cpp` | **263 checks, 0 failures** |
+| `RANMobile/Tests/test_phase3j.cpp` | **256 checks, 0 failures** |
 | same, `-fsanitize=address,undefined`, `detect_leaks=1` | **clean, no reports** |
 | `RANMobile/Tests/test_main.cpp` (Phase 3G–3I regression) | compiles clean with the 8 new sources linked; runtime stops at the **pre-existing** `assert(tpStats.found)` (line 186) because `external/ep7_release/thaipack_original` does not exist in this sandbox — unchanged behaviour, not a Phase 3J regression |
 

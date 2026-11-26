@@ -259,12 +259,12 @@ std::vector<uint8_t> AnimationBin() {
 }
 
 // SANIMCONINFO 0x0107 (payload only, header present).
-// Emits the authentic SANIMCONINFO layout for each version, following the per-version
-// readers in enginelib/Meshs/DxSkinAniManSaveLoad.cpp:
-//   0x0101 no strike table / no sound block   0x0102 6 sound slots, TYPE+BUFFCOUNT
-//   0x0103 10 slots with TYPE+BUFFCOUNT       0x0104 + strike table
-//   0x0105 same as 0104                       0x0106 sound without TYPE
-//   0x0107 0x0106 + trailing DxAniScale
+// Emits the authentic SANIMCONINFO byte layout for each version, including the MSVC struct
+// padding the engine actually reads:
+//   0x0101..0x0104 are read with ReadBuffer(&OldAnimInfo, sizeof(SANIMCONINFO_10x)), i.e.
+//   whole padded structs (304 / 564 / 732 / 844 bytes); 0x0105..0x0107 are read field by
+//   field but with sizeof(SChaSoundData_103)=428 / sizeof(SChaSoundData)=388 in the tail.
+// SOURCE: enginelib/Meshs/DxSkinAniManSaveLoad.cpp, SAnimation.h, CharacterSound.h.
 std::vector<uint8_t> AnimationCfg(bool loop, uint32_t version = 0x0107) {
     ByteWriter w;
     w.Raw(std::vector<uint8_t>(128, 0));
@@ -281,34 +281,60 @@ std::vector<uint8_t> AnimationCfg(bool loop, uint32_t version = 0x0107) {
     w.U16(1);      // divCount
     for (int i = 0; i < 8; ++i) w.U16(static_cast<uint16_t>(i));
 
-    if (version == 0x0101) {
-        return w.Data();  // SANIMCONINFO_101 ends here
-    }
-
-    const bool hasStrike = version >= 0x0104;
-    const int soundSlots = (version == 0x0102) ? 6 : 10;
-    const bool soundType = (version >= 0x0102 && version <= 0x0105);
-
-    if (hasStrike) {
+    // Tail: strike table + sound block, sized exactly as the engine's structs are.
+    auto strikeTable = [&w]() {
         w.U16(0);  // strikeCount
-        // SANIMSTRIKE m_sStrikeEff[ACF_STRIKE=9] is a fixed array, read regardless of count.
-        for (int i = 0; i < 9; ++i) { w.I32(0); w.I32(0); w.U32(0); }
+        for (int i = 0; i < 9; ++i) { w.I32(0); w.I32(0); w.U32(0); }  // SANIMSTRIKE[9]
+    };
+    auto soundBlock = [&w](int slots, bool hasBufferCount, bool hasPlayType, size_t tailPad) {
+        w.I32(2);                                            // m_PlayFrameCount
+        for (int i = 0; i < slots; ++i) w.FixedStr(i == 0 ? "hit.wav" : "", 32);
+        if (hasBufferCount) {
+            for (int i = 0; i < slots; ++i) w.U16(0);        // m_BufferCount
+        }
+        for (int i = 0; i < slots; ++i) w.Bool(false);       // m_bLoop
+        if (hasPlayType) {
+            for (int i = 0; i < slots; ++i) w.U16(0);        // m_PlayType
+        }
+        for (int i = 0; i < slots + 1; ++i) w.U16(0);        // m_PlayFrame[count + 1]
+        if (tailPad != 0) w.Raw(std::vector<uint8_t>(tailPad, 0));  // struct tail padding
+    };
+
+    switch (version) {
+        case 0x0101:
+            w.Raw(std::vector<uint8_t>(2, 0));    // struct tail padding -> 304
+            break;                                // no sound block, no strike table
+        case 0x0102:
+            w.Raw(std::vector<uint8_t>(2, 0));    // 302 -> 304
+            soundBlock(6, true, true, 2);         // SChaSoundData_102 = 260 (258 + 2)
+            break;
+        case 0x0103:
+            w.Raw(std::vector<uint8_t>(2, 0));    // 302 -> 304
+            soundBlock(10, true, true, 2);        // SChaSoundData_103 = 428 (426 + 2)
+            break;
+        case 0x0104:
+            w.Raw(std::vector<uint8_t>(2, 0));    // 302 -> 304
+            strikeTable();                        // 2 + 108 = 110
+            soundBlock(10, true, true, 2);        // 428 -> total 842, +2 align = 844
+            w.Raw(std::vector<uint8_t>(2, 0));
+            break;
+        case 0x0105:
+            strikeTable();                        // no prefix padding: 302
+            soundBlock(10, true, true, 2);        // 428 -> 840
+            break;
+        case 0x0106:
+            strikeTable();
+            soundBlock(10, false, false, 2);      // SChaSoundData = 388 (386 + BOOL pad)
+            break;
+        default:
+            strikeTable();
+            soundBlock(10, false, false, 2);      // 800
+            break;
     }
 
-    w.I32(2);      // SChaSoundData::m_PlayFrameCount
-    for (int i = 0; i < soundSlots; ++i) w.FixedStr(i == 0 ? "hit.wav" : "", 32);
-    if (soundType) {
-        for (int i = 0; i < soundSlots; ++i) w.U16(0);   // m_BufferCount
-    }
-    for (int i = 0; i < soundSlots; ++i) w.Bool(false);  // m_bLoop
-    if (soundType) {
-        for (int i = 0; i < soundSlots; ++i) w.U16(0);   // m_PlayType
-    }
-    for (int i = 0; i < soundSlots + 1; ++i) w.U16(0);   // m_PlayFrame[count + 1]
-
-    w.U32(0);      // effect count
+    w.U32(0);  // effect count -- every version has one after the header block
     if (version == 0x0107) {
-        w.U32(0);  // DxAniScale: map size
+        w.U32(0);  // DxAniScale: map size (0x0107 only)
     }
     return w.Data();
 }
@@ -634,8 +660,6 @@ void TestAnimation() {
         J_CHECK(infoV.skeleton == "m_bone.skt");
         J_CHECK(infoV.endTime == 4800);
         J_CHECK(infoV.IsLoop());
-        // 0x0101 has no sound block at all; every other version carries one.
-        J_CHECK((version == 0x0101) ? infoV.playFrameCount == 0 : infoV.playFrameCount == 2);
     }
 
     // Versions the client ships but the engine source does not define must be rejected with
