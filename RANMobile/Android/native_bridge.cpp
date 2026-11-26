@@ -145,25 +145,6 @@ static void ApplyDisplayCutoutInsets(ANativeActivity* activity, AndroidAppContex
     activity->vm->DetachCurrentThread();
 }
 
-static void AppendUTF8(std::string& out, int32_t codepoint) {
-    if (codepoint <= 0 || codepoint > 0x10FFFF) return;
-    if (codepoint < 0x80) {
-        out.push_back(static_cast<char>(codepoint));
-    } else if (codepoint < 0x800) {
-        out.push_back(static_cast<char>(0xC0 | (codepoint >> 6)));
-        out.push_back(static_cast<char>(0x80 | (codepoint & 0x3F)));
-    } else if (codepoint < 0x10000) {
-        out.push_back(static_cast<char>(0xE0 | (codepoint >> 12)));
-        out.push_back(static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F)));
-        out.push_back(static_cast<char>(0x80 | (codepoint & 0x3F)));
-    } else {
-        out.push_back(static_cast<char>(0xF0 | (codepoint >> 18)));
-        out.push_back(static_cast<char>(0x80 | ((codepoint >> 12) & 0x3F)));
-        out.push_back(static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F)));
-        out.push_back(static_cast<char>(0x80 | (codepoint & 0x3F)));
-    }
-}
-
 static void ShowAndroidKeyboard(ANativeActivity* activity, bool show);
 
 static void HandleAppCmd(struct android_app* app, int32_t cmd) {
@@ -296,15 +277,6 @@ static int32_t HandleInputEvent(struct android_app* app, AInputEvent* event) {
         } else if (keyCode == AKEYCODE_SPACE) {
             ctx->engine.OnTextInput(" ");
             return 1;
-        }
-        const int32_t unicode = AKeyEvent_getUnicodeChar(event, 0);
-        if (unicode > 0x7F) {
-            std::string utf8;
-            AppendUTF8(utf8, unicode);
-            if (!utf8.empty()) {
-                ctx->engine.OnTextInput(utf8);
-                return 1;
-            }
         }
     }
     return 0;
