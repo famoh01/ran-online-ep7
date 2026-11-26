@@ -49,6 +49,14 @@ jobs:
             RANMobile/Data/Importer/EP7AssetImporter.cpp \
             RANMobile/Data/Importer/EP7TextureDecoder.cpp \
             RANMobile/Data/Importer/EP7WorldCharParser.cpp \
+            RANMobile/Data/Importer/EP7Animation.cpp \
+            RANMobile/Data/Importer/EP7CharacterFile.cpp \
+            RANMobile/Data/Importer/EP7Skeleton.cpp \
+            RANMobile/Data/Importer/EP7SkinPiece.cpp \
+            RANMobile/Data/Importer/EP7SkinnedMesh.cpp \
+            RANMobile/Data/Importer/EP7XFile.cpp \
+            RANMobile/Engine/Scene/EP7CharacterScene.cpp \
+            RANMobile/UI/Character/CharacterPreviewOverlay.cpp \
             RANMobile/Data/Converter/RANMobileDataConverter.cpp \
             RANMobile/Data/Loader/GameDataLoader.cpp \
             RANMobile/Data/Loader/ThaiPackLoader.cpp \
@@ -70,6 +78,46 @@ jobs:
             RANMobile/Server/MobileServerHost.cpp \
             RANMobile/Tests/test_main.cpp \
             -lpthread -o ranmobile_tests 2>&1 | tee -a compile_output.log
+
+      - name: Build & Run Phase 3J Character Tests
+        run: |
+          set -e
+          g++ -std=c++17 -Wall -Wextra -Werror \
+            RANMobile/Engine/Core/Logger.cpp \
+            RANMobile/Engine/Renderer/MobileRenderer.cpp \
+            RANMobile/Engine/Camera/MobileCamera.cpp \
+            RANMobile/Engine/Scene/EP7CharacterScene.cpp \
+            RANMobile/Data/Importer/EP7Animation.cpp \
+            RANMobile/Data/Importer/EP7CharacterFile.cpp \
+            RANMobile/Data/Importer/EP7Skeleton.cpp \
+            RANMobile/Data/Importer/EP7SkinPiece.cpp \
+            RANMobile/Data/Importer/EP7SkinnedMesh.cpp \
+            RANMobile/Data/Importer/EP7XFile.cpp \
+            RANMobile/Tests/test_phase3j.cpp \
+            -lpthread -o ranmobile_phase3j_tests
+          ./ranmobile_phase3j_tests 2>&1 | tee phase3j_test_output.log
+
+      - name: Verify Authentic EP7 Character Assets
+        # Runs the Phase 3J parsers against the REAL extracted client data. The report
+        # states exactly which authentic files parsed; it never invents coverage.
+        run: |
+          set -e
+          g++ -std=c++17 -Wall -Wextra -Werror \
+            RANMobile/Data/Importer/EP7Animation.cpp \
+            RANMobile/Data/Importer/EP7CharacterFile.cpp \
+            RANMobile/Data/Importer/EP7Skeleton.cpp \
+            RANMobile/Data/Importer/EP7SkinPiece.cpp \
+            RANMobile/Data/Importer/EP7SkinnedMesh.cpp \
+            RANMobile/Data/Importer/EP7XFile.cpp \
+            RANMobile/Tools/verify_ep7_character_assets.cpp \
+            -o verify_ep7_character_assets
+          if [ -d external/ep7_release/client_original ]; then
+            ./verify_ep7_character_assets external/ep7_release/client_original \
+              2>&1 | tee phase3j_authentic_assets.log
+          else
+            echo "external/ep7_release/client_original missing; nothing verified." \
+              | tee phase3j_authentic_assets.log
+          fi
 
       - name: Run Linux C++17 Tests
         run: |
@@ -94,6 +142,13 @@ jobs:
             echo '```'
             tail -n 60 test_output.log 2>/dev/null || echo "No test_output.log"
             echo '```'
+            echo "### Phase 3J Character Tests"
+            tail -n 30 phase3j_test_output.log 2>/dev/null || echo "No phase3j_test_output.log"
+            echo '```'
+            echo "### Phase 3J Authentic Asset Verification"
+            echo '```'
+            tail -n 60 phase3j_authentic_assets.log 2>/dev/null || echo "No phase3j_authentic_assets.log"
+            echo '```'
             echo "### external/ep7_release"
             ls -la external/ep7_release 2>/dev/null || echo "Missing external/ep7_release"
             ls -la external/ep7_release/thaipack_original 2>/dev/null | head -n 20 || echo "Missing thaipack_original"
@@ -104,7 +159,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: linux-test-failure-log
-          path: test_output.log
+          path: |
+            test_output.log
+            phase3j_test_output.log
+            phase3j_authentic_assets.log
 
       - name: Setup Android NDK
         uses: nttld/setup-ndk@v1

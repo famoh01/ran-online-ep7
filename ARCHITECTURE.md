@@ -51,3 +51,64 @@ RANMobile/
 ├── README.md
 └── BUILD_ANDROID.md
 ```
+
+---
+
+## Phase 3J addition (2026-11-26) — Character / skeleton / animation layer
+
+New directories and files. Nothing existing was moved or replaced.
+
+```
+RANMobile/
+├── Data/Importer/
+│   ├── EP7ByteFormat.h      (header-only) bounds-checked basestream + compbyte
+│   ├── EP7Math.h            (header-only) Vec3/Quat/Mat4, D3DX row-vector order
+│   ├── EP7XFile.{h,cpp}     .x text tokenizer (rejects binary encodings)
+│   ├── EP7Skeleton.{h,cpp}  .x Frame hierarchy -> bones, pose accumulation
+│   ├── EP7SkinPiece.{h,cpp} .cps 0x0104..0x0107
+│   ├── EP7CharacterFile.{h,cpp}  .chf 0x0100..0x0102
+│   ├── EP7SkinnedMesh.{h,cpp}    Mesh + SkinWeights + materials + CPU skinning
+│   └── EP7Animation.{h,cpp}      .bin 0x0100..0x0102, .cfg 0x0107, player
+├── Engine/Scene/
+│   └── EP7CharacterScene.{h,cpp} loader, instances, pose eval, AABB culling, diagnostics
+├── UI/Character/
+│   └── CharacterPreviewOverlay.{h,cpp}  touch preview + diagnostics overlay
+└── Tools/
+    └── verify_ep7_character_assets.cpp  authentic-asset probe (CI)
+```
+
+### Layering rules this layer follows
+
+1. **Parsers never touch I/O.** Every reader takes bytes + a `bool compByteEncoded`, or an
+   `ep7byte::Stream`. `EP7CharacterLoader` resolves names through a
+   `bool (*)(void* userData, const std::string&, std::vector<uint8_t>&)` callback, so Android
+   `AAssetManager`, a pack archive and test fixtures are interchangeable.
+2. **One frustum implementation.** `EP7CharacterScene::CullInstances` feeds instance AABBs to
+   the existing `MobileRenderer::IsBoxInFrustum` instead of duplicating view-distance logic.
+3. **One camera.** The preview overlay drives the existing `MobileCamera` API
+   (`OnDrag`/`OnPinch`/`SetMode`/`SetDistanceBounds`); there is no second camera type.
+4. **One UI primitive set.** The overlay draws through `MobileRenderer::DrawUIQuad` /
+   `DrawUIText`, the same calls `MobileHUD` uses, so no new GL state is introduced.
+5. **No data aliasing.** Each character instance owns its own `EP7Skeleton`; the shared
+   `EP7CharacterAsset` holds immutable parsed data only.
+6. **No fabricated fallbacks.** A character instance cannot exist without a successfully
+   parsed `.chf` + skeleton + at least one piece. There is no placeholder path.
+
+### Draw-path contract for the 3D renderer (PR #4)
+
+Per frame, after the world pass is prepared:
+
+```
+characterScene.Update(dt);                                  // animation + CPU pose
+characterScene.CullInstances(camera, &renderer);            // sets inFrustum + bounds
+for (instance : characterScene.Instances())
+    if (instance->poseValid && instance->inFrustum)
+        for (slot : pieces)
+            draw(instance->skinnedPositions + pieceVertexOffsets[slot],
+                 instance->skinnedNormals,
+                 piece.mesh.faces,
+                 piece.mesh.subsets[i].texture);
+```
+
+A GPU skinning path can replace the vertex upload by sending `BuildBonePalette()` output as a
+palette uniform; the mesh already carries per-vertex blend data in its `SkinWeights`.
