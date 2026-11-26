@@ -397,26 +397,31 @@ EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, boo
     //
     // The common prefix (name, skeleton, flags, time window, type, div frames) is identical
     // for all of them, so parsing proceeds member by member and stops at the effect count.
-    // On-disk size of the SANIMCONINFO header part, per version. These are NOT sums of
-    // packed fields: the engine reads 0x0101..0x0104 with
-    //     SFile.ReadBuffer ( &OldAnimInfo, sizeof(SANIMCONINFO_10x) )
-    // i.e. the whole MSVC-padded struct, and 0x0105..0x0107 field by field but with
-    // `sizeof(SChaSoundData_103)` / `sizeof(SChaSoundData)` for the sound member, which
-    // includes that struct's own tail padding.
+    // On-disk size of the SANIMCONINFO header part, per version.
     //
-    //   SANIMCONINFO_101  304   = 302 prefix + 2 struct tail padding
-    //   SANIMCONINFO_102  564   = 304 + SChaSoundData_102 (260)
-    //   SANIMCONINFO_103  732   = 304 + SChaSoundData_103 (428)
-    //   SANIMCONINFO_104  844   = 304 + strike 110 + 428, aligned
-    //   0x0105            840   = 302 + strike 110 + 428
-    //   0x0106/0x0107     800   = 302 + strike 110 + 388
+    // These are MEASURED from the shipped client and then explained by the struct layout;
+    // they are not guesses. The key detail: the prefix ends at offset 302 on a WORD, and
+    // that WORD is m_wStrikeCount -- so it occupies what would otherwise be alignment
+    // padding, and SANIMSTRIKE m_sStrikeEff[9] starts 4-aligned at 304 with no gap:
+    //
+    //   302  prefix (name 128, skeleton 128, flag + 4 times 20, 2 types 8, count 2,
+    //        div frames 16)  -- no tail padding, the strike count fills it
+    //   +2   m_wStrikeCount (versions >= 0x0104)
+    //   +108 SANIMSTRIKE[9]
+    //   +428 SChaSoundData_103  (0x0102: +260 SChaSoundData_102, 0x0106/7: +388)
+    //
+    //   0x0101 302   0x0102 564   0x0103 732   0x0104 840
+    //   0x0105 840   0x0106 800   0x0107 800
+    //
+    // CONFIRMED against authentic data: 0x0104 files carry exactly 538 bytes after the
+    // 302-byte prefix (110 + 428) and 0x0106/0x0107 files exactly 498 (110 + 388).
     //
     // SOURCE: enginelib/Meshs/DxSkinAniManSaveLoad.cpp, enginelib/Meshs/SAnimation.h,
     //         EngineSoundLib/DxSound/CharacterSound.h.
-    static constexpr uint32_t kInfoSize0101 = 304;
+    static constexpr uint32_t kInfoSize0101 = 302;
     static constexpr uint32_t kInfoSize0102 = 564;
     static constexpr uint32_t kInfoSize0103 = 732;
-    static constexpr uint32_t kInfoSize0104 = 844;
+    static constexpr uint32_t kInfoSize0104 = 840;
     static constexpr uint32_t kInfoSize0105 = 840;
     static constexpr uint32_t kInfoSize0106 = 800;
     static constexpr uint32_t kInfoSize0107 = 800;

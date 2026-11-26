@@ -28,6 +28,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -281,55 +282,41 @@ std::vector<uint8_t> AnimationCfg(bool loop, uint32_t version = 0x0107) {
     w.U16(1);      // divCount
     for (int i = 0; i < 8; ++i) w.U16(static_cast<uint16_t>(i));
 
-    // Tail: strike table + sound block, sized exactly as the engine's structs are.
-    auto strikeTable = [&w]() {
-        w.U16(0);  // strikeCount
-        for (int i = 0; i < 9; ++i) { w.I32(0); w.I32(0); w.U32(0); }  // SANIMSTRIKE[9]
+    // Tail: m_wStrikeCount + SANIMSTRIKE[9] + sound block.
+    //
+    // Byte counts are NOT re-derived here; they are the authentic ones measured from the
+    // shipped client and fitted to the struct declarations:
+    //
+    //   0x0101 302                                no strike table, no sound block
+    //   0x0102 302 + 2 + 260  = 564               SANIMSTRIKE array NOT written
+    //   0x0103 302 + 2 + 428  = 732               SANIMSTRIKE array NOT written
+    //   0x0104 302 + 2 + 108 + 428 = 840
+    //   0x0105 302 + 2 + 108 + 428 = 840
+    //   0x0106 302 + 2 + 108 + 388 = 800
+    //   0x0107 302 + 2 + 108 + 388 = 800
+    //
+    // 0x0104 must total exactly 840: authentic files carry 538 bytes after the 302 prefix.
+    auto strike = [&w](bool withArray) {
+        w.U16(0);                               // m_wStrikeCount
+        if (withArray) {
+            for (int i = 0; i < 9; ++i) { w.I32(0); w.I32(0); w.U32(0); }  // SANIMSTRIKE[9]
+        }
     };
-    auto soundBlock = [&w](int slots, bool hasBufferCount, bool hasPlayType, size_t tailPad) {
-        w.I32(2);                                            // m_PlayFrameCount
-        for (int i = 0; i < slots; ++i) w.FixedStr(i == 0 ? "hit.wav" : "", 32);
-        if (hasBufferCount) {
-            for (int i = 0; i < slots; ++i) w.U16(0);        // m_BufferCount
-        }
-        for (int i = 0; i < slots; ++i) w.Bool(false);       // m_bLoop
-        if (hasPlayType) {
-            for (int i = 0; i < slots; ++i) w.U16(0);        // m_PlayType
-        }
-        for (int i = 0; i < slots + 1; ++i) w.U16(0);        // m_PlayFrame[count + 1]
-        if (tailPad != 0) w.Raw(std::vector<uint8_t>(tailPad, 0));  // struct tail padding
+    // Exact byte count for the sound struct, written as its fields then zero-filled to the
+    // authentic size (260 / 428 / 388). Field order doesn't matter for these fixtures.
+    auto sound = [&w](size_t bytes) {
+        w.I32(2);                               // m_PlayFrameCount
+        w.Raw(std::vector<uint8_t>(bytes - 4, 0));
     };
 
     switch (version) {
-        case 0x0101:
-            w.Raw(std::vector<uint8_t>(2, 0));    // struct tail padding -> 304
-            break;                                // no sound block, no strike table
-        case 0x0102:
-            w.Raw(std::vector<uint8_t>(2, 0));    // 302 -> 304
-            soundBlock(6, true, true, 2);         // SChaSoundData_102 = 260 (258 + 2)
-            break;
-        case 0x0103:
-            w.Raw(std::vector<uint8_t>(2, 0));    // 302 -> 304
-            soundBlock(10, true, true, 2);        // SChaSoundData_103 = 428 (426 + 2)
-            break;
-        case 0x0104:
-            w.Raw(std::vector<uint8_t>(2, 0));    // 302 -> 304
-            strikeTable();                        // 2 + 108 = 110
-            soundBlock(10, true, true, 2);        // 428 -> total 842, +2 align = 844
-            w.Raw(std::vector<uint8_t>(2, 0));
-            break;
-        case 0x0105:
-            strikeTable();                        // no prefix padding: 302
-            soundBlock(10, true, true, 2);        // 428 -> 840
-            break;
-        case 0x0106:
-            strikeTable();
-            soundBlock(10, false, false, 2);      // SChaSoundData = 388 (386 + BOOL pad)
-            break;
-        default:
-            strikeTable();
-            soundBlock(10, false, false, 2);      // 800
-            break;
+        case 0x0101: break;
+        case 0x0102: strike(false); sound(260); break;
+        case 0x0103: strike(false); sound(428); break;
+        case 0x0104: strike(true);  sound(428); break;
+        case 0x0105: strike(true);  sound(428); break;
+        case 0x0106: strike(true);  sound(388); break;
+        default:     strike(true);  sound(388); break;
     }
 
     w.U32(0);  // effect count -- every version has one after the header block
@@ -649,8 +636,17 @@ void TestAnimation() {
     // metadata: the layouts differ only in the sound/strike tail, which comes after the
     // fields asserted here.
     for (uint32_t version : {0x0101u, 0x0102u, 0x0103u, 0x0104u, 0x0105u, 0x0106u, 0x0107u}) {
+        const std::vector<uint8_t> cfgBytes = AnimationCfg(true, version);
+        // Authentic header-block sizes (bytes after the 132-byte basestream header, minus
+        // the 4-byte effect count). Locked here because a wrong size is silent otherwise.
+        static const std::map<uint32_t, size_t> kExpected = {
+            {0x0101, 302}, {0x0102, 564}, {0x0103, 732}, {0x0104, 840},
+            {0x0105, 840}, {0x0106, 800}, {0x0107, 800}};
+        // 0x0107 additionally carries the trailing DxAniScale DWORD, hence the extra 4.
+        const size_t trailing = (version == 0x0107) ? 4 : 0;
+        J_CHECK(cfgBytes.size() - 132 - 4 - trailing == kExpected.at(version));
         const RANMobile::EP7AnimInfo infoV =
-            RANMobile::EP7AnimationReader::ParseInfo(AnimationCfg(true, version), true, false);
+            RANMobile::EP7AnimationReader::ParseInfo(cfgBytes, true, false);
         if (!infoV.valid) {
             std::printf("  cfg 0x%04X -> %s\n", version, infoV.error.c_str());
         }

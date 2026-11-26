@@ -142,7 +142,7 @@ exaggeration and strict evidence.
 | `UI/Character/CharacterPreviewOverlay.{h,cpp}` — touch preview UX | complete |
 | `Tools/verify_ep7_character_assets.cpp` — real-data probe | complete, CI-wired |
 | `Data/Importer/EP7RccArchive.{h,cpp}` — `.rcc` reader (inflate + ZipCrypto) | complete |
-| `Tests/test_phase3j.cpp` | 256 checks, 0 failures |
+| `Tests/test_phase3j.cpp` | 263 checks, 0 failures |
 | CMake + workflow wiring | complete |
 | GPU skinning | **not implemented** (B10) |
 | Renderer draw pass for characters | **not implemented** here (PR #4 owns it) |
