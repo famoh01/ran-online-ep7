@@ -18,6 +18,7 @@ set(RANMOBILE_SOURCES
     Data/Validator/DataValidator.cpp
     Data/Importer/EP7AssetImporter.cpp
     Data/Importer/EP7AssetPipeline.cpp
+    Data/Importer/EP7HashVerify.cpp
     Data/Importer/EP7SerialFile.cpp
     Data/Importer/EP7SceneData.cpp
     Data/Importer/EP7TextureDecoder.cpp

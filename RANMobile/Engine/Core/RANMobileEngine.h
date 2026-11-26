@@ -13,6 +13,7 @@ namespace RANMobile {
     class GameDataLoader;
     struct AssetPipelineReport;
     class EP7SceneRenderer;
+    enum class EP7ValidationMode;
 }
 class LoginScreen;
 enum class LoginFocus;
@@ -33,6 +34,8 @@ public:
     bool Initialize();
     bool LoadGameData(const std::string& path);
     bool LoadScene(const std::string& root);
+    bool LoadScene(const std::string& root, RANMobile::EP7ValidationMode mode);
+    bool LoadSceneWithManifest(const std::string& root, const std::string& manifestPath);
     const RANMobile::AssetPipelineReport* GetAssetPipelineReport() const;
     RANMobile::EP7SceneRenderer* GetSceneRenderer() const { return m_scene.get(); }
     std::string GetSceneStatus() const;

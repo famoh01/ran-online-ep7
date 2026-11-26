@@ -34,12 +34,15 @@
 #include "../Data/Validator/DataValidator.h"
 #include "../Data/Converter/RANMobileDataConverter.h"
 #include "../Data/Importer/EP7AssetPipeline.h"
+#include "../Data/Importer/EP7HashVerify.h"
 #include "../Data/Importer/EP7SerialCodec.h"
 #include "../Data/Importer/EP7SerialFile.h"
 #include "../Data/Importer/EP7SceneData.h"
 #include "../Engine/Scene/EP7SceneRenderer.h"
 
 #include <cassert>
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <cmath>
 #include <filesystem>
@@ -452,7 +455,13 @@ int main() {
         for (int i = 0; i < 4; ++i) glmap.push_back(static_cast<uint8_t>(fileVersion >> (8 * i)));
         for (uint8_t b : payload) glmap.push_back(RANMobile::EP7Serial::kEncodeTable[b]);
 
-        const auto header = RANMobile::EP7LevelHeaderParser::Parse(glmap);
+        // StrictAuthentic default must reject legacy GLLEVEL 0x0104 / SLEVEL_HEAD 0x0101.
+        const auto strictRejected = RANMobile::EP7LevelHeaderParser::Parse(glmap);
+        assert(!strictRejected.valid);
+        assert(strictRejected.fileVersion == 0x0104);
+
+        const auto header = RANMobile::EP7LevelHeaderParser::Parse(
+            glmap, RANMobile::EP7ValidationMode::LegacySourceCompat);
         assert(header.valid && header.wldFile == wldFile && header.mapName == mapName);
         assert(header.fileVersion == 0x0104 && header.headVersion == 0x0101);
 
@@ -483,7 +492,11 @@ int main() {
         RANMobile::EP7SceneRenderer scene;
         auto* renderer = engine.GetRenderer();
         const size_t texturesBefore = renderer->GetAssetTextureCount();
-        assert(scene.Load(tmp.string(), renderer, engine.GetResourceManager()));
+        // StrictAuthentic default rejects plain-text INI mapslist.mst without fallback.
+        assert(!scene.Load(tmp.string(), renderer, engine.GetResourceManager()));
+        assert(!scene.IsLoaded());
+        assert(scene.Load(tmp.string(), renderer, engine.GetResourceManager(),
+                          RANMobile::EP7ValidationMode::LegacySourceCompat));
         assert(scene.IsLoaded() && scene.HasPreviewTexture());
         assert(scene.GetIndex().scenes.size() == 1);
         assert(scene.GetIndex().scenes[0].wldFile == wldFile);
@@ -677,6 +690,655 @@ int main() {
         engine.OnIMEActionDone();
         assert(ui->GetAuthState() == LoginAuthState::LoginRejected);
         ui->SetFocus(LoginFocus::None);
+    }
+
+    // 32. Phase 3H: ByteCrypt bijections (Old, MapsList, LevelNew) & SHA-256 verification
+    {
+        assert(RANMobile::EP7Serial::IsValidBijection(RANMobile::EP7Serial::kEncodeTable));
+        assert(RANMobile::EP7Serial::IsValidBijection(RANMobile::EP7Serial::kMapsListEncodeTable));
+        assert(RANMobile::EP7Serial::IsValidBijection(RANMobile::EP7Serial::kLevelNewEncodeTable));
+
+        const std::vector<RANMobile::EP7Serial::EP7ByteCryptMode> modes = {
+            RANMobile::EP7Serial::EP7ByteCryptMode::None,
+            RANMobile::EP7Serial::EP7ByteCryptMode::Old,
+            RANMobile::EP7Serial::EP7ByteCryptMode::MapsList,
+            RANMobile::EP7Serial::EP7ByteCryptMode::LevelNew,
+        };
+        for (auto m : modes) {
+            std::vector<uint8_t> buf(256);
+            for (size_t i = 0; i < 256; ++i) buf[i] = static_cast<uint8_t>(i);
+            const auto& enc = RANMobile::EP7Serial::EncodeTable(m);
+            std::vector<uint8_t> cipher(256);
+            for (size_t i = 0; i < 256; ++i) cipher[i] = enc[buf[i]];
+            RANMobile::EP7Serial::DecodeInPlace(cipher.data(), cipher.size(), m);
+            assert(cipher == buf);
+        }
+
+        // FIPS 180-4 SHA-256 vectors
+        assert(RANMobile::EP7HashVerify::Sha256Hex(std::vector<uint8_t>{}) ==
+               "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+        const std::vector<uint8_t> abc = {'a', 'b', 'c'};
+        assert(RANMobile::EP7HashVerify::Sha256Hex(abc) ==
+               "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+        const auto okHash = RANMobile::EP7HashVerify::VerifyBytesAgainstExpected(
+            abc, "BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD", 3);
+        assert(okHash.valid);
+        assert(!RANMobile::EP7HashVerify::VerifyBytesAgainstExpected(
+            abc, "0000000000000000000000000000000000000000000000000000000000000000", 3).valid);
+        assert(!RANMobile::EP7HashVerify::VerifyBytesAgainstExpected(
+            abc, "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", 4).valid);
+    }
+
+    // 33. Phase 3H: Source-layout binary GLMAPS_LIST 0x0200 + glmap 0x0200 / SLEVEL_HEAD 0x0102
+    //     round-trip and case-insensitive StrictAuthentic scene index resolution (synthetic fixture)
+    {
+        namespace fs = std::filesystem;
+        const auto pushU16 = [](std::vector<uint8_t>& out, uint16_t v) {
+            out.push_back(static_cast<uint8_t>(v & 0xFFu));
+            out.push_back(static_cast<uint8_t>((v >> 8) & 0xFFu));
+        };
+        const auto pushU32 = [](std::vector<uint8_t>& out, uint32_t v) {
+            for (int i = 0; i < 4; ++i) out.push_back(static_cast<uint8_t>((v >> (8 * i)) & 0xFFu));
+        };
+        const auto pushStr = [&](std::vector<uint8_t>& out, const std::string& s) {
+            pushU32(out, static_cast<uint32_t>(s.size() + 1));
+            out.insert(out.end(), s.begin(), s.end());
+            out.push_back(0);
+        };
+        const auto buildMapsList = [&](uint32_t fileVer, const std::string& fileHead,
+                                       const std::vector<uint8_t>& plainPayload,
+                                       RANMobile::EP7Serial::EP7ByteCryptMode cryptMode) {
+            std::vector<uint8_t> out(128, 0);
+            std::memcpy(out.data(), fileHead.data(), std::min(fileHead.size(), size_t(127)));
+            pushU32(out, fileVer);
+            const auto& enc = RANMobile::EP7Serial::EncodeTable(cryptMode);
+            for (uint8_t b : plainPayload) out.push_back(enc[b]);
+            return out;
+        };
+        const auto buildSMapNode0203 = [&](bool used, const std::string& file,
+                                           uint16_t mainId, uint16_t subId,
+                                           const std::string& mapName,
+                                           const std::string& loadingImg) {
+            std::vector<uint8_t> rec;
+            pushU32(rec, 0x0203u);
+            rec.push_back(used ? 1u : 0u);
+            pushStr(rec, file);
+            pushU16(rec, mainId);
+            pushU16(rec, subId);
+            pushU32(rec, 0u); // dwFieldSID
+            for (int i = 0; i < 11; ++i) rec.push_back(0u);
+            pushStr(rec, mapName);
+            pushStr(rec, "bgm.ogg");
+            pushStr(rec, loadingImg);
+            for (int i = 0; i < 16; ++i) rec.push_back(0u);
+            return rec;
+        };
+        const auto buildGlmap0200 = [&](const std::string& mapName, const std::string& wldFile,
+                                        uint32_t division, uint32_t bright,
+                                        uint32_t headVer = 0x0102u,
+                                        const std::string& fileType = "glmap",
+                                        uint32_t fileVer = 0x0200u,
+                                        RANMobile::EP7Serial::EP7ByteCryptMode cryptMode =
+                                            RANMobile::EP7Serial::EP7ByteCryptMode::LevelNew) {
+            std::vector<uint8_t> block;
+            pushStr(block, mapName);
+            pushStr(block, wldFile);
+            pushU32(block, division);
+            pushU32(block, bright);
+
+            std::vector<uint8_t> payload;
+            pushU32(payload, headVer);
+            pushU32(payload, static_cast<uint32_t>(block.size()));
+            payload.insert(payload.end(), block.begin(), block.end());
+
+            std::vector<uint8_t> out(128, 0);
+            std::memcpy(out.data(), fileType.data(), std::min(fileType.size(), size_t(127)));
+            pushU32(out, fileVer);
+            const auto& enc = RANMobile::EP7Serial::EncodeTable(cryptMode);
+            for (uint8_t b : payload) out.push_back(enc[b]);
+            return out;
+        };
+
+        std::vector<uint8_t> mapPayload;
+        pushU32(mapPayload, 2u); // 2 records: 1 used, 1 unused
+        const auto rec0 = buildSMapNode0203(true, "zone_a.lev", 0, 0, "ZoneA", "load_a.dds");
+        const auto rec1 = buildSMapNode0203(false, "zone_b.LEV", 1, 0, "ZoneB", "");
+        mapPayload.insert(mapPayload.end(), rec0.begin(), rec0.end());
+        mapPayload.insert(mapPayload.end(), rec1.begin(), rec1.end());
+        const auto binMapList = buildMapsList(0x0200u, "GLMAPS_LIST", mapPayload,
+                                              RANMobile::EP7Serial::EP7ByteCryptMode::MapsList);
+
+        const auto mapReport = RANMobile::EP7BinaryMapListParser::Parse(binMapList);
+        assert(mapReport.valid);
+        assert(mapReport.format == "GLMAPS_LIST");
+        assert(mapReport.fileVersion == 0x0200u);
+        assert(mapReport.recordVersion == 0x0203u);
+        assert(mapReport.totalRecords == 2u);
+        assert(mapReport.usedRecords == 1u);
+        assert(mapReport.bytesConsumed == binMapList.size());
+        assert(mapReport.entries[0].file == "zone_a.lev");
+        assert(mapReport.entries[0].mapName == "ZoneA");
+
+        const auto binLev = buildGlmap0200("", "zone_a.wld", 16u, 2u);
+        const auto levHdr = RANMobile::EP7LevelHeaderParser::Parse(binLev);
+        assert(levHdr.valid);
+        assert(levHdr.fileType == "glmap");
+        assert(levHdr.fileVersion == 0x0200u);
+        assert(levHdr.headVersion == 0x0102u);
+        assert(levHdr.wldFile == "zone_a.wld");
+        assert(levHdr.mapName.empty());
+        assert(levHdr.division == 16u && levHdr.bright == 2u);
+        assert(levHdr.bytesConsumed == binLev.size());
+
+        // Case-insensitive lookup ("zone_a.lev" -> "Zone_A.Lev") & manifest verification
+        const fs::path tmp = fs::temp_directory_path() / "ranmobile_phase3h_synth";
+        std::error_code ec;
+        fs::remove_all(tmp, ec);
+        fs::create_directories(tmp / "glogic" / "level", ec);
+        fs::create_directories(tmp / "textures", ec);
+        {
+            std::ofstream o(tmp / "glogic" / "mapslist.mst", std::ios::binary);
+            o.write(reinterpret_cast<const char*>(binMapList.data()), binMapList.size());
+        }
+        {
+            std::ofstream o(tmp / "glogic" / "level" / "Zone_A.Lev", std::ios::binary);
+            o.write(reinterpret_cast<const char*>(binLev.data()), binLev.size());
+        }
+        std::vector<uint8_t> dds(136, 0);
+        std::memcpy(dds.data(), "DDS ", 4);
+        uint32_t flags = 0, h = 4, w = 4, pfSize = 32, pfFlags = 4, fourcc = 0x31545844;
+        std::memcpy(dds.data() + 8, &flags, 4);
+        std::memcpy(dds.data() + 12, &h, 4);
+        std::memcpy(dds.data() + 16, &w, 4);
+        std::memcpy(dds.data() + 76, &pfSize, 4);
+        std::memcpy(dds.data() + 80, &pfFlags, 4);
+        std::memcpy(dds.data() + 84, &fourcc, 4);
+        dds[128] = 0; dds[129] = 0xF8; dds[130] = 0x1F; dds[131] = 0;
+        {
+            std::ofstream o(tmp / "textures" / "LOAD_A.DDS", std::ios::binary);
+            o.write(reinterpret_cast<const char*>(dds.data()), dds.size());
+        }
+
+        const fs::path manifestFile = tmp / "manifest.tsv";
+        {
+            std::ofstream m(manifestFile);
+            const std::string mSha = RANMobile::EP7HashVerify::Sha256Hex(binMapList);
+            const std::string lSha = RANMobile::EP7HashVerify::Sha256Hex(binLev);
+            const std::string dSha = RANMobile::EP7HashVerify::Sha256Hex(dds);
+            m << "path\toid\tsha256\tsize\n";
+            m << "glogic/mapslist.mst\t" << mSha << "\t" << mSha << "\t" << binMapList.size() << "\n";
+            m << "glogic/level/Zone_A.Lev\t" << lSha << "\t" << lSha << "\t" << binLev.size() << "\n";
+            m << "textures/LOAD_A.DDS\t" << dSha << "\t" << dSha << "\t" << dds.size() << "\n";
+        }
+
+        assert(engine.LoadSceneWithManifest(tmp.string(), manifestFile.string()));
+        const auto* scenePtr = engine.GetSceneRenderer();
+        assert(scenePtr->IsLoaded() && scenePtr->HasPreviewTexture());
+        assert(scenePtr->GetValidationMode() == RANMobile::EP7ValidationMode::StrictAuthentic);
+        assert(scenePtr->GetResolvedLevelCount() == 1u);
+        assert(scenePtr->GetIndex().manifestVerified);
+        assert(scenePtr->GetIndex().scenes[0].mapName == "ZoneA");
+        assert(scenePtr->GetIndex().scenes[0].wldFile == "zone_a.wld");
+        assert(!scenePtr->GetIndex().scenes[0].wldFound);
+
+        // requireReferencedWlds must fail when zone_a.wld is absent
+        RANMobile::EP7SceneBuildOptions strictWldOpts;
+        strictWldOpts.requireReferencedWlds = true;
+        strictWldOpts.manifestPath = manifestFile.string();
+        assert(!RANMobile::EP7SceneIndexBuilder::Build(tmp.string(), strictWldOpts).valid);
+
+        // Corrupting 1 byte in mapslist.mst must fail manifest verification strictly
+        std::vector<uint8_t> corruptMapList = binMapList;
+        corruptMapList.back() ^= 0x01u;
+        {
+            std::ofstream o(tmp / "glogic" / "mapslist.mst", std::ios::binary);
+            o.write(reinterpret_cast<const char*>(corruptMapList.data()), corruptMapList.size());
+        }
+        assert(!engine.LoadSceneWithManifest(tmp.string(), manifestFile.string()));
+
+        // Restore valid mapslist.mst, add a corrupt .Lev for unused/second entry or corrupt Zone_A.Lev
+        {
+            std::ofstream o(tmp / "glogic" / "mapslist.mst", std::ios::binary);
+            o.write(reinterpret_cast<const char*>(binMapList.data()), binMapList.size());
+        }
+        std::vector<uint8_t> corruptLev = binLev;
+        corruptLev[135] ^= 0xFFu;
+        {
+            std::ofstream o(tmp / "glogic" / "level" / "Zone_A.Lev", std::ios::binary);
+            o.write(reinterpret_cast<const char*>(corruptLev.data()), corruptLev.size());
+        }
+        assert(!engine.LoadSceneWithManifest(tmp.string(), manifestFile.string()));
+        assert(!engine.LoadScene(tmp.string()));
+
+        engine.GetSceneRenderer()->Unload(engine.GetRenderer());
+        fs::remove_all(tmp, ec);
+    }
+
+    // 34. Phase 3H: Strict no-fallback negative & adversarial tests (mapslist.mst & .Lev)
+    {
+        const auto pushU16 = [](std::vector<uint8_t>& out, uint16_t v) {
+            out.push_back(static_cast<uint8_t>(v & 0xFFu));
+            out.push_back(static_cast<uint8_t>((v >> 8) & 0xFFu));
+        };
+        const auto pushU32 = [](std::vector<uint8_t>& out, uint32_t v) {
+            for (int i = 0; i < 4; ++i) out.push_back(static_cast<uint8_t>((v >> (8 * i)) & 0xFFu));
+        };
+        const auto pushStr = [&](std::vector<uint8_t>& out, const std::string& s) {
+            pushU32(out, static_cast<uint32_t>(s.size() + 1));
+            out.insert(out.end(), s.begin(), s.end());
+            out.push_back(0);
+        };
+        const auto wrapSerial = [&](const std::string& head, uint32_t ver,
+                                    const std::vector<uint8_t>& plainPayload,
+                                    RANMobile::EP7Serial::EP7ByteCryptMode mode) {
+            std::vector<uint8_t> out(128, 0);
+            std::memcpy(out.data(), head.data(), std::min(head.size(), size_t(127)));
+            pushU32(out, ver);
+            const auto& enc = RANMobile::EP7Serial::EncodeTable(mode);
+            for (uint8_t b : plainPayload) out.push_back(enc[b]);
+            return out;
+        };
+
+        // Empty / truncated / unterminated headers
+        assert(!RANMobile::EP7BinaryMapListParser::Parse({}).valid);
+        assert(!RANMobile::EP7BinaryMapListParser::Parse(std::vector<uint8_t>(131, 0)).valid);
+        assert(!RANMobile::EP7LevelHeaderParser::Parse({}).valid);
+        assert(!RANMobile::EP7LevelHeaderParser::Parse(std::vector<uint8_t>(131, 0)).valid);
+        assert(!RANMobile::EP7SerialFile::ReadHeaderOnly(std::vector<uint8_t>(132, 'A')).valid); // no NUL
+        {
+            std::vector<uint8_t> nonAsciiHdr(132, 0);
+            nonAsciiHdr[0] = 0x80u;
+            assert(!RANMobile::EP7SerialFile::ReadHeaderOnly(nonAsciiHdr).valid);
+        }
+
+        // Unsupported formats (plain INI / JSON / wrong fileType) rejected with zero fallback
+        {
+            const std::string ini = "[MAP_LIST_INFO]\nMapKeySize=20\n[MAP_LIST]\nMAP=1,a.lev,0,0,0\n";
+            const std::vector<uint8_t> iniBytes(ini.begin(), ini.end());
+            assert(!RANMobile::EP7BinaryMapListParser::Parse(iniBytes).valid);
+
+            const std::string json = "{\"maps\":[{\"file\":\"innerzone_01.lev\"}]}";
+            assert(!RANMobile::EP7BinaryMapListParser::Parse(
+                std::vector<uint8_t>(json.begin(), json.end())).valid);
+
+            const auto wrongHead = wrapSerial("LAND.MAN", 0x0200u, {1, 0, 0, 0},
+                                              RANMobile::EP7Serial::EP7ByteCryptMode::MapsList);
+            assert(!RANMobile::EP7BinaryMapListParser::Parse(wrongHead).valid);
+            assert(!RANMobile::EP7LevelHeaderParser::Parse(wrongHead).valid);
+        }
+
+        // Invalid versions in StrictAuthentic
+        {
+            const auto oldVerMapList = wrapSerial("GLMAPS_LIST", 0x0100u, {1, 0, 0, 0},
+                                                  RANMobile::EP7Serial::EP7ByteCryptMode::Old);
+            assert(!RANMobile::EP7BinaryMapListParser::Parse(oldVerMapList).valid);
+
+            const auto futureVerMapList = wrapSerial("GLMAPS_LIST", 0x0300u, {1, 0, 0, 0},
+                                                     RANMobile::EP7Serial::EP7ByteCryptMode::MapsList);
+            assert(!RANMobile::EP7BinaryMapListParser::Parse(futureVerMapList).valid);
+        }
+
+        // Helper for single-record GLMAPS_LIST 0x0200 testing
+        const auto makeOneMapList = [&](uint32_t recVer, bool used, uint8_t usedByte,
+                                        const std::string& file, uint16_t mid, uint16_t sid,
+                                        const std::string& name, uint8_t extraFlagByte,
+                                        bool appendTrailingByte) {
+            (void)used;
+            std::vector<uint8_t> p;
+            pushU32(p, 1u);
+            pushU32(p, recVer);
+            p.push_back(usedByte);
+            pushStr(p, file);
+            pushU16(p, mid);
+            pushU16(p, sid);
+            pushU32(p, 0u);
+            for (int i = 0; i < 11; ++i) p.push_back(extraFlagByte);
+            pushStr(p, name);
+            pushStr(p, "bgm.ogg");
+            pushStr(p, "loading.dds");
+            for (int i = 0; i < 16; ++i) p.push_back(0u);
+            if (appendTrailingByte) p.push_back(0xAAu);
+            return wrapSerial("GLMAPS_LIST", 0x0200u, p,
+                              RANMobile::EP7Serial::EP7ByteCryptMode::MapsList);
+        };
+
+        // Valid baseline check
+        assert(RANMobile::EP7BinaryMapListParser::Parse(
+            makeOneMapList(0x0203u, true, 1u, "a.lev", 0, 0, "OK", 0u, false)).valid);
+        // Wrong record version (0x0202) in StrictAuthentic
+        assert(!RANMobile::EP7BinaryMapListParser::Parse(
+            makeOneMapList(0x0202u, true, 1u, "a.lev", 0, 0, "OK", 0u, false)).valid);
+        // Invalid bool bytes (>1)
+        assert(!RANMobile::EP7BinaryMapListParser::Parse(
+            makeOneMapList(0x0203u, true, 2u, "a.lev", 0, 0, "OK", 0u, false)).valid);
+        assert(!RANMobile::EP7BinaryMapListParser::Parse(
+            makeOneMapList(0x0203u, true, 1u, "a.lev", 0, 0, "OK", 0x42u, false)).valid);
+        // Out-of-bounds MainID (>= 256), SubID (>= 256), MapName (> 16)
+        assert(!RANMobile::EP7BinaryMapListParser::Parse(
+            makeOneMapList(0x0203u, true, 1u, "a.lev", 256, 0, "OK", 0u, false)).valid);
+        assert(!RANMobile::EP7BinaryMapListParser::Parse(
+            makeOneMapList(0x0203u, true, 1u, "a.lev", 0, 256, "OK", 0u, false)).valid);
+        assert(!RANMobile::EP7BinaryMapListParser::Parse(
+            makeOneMapList(0x0203u, true, 1u, "a.lev", 0, 0, "12345678901234567", 0u, false)).valid);
+        // Path traversal & wrong extension
+        assert(!RANMobile::EP7BinaryMapListParser::Parse(
+            makeOneMapList(0x0203u, true, 1u, "../evil.lev", 0, 0, "OK", 0u, false)).valid);
+        assert(!RANMobile::EP7BinaryMapListParser::Parse(
+            makeOneMapList(0x0203u, true, 1u, "dir/evil.lev", 0, 0, "OK", 0u, false)).valid);
+        assert(!RANMobile::EP7BinaryMapListParser::Parse(
+            makeOneMapList(0x0203u, true, 1u, "evil.txt", 0, 0, "OK", 0u, false)).valid);
+        // Trailing unparsed byte & zero used records
+        assert(!RANMobile::EP7BinaryMapListParser::Parse(
+            makeOneMapList(0x0203u, true, 1u, "a.lev", 0, 0, "OK", 0u, true)).valid);
+        assert(!RANMobile::EP7BinaryMapListParser::Parse(
+            makeOneMapList(0x0203u, false, 0u, "a.lev", 0, 0, "OK", 0u, false)).valid);
+
+        // Duplicate used ID and duplicate case-insensitive used filename
+        {
+            std::vector<uint8_t> dupId;
+            pushU32(dupId, 2u);
+            const auto addRec = [&](uint16_t mid, uint16_t sid, const std::string& f) {
+                pushU32(dupId, 0x0203u);
+                dupId.push_back(1u);
+                pushStr(dupId, f);
+                pushU16(dupId, mid);
+                pushU16(dupId, sid);
+                pushU32(dupId, 0u);
+                for (int i = 0; i < 11; ++i) dupId.push_back(0u);
+                pushStr(dupId, "Map");
+                pushStr(dupId, "bgm.ogg");
+                pushStr(dupId, "l.dds");
+                for (int i = 0; i < 16; ++i) dupId.push_back(0u);
+            };
+            addRec(1, 0, "a.lev");
+            addRec(1, 0, "b.lev");
+            assert(!RANMobile::EP7BinaryMapListParser::Parse(
+                wrapSerial("GLMAPS_LIST", 0x0200u, dupId,
+                           RANMobile::EP7Serial::EP7ByteCryptMode::MapsList)).valid);
+
+            std::vector<uint8_t> dupFile;
+            pushU32(dupFile, 2u);
+            auto addRec2 = [&](uint16_t mid, uint16_t sid, const std::string& f) {
+                pushU32(dupFile, 0x0203u);
+                dupFile.push_back(1u);
+                pushStr(dupFile, f);
+                pushU16(dupFile, mid);
+                pushU16(dupFile, sid);
+                pushU32(dupFile, 0u);
+                for (int i = 0; i < 11; ++i) dupFile.push_back(0u);
+                pushStr(dupFile, "Map");
+                pushStr(dupFile, "bgm.ogg");
+                pushStr(dupFile, "l.dds");
+                for (int i = 0; i < 16; ++i) dupFile.push_back(0u);
+            };
+            addRec2(1, 0, "Same.Lev");
+            addRec2(2, 0, "same.lev");
+            assert(!RANMobile::EP7BinaryMapListParser::Parse(
+                wrapSerial("GLMAPS_LIST", 0x0200u, dupFile,
+                           RANMobile::EP7Serial::EP7ByteCryptMode::MapsList)).valid);
+        }
+
+        // Scene index negative checks: missing root, empty dir, mapslist with 0 resolved levels
+        {
+            assert(!RANMobile::EP7SceneIndexBuilder::Build("/nonexistent_phase3h_dir").valid);
+            namespace fs = std::filesystem;
+            const fs::path emptyTmp = fs::temp_directory_path() / "ranmobile_phase3h_empty";
+            std::error_code ec;
+            fs::remove_all(emptyTmp, ec);
+            fs::create_directories(emptyTmp, ec);
+            assert(!RANMobile::EP7SceneIndexBuilder::Build(emptyTmp.string()).valid);
+
+            const auto onlyMapList = makeOneMapList(0x0203u, true, 1u, "missing.lev", 0, 0, "OK", 0u, false);
+            {
+                std::ofstream o(emptyTmp / "mapslist.mst", std::ios::binary);
+                o.write(reinterpret_cast<const char*>(onlyMapList.data()), onlyMapList.size());
+            }
+            const auto noLevels = RANMobile::EP7SceneIndexBuilder::Build(emptyTmp.string());
+            assert(!noLevels.valid);
+            assert(noLevels.resolvedLevelHeaders == 0u);
+            assert(noLevels.missingLevelFiles == 1u);
+            fs::remove_all(emptyTmp, ec);
+        }
+
+        // Truncated payload & oversized dwNum (> MAPLIST_MAX 1000)
+        {
+            const auto validBytes = makeOneMapList(0x0203u, true, 1u, "a.lev", 0, 0, "OK", 0u, false);
+            std::vector<uint8_t> truncated(validBytes.begin(), validBytes.end() - 5);
+            assert(!RANMobile::EP7BinaryMapListParser::Parse(truncated).valid);
+
+            std::vector<uint8_t> tooMany;
+            pushU32(tooMany, 1001u);
+            assert(!RANMobile::EP7BinaryMapListParser::Parse(
+                wrapSerial("GLMAPS_LIST", 0x0200u, tooMany,
+                           RANMobile::EP7Serial::EP7ByteCryptMode::MapsList)).valid);
+        }
+
+        // Malformed CSerialFile strings (0 length, missing NUL, embedded NUL, length > payload)
+        {
+            std::string strErr;
+            size_t off = 0;
+            std::string s;
+            std::vector<uint8_t> zeroLen = {0, 0, 0, 0};
+            assert(!RANMobile::EP7SerialFile::ReadString(zeroLen, off, s, 64, &strErr));
+
+            off = 0;
+            std::vector<uint8_t> noNul = {3, 0, 0, 0, 'A', 'B', 'C'};
+            assert(!RANMobile::EP7SerialFile::ReadString(noNul, off, s, 64, &strErr));
+
+            off = 0;
+            std::vector<uint8_t> embeddedNul = {4, 0, 0, 0, 'A', 0, 'B', 0};
+            assert(!RANMobile::EP7SerialFile::ReadString(embeddedNul, off, s, 64, &strErr));
+
+            off = 0;
+            std::vector<uint8_t> overLen = {10, 0, 0, 0, 'A', 0};
+            assert(!RANMobile::EP7SerialFile::ReadString(overLen, off, s, 64, &strErr));
+        }
+
+        // Malformed SLEVEL_HEAD 0x0102: wrong block size, bad division, bad bright, bad wld ext
+        const auto makeLevRaw = [&](uint32_t headVer, uint32_t declaredBlockSize,
+                                    const std::string& mapName, const std::string& wld,
+                                    uint32_t div, uint32_t bright) {
+            std::vector<uint8_t> blk;
+            pushStr(blk, mapName);
+            pushStr(blk, wld);
+            pushU32(blk, div);
+            pushU32(blk, bright);
+            std::vector<uint8_t> p;
+            pushU32(p, headVer);
+            pushU32(p, declaredBlockSize);
+            p.insert(p.end(), blk.begin(), blk.end());
+            return wrapSerial("glmap", 0x0200u, p, RANMobile::EP7Serial::EP7ByteCryptMode::LevelNew);
+        };
+        assert(RANMobile::EP7LevelHeaderParser::Parse(
+            makeLevRaw(0x0102u, 23u, "", "a.wld", 16u, 2u)).valid);
+        assert(!RANMobile::EP7LevelHeaderParser::Parse(
+            makeLevRaw(0x0102u, 24u, "", "a.wld", 16u, 2u)).valid); // block size mismatch
+        assert(!RANMobile::EP7LevelHeaderParser::Parse(
+            makeLevRaw(0x0102u, 23u, "", "a.wld", 3u, 2u)).valid);  // invalid division
+        assert(!RANMobile::EP7LevelHeaderParser::Parse(
+            makeLevRaw(0x0102u, 23u, "", "a.wld", 16u, 3u)).valid); // invalid bright
+        assert(!RANMobile::EP7LevelHeaderParser::Parse(
+            makeLevRaw(0x0102u, 23u, "", "a.txt", 16u, 2u)).valid); // bad .wld ext
+        assert(!RANMobile::EP7LevelHeaderParser::Parse(
+            makeLevRaw(0x0102u, 25u, "", "../a.wld", 16u, 2u)).valid); // traversal
+        assert(!RANMobile::EP7LevelHeaderParser::Parse(
+            makeLevRaw(0x0101u, 23u, "", "a.wld", 16u, 2u)).valid); // 0x0101 rejected in strict
+    }
+
+    // 35. Phase 3H: Authentic Phase 3G binary verification (executed locally whenever
+    //     external/recovery/phase3g/retrieval_manifest.tsv exists, or forced via env var)
+    {
+        namespace fs = std::filesystem;
+        const fs::path manifestPath = "external/recovery/phase3g/retrieval_manifest.tsv";
+        const char* forceAuth = std::getenv("RANMOBILE_REQUIRE_AUTHENTIC_PHASE3G");
+        const bool requireAuthentic = (forceAuth != nullptr && std::string(forceAuth) == "1");
+        const bool manifestExists = fs::exists(manifestPath);
+        if (requireAuthentic) {
+            assert(manifestExists);
+        }
+
+        if (manifestExists) {
+            const auto readBin = [](const fs::path& p) {
+                std::ifstream in(p, std::ios::binary | std::ios::ate);
+                assert(in.is_open());
+                const std::streamsize sz = in.tellg();
+                assert(sz >= 0);
+                in.seekg(0, std::ios::beg);
+                std::vector<uint8_t> out(static_cast<size_t>(sz));
+                if (sz > 0) assert(in.read(reinterpret_cast<char*>(out.data()), sz));
+                return out;
+            };
+
+            // Verify all 24 Phase 3G recovered objects against retrieval_manifest.tsv
+            const RANMobile::EP7Manifest manifest = RANMobile::EP7HashVerify::LoadManifest(manifestPath.string());
+            assert(manifest.loaded);
+            assert(manifest.entries.size() == 24u);
+            for (const auto& entry : manifest.entries) {
+                assert(!entry.localPath.empty());
+                assert(fs::exists(entry.localPath));
+                const auto bytes = readBin(entry.localPath);
+                const auto hv = RANMobile::EP7HashVerify::VerifyBytesAgainstManifest(
+                    manifest, entry.repoPath, bytes);
+                assert(hv.valid);
+            }
+
+            // Authentic mapslist.mst: GLMAPS_LIST 0x0200, SMAPNODE_DATA 0x0203, 13,714 B, 120/104
+            const auto mapsBytes = readBin("external/recovery/phase3g/authentic/mapslist.mst");
+            const auto mapsReport = RANMobile::EP7BinaryMapListParser::Parse(mapsBytes);
+            assert(mapsReport.valid);
+            assert(mapsReport.validationMode == RANMobile::EP7ValidationMode::StrictAuthentic);
+            assert(mapsReport.format == "GLMAPS_LIST");
+            assert(mapsReport.fileVersion == 0x0200u);
+            assert(mapsReport.recordVersion == 0x0203u);
+            assert(mapsReport.totalRecords == 120u);
+            assert(mapsReport.usedRecords == 104u);
+            assert(mapsReport.fileBytes == 13714u);
+            assert(mapsReport.bytesConsumed == 13714u);
+            assert(mapsReport.sha256 ==
+                   "cc52d4d0483a7dcd91ced28ac6de783eca0859736ea13bebe5fa7a49cd23488f");
+            assert(mapsReport.entries[0].used);
+            assert(mapsReport.entries[0].file == "innerzone_01.lev");
+            assert(mapsReport.entries[0].mainID == 0u && mapsReport.entries[0].subID == 0u);
+            assert(mapsReport.entries[0].mapName == "SG_Campus1F");
+            assert(mapsReport.entries[0].bgm == "ran07.ogg");
+            assert(mapsReport.entries[0].loadingImage == "loading_032.dds");
+            assert(!mapsReport.entries[1].used);
+            assert(mapsReport.entries[1].file == "Sea_Death.LEV");
+            assert(mapsReport.entries[2].used);
+            assert(mapsReport.entries[2].file == "w_school_01.Lev");
+            assert(mapsReport.entries[2].mapName == "SG_Campus");
+            assert(mapsReport.entries[2].loadingImage == "loading_054.dds");
+            for (const auto& rec : mapsReport.entries) {
+                assert(rec.recordVersion == 0x0203u);
+                assert(rec.mainID < 256u && rec.subID < 256u);
+                assert(rec.mapName.size() <= 16u);
+            }
+
+            // Authentic innerzone_01.Lev: glmap 0x0200, SLEVEL_HEAD 0x0102, 34-byte block
+            const auto levBytes = readBin("external/recovery/phase3g/authentic/innerzone_01.Lev");
+            const auto levHdr = RANMobile::EP7LevelHeaderParser::Parse(levBytes);
+            assert(levHdr.valid);
+            assert(levHdr.fileType == "glmap");
+            assert(levHdr.fileVersion == 0x0200u);
+            assert(levHdr.headVersion == 0x0102u);
+            assert(levHdr.headBlockSize == 34u);
+            assert(levHdr.headBlockBytesConsumed == 34u);
+            assert(levHdr.bytesConsumed == 174u);
+            assert(levHdr.fileBytes == 12654u);
+            assert(levHdr.remainingPayloadBytes == 12480u);
+            assert(levHdr.mapName.empty());
+            assert(levHdr.wldFile == "innerzone_01.wld");
+            assert(levHdr.division == 16u);
+            assert(levHdr.bright == 2u);
+            assert(levHdr.sha256 ==
+                   "f1738a67987929d0c2e62248f2987b647fc22516f7cc32835645a1fd24a5235c");
+
+            // Authentic login.wld header + SHA-256 verification
+            const auto loginWld = readBin("external/recovery/phase3g/authentic/login.wld");
+            const auto wldRes = RANMobile::EP7WorldCharParser::ParseWldHeader(loginWld);
+            assert(wldRes.valid && wldRes.fileType == "LAND.MAN" && wldRes.version == 0x0108u);
+
+            // End-to-end StrictAuthentic scene-index & preview load using ONLY verified authentic files
+            const fs::path stage = fs::temp_directory_path() / "ranmobile_phase3h_authentic_stage";
+            std::error_code ec;
+            fs::remove_all(stage, ec);
+            fs::create_directories(stage / "data" / "glogic" / "level", ec);
+            fs::create_directories(stage / "textures" / "gui", ec);
+            fs::copy_file("external/recovery/phase3g/authentic/mapslist.mst",
+                          stage / "data" / "glogic" / "mapslist.mst", ec);
+            fs::copy_file("external/recovery/phase3g/authentic/innerzone_01.Lev",
+                          stage / "data" / "glogic" / "level" / "innerzone_01.Lev", ec);
+            fs::copy_file("external/recovery/phase3g/authentic/loading_032.dds",
+                          stage / "textures" / "gui" / "loading_032.dds", ec);
+
+            assert(engine.LoadSceneWithManifest(stage.string(), manifestPath.string()));
+            const auto* sr = engine.GetSceneRenderer();
+            assert(sr->IsLoaded());
+            assert(sr->HasPreviewTexture());
+            assert(sr->GetIndex().manifestVerified);
+            assert(sr->GetIndex().totalMapRecords == 120u);
+            assert(sr->GetIndex().usedMapRecords == 104u);
+            assert(sr->GetIndex().mapListBytesConsumed == 13714u);
+            assert(sr->GetIndex().resolvedLevelHeaders == 1u);
+            assert(sr->GetIndex().missingLevelFiles == 103u);
+            assert(sr->GetIndex().invalidLevelHeaders == 0u);
+            assert(sr->GetIndex().scenes[0].glmapFile == "innerzone_01.lev");
+            assert(sr->GetIndex().scenes[0].mapName == "SG_Campus1F");
+            assert(sr->GetIndex().scenes[0].wldFile == "innerzone_01.wld");
+            assert(sr->GetIndex().scenes[0].division == 16u);
+            assert(sr->GetIndex().scenes[0].bright == 2u);
+            assert(sr->GetIndex().scenes[0].loadingImage == "loading_032.dds");
+            assert(!sr->GetIndex().scenes[0].wldFound);
+            assert(sr->GetStatus().find("loading_032.dds (1024x512)") != std::string::npos);
+
+            sr->Draw(engine.GetRenderer());
+            engine.GetSceneRenderer()->Unload(engine.GetRenderer());
+
+            // Default StrictAuthentic LoadScene (without manifestPath) also succeeds
+            assert(engine.LoadScene(stage.string()));
+            engine.GetSceneRenderer()->Unload(engine.GetRenderer());
+
+            // requireAllReferencedLevels = true must reject partial 1-of-104 asset drop
+            RANMobile::EP7SceneBuildOptions allLevelsOpts;
+            allLevelsOpts.requireAllReferencedLevels = true;
+            assert(!RANMobile::EP7SceneIndexBuilder::Build(stage.string(), allLevelsOpts).valid);
+
+            // Corrupt 1 byte of authentic loading_032.dds copy -> strict manifest check must reject
+            {
+                std::fstream d(stage / "textures" / "gui" / "loading_032.dds",
+                               std::ios::binary | std::ios::in | std::ios::out);
+                assert(d.is_open());
+                d.seekg(200);
+                char byte = 0;
+                d.read(&byte, 1);
+                byte = static_cast<char>(byte ^ 0x33);
+                d.seekp(200);
+                d.write(&byte, 1);
+            }
+            assert(!engine.LoadSceneWithManifest(stage.string(), manifestPath.string()));
+            fs::copy_file("external/recovery/phase3g/authentic/loading_032.dds",
+                          stage / "textures" / "gui" / "loading_032.dds",
+                          fs::copy_options::overwrite_existing, ec);
+
+            // Corrupt 1 byte of authentic .Lev copy -> strict manifest check must reject
+            {
+                std::fstream c(stage / "data" / "glogic" / "level" / "innerzone_01.Lev",
+                               std::ios::binary | std::ios::in | std::ios::out);
+                assert(c.is_open());
+                c.seekg(140);
+                char byte = 0;
+                c.read(&byte, 1);
+                byte = static_cast<char>(byte ^ 0x55);
+                c.seekp(140);
+                c.write(&byte, 1);
+            }
+            assert(!engine.LoadSceneWithManifest(stage.string(), manifestPath.string()));
+
+            fs::remove_all(stage, ec);
+            std::cout << "[PHASE 3H] Authentic Phase 3G verification PASSED (24/24 manifest objects, 13,714 B mapslist.mst, 12,654 B innerzone_01.Lev, 1024x512 loading_032.dds)\n";
+        } else {
+            std::cout << "[PHASE 3H] Authentic Phase 3G local files absent; manifest checks skipped (CI mode)\n";
+        }
     }
 
     engine.Shutdown();

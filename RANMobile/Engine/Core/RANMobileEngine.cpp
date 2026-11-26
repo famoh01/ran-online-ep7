@@ -70,11 +70,26 @@ const RANMobile::AssetPipelineReport* RANMobileEngine::GetAssetPipelineReport() 
 }
 
 bool RANMobileEngine::LoadScene(const std::string& root) {
+    return LoadScene(root, RANMobile::EP7ValidationMode::StrictAuthentic);
+}
+
+bool RANMobileEngine::LoadScene(const std::string& root, RANMobile::EP7ValidationMode mode) {
     if (!m_initialized || !m_scene) {
         RANMobile::Logger::Error("RANMobileEngine", "Cannot LoadScene before Initialize()");
         return false;
     }
-    return m_scene->Load(root, m_renderer.get(), m_resourceManager.get());
+    return m_scene->Load(root, m_renderer.get(), m_resourceManager.get(), mode);
+}
+
+bool RANMobileEngine::LoadSceneWithManifest(const std::string& root, const std::string& manifestPath) {
+    if (!m_initialized || !m_scene) {
+        RANMobile::Logger::Error("RANMobileEngine", "Cannot LoadSceneWithManifest before Initialize()");
+        return false;
+    }
+    RANMobile::EP7SceneBuildOptions options;
+    options.validationMode = RANMobile::EP7ValidationMode::StrictAuthentic;
+    options.manifestPath = manifestPath;
+    return m_scene->Load(root, m_renderer.get(), m_resourceManager.get(), options);
 }
 
 void RANMobileEngine::SetSafeAreaInsets(float left, float top, float right, float bottom) {

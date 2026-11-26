@@ -2,6 +2,7 @@
 #include "../Renderer/MobileRenderer.h"
 #include "../Resource/ResourceManager.h"
 #include "../Core/Logger.h"
+#include "../../Data/Importer/EP7HashVerify.h"
 #include "../../Data/Importer/EP7TextureDecoder.h"
 
 #include <algorithm>
@@ -25,24 +26,49 @@ std::vector<uint8_t> ReadBytes(const fs::path& path) {
     return bytes;
 }
 
-fs::path FindFile(const fs::path& root, const std::string& name) {
-    if (name.empty()) return {};
+fs::path FindFileCaseInsensitive(const fs::path& root, const std::string& name) {
+    if (name.empty() ||
+        name.find('/') != std::string::npos ||
+        name.find('\\') != std::string::npos ||
+        name.find("..") != std::string::npos) {
+        return {};
+    }
+    const std::string targetLower = EP7HashVerify::LowerAscii(name);
+    std::vector<fs::path> ciMatches;
     std::error_code ec;
     for (fs::recursive_directory_iterator it(root, ec), end; it != end && !ec; it.increment(ec)) {
-        if (it->is_regular_file(ec) && it->path().filename() == name) return it->path();
+        if (!it->is_regular_file(ec)) continue;
+        const std::string candidate = it->path().filename().string();
+        if (candidate == name) return it->path();
+        if (EP7HashVerify::LowerAscii(candidate) == targetLower) {
+            ciMatches.push_back(it->path());
+        }
     }
-    return {};
+    if (ciMatches.empty()) return {};
+    std::sort(ciMatches.begin(), ciMatches.end());
+    return ciMatches.front();
 }
 
 } // namespace
 
 bool EP7SceneRenderer::Load(const std::string& root, MobileRenderer* renderer,
-                            ResourceManager* resources) {
+                            ResourceManager* resources, EP7ValidationMode mode) {
+    EP7SceneBuildOptions options;
+    options.validationMode = mode;
+    return Load(root, renderer, resources, options);
+}
+
+bool EP7SceneRenderer::Load(const std::string& root, MobileRenderer* renderer,
+                            ResourceManager* resources, const EP7SceneBuildOptions& options) {
     Unload(renderer);
     m_assetReport = EP7AssetPipeline::ScanDirectory(root, resources);
-    m_index = EP7SceneIndexBuilder::Build(root);
+    m_index = EP7SceneIndexBuilder::Build(root, options);
     if (!m_index.valid) {
-        m_status = "NO ORIGINAL SCENE METADATA RESOLVED";
+        if (!m_index.diagnostics.empty()) {
+            m_status = "NO ORIGINAL SCENE METADATA RESOLVED: " + m_index.diagnostics.front();
+        } else {
+            m_status = "NO ORIGINAL SCENE METADATA RESOLVED";
+        }
         Logger::Warn("EP7SceneRenderer", m_status);
         return false;
     }
@@ -50,14 +76,14 @@ bool EP7SceneRenderer::Load(const std::string& root, MobileRenderer* renderer,
     // The first resolvable loading image is an original DDS/MTF texture referenced
     // by mapslist.mst. It is shown as a texture preview, never as a game scene.
     for (const EP7SceneEntry& scene : m_index.scenes) {
-        if (scene.loadingImage.empty()) continue;
-        const fs::path path = FindFile(root, scene.loadingImage);
+        if (!scene.glmapValid || scene.loadingImage.empty()) continue;
+        const fs::path path = FindFileCaseInsensitive(root, scene.loadingImage);
         if (path.empty()) continue;
         std::vector<uint8_t> bytes = ReadBytes(path);
         if (bytes.empty()) continue;
 
         std::vector<uint8_t> ddsBytes;
-        const std::string ext = path.extension().string();
+        const std::string ext = EP7HashVerify::LowerAscii(path.extension().string());
         if (ext == ".mtf") {
             int fileType = -1;
             if (!EP7TextureDecoder::DecryptMTF(bytes, ddsBytes, fileType)) continue;
@@ -117,6 +143,8 @@ void EP7SceneRenderer::Draw(MobileRenderer* renderer) const {
 
 void EP7SceneRenderer::Unload(MobileRenderer* renderer) {
     if (renderer && !m_previewTextureKey.empty()) renderer->UnloadAssetTexture(m_previewTextureKey);
+    m_index = EP7SceneIndex{};
+    m_assetReport = AssetPipelineReport{};
     m_previewTextureKey.clear();
     m_hasPreview = false;
     m_alphaCutoff = 0.0f;

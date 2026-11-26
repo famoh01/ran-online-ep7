@@ -49,6 +49,7 @@ jobs:
             RANMobile/Data/Validator/DataValidator.cpp \
             RANMobile/Data/Importer/EP7AssetImporter.cpp \
             RANMobile/Data/Importer/EP7AssetPipeline.cpp \
+            RANMobile/Data/Importer/EP7HashVerify.cpp \
             RANMobile/Data/Importer/EP7SerialFile.cpp \
             RANMobile/Data/Importer/EP7SceneData.cpp \
             RANMobile/Data/Importer/EP7TextureDecoder.cpp \
