@@ -12,6 +12,11 @@ on:
         description: 'Comma-separated backup-repo paths to retrieve with Git LFS'
         required: true
         default: 'Ran Online Game Client/data/glogic/mapslist.mst,Ran Online Game Client/data/map/login.wld'
+  push:
+    branches:
+      - arena/075e1725-ran-online-ep7
+    paths:
+      - '.github/workflows/phase3g_focused_lfs_fetch.yml'
 
 permissions:
   contents: write
