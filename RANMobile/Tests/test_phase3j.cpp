@@ -259,6 +259,12 @@ std::vector<uint8_t> AnimationBin() {
 }
 
 // SANIMCONINFO 0x0107 (payload only, header present).
+// Emits the authentic SANIMCONINFO layout for each version, following the per-version
+// readers in enginelib/Meshs/DxSkinAniManSaveLoad.cpp:
+//   0x0101 no strike table / no sound block   0x0102 6 sound slots, TYPE+BUFFCOUNT
+//   0x0103 10 slots with TYPE+BUFFCOUNT       0x0104 + strike table
+//   0x0105 same as 0104                       0x0106 sound without TYPE
+//   0x0107 0x0106 + trailing DxAniScale
 std::vector<uint8_t> AnimationCfg(bool loop, uint32_t version = 0x0107) {
     ByteWriter w;
     w.Raw(std::vector<uint8_t>(128, 0));
@@ -274,18 +280,33 @@ std::vector<uint8_t> AnimationCfg(bool loop, uint32_t version = 0x0107) {
     w.I32(0);      // subType
     w.U16(1);      // divCount
     for (int i = 0; i < 8; ++i) w.U16(static_cast<uint16_t>(i));
-    w.U16(0);      // strikeCount
-    // SANIMSTRIKE m_sStrikeEff[ACF_STRIKE=9] is a fixed array, read regardless of the count.
-    for (int i = 0; i < 9; ++i) { w.I32(0); w.I32(0); w.U32(0); }
-    // SChaSoundData written field by field: int + char[10][32] + BOOL[10] + WORD[11]
-    // = 4 + 320 + 40 + 22 = 386 bytes (no struct-alignment tail).
-    w.I32(0);      // m_PlayFrameCount
-    for (int i = 0; i < 10; ++i) w.FixedStr("", 32);
-    for (int i = 0; i < 10; ++i) w.Bool(false);
-    for (int i = 0; i < 11; ++i) w.U16(0);
+
+    if (version == 0x0101) {
+        return w.Data();  // SANIMCONINFO_101 ends here
+    }
+
+    const bool hasStrike = version >= 0x0104;
+    const int soundSlots = (version == 0x0102) ? 6 : 10;
+    const bool soundType = (version >= 0x0102 && version <= 0x0105);
+
+    if (hasStrike) {
+        w.U16(0);  // strikeCount
+        // SANIMSTRIKE m_sStrikeEff[ACF_STRIKE=9] is a fixed array, read regardless of count.
+        for (int i = 0; i < 9; ++i) { w.I32(0); w.I32(0); w.U32(0); }
+    }
+
+    w.I32(2);      // SChaSoundData::m_PlayFrameCount
+    for (int i = 0; i < soundSlots; ++i) w.FixedStr(i == 0 ? "hit.wav" : "", 32);
+    if (soundType) {
+        for (int i = 0; i < soundSlots; ++i) w.U16(0);   // m_BufferCount
+    }
+    for (int i = 0; i < soundSlots; ++i) w.Bool(false);  // m_bLoop
+    if (soundType) {
+        for (int i = 0; i < soundSlots; ++i) w.U16(0);   // m_PlayType
+    }
+    for (int i = 0; i < soundSlots + 1; ++i) w.U16(0);   // m_PlayFrame[count + 1]
+
     w.U32(0);      // effect count
-    // SANIMCONINFO::SaveFile writes m_pAniScale->Load(SFile) unconditionally in 0x0107 and
-    // never in 0x0106 (DxSkinAniManSaveLoad.cpp). Both must parse.
     if (version == 0x0107) {
         w.U32(0);  // DxAniScale: map size
     }
@@ -598,26 +619,36 @@ void TestAnimation() {
     J_CHECK(info.startTime == 0);
     J_CHECK(info.endTime == 4800);
 
-    // 0x0106 (SANIMCONINFO_106) shares this prefix and has NO trailing DxAniScale block.
-    // It is a real version used by the shipped client, so both must parse.
-    const RANMobile::EP7AnimInfo info106 =
-        RANMobile::EP7AnimationReader::ParseInfo(AnimationCfg(true, 0x0106), true, false);
-    J_CHECK_MSG(info106.valid, info106.error);
-    J_CHECK(info106.name == info.name);
-    J_CHECK(info106.skeleton == info.skeleton);
-    J_CHECK(info106.endTime == info.endTime);
-    J_CHECK(info106.IsLoop());
+    // Every version the engine source implements must parse, and parse to the same
+    // metadata: the layouts differ only in the sound/strike tail, which comes after the
+    // fields asserted here.
+    for (uint32_t version : {0x0101u, 0x0102u, 0x0103u, 0x0104u, 0x0105u, 0x0106u, 0x0107u}) {
+        const RANMobile::EP7AnimInfo infoV =
+            RANMobile::EP7AnimationReader::ParseInfo(AnimationCfg(true, version), true, false);
+        if (!infoV.valid) {
+            std::printf("  cfg 0x%04X -> %s\n", version, infoV.error.c_str());
+        }
+        J_CHECK_MSG(infoV.valid, infoV.error);
+        J_CHECK(infoV.version == version);
+        J_CHECK(infoV.name == "st_walk");
+        J_CHECK(infoV.skeleton == "m_bone.skt");
+        J_CHECK(infoV.endTime == 4800);
+        J_CHECK(infoV.IsLoop());
+        // 0x0101 has no sound block at all; every other version carries one.
+        J_CHECK((version == 0x0101) ? infoV.playFrameCount == 0 : infoV.playFrameCount == 2);
+    }
 
-    // A 0x0106 payload is not accepted as 0x0107 and vice versa is fine only because the
-    // DxAniScale block is a tail: 0x0106 data must still parse when read as 0x0106.
-    {
-        std::vector<uint8_t> v114 = AnimationCfg(true, 0x0106);
-        v114[128] = 0x14;
-        v114[129] = 0x01;
-        const RANMobile::EP7AnimInfo unsupported = RANMobile::EP7AnimationReader::ParseInfo(v114, true, false);
-        J_CHECK(!unsupported.valid);
-        J_CHECK(unsupported.error.find("0x00000114") != std::string::npos);
-        J_CHECK(unsupported.error.find("0x0106") != std::string::npos);
+    // Versions the client ships but the engine source does not define must be rejected with
+    // the value named -- never guessed at.
+    for (uint32_t version : {0x0110u, 0x0114u, 0x0115u}) {
+        std::vector<uint8_t> unknown = AnimationCfg(true, 0x0106);
+        unknown[128] = static_cast<uint8_t>(version & 0xFF);
+        unknown[129] = static_cast<uint8_t>((version >> 8) & 0xFF);
+        const RANMobile::EP7AnimInfo rejected = RANMobile::EP7AnimationReader::ParseInfo(unknown, true, false);
+        J_CHECK(!rejected.valid);
+        char expected[16];
+        std::snprintf(expected, sizeof(expected), "0x%08X", version);
+        J_CHECK(rejected.error.find(expected) != std::string::npos);
     }
 
     // Player: looping wraps, non-looping ends.

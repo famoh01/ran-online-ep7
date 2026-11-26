@@ -385,28 +385,33 @@ EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, boo
         }
     }
 
-    // Supported layouts. 0x0106 (SANIMCONINFO_106) is byte-identical to 0x0107 up to and
-    // including the sound block; the ONLY difference is that 0x0107 appends a DxAniScale
-    // block, which SANIMCONINFO::SaveFile writes unconditionally --
+    // Supported layouts, all taken from enginelib/Meshs/DxSkinAniManSaveLoad.cpp:
     //
-    //     SFile << (DWORD)m_listEffAni.size();   // effects
-    //     ... per-effect payload ...
-    //     m_pAniScale->Load( SFile );            // 0x0107 only
+    //   0x0101  SANIMCONINFO_101  no strike table, no sound block
+    //   0x0102  SANIMCONINFO_102  + SChaSoundData_102 (6 slots)
+    //   0x0103  SANIMCONINFO_103  + SChaSoundData_103 (10 slots, LOOP+TYPE+FRAME)
+    //   0x0104  SANIMCONINFO_104  + strike table
+    //   0x0105  SANIMCONINFO_105  same layout, written field-by-field
+    //   0x0106  SANIMCONINFO_106  + SChaSoundData (no TYPE)
+    //   0x0107  SANIMCONINFO      + trailing DxAniScale block
     //
-    // The 0x0106 reader in DxSkinAniManSaveLoad.cpp stops after the effect list.
-    // SOURCE: enginelib/Meshs/DxSkinAniManSaveLoad.cpp (0x0106 and 0x0107 branches),
-    //         enginelib/Meshs/SAnimation.h (SANIMCONINFO_106, SANIMCONINFO),
-    //         EngineSoundLib/DxSound/CharacterSound.h (SChaSoundData size).
-    const bool hasAniScaleBlock = (version == EP7AnimInfo::kVersion);
-    if (version != EP7AnimInfo::kVersion && version != EP7AnimInfo::kVersion106) {
-        // 0x0101..0x0105 exist in SANIMCONINFO_101.._105 but are not implemented here; the
-        // shipped client uses 0x0114/0x0115, which are defined nowhere in this repository.
-        char message[160];
+    // The common prefix (name, skeleton, flags, time window, type, div frames) is identical
+    // for all of them, so parsing proceeds member by member and stops at the effect count.
+    // Per-effect payloads (DxEffAniData::LoadFile) and the 0x0107 DxAniScale block are not
+    // decoded, which is why stopping there is safe for every version.
+    const bool hasStrikeTable = version >= 0x0104;
+    const bool hasSoundBlock = version >= 0x0102;
+    if (version < 0x0101 || version > EP7AnimInfo::kVersion) {
+        // The shipped client uses 0x0108..0x0110 and 0x0114/0x0115 as well; none of those
+        // appear in the engine source, so their layout is unknown and guessing would risk
+        // silently misreading every field after the version DWORD.
+        char message[200];
         std::snprintf(message, sizeof(message),
-                      "unsupported animation cfg version 0x%08X (implemented: 0x0106, 0x0107)", version);
+                      "unsupported animation cfg version 0x%08X (implemented: 0x0101-0x0107)", version);
         info.error = message;
         return info;
     }
+    info.version = version;
 
     auto readFixedName = [&stream](std::string& out) -> bool {
         if (stream.Remaining() < EP7AnimInfo::kNameSize) {
@@ -465,6 +470,21 @@ EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, boo
         }
     }
 
+    uint16_t soundSlots = 10;      // MAXPLAYFRAME - 1
+    bool soundHasType = true;      // SChaSoundData_103 carries m_PlayType[MAXPLAYFRAME-1]
+    if (!hasSoundBlock) {
+        // 0x0101 has no sound block at all; the file ends after the div frames.
+        info.valid = true;
+        return info;
+    }
+    if (version == 0x0102) {
+        soundSlots = 6;            // MAXPLAYFRAME_102 - 1
+        soundHasType = false;      // SChaSoundData_102 has no m_PlayType
+    } else if (version >= 0x0106) {
+        soundHasType = false;      // SChaSoundData dropped m_PlayType
+    }
+
+    if (hasStrikeTable) {
     if (!stream.ReadU16(info.strikeCount)) {
         info.error = "truncated cfg strike count";
         return info;
@@ -481,33 +501,58 @@ EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, boo
         info.strikeEff[i].effect = effect;
         info.strikeEff[i].frame = frame;
     }
+    }  // hasStrikeTable
 
-    // SChaSoundData (10 frame slots; 388 bytes on the original 32-bit build):
-    //   int PlayFrameCount; char szFileName[10][32]; BOOL m_bLoop[10]; WORD m_PlayFrame[11];
-    // The exact size is validated rather than assumed: 4 + 320 + 40 + 22 = 386 bytes of
-    // payload; alignment inside SChaSoundData pads m_PlayFrame to offset 364, so 386 is
-    // the on-disk size and 388 is only the in-memory struct size.  Both are accepted and
-    // the 22-byte frame tail is read explicitly.
+    // Sound block, laid out field by field as the loaders read it (NOT the in-memory struct
+    // sizes, which include alignment padding):
+    //
+    //   SChaSoundData_102 : int; char[6][32]; WORD m_BufferCount[6]; BOOL m_bLoop[6];
+    //                       WORD m_PlayType[6]; WORD m_PlayFrame[7]
+    //   SChaSoundData_103 : int; char[10][32]; WORD m_BufferCount[10]; BOOL m_bLoop[10];
+    //                       WORD m_PlayType[10]; WORD m_PlayFrame[11]
+    //   SChaSoundData     : int; char[10][32]; BOOL m_bLoop[10]; WORD m_PlayFrame[11]
+    //
+    // SOURCE: EngineSoundLib/DxSound/CharacterSound.h, as read by DxSkinAniManSaveLoad.cpp.
     {
         int32_t playFrameCount = 0;
         if (!stream.ReadI32(playFrameCount)) {
             info.error = "truncated sound data";
             return info;
         }
-        for (uint32_t i = 0; i < 10; ++i) {
+        info.playFrameCount = playFrameCount;
+        for (uint16_t i = 0; i < soundSlots; ++i) {
             if (!stream.Skip(32)) {
                 info.error = "truncated sound file names";
                 return info;
             }
         }
-        for (uint32_t i = 0; i < 10; ++i) {
+        if (soundHasType) {
+            for (uint16_t i = 0; i < soundSlots; ++i) {
+                uint16_t ignored = 0;
+                if (!stream.ReadU16(ignored)) {
+                    info.error = "truncated sound buffer counts";
+                    return info;
+                }
+            }
+        }
+        for (uint16_t i = 0; i < soundSlots; ++i) {
             uint32_t loop = 0;
             if (!stream.ReadU32(loop)) {
                 info.error = "truncated sound loop flags";
                 return info;
             }
         }
-        for (uint32_t i = 0; i < 11; ++i) {
+        if (soundHasType) {
+            for (uint16_t i = 0; i < soundSlots; ++i) {
+                uint16_t playType = 0;
+                if (!stream.ReadU16(playType)) {
+                    info.error = "truncated sound play types";
+                    return info;
+                }
+            }
+        }
+        // m_PlayFrame is a fixed array of MAXPLAYFRAME (= count + 1) entries.
+        for (uint16_t i = 0; i < soundSlots + 1; ++i) {
             uint16_t frame = 0;
             if (!stream.ReadU16(frame)) {
                 info.error = "truncated sound play frames";
@@ -523,10 +568,9 @@ EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, boo
     }
     info.effectCount = effectCount;
     info.effectsSkipped = (effectCount != 0);
-    // Per-effect payloads are not decoded; reaching them would require the DxEffAniData
-    // readers. Parsing stops here either way, which is safe for both layouts: the trailing
-    // DxAniScale block of 0x0107 is simply left unread.
-    (void)hasAniScaleBlock;
+    // Per-effect payloads (DxEffAniData::LoadFile) are not decoded: that needs the effect
+    // readers. The trailing DxAniScale block of 0x0107 is likewise left unread. Stopping
+    // here is safe for every supported version because nothing after this point is used.
 
     info.valid = true;
     return info;
