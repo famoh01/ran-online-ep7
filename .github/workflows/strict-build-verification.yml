@@ -43,13 +43,16 @@ jobs:
             if ($env:SKIP_SOLUTION -eq 'true' -and $p.Name -eq 'Smtm2022.sln') { continue }
             $log = "build_logs/$($p.Name).log"
             Write-Host "=== BUILD $($p.Name) ==="
-            $extra = @()
+            $target = $p.Path
             if ($p.Name -eq 'GameServer') {
-              # Legacy numeric PCH value '3' is rejected by modern MSVC CL task (MSB6011).
-              # Override it on the command line only; the original .vcxproj stays untouched.
-              $extra += '/p:PrecompiledHeader=NotUsing'
+              # Legacy numeric PCH metadata '3' is rejected by modern MSVC (MSB6011).
+              # Build a temporary CI-only copy; the committed original .vcxproj stays untouched.
+              $xml = [System.IO.File]::ReadAllText($target)
+              $xml = $xml.Replace('<PrecompiledHeader>3</PrecompiledHeader>', '<PrecompiledHeader>NotUsing</PrecompiledHeader>')
+              $target = 'GameServer/GameServer.ci.vcxproj'
+              [System.IO.File]::WriteAllText($target, $xml, (New-Object System.Text.UTF8Encoding($false)))
             }
-            msbuild $p.Path /m /v:m /p:Configuration=Release /p:Platform=Win32 /p:SolutionDir="$slnDir" @extra /flp:"LogFile=$log;Verbosity=detailed"
+            msbuild $target /m /v:m /p:Configuration=Release /p:Platform=Win32 /p:SolutionDir="$slnDir" /flp:"LogFile=$log;Verbosity=detailed"
             $code = $LASTEXITCODE
             $results += "$($p.Name)=$code"
             Write-Host "$($p.Name) EXIT=$code"
