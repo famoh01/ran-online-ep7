@@ -531,7 +531,14 @@ EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, boo
 
     uint32_t effectCount = 0;
     if (!stream.ReadU32(effectCount)) {
-        info.error = "truncated cfg effect count";
+        // Diagnose precisely: a file that ends exactly at the header block simply has no
+        // effect list, which is legal (not every style has effects).
+        char message[200];
+        std::snprintf(message, sizeof(message),
+                      "cfg ends after the 0x%04X header block (%u bytes of payload) with no "
+                      "effect count; file may be truncated",
+                      version, infoSize);
+        info.error = message;
         return info;
     }
     info.effectCount = effectCount;
