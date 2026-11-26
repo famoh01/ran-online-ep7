@@ -137,33 +137,38 @@ jobs:
           fi
 
           # The log is uploaded as an artifact, but artifacts expire and downloading one
-          # needs credentials. Mirror the OUTCOME into a check-run annotation so the result
-          # is readable from the PR page and via the API. `::notice::` / `::warning::` only
-          # create annotations; they never change the step's exit code.
-          verdict=$(grep '^VERDICT: ' phase3j_authentic_assets.log | head -1 || true)
-          packs=$(grep '^pack entries ' phase3j_authentic_assets.log | head -1 || true)
+          # needs credentials. Check-run annotations are the only channel that is readable
+          # from the PR page and the API, so the verdict is mirrored into them.
+          #
+          # ORDER MATTERS: GitHub keeps only the first ~10 annotations per check run. The
+          # verdict goes FIRST so it can never be crowded out by per-file lines.
           ok_count=$(grep -c '^  \[ OK \] ' phase3j_authentic_assets.log || true)
           arc_count=$(grep -c '^--- archive ' phase3j_authentic_assets.log || true)
           bad_count=$(grep -c '^  \[FAIL\] ' phase3j_authentic_assets.log || true)
-          # Failures are the actionable lines; cap them so a broken pack cannot flood the
-          # check run (GitHub limits annotations per step).
-          grep '^  \[FAIL\] ' phase3j_authentic_assets.log 2>/dev/null | head -20 | \
+          verdict=$(grep '^VERDICT: ' phase3j_authentic_assets.log | head -1 || true)
+          packs=$(grep '^pack entries ' phase3j_authentic_assets.log | head -1 || true)
+          reasons=$(grep -E '^ +[0-9]+ x ' phase3j_authentic_assets.log | head -8 | tr '\n' ';' || true)
+
+          if [ "${verify_status}" -eq 0 ]; then
+            echo "::notice title=Phase 3J authentic assets - VERDICT::${packs:-$ok_count ok / $bad_count failed} -- ${verdict:-no verdict emitted}"
+          else
+            echo "::warning title=Phase 3J authentic assets - VERDICT::${packs:-$ok_count ok / $bad_count failed} -- ${verdict:-no verdict emitted}"
+          fi
+          if [ -n "$reasons" ]; then
+            echo "::warning title=Phase 3J authentic assets - failure reasons::${reasons}"
+          fi
+          # Per-entry detail last: useful, but expendable when the cap is hit.
+          grep '^  \[FAIL\] ' phase3j_authentic_assets.log 2>/dev/null | head -8 | \
             while IFS= read -r line; do
               echo "::warning title=Phase 3J authentic asset FAILED::${line}"
             done
-          # One annotation carrying every aggregated reason: GitHub caps annotations at ~10
-          # per check run, so per-entry lines alone would hide most of the picture.
-          reasons=$(grep -E '^ +[0-9]+ x ' phase3j_authentic_assets.log 2>/dev/null | head -12 || true)
-          if [ -n "$reasons" ]; then
-            echo "::warning title=Phase 3J authentic assets - failure reasons::$(echo "$reasons" | tr '\n' ';')"
-          fi
 
-          if [ "${verify_status}" -eq 0 ] && [ "$ok_count" -gt 0 ]; then
-            echo "::notice title=Phase 3J authentic assets::${packs:-$ok_count ok} -- ${verdict:-all pack entries parsed}"
-          elif [ "$ok_count" -eq 0 ]; then
-            echo "::warning title=Phase 3J authentic assets::no authentic character entry was parsed (archives found: $arc_count, failures: $bad_count). Real-data compatibility is NOT proven."
-          else
-            echo "::warning title=Phase 3J authentic assets::$ok_count authentic character entries parsed from $arc_count archive(s), but $bad_count entr(ies) FAILED. Real-data compatibility is only partially proven."
+          # NOTE: `::error::` creates an annotation but does NOT change the step's exit
+          # code. Only a non-zero exit does. Without this line the step stayed green while
+          # the probe had reported failure -- verified against a real run.
+          if [ "${verify_status}" -eq 1 ]; then
+            echo "Failing the step: the probe found authentic entries it could not parse."
+            exit 1
           fi
 
       - name: Run Linux C++17 Tests
