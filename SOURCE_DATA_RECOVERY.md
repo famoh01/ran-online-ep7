@@ -133,3 +133,12 @@ Recovered **original tools/builds** (inspected, not executed): 15 editor/GM tool
 ### 16.4 Strict Windows build, first run
 
 Run `45819356699` (commit `0680b8e`): Android + Linux jobs succeeded; Windows job `139907264786` **failed** at the MSBuild step (`Process completed with exit code 1`), with no `continue-on-error`. Raw log download is blocked in this sandbox, so the workflow was updated to emit per-project exit codes and the first compiler-error lines as GitHub annotations, and re-run as `45828309380`. Result will be appended here when the job completes.
+
+### 16.5 Strict Windows build — exact errors and fix cycle
+
+Run `45828309380` (commit `5b5a287`, annotations enabled) completed: Android and Linux jobs succeeded; Windows job failed at the MSBuild step. Extracted annotations (verbatim, escaped path separators normalised) show:
+
+- `Smtm2022.sln` — **exit 0** (full original solution compiled in `Release|Win32`; only MSB8012 output-path warnings were reported by the annotation filter and are not build errors).
+- Direct per-project builds failed because `$(SolutionDir)` was undefined when invoking `.vcxproj` files without the solution:
+  - `enginelib\DxCommon9\dxstdafx.h(67,10): error C1083: Cannot open include file: 'd3dx9math.h': No such file or directory` for `enginelib.vcxproj`, `MfcExLib.vcxproj`, `netserverLib.vcxproj` while building `LoginServer`, `SessionServer`, `AgentServer`.
+- Fix applied (commit `aa54bc6`): every per-project `msbuild` invocation now passes `/p:SolutionDir=<workspace>\`, and annotations are emitted only for real compiler errors on non-zero exits. Third verification run `45833466593` was dispatched; full solution build takes ~28 minutes on `windows-latest`.
