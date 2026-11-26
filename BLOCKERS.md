@@ -102,3 +102,11 @@ Please tell me which blockers to clear and how (provide files/toolchain/server a
 - Android IME UTF-8 commit is still unimplemented. NDK r26d with `ANDROID_PLATFORM=android-24` has no `AKeyEvent_getUnicodeChar` (proven by CI run `45862660028` compile error); only hardware ASCII key events and focus/keyboard lifecycle are implemented. A Java `InputConnection`/commit callback bridge is required for Thai UTF-8 IME input.
 - DisplayCutout insets are queried through JNI (API 28+), but no device test was performed; `ANDROID_PLATFORM=android-24` runs degrade to zero insets. The manifest still locks landscape; portrait virtual-canvas support is implemented but unverified on device.
 - B1 (no local Android SDK/NDK/JDK), B6/B8 (protocol/server uncertainty, GameServer DirectX header conflict) remain unchanged and untouched.
+
+## Phase 3D update (2026-11-26, authorized recovery + IME implementation)
+
+- Asset availability blocker **partially audited, not cleared**: three additional authorized Drive archives were recovered and validated, but they contain only `.ntk`/`.qst`/`.txt` data and Windows executables. No DDS/MTF/WLD/GLMAP/manifest asset was found. Scene rendering from original binary assets remains blocked.
+- The two 1.57 GB + 1.01 GB client split archives exceed the Google Drive connector's 100 MB cap; the GitHub release-asset host remains unreachable from this sandbox. Their recorded path inventory has no asset-like extensions, but binary-level verification is still unavailable.
+- Backup GitHub repository `matheomedrana/Ran-Online-Episode-7-Complete-Files` returns HTTP 404 (verified with `gh repo view` and `gh api`); that recovery route is stopped.
+- Android IME is now implemented in Java/Kotlin-side Android classes plus JNI callbacks, but no physical device/emulator test was performed. Compile/unit evidence only; Thai IME composition behaviour on a real keyboard remains unverified.
+- Existing blockers B1 (no local Android SDK/NDK/JDK), B6/B8 (protocol/server uncertainty, GameServer DirectX header conflict) remain untouched.

@@ -76,3 +76,18 @@ Android CI on commit `d2db415` (final Phase 3C implementation):
 - No recovered original DDS/MTF/WLD/GLMAP file exists in the available trees, so no original binary asset was rendered.
 - No playable scene, NPC, monster, item, skill, quest or fabricated map is present.
 - No login/server/DB/gameplay change; PR #3 remains OPEN/DRAFT.
+
+## 7. Phase 3D verification (2026-11-26)
+
+Local sandbox:
+
+- Compile: `g++ -std=c++17 -Wall -Wextra -Werror` over all RANMobile sources + tests → **exit 0**; log `external/recovery/phase3d_compile.log`.
+- Tests: `./external/recovery/phase3d_tests` → **exit 0**, `ALL TESTS PASSED!`; log `external/recovery/phase3d_test_output.txt`.
+- New section 31: UTF-8 full-field commit, Thai input, mixed Unicode, codepoint-aware deletion, 20-codepoint cap, password mask length, focus transitions, keyboard bottom inset and IME action without false `LoginAccepted`.
+- Asset recovery: three additional Drive archives were integrity-checked and hashed (see `SOURCE_DATA_RECOVERY.md` §17); none contained DDS/MTF/WLD/GLMAP/manifest assets, so no real-asset rendering test was added.
+
+Android CI:
+
+- Run `45866773886` on `da95f90`: **failure** — `native_bridge.cpp` used `ReleaseAndroidInput()` before declaration and `LoginScreen::GetPassword()` did not exist. Fixed in `91b9db6`.
+- Run **45867328078** on `91b9db6`: **success**, all steps (native tests, ARM64 native library, Java 17/Gradle, debug/release APK, release AAB). Artifacts: `libranmobile-arm64-v8a` **1,825,929 B**, `ranmobile-android-packages` **1,800,104 B**.
+- No device/emulator test: IME composition, actual keyboard visibility and password presentation on hardware are **not** verified.

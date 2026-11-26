@@ -169,3 +169,27 @@ Fast run `45841659289` (commit `b32f4b2`): CI-only PCH rewrite removed MSB6011 a
 - `LegacyDX_Include\D3d8types.h(160,14): error C2011: '_D3DLIGHTTYPE': 'enum' type redefinition`
 
 Root cause in original source: `GameServer/stdafx.h:73–74` includes both `<d3d9.h>` and `<D3d8types.h>` (with further D3DX8 headers); modern Windows SDK/Vs2022 headers define the same enums. Per the task rule "record the exact error and stop that target", GameServer is **not claimed as compiled**. The other four server projects and the full solution remain verified with real exit code 0. No gameplay/protocol source was edited to force a pass.
+
+## 17. Phase 3D authorized recovery audit (2026-11-26)
+
+### 17.1 Drive folder listing (no duplicate download of recovered archives)
+
+Listed the authorized folder `1Y3VOeAeBzSbaB_o9oWLN16qD29b8Ro1m` through the connected Google Drive tool: 12 files, including the four archives already recovered in earlier phases. Three not previously recorded files were retrieved by file ID, prioritizing small, directly inspectable items:
+
+| File (Drive ID) | Size (bytes) | SHA-256 | Integrity | Content classification |
+|---|---:|---|---|---|
+| `RAN-EP7-ThaiPack-FamHawaii.zip` (`1Z3O9kV1UyfhKG1GoqmuF-iaZTRDG0Bl2`) | 2,266,660 | `6bfd50e712bb930acf69d06ca7903fb2b93fec66179fb0c707503a888d5c3ef7` | `unzip -t`: no errors | 1,049 files: 309 `.ntk`, 730 `.qst`, 10 `.txt`; no DDS/MTF/WLD/GLMAP/mapslist |
+| `RAN-EP7-ItemText-Thai-Update.zip` (`14Cjnc3WPpTAi09gIDa78fldph7xu0T6h`) | 912,989 | `3d05465da479c2386bcad6580243b37f093f5d087d497e04238e61142dd5a403` | `unzip -t`: no errors | 3 `.txt`: `README_TH.txt`, `data/glogic/ItemStrtable.txt`, `data/glogic/SearchItemList.txt` |
+| `ไฟล์ exeEp7 Ran.zip` (`111SsgbBXMqg0x6mHYPfLSIxEqmaLDEVo`) | 23,584,218 | `397c71a13a51464858f02adb3900d22d83ac6d0f717a8fc4ee5b5a3b08deb944` | `unzip -t`: no errors | 20 `.exe`, 1 `.dll`, 1 `.ocx`; compiled Windows executables, **not executed** |
+
+The connector names downloads by their Drive filename, which initially replaced the earlier 1,359,185 B ThaiPack file at `google_drive/RAN-EP7-ThaiPack-FamHawaii.zip`. The new variant was preserved as `google_drive/RAN-EP7-ThaiPack-FamHawaii-2266660.zip`, and the original archive was re-downloaded from `1IL8jlmvl5PGGHdaf5nlnoZdBMhTu25Ag`. Its SHA-256 is again `4a20b17fd4afd2a4d37532ebcccb6a3daf68b56f82118223a2a4ef083882f969`, matching the Phase 1 record. No recovered original file was modified.
+
+### 17.2 Safety validation
+
+Python `zipfile` inspection of all three new archives found **0** suspicious paths (no absolute paths, `..` segments, drive letters or backslashes), no encrypted entries, and no asset-like extensions. No binary was executed, no archive was extracted into the existing recovered asset tree, and no secret/token was written to disk or Git.
+
+### 17.3 Attempts stopped
+
+- The two large client split archives in the same folder (`RAN-EP7-Client-TH.00.zip`, 1,572,864,000 B; `RAN-EP7-Client-TH.001.zip`, 1,010,562,339 B) exceed the connector's 100 MB inline/download cap and were **not** downloaded in this phase. Their previously recorded path inventory (`external/recovery/RanOnlineEP7-Client_paths.txt`, 7,310 entries) contains 0 DDS/MTF/WLD/GLMAP/MST asset entries; the GitHub release asset host was already proven unreachable from this sandbox, so that path was not retried.
+- Backup GitHub source `matheomedrana/Ran-Online-Episode-7-Complete-Files`: `gh repo view` and `gh api repos/.../git/trees/HEAD?recursive=1` both returned **HTTP 404 Not Found**. That recovery path is stopped and is not claimed.
+- No original DDS, MTF, WLD, GLMAP, `mapslist.mst` or other scene dependency was recovered. `.ntk`/`.qst` payload layouts remain unknown. No substitute asset was created.
