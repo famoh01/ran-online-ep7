@@ -218,6 +218,24 @@ void RANMobileEngine::OnBackspace() {
     if (m_loginScreen) m_loginScreen->HandleBackspace();
 }
 
+void RANMobileEngine::OnIMETextChanged(LoginFocus field, const std::string& utf8) {
+    if (m_loginScreen) m_loginScreen->SetFieldText(field, utf8);
+}
+
+void RANMobileEngine::OnIMEFocusChanged(LoginFocus field) {
+    if (m_loginScreen) m_loginScreen->SetFocus(field);
+}
+
+void RANMobileEngine::OnIMEActionDone() {
+    if (m_loginScreen && m_loginScreen->GetFocus() != LoginFocus::None) {
+        m_loginScreen->OnLoginPressed();
+    }
+}
+
+void RANMobileEngine::SetKeyboardVisible(bool visible) {
+    if (m_loginScreen) m_loginScreen->SetKeyboardVisible(visible);
+}
+
 void RANMobileEngine::Shutdown() {
     if (!m_initialized) {
         return;

@@ -15,6 +15,7 @@ namespace RANMobile {
     class EP7SceneRenderer;
 }
 class LoginScreen;
+enum class LoginFocus;
 namespace RANMobile { class MobileHUD; }
 
 enum class EngineScreenState {
@@ -56,6 +57,10 @@ public:
     void OnTouchCancel(int pointerId, float x, float y);
     void OnTextInput(const std::string& utf8);
     void OnBackspace();
+    void OnIMETextChanged(LoginFocus field, const std::string& utf8);
+    void OnIMEFocusChanged(LoginFocus field);
+    void OnIMEActionDone();
+    void SetKeyboardVisible(bool visible);
 
     LoginScreen* GetLoginScreen() const { return m_loginScreen.get(); }
     RANMobile::MobileHUD* GetMobileHUD() const { return m_mobileHUD.get(); }

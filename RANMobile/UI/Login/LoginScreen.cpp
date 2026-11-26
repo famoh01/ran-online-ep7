@@ -8,6 +8,41 @@
 
 namespace UI = RANMobile::UI;
 
+namespace {
+
+constexpr size_t kMaxFieldCodepoints = 20;
+
+size_t CountUTF8Codepoints(const std::string& value) {
+    size_t count = 0;
+    for (unsigned char c : value) {
+        if ((c & 0xC0) != 0x80) ++count;
+    }
+    return count;
+}
+
+std::string TruncateUTF8(const std::string& value, size_t maxCodepoints) {
+    if (CountUTF8Codepoints(value) <= maxCodepoints) return value;
+    std::string out;
+    size_t count = 0;
+    for (unsigned char c : value) {
+        if ((c & 0xC0) != 0x80) {
+            if (count == maxCodepoints) break;
+            ++count;
+        }
+        out.push_back(static_cast<char>(c));
+    }
+    return out;
+}
+
+void PopUTF8Codepoint(std::string& value) {
+    if (value.empty()) return;
+    size_t start = value.size() - 1;
+    while (start > 0 && (static_cast<unsigned char>(value[start]) & 0xC0) == 0x80) --start;
+    value.erase(start);
+}
+
+} // namespace
+
 void LoginScreen::Initialize(RANMobile::NetworkClient* net) {
     m_networkClient = net;
     m_serverDisplayName = RANMobile::AuthenticationManager::GetServerDisplayName();
@@ -34,7 +69,7 @@ LoginScreen::LoginLayout LoginScreen::ComputeLayout() const {
     layout.portrait = m_screenH > m_screenW;
 
     const float cw = std::max(320.0f, m_screenW - m_safeLeft - m_safeRight);
-    const float ch = std::max(480.0f, m_screenH - m_safeTop - m_safeBottom);
+    const float ch = std::max(360.0f, m_screenH - m_safeTop - m_safeBottom - m_keyboardInset);
     const float left = m_safeLeft;
     const float top = m_safeTop;
 
@@ -184,20 +219,30 @@ void LoginScreen::HandleTouchCancel(int pointerId) {
     }
 }
 
+std::string LoginScreen::GetMaskedPassword() const {
+    return std::string(CountUTF8Codepoints(m_password), '*');
+}
+
+void LoginScreen::SetFieldText(LoginFocus field, const std::string& utf8) {
+    const std::string safe = TruncateUTF8(utf8, kMaxFieldCodepoints);
+    if (field == LoginFocus::Username) m_username = safe;
+    else if (field == LoginFocus::Password) m_password = safe;
+}
+
 void LoginScreen::HandleTextInput(const std::string& utf8) {
     if (utf8.empty()) return;
-    if (m_focus == LoginFocus::Username && m_username.size() < 20) {
-        m_username += utf8;
-    } else if (m_focus == LoginFocus::Password && m_password.size() < 20) {
-        m_password += utf8;
+    if (m_focus == LoginFocus::Username) {
+        SetFieldText(m_focus, m_username + utf8);
+    } else if (m_focus == LoginFocus::Password) {
+        SetFieldText(m_focus, m_password + utf8);
     }
 }
 
 void LoginScreen::HandleBackspace() {
-    if (m_focus == LoginFocus::Username && !m_username.empty()) {
-        m_username.pop_back();
-    } else if (m_focus == LoginFocus::Password && !m_password.empty()) {
-        m_password.pop_back();
+    if (m_focus == LoginFocus::Username) {
+        PopUTF8Codepoint(m_username);
+    } else if (m_focus == LoginFocus::Password) {
+        PopUTF8Codepoint(m_password);
     }
 }
 

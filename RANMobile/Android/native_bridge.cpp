@@ -8,8 +8,14 @@
 #include <GLES3/gl3.h>
 #include <jni.h>
 #include <chrono>
+#include <string>
 #include "../Engine/Core/RANMobileEngine.h"
 #include "../UI/Login/LoginScreen.h"
+
+static JavaVM* g_jvm = nullptr;
+static jclass g_bridgeClass = nullptr;
+static RANMobileEngine* g_engine = nullptr;
+static void* g_appContext = nullptr;
 
 struct AndroidAppContext {
     RANMobileEngine engine;
@@ -145,8 +151,6 @@ static void ApplyDisplayCutoutInsets(ANativeActivity* activity, AndroidAppContex
     activity->vm->DetachCurrentThread();
 }
 
-static void ShowAndroidKeyboard(ANativeActivity* activity, bool show);
-
 static void HandleAppCmd(struct android_app* app, int32_t cmd) {
     auto* ctx = static_cast<AndroidAppContext*>(app->userData);
     if (!ctx) return;
@@ -154,12 +158,14 @@ static void HandleAppCmd(struct android_app* app, int32_t cmd) {
         InitEGL(ctx, app->window);
         ApplyDisplayCutoutInsets(app->activity, ctx);
     } else if (cmd == APP_CMD_TERM_WINDOW) {
-        ShowAndroidKeyboard(app->activity, false);
+        ReleaseAndroidInput();
         ctx->keyboardVisible = false;
+        if (g_engine) g_engine->SetKeyboardVisible(false);
         TermEGL(ctx);
     } else if (cmd == APP_CMD_PAUSE) {
-        ShowAndroidKeyboard(app->activity, false);
+        ReleaseAndroidInput();
         ctx->keyboardVisible = false;
+        ctx->engine.SetKeyboardVisible(false);
         ctx->engine.Pause();
     } else if (cmd == APP_CMD_RESUME) {
         ctx->engine.Resume();
@@ -172,41 +178,82 @@ static void HandleAppCmd(struct android_app* app, int32_t cmd) {
     }
 }
 
-static void ShowAndroidKeyboard(ANativeActivity* activity, bool show) {
-    if (!activity || !activity->vm) return;
-    JNIEnv* env = nullptr;
-    if (activity->vm->AttachCurrentThread(&env, nullptr) != JNI_OK || !env) return;
+static bool AttachJNI(JNIEnv** env, bool* attached) {
+    if (!g_jvm) return false;
+    const jint result = g_jvm->GetEnv(reinterpret_cast<void**>(env), JNI_VERSION_1_6);
+    if (result == JNI_OK) {
+        *attached = false;
+        return *env != nullptr;
+    }
+    if (result == JNI_EDETACHED && g_jvm->AttachCurrentThread(env, nullptr) == JNI_OK && *env) {
+        *attached = true;
+        return true;
+    }
+    return false;
+}
 
-    jclass actCls = env->GetObjectClass(activity->clazz);
-    jmethodID getSysSvc = env->GetMethodID(actCls, "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;");
-    jstring immStr = env->NewStringUTF("input_method");
-    jobject imm = env->CallObjectMethod(activity->clazz, getSysSvc, immStr);
-    if (imm) {
-        jclass immCls = env->GetObjectClass(imm);
-        jmethodID getWin = env->GetMethodID(actCls, "getWindow", "()Landroid/view/Window;");
-        jobject win = env->CallObjectMethod(activity->clazz, getWin);
-        if (win) {
-            jclass winCls = env->GetObjectClass(win);
-            jmethodID getDecor = env->GetMethodID(winCls, "getDecorView", "()Landroid/view/View;");
-            jobject decor = env->CallObjectMethod(win, getDecor);
-            if (decor) {
-                if (show) {
-                    jmethodID toggleSoft = env->GetMethodID(immCls, "toggleSoftInput", "(II)V");
-                    if (toggleSoft) {
-                        env->CallVoidMethod(imm, toggleSoft, 2, 0); // SHOW_FORCED
-                    }
-                } else {
-                    jclass viewCls = env->GetObjectClass(decor);
-                    jmethodID getTok = env->GetMethodID(viewCls, "getWindowToken", "()Landroid/os/IBinder;");
-                    jobject tok = env->CallObjectMethod(decor, getTok);
-                    jmethodID hideSoft = env->GetMethodID(immCls, "hideSoftInputFromWindow", "(Landroid/os/IBinder;I)Z");
-                    env->CallBooleanMethod(imm, hideSoft, tok, 0);
-                }
+static void DetachJNI(JNIEnv* env, bool attached) {
+    if (env && env->ExceptionCheck()) env->ExceptionClear();
+    if (attached && g_jvm) g_jvm->DetachCurrentThread();
+}
+
+static void CallBridgeVoid(JNIEnv* env, const char* name, const char* signature) {
+    if (!g_bridgeClass || !env) return;
+    jmethodID method = env->GetStaticMethodID(g_bridgeClass, name, signature);
+    if (method) env->CallStaticVoidMethod(g_bridgeClass, method);
+}
+
+// Requests that the Java InputConnection focuses the matching native field.
+// Text is passed as a UTF-8 string; no per-character key synthesis is used.
+static void FocusAndroidTextField(LoginScreen* login, LoginFocus focus) {
+    if (!login) return;
+    JNIEnv* env = nullptr;
+    bool attached = false;
+    if (!AttachJNI(&env, &attached)) return;
+    const bool password = focus == LoginFocus::Password;
+    const std::string current = focus == LoginFocus::Username ? login->GetUsername()
+                              : focus == LoginFocus::Password ? login->GetPassword()
+                              : std::string();
+    const int field = focus == LoginFocus::Username ? 1
+                    : focus == LoginFocus::Password ? 2 : 0;
+    if (g_bridgeClass) {
+        jmethodID method = env->GetStaticMethodID(g_bridgeClass, "focusField",
+                                                  "(ILjava/lang/String;Z)V");
+        if (method) {
+            jstring text = env->NewStringUTF(current.c_str());
+            if (text) {
+                env->CallStaticVoidMethod(g_bridgeClass, method, field, text,
+                                          password ? JNI_TRUE : JNI_FALSE);
+                env->DeleteLocalRef(text);
             }
         }
     }
-    env->DeleteLocalRef(immStr);
-    activity->vm->DetachCurrentThread();
+    DetachJNI(env, attached);
+}
+
+static void BlurAndroidTextField() {
+    JNIEnv* env = nullptr;
+    bool attached = false;
+    if (!AttachJNI(&env, &attached)) return;
+    CallBridgeVoid(env, "blurField", "()V");
+    DetachJNI(env, attached);
+}
+
+static void ReleaseAndroidInput() {
+    JNIEnv* env = nullptr;
+    bool attached = false;
+    if (!AttachJNI(&env, &attached)) return;
+    CallBridgeVoid(env, "releaseInput", "()V");
+    DetachJNI(env, attached);
+}
+
+static std::string JStringToUtf8(JNIEnv* env, jstring value) {
+    if (!env || !value) return std::string();
+    const char* chars = env->GetStringUTFChars(value, nullptr);
+    if (!chars) return std::string();
+    const std::string out(chars);
+    env->ReleaseStringUTFChars(value, chars);
+    return out;
 }
 
 static int32_t HandleInputEvent(struct android_app* app, AInputEvent* event) {
@@ -225,12 +272,11 @@ static int32_t HandleInputEvent(struct android_app* app, AInputEvent* event) {
         if (masked == AMOTION_EVENT_ACTION_DOWN || masked == AMOTION_EVENT_ACTION_POINTER_DOWN) {
             ctx->engine.OnTouchDown(pointerId, x, y);
             if (ctx->engine.GetLoginScreen()) {
-                auto focus = ctx->engine.GetLoginScreen()->GetFocus();
-                const bool wantsKeyboard = focus == LoginFocus::Username ||
-                                           focus == LoginFocus::Password;
-                if (wantsKeyboard != ctx->keyboardVisible) {
-                    ShowAndroidKeyboard(app->activity, wantsKeyboard);
-                    ctx->keyboardVisible = wantsKeyboard;
+                const LoginFocus focus = ctx->engine.GetLoginScreen()->GetFocus();
+                if (focus == LoginFocus::Username || focus == LoginFocus::Password) {
+                    FocusAndroidTextField(ctx->engine.GetLoginScreen(), focus);
+                } else {
+                    BlurAndroidTextField();
                 }
             }
         } else if (masked == AMOTION_EVENT_ACTION_MOVE) {
@@ -249,41 +295,69 @@ static int32_t HandleInputEvent(struct android_app* app, AInputEvent* event) {
             ctx->engine.OnTouchUp(pointerId, x, y);
         }
         return 1;
-    } else if (type == AINPUT_EVENT_TYPE_KEY && AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN) {
-        int32_t keyCode = AKeyEvent_getKeyCode(event);
-        if (keyCode == AKEYCODE_DEL) {
-            ctx->engine.OnBackspace();
-            return 1;
-        } else if (keyCode == AKEYCODE_ENTER && ctx->engine.GetLoginScreen()) {
-            ctx->engine.GetLoginScreen()->OnLoginPressed();
-            return 1;
-        } else if (keyCode >= AKEYCODE_A && keyCode <= AKEYCODE_Z) {
-            char c = static_cast<char>('a' + (keyCode - AKEYCODE_A));
-            ctx->engine.OnTextInput(std::string(1, c));
-            return 1;
-        } else if (keyCode >= AKEYCODE_0 && keyCode <= AKEYCODE_9) {
-            char c = static_cast<char>('0' + (keyCode - AKEYCODE_0));
-            ctx->engine.OnTextInput(std::string(1, c));
-            return 1;
-        } else if (keyCode == AKEYCODE_PERIOD) {
-            ctx->engine.OnTextInput(".");
-            return 1;
-        } else if (keyCode == AKEYCODE_MINUS) {
-            ctx->engine.OnTextInput("-");
-            return 1;
-        } else if (keyCode == AKEYCODE_AT) {
-            ctx->engine.OnTextInput("@");
-            return 1;
-        } else if (keyCode == AKEYCODE_SPACE) {
-            ctx->engine.OnTextInput(" ");
-            return 1;
-        }
     }
+    // Key events are deliberately not mapped to characters here: the Java
+    // InputConnection owns text, deletion and IME actions for both soft and
+    // hardware keyboards.
+    (void)type;
     return 0;
+}
+
+// Java -> native IME callbacks. Text always arrives as a UTF-8 string; no
+// Unicode codepoint is reinterpreted as a hardware key event.
+extern "C" JNIEXPORT void JNICALL
+Java_com_famhawaii_ranmobile_RanTextInputBridge_nativeTextChanged(
+        JNIEnv* env, jclass, jint field, jstring text) {
+    if (!g_engine || !env) return;
+    const LoginFocus focus = field == 1 ? LoginFocus::Username
+                           : field == 2 ? LoginFocus::Password : LoginFocus::None;
+    g_engine->OnIMETextChanged(focus, JStringToUtf8(env, text));
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_famhawaii_ranmobile_RanTextInputBridge_nativeFocusChanged(
+        JNIEnv*, jclass, jint field) {
+    if (!g_engine) return;
+    const LoginFocus focus = field == 1 ? LoginFocus::Username
+                           : field == 2 ? LoginFocus::Password : LoginFocus::None;
+    g_engine->OnIMEFocusChanged(focus);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_famhawaii_ranmobile_RanTextInputBridge_nativeImeActionDone(
+        JNIEnv*, jclass) {
+    if (g_engine) g_engine->OnIMEActionDone();
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_famhawaii_ranmobile_RanTextInputBridge_nativeKeyboardVisible(
+        JNIEnv*, jclass, jboolean visible) {
+    AndroidAppContext* ctx = static_cast<AndroidAppContext*>(g_appContext);
+    const bool isVisible = visible == JNI_TRUE;
+    if (ctx) ctx->keyboardVisible = isVisible;
+    if (g_engine) g_engine->SetKeyboardVisible(isVisible);
+}
+
+extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
+    g_jvm = vm;
+    JNIEnv* env = nullptr;
+    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK || !env) {
+        return JNI_ERR;
+    }
+    jclass local = env->FindClass("com/famhawaii/ranmobile/RanTextInputBridge");
+    if (local) {
+        g_bridgeClass = static_cast<jclass>(env->NewGlobalRef(local));
+        env->DeleteLocalRef(local);
+    }
+    if (env->ExceptionCheck()) env->ExceptionClear();
+    // Absence of the bridge class degrades to no IME, not a launch failure.
+    return JNI_VERSION_1_6;
 }
 
 extern "C" void android_main(struct android_app* state) {
     AndroidAppContext ctx;
+    g_appContext = &ctx;
+    g_engine = &ctx.engine;
     state->userData = &ctx;
     state->onAppCmd = HandleAppCmd;
     state->onInputEvent = HandleInputEvent;
@@ -313,7 +387,10 @@ extern "C" void android_main(struct android_app* state) {
             break;
         }
     }
+    ReleaseAndroidInput();
     ctx.engine.Shutdown();
     TermEGL(&ctx);
+    g_engine = nullptr;
+    g_appContext = nullptr;
 }
 #endif

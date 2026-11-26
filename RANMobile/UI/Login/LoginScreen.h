@@ -34,13 +34,19 @@ public:
     void SetUsername(const std::string& username) { m_username = username; }
     void SetPassword(const std::string& password) { m_password = password; }
     void SetRememberAccount(bool remember) { m_rememberAccount = remember; }
+    void SetFocus(LoginFocus focus) { m_focus = focus; }
+    void SetKeyboardVisible(bool visible) { m_keyboardInset = visible ? 180.0f : 0.0f; }
+    bool IsKeyboardVisible() const { return m_keyboardInset > 0.0f; }
+    // Full UTF-8 replacement from an Android InputConnection. Length limits are
+    // counted in code points so Thai text is not truncated mid-character.
+    void SetFieldText(LoginFocus field, const std::string& utf8);
     void ToggleShowPassword() { m_showPassword = !m_showPassword; }
     bool IsPasswordVisible() const { return m_showPassword; }
 
     const std::string& GetGameTitle() const { return m_gameTitle; }
     const std::string& GetServerDisplayName() const { return m_serverDisplayName; }
     const std::string& GetUsername() const { return m_username; }
-    std::string GetMaskedPassword() const { return std::string(m_password.size(), '*'); }
+    std::string GetMaskedPassword() const;
     bool GetRememberAccount() const { return m_rememberAccount; }
     LoginFocus GetFocus() const { return m_focus; }
     LoginAuthState GetAuthState() const { return m_authState; }
@@ -127,6 +133,7 @@ private:
     float m_safeTop = 0.0f;
     float m_safeRight = 0.0f;
     float m_safeBottom = 0.0f;
+    float m_keyboardInset = 0.0f;
     int m_activePointerId = -1;
     LoginControl m_pressedControl = LoginControl::None;
 };

@@ -638,6 +638,47 @@ int main() {
         renderer->EndFrame();
     }
 
+    // 31. Android IME UTF-8 text path: full-field replacement, codepoint-aware
+    // deletion, focus transitions and keyboard-responsive layout.
+    {
+        auto* ui = engine.GetLoginScreen();
+        const std::string thai = u8"สวัสดีEP7";
+        ui->SetFocus(LoginFocus::Username);
+        ui->SetFieldText(LoginFocus::Username, thai);
+        assert(ui->GetUsername() == thai);
+
+        ui->HandleTextInput(u8"ก");
+        const std::string mixed = thai + u8"ก";
+        assert(ui->GetUsername() == mixed);
+        ui->HandleBackspace();
+        assert(ui->GetUsername() == thai);
+
+        const std::string overLong = std::string(25, 'A');
+        ui->SetFieldText(LoginFocus::Username, overLong);
+        assert(ui->GetUsername().size() == 20);
+
+        ui->SetFocus(LoginFocus::Password);
+        ui->SetFieldText(LoginFocus::Password, u8"密码🔑");
+        assert(ui->GetMaskedPassword() == "***");
+
+        ui->SetKeyboardVisible(true);
+        assert(ui->IsKeyboardVisible());
+        const auto keyboardLayout = ui->GetLoginButtonRect();
+        assert(keyboardLayout.y + keyboardLayout.height <= 540.0f);
+        ui->SetKeyboardVisible(false);
+        assert(!ui->IsKeyboardVisible());
+
+        ui->SetFocus(LoginFocus::None);
+        engine.OnIMEActionDone();
+        assert(ui->GetAuthState() != LoginAuthState::LoginAccepted);
+        ui->SetUsername("");
+        ui->SetPassword("");
+        ui->SetFocus(LoginFocus::Username);
+        engine.OnIMEActionDone();
+        assert(ui->GetAuthState() == LoginAuthState::LoginRejected);
+        ui->SetFocus(LoginFocus::None);
+    }
+
     engine.Shutdown();
     assert(!engine.IsInitialized());
 
