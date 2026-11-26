@@ -44,7 +44,7 @@ jobs:
           HEAD_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          trap 'printf "FAILED command: %s\n" "$BASH_COMMAND" > /tmp/phase3g_error.txt' ERR
+          trap 'rc=$?; if [ "$rc" -ne 0 ]; then printf "exit=%s command=%s\n" "$rc" "$BASH_COMMAND" >> /tmp/phase3g_error.txt; fi' EXIT
           python3 - <<'PY'
           import os, re, sys
           paths = [p.strip() for p in os.environ['INCLUDES'].split(',') if p.strip()]
@@ -62,7 +62,7 @@ jobs:
           PY
           GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 https://github.com/matheomedrana/Ran-Online-EP7-Complete-Files.git /tmp/ep7backup
           cd /tmp/ep7backup
-          git lfs pull --include="$(cat /tmp/phase3g_includes.txt)" --exclude=""
+          git lfs pull --include="$(cat /tmp/phase3g_includes.txt)" --exclude="" 2>&1 | tee /tmp/phase3g_pull.log
           : > /tmp/phase3g_results.tsv
           while IFS= read -r p; do
             [ -n "$p" ] || continue
@@ -70,13 +70,13 @@ jobs:
             expected_oid=$(sed -n 's/^oid sha256://p' /tmp/phase3g_pointer.txt)
             expected_size=$(sed -n 's/^size //p' /tmp/phase3g_pointer.txt)
             if head -c 40 "$p" | grep -q 'version https://git-lfs'; then
-              echo "ERROR: LFS pointer remains after pull: $p" >&2
+              echo "ERROR: LFS pointer remains after pull: $p" | tee /tmp/phase3g_error.txt >&2
               exit 1
             fi
             actual_size=$(stat -c %s "$p")
             actual_sha=$(sha256sum "$p" | cut -d' ' -f1)
             if [ "$actual_sha" != "$expected_oid" ] || [ "$actual_size" != "$expected_size" ]; then
-              echo "ERROR: verification failed for $p ($actual_sha/$actual_size vs $expected_oid/$expected_size)" >&2
+              echo "ERROR: verification failed for $p ($actual_sha/$actual_size vs $expected_oid/$expected_size)" | tee /tmp/phase3g_error.txt >&2
               exit 1
             fi
             base64 -w0 "$p" > /tmp/phase3g_b64.txt
@@ -109,6 +109,7 @@ jobs:
           set -euo pipefail
           detail=$(cat /tmp/phase3g_error.txt 2>/dev/null || echo 'unknown failure')
           partial=$(cat /tmp/phase3g_results.tsv 2>/dev/null || true)
+          pull_log=$(cat /tmp/phase3g_pull.log 2>/dev/null || true)
           gh api --method POST "repos/$REPO/check-runs" \
             -f name='phase3g-lfs-retrieval-failed' \
             -f head_sha="$HEAD_SHA" \
@@ -116,5 +117,5 @@ jobs:
             -f conclusion=failure \
             -f 'output[title]=Phase 3G focused LFS retrieval failed' \
             -f 'output[summary]=Focused retrieval did not complete.' \
-            -f "output[text]=$detail"$'\n'"$partial" \
+            -f "output[text]=$detail"$'\n'"PULL LOG:"$'\n'"$pull_log"$'\n'"PARTIAL:"$'\n'"$partial" \
             --jq .id
