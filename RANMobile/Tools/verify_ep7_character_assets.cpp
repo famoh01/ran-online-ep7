@@ -88,6 +88,21 @@ std::string ExtractExtension(const std::string& path) {
     return path.substr(dot);
 }
 
+// The client root contains many unrelated .bin/.x/.cfg files (cFileList.bin, effect data,
+// terrain). A probe that parses every one of them reports failures for files the engine
+// never treats as character assets. Character animation data lives under data/animation
+// (and the packs), so loose-file scanning is limited to that subtree; pack entries are
+// always in scope because the engine only loads character assets from the packs.
+bool IsInCharacterDataPath(const std::string& path) {
+    std::string lower = path;
+    std::transform(lower.begin(), lower.end(), lower.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return lower.find("/data/animation/") != std::string::npos ||
+           lower.find("/data/character/") != std::string::npos ||
+           lower.find("\\data\\animation\\") != std::string::npos ||
+           lower.find("\\data\\character\\") != std::string::npos;
+}
+
 struct Counters {
     uint32_t chfTotal = 0, chfOk = 0;
     uint32_t cpsTotal = 0, cpsOk = 0;
@@ -95,6 +110,8 @@ struct Counters {
     uint32_t binTotal = 0, binOk = 0;
     uint32_t cfgTotal = 0, cfgOk = 0;
     uint32_t extractFailures = 0;
+    uint32_t packOk = 0, packFailed = 0;   // entries inside .rcc/.zip (engine-authoritative)
+    uint32_t looseOk = 0, looseFailed = 0; // loose files under data/animation|character
     uint32_t firstVersionSeenNonZero = 0;
 };
 
@@ -287,6 +304,7 @@ int main(int argc, char** argv) {
 
     std::vector<std::string> looseFiles;
     std::vector<std::string> archives;
+    size_t skippedUnrelated = 0;
     char line[4096];
     while (std::fgets(line, sizeof(line), pipe)) {
         std::string path(line);
@@ -294,8 +312,10 @@ int main(int argc, char** argv) {
         if (path.empty()) continue;
         if (IsArchiveName(path)) {
             archives.push_back(path);
-        } else if (IsCharacterAssetName(path)) {
+        } else if (IsCharacterAssetName(path) && IsInCharacterDataPath(path)) {
             looseFiles.push_back(path);
+        } else if (IsCharacterAssetName(path)) {
+            ++skippedUnrelated;
         }
         if (looseFiles.size() + archives.size() >= maxFiles) break;
     }
@@ -306,7 +326,10 @@ int main(int argc, char** argv) {
 
     std::printf("=== Phase 3J authentic character asset verification ===\n");
     std::printf("root: %s\n", root.c_str());
-    std::printf("loose candidate files: %zu\n", looseFiles.size());
+    // Two independent populations, reported separately: pack entries are what the engine
+    // actually loads, loose files are only informative.
+    std::printf("loose candidate files (data/animation, data/character): %zu\n", looseFiles.size());
+    std::printf("  ignored .bin/.x/.cfg elsewhere in the tree (not character data): %zu\n", skippedUnrelated);
     std::printf("archives (.rcc/.zip): %zu\n\n", archives.size());
 
     Counters counters;
@@ -318,7 +341,7 @@ int main(int argc, char** argv) {
             ReportFile("read", path, false, error);
             continue;
         }
-        VerifySingleAsset(path, bytes, counters);
+        if (VerifySingleAsset(path, bytes, counters)) ++counters.looseOk; else ++counters.looseFailed;
     }
 
     // The authentic assets live inside these packs (GLOGIC::InitFile).
@@ -357,9 +380,10 @@ int main(int argc, char** argv) {
                 // must count against the pass rate; otherwise "2 entries, 1 unreadable" would
                 // still print "parsed 1 of 1" and exit 0.
                 ++counters.extractFailures;
+                ++counters.packFailed;
                 continue;
             }
-            VerifySingleAsset(label, entryBytes, counters);
+            if (VerifySingleAsset(label, entryBytes, counters)) ++counters.packOk; else ++counters.packFailed;
         }
         if (checked == 0) std::printf("     (no character assets inside)\n");
     }
@@ -415,6 +439,27 @@ int main(int argc, char** argv) {
     //   0 = at least one authentic entry was found and every one of them parsed
     //   1 = authentic entries were found but at least one failed to parse
     //   2 = no authentic candidate was found at all; nothing was verified
-    if (attempted == 0) return 2;
-    return (parsed == attempted && counters.extractFailures == 0) ? 0 : 1;
+    std::printf("\npack entries (what the engine actually loads): %u parsed, %u failed\n",
+                counters.packOk, counters.packFailed);
+    std::printf("loose files (informational only):            %u parsed, %u failed\n",
+                counters.looseOk, counters.looseFailed);
+
+    // The verdict is about pack entries ONLY. The engine resolves character assets through
+    // GLOGIC::openfile_basestream(bENGLIB_ZIPFILE, ...), i.e. from SkinObject.rcc /
+    // Animation.rcc. Loose files are reported for information; failing the build on data
+    // the engine never reads would be a false alarm, and ignoring pack failures would be
+    // the opposite. Say which is which.
+    if (counters.packOk == 0 && counters.packFailed == 0) {
+        std::printf("\nVERDICT: no character entries were found inside any pack. Nothing was verified.\n");
+        return 2;
+    }
+    if (counters.packFailed != 0) {
+        std::printf("\nVERDICT: %u pack entr(y/ies) FAILED to parse — this build cannot load that data.\n",
+                    counters.packFailed);
+        return 1;
+    }
+    std::printf("\nVERDICT: every character entry inside the packs parsed.\n");
+    (void)parsed;
+    (void)attempted;
+    return 0;
 }

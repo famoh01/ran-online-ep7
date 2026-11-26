@@ -140,6 +140,8 @@ jobs:
           # needs credentials. Mirror the OUTCOME into a check-run annotation so the result
           # is readable from the PR page and via the API. `::notice::` / `::warning::` only
           # create annotations; they never change the step's exit code.
+          verdict=$(grep '^VERDICT: ' phase3j_authentic_assets.log | head -1 || true)
+          packs=$(grep '^pack entries ' phase3j_authentic_assets.log | head -1 || true)
           ok_count=$(grep -c '^  \[ OK \] ' phase3j_authentic_assets.log || true)
           arc_count=$(grep -c '^--- archive ' phase3j_authentic_assets.log || true)
           bad_count=$(grep -c '^  \[FAIL\] ' phase3j_authentic_assets.log || true)
@@ -157,7 +159,7 @@ jobs:
           fi
 
           if [ "${verify_status}" -eq 0 ] && [ "$ok_count" -gt 0 ]; then
-            echo "::notice title=Phase 3J authentic assets::$ok_count authentic character entries parsed from $arc_count archive(s), 0 failures."
+            echo "::notice title=Phase 3J authentic assets::${packs:-$ok_count ok} -- ${verdict:-all pack entries parsed}"
           elif [ "$ok_count" -eq 0 ]; then
             echo "::warning title=Phase 3J authentic assets::no authentic character entry was parsed (archives found: $arc_count, failures: $bad_count). Real-data compatibility is NOT proven."
           else
