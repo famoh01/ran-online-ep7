@@ -30,6 +30,7 @@
 //
 #include <algorithm>
 #include <cstdio>
+#include <map>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -96,9 +97,22 @@ struct Counters {
     uint32_t firstVersionSeenNonZero = 0;
 };
 
+// Failure reasons are aggregated so the summary survives CI's annotation cap (~10 per check
+// run): a client with 400 unimplemented animation versions must still say so in one line.
+std::map<std::string, uint32_t> g_failureReasons;
+
+std::string ReasonKey(const std::string& detail) {
+    // Keep the leading clause only; trailing numbers/paths vary per file.
+    const size_t cut = detail.find(" — ");
+    std::string key = (cut == std::string::npos) ? detail : detail.substr(0, cut);
+    if (key.size() > 120) key.resize(120);
+    return key;
+}
+
 void ReportFile(const char* kind, const std::string& path, bool ok, const std::string& detail) {
     std::printf("  [%s] %-10s %s%s%s\n", ok ? " OK " : "FAIL", kind, path.c_str(),
                 detail.empty() ? "" : " — ", detail.c_str());
+    if (!ok) ++g_failureReasons[std::string(kind) + ": " + ReasonKey(detail)];
 }
 
 }  // namespace
@@ -342,6 +356,13 @@ int main(int argc, char** argv) {
     std::printf("bin  : %u ok / %u\n", counters.binOk, counters.binTotal);
     std::printf("cfg  : %u ok / %u\n", counters.cfgOk, counters.cfgTotal);
     std::printf("extract failures (could not decompress/decrypt): %u\n", counters.extractFailures);
+
+    if (!g_failureReasons.empty()) {
+        std::printf("\nfailure reasons (aggregated, so none are lost to log/annotation caps):\n");
+        for (const auto& [reason, count] : g_failureReasons) {
+            std::printf("  %4u x %s\n", count, reason.c_str());
+        }
+    }
 
     const uint32_t parsed = counters.chfOk + counters.cpsOk + counters.xSkeletonOk + counters.xMeshOk +
                             counters.binOk + counters.cfgOk;

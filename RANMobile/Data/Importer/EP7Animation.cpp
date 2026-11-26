@@ -1,5 +1,7 @@
 #include "EP7Animation.h"
 
+#include <cstdio>
+
 #include <cmath>
 #include <cstring>
 
@@ -331,7 +333,13 @@ EP7AnimClip EP7AnimationReader::ParseContainer(const std::vector<uint8_t>& bytes
             return clip;
         }
     } else {
-        clip.error = "unsupported animation container version";
+        // Report the actual value: the authentic client contains containers this build does
+        // not implement, and a bare "unsupported version" hides which ones are missing.
+        char message[128];
+        std::snprintf(message, sizeof(message),
+                      "unsupported animation container version 0x%08X (implemented: 0x0100, 0x0101, 0x0102)",
+                      version);
+        clip.error = message;
         return clip;
     }
 
@@ -380,7 +388,10 @@ EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, boo
     if (version != EP7AnimInfo::kVersion) {
         // Only the 0x0107 layout is implemented; older layouts differ in fixed-size
         // struct members (SANIMCONINFO_101.._106) and are documented as unsupported.
-        info.error = "unsupported animation cfg version (only 0x0107 implemented)";
+        char message[128];
+        std::snprintf(message, sizeof(message),
+                      "unsupported animation cfg version 0x%08X (implemented: 0x0107)", version);
+        info.error = message;
         return info;
     }
 

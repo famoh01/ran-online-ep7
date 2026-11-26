@@ -149,6 +149,13 @@ jobs:
             while IFS= read -r line; do
               echo "::warning title=Phase 3J authentic asset FAILED::${line}"
             done
+          # One annotation carrying every aggregated reason: GitHub caps annotations at ~10
+          # per check run, so per-entry lines alone would hide most of the picture.
+          reasons=$(grep -E '^ +[0-9]+ x ' phase3j_authentic_assets.log 2>/dev/null | head -12 || true)
+          if [ -n "$reasons" ]; then
+            echo "::warning title=Phase 3J authentic assets - failure reasons::$(echo "$reasons" | tr '\n' ';')"
+          fi
+
           if [ "${verify_status}" -eq 0 ] && [ "$ok_count" -gt 0 ]; then
             echo "::notice title=Phase 3J authentic assets::$ok_count authentic character entries parsed from $arc_count archive(s), 0 failures."
           elif [ "$ok_count" -eq 0 ]; then
