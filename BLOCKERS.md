@@ -110,3 +110,11 @@ Please tell me which blockers to clear and how (provide files/toolchain/server a
 - Backup GitHub repository `matheomedrana/Ran-Online-Episode-7-Complete-Files` returns HTTP 404 (verified with `gh repo view` and `gh api`); that recovery route is stopped.
 - Android IME is now implemented in Java/Kotlin-side Android classes plus JNI callbacks, but no physical device/emulator test was performed. Compile/unit evidence only; Thai IME composition behaviour on a real keyboard remains unverified.
 - Existing blockers B1 (no local Android SDK/NDK/JDK), B6/B8 (protocol/server uncertainty, GameServer DirectX header conflict) remain untouched.
+
+## Phase 3G update (2026-11-26, authentic LFS retrieval)
+
+- Local `git-lfs` cannot be installed: Debian mirrors are unreachable and the sandbox token gets HTTP 403 from GitHub’s LFS batch endpoint; `media.githubusercontent.com` and artifact/log blob hosts fail TLS. Resolved for retrieval only by the standard GitHub-hosted runner workflow `phase3g_focused_lfs_fetch.yml` plus GitHub blob API transfer; local LFS remains unavailable.
+- Backup `.gitattributes` is itself an LFS pointer, so `git lfs pull` needs explicit local `.git/info/attributes` for the requested paths. This is local workflow configuration, not a change to the backup repo.
+- Authentic `mapslist.mst` is binary `GLMAPS_LIST`/`EMBYTECRYPT_MAPSLIST`; the Android importer accepts only plain INI and therefore reports `encoded mapslist is unsupported`. Authentic `innerzone_01.Lev` uses `SLEVEL_HEAD 0x0102`; the Android parser accepts only `0x0101` and reports `UNSUPPORTED GLLEVEL VERSION`. No fallback decoder is enabled, and no fake plain-text fixture was substituted.
+- `innerzone_01.wld`/`.wld0` were identified from verified data but not downloaded; no WLD geometry parser/renderer exists, so no original scene is rendered. The two large Drive client split archives and release-asset host remain unchanged blockers from earlier phases.
+- No isolated Phase 3G branch/PR was available in this session; only a new workflow/report and append-only doc sections were added on the current branch. PR #3 remains OPEN/DRAFT; no merge, close, overwrite or force push occurred.

@@ -91,3 +91,12 @@ Android CI:
 - Run `45866773886` on `da95f90`: **failure** — `native_bridge.cpp` used `ReleaseAndroidInput()` before declaration and `LoginScreen::GetPassword()` did not exist. Fixed in `91b9db6`.
 - Run **45867328078** on `91b9db6`: **success**, all steps (native tests, ARM64 native library, Java 17/Gradle, debug/release APK, release AAB). Artifacts: `libranmobile-arm64-v8a` **1,825,929 B**, `ranmobile-android-packages` **1,800,104 B**.
 - No device/emulator test: IME composition, actual keyboard visibility and password presentation on hardware are **not** verified.
+
+## 8. Phase 3G verification (2026-11-26, verified binary files only)
+
+- Retrieval: 24 focused backup-repo objects pulled with official `git-lfs` on GitHub-hosted runner; each was checked as non-pointer, SHA-256 equal to LFS OID and byte size equal to pointer size. Manifest: `external/recovery/phase3g/retrieval_manifest.tsv`; bytes: `external/recovery/phase3g/authentic/`. Successful runs include `45877365090` (mapslist.mst + login.wld) and `45878536743` (final source).
+- Source-derived decode: `decode_mapslist.py` parsed all 120 records and consumed exactly 13,714 bytes; `decode_lev_head.py` consumed exactly the 34-byte `SLEVEL_HEAD` block and recovered dependency `innerzone_01.wld`. No invented format or decoder was used.
+- Android native check on verified texture: `EP7TextureDecoder::InspectDDS`/`DecodeDDS` on authentic `loading_032.dds` returned valid DXT1 1024×512, 1 mip, 2,097,152 RGBA bytes, exit 0.
+- Android native check on verified conflict cases: authentic binary `mapslist.mst` → `valid=NO`, encoded-manifest diagnostic; authentic `innerzone_01.Lev` → `valid=0`, `UNSUPPORTED GLLEVEL VERSION`. Both are expected compatibility findings, not test failures.
+- Regression baseline: `./external/recovery/phase3d_tests` → exit 0, `ALL TESTS PASSED!`. No game source changed.
+- Not performed: local Git LFS fetch, APK/AAB build, device/emulator run, live server login, WLD geometry render, original EXE execution.
