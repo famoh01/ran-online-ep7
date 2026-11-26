@@ -23,6 +23,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path build_logs | Out-Null
           $results = @()
+          $slnDir = (Get-Location).Path + '\'
           $projects = @(
             @{ Name='Smtm2022.sln'; Path='Smtm2022.sln' },
             @{ Name='LoginServer'; Path='LoginServer/LoginServer.vcxproj' },
@@ -34,20 +35,24 @@ jobs:
           foreach ($p in $projects) {
             $log = "build_logs/$($p.Name).log"
             Write-Host "=== BUILD $($p.Name) ==="
-            msbuild $p.Path /m /v:m /p:Configuration=Release /p:Platform=Win32 /flp:"LogFile=$log;Verbosity=detailed"
+            msbuild $p.Path /m /v:m /p:Configuration=Release /p:Platform=Win32 /p:SolutionDir="$slnDir" /flp:"LogFile=$log;Verbosity=detailed"
             $code = $LASTEXITCODE
             $results += "$($p.Name)=$code"
             Write-Host "$($p.Name) EXIT=$code"
-            $lines = @()
-            if (Test-Path $log) {
-              $lines = @(Select-String -Path $log -Pattern 'error [A-Z]+\d+:|fatal error|LNK\d+|MSB\d+:' |
-                Select-Object -First 3 | ForEach-Object { $_.Line.Trim() })
+            if ($code -ne 0) {
+              $lines = @()
+              if (Test-Path $log) {
+                $lines = @(Select-String -Path $log -Pattern 'error [A-Z]+\d+:|fatal error' |
+                  Select-Object -First 3 | ForEach-Object { $_.Line.Trim() })
+              }
+              foreach ($line in $lines) {
+                $safe = $line -replace "`r", ' ' -replace "`n", ' ' -replace '%', '%25'
+                Write-Host "::error title=$($p.Name)::$safe"
+              }
+              Write-Host "::error title=MSBuild result::$($p.Name) exit=$code"
+            } else {
+              Write-Host "::notice title=MSBuild result::$($p.Name) exit=0"
             }
-            foreach ($line in $lines) {
-              $safe = $line -replace "`r", ' ' -replace "`n", ' ' -replace '%', '%25'
-              Write-Host "::error title=$($p.Name)::$safe"
-            }
-            if ($code -eq 0) { Write-Host "::notice title=MSBuild result::$($p.Name) exit=0" }
           }
           $results | Set-Content build_logs/results.txt
           $results | ForEach-Object { Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- $_" }
