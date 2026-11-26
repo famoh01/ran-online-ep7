@@ -60,3 +60,9 @@ Please tell me which blockers to clear and how (provide files/toolchain/server a
 - Run `45819356699` (workflow `Strict Build Verification`, commit `0680b8e`), Windows job `139907264786`, started 2026-11-26T12:24:32Z. At report time (~26 min later) the MSBuild step was still in progress; no project exit codes or output-binary checks had been produced.
 - Impact: Windows client/server compilation is **unverified** in this task. The green Android/Linux jobs in the same run are separately verified and must not be treated as Windows proof.
 - **Needed**: re-check that run (or wait for its completion) before Phase 3; the workflow has no `continue-on-error`, so a failing project will fail the job and upload `build_logs/results.txt`.
+
+## Recovery progress update (continuation task)
+
+- B2/B4 **partially cleared**: `RAN-EP7-ServerDBTools.zip` was recovered with an alternate authorized connector input; 4 `.sql` scripts, 4 `.bak` backups, 4 non-empty `Server*.cfg` files and 15 editor/GM tools are now present locally (`external/ep7_release/serverdb_original/`, git-ignored). The >1 GB client archives and the 19 MB `RanOnlineEP7-Server.zip` remain unavailable.
+- B6 **refined, not yet fixed**: project files define `TH_PARAM` for Thailand builds (`NET_MSG_BASE=989`, active lobby `+950`), so the correct `LOGIN_2` is 2046 (not 1120). No code change was made in this recovery task; Phase 3 must correct the mobile constant and re-verify against the server.
+- B7 update: first strict Windows run `45819356699` **failed** at the MSBuild step; second run `45828309380` was dispatched with error annotations enabled.

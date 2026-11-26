@@ -90,3 +90,46 @@ See §1 for the three recovered archives. Native test binary and extracted text 
 ## 15. Branch / PR note
 
 All recovery work was committed to the session's fixed branch `arena/075e1725-ran-online-ep7` (platform rule: no branch creation or switching in this session). PR #3 remains **OPEN DRAFT**; no PR was merged, closed or edited, and no separate branch/PR was created.
+
+---
+
+## 16. Continuation addendum — recovered source-based DB/tools and build-flag resolution
+
+### 16.1 ServerDBTools archive recovered via alternate authorized connector input
+
+A second Drive attempt with a different connector input (`acknowledge_abuse=true`, `return_download_url=true`) succeeded for the file that had previously failed:
+
+- `google_drive/RAN-EP7-ServerDBTools.zip` — 49,791,515 bytes, SHA-256 `79243e4e7a5fb30e63e9ac70ab6a9e45acb73783a8b52a55caf958de4d22ff6f`, `unzip -t` clean, 74 entries, 0 unsafe paths.
+- Extracted (read-only, ignored by Git) to `external/ep7_release/serverdb_original/`. No binary was executed.
+
+Recovered database **source and backups** (`2_Database/`):
+
+| File | Bytes | SHA-256 | Notes |
+|---|---|---|---|
+| `RanGame1.sql` | 100,664 | `62e4ce02172ec69f…` | 19 `CREATE TABLE`, 37 `INSERT` statements |
+| `RanLog.sql` | 58,886 | `a66992ff334920ff…` | DB creation script |
+| `RanShop.sql` | 44,070 | `f12dc120c3c53954…` | DB creation script |
+| `RanUser.sql` | 96,604 | `310349ce2a9320ad…` | DB creation script (matches backup-repo LFS OID) |
+| `RanGame1.bak` | 2,908,672 | `28d42de3d4fa97ca…` | MSSQL backup (matches backup-repo LFS OID) |
+| `RanLog.bak` | 2,970,112 | `18807b752b850ca5…` | MSSQL backup |
+| `RanShop.bak` | 2,642,432 | `aa6c78007b359717…` | MSSQL backup |
+| `RanUser.bak` | 2,642,432 | `7413931d58251393…` | MSSQL backup |
+
+Recovered **server configuration templates** (`1_Server/cfg/`): `ServerLogin.cfg` (829 B), `ServerSession.cfg` (1,316 B), `ServerAgent.cfg` (2,409 B), `ServerField.cfg` (2,272 B), `Filter.cfg` and `IPFilter.cfg` (0 B). Values include placeholder DB credentials (`Your-DB-Pass`) — not committed and not printed in reports. Server names are `(FamHawaii)LoginServer`, `(FamHawaii)SessionServer`, `(FamHawaii)AgentServer`, `(FamHawaii)FieldServer`; service ports 3141/5000/5104/5103.
+
+Recovered **original tools/builds** (inspected, not executed): 15 editor/GM tools under `4_Tools_Editors/` (e.g. `EditorItem.exe`, `EditorQuest.exe`, `EditorMobNpc.exe`, `EditorGMTool.exe`, `FileCrypt.exe`), server executables and runtime DLLs under `1_Server/` and `5_FreshBuild_VS2022/`. `README_TH.txt` states `5_FreshBuild_VS2022` was built from `famoh01/ran-online-ep7` source with VS2022 on GitHub Actions, and warns it is a different source lineage from the Thai client package — protocol compatibility must be tested, not assumed.
+
+### 16.2 Alternate recovery routes investigated
+
+- **Backup GitHub repository** (`matheomedrana/Ran-Online-EP7-Complete-Files`): metadata clone succeeds; 60,457 tracked paths; the `(Source Code)` subtree has 4,413 files (1,602 `.cpp`, 1,610 `.h`, 30 `.vcproj`, `RanOnline.sln`, editor tools), but every large file is a Git LFS pointer (~128 bytes). A previous CI run (`phase1-complete-files-audit.yml`, run 45477556185) proved LFS objects are pullable *on a GitHub runner*; local LFS batch API returns HTTP 403 and `media.githubusercontent.com` is unreachable. 1,147 source basenames in that tree do not exist in the main repo (e.g. `activitydisplay.cpp`, `charactercreatepage.cpp`, `bytecrypt.cpp`) — a genuine alternate/variant source set, not yet pulled into this workspace.
+- **Main repo Git history**: `git fetch --unshallow` completed; 10,098 objects. Only deleted files found are `RANMobile/Android/assets/login_bg.jpg` and `RANMobile/Engine/Renderer/stb_image.h`; no DB scripts, server configs or game data are hidden in history.
+- **Drive**: `RanOnlineEP7-Server.zip` (19,230,299 B) and the Thai-character-named 23,584,218 B archive still fail with "Could not retrieve the file from the connector" under different input combinations; not retried further. The >1 GB client archives were not attempted, per instruction.
+- **Release**: 4 assets listed; bytes unreachable locally, but CI can download them (small ThaiPack already used in strict workflow).
+
+### 16.3 Protocol build flags resolved from source (B6)
+
+`netclientLib/s_NetGlobal.h` lines 618–636 define region bases; `TH_PARAM → NET_MSG_BASE = 989`, default `995`. The active lobby offset is `+950` (the `+1013` block is commented out). `Basic/Basic.vcxproj`, `RanClientLib/RanClientLib.vcxproj`, `netclientLib/netclientLib.vcxproj`, `enginelib/enginelib.vcxproj` and `netserverLib/netserverLib.vcxproj` define `TH_PARAM` in their Thailand/Release configurations; solution configuration `Release_Thailand|Win32` exists. Therefore the correct Thailand release value is `NET_MSG_LOGIN_2 = 989 + 950 + 107 = 2046` (default `Release` builds 2052). `RANMobile/Engine/Network/EP7Protocol.h` still contains 1120; this recovery task did **not** alter it. The strict build should target `Release_Thailand|Win32` for protocol-relevant verification.
+
+### 16.4 Strict Windows build, first run
+
+Run `45819356699` (commit `0680b8e`): Android + Linux jobs succeeded; Windows job `139907264786` **failed** at the MSBuild step (`Process completed with exit code 1`), with no `continue-on-error`. Raw log download is blocked in this sandbox, so the workflow was updated to emit per-project exit codes and the first compiler-error lines as GitHub annotations, and re-run as `45828309380`. Result will be appended here when the job completes.
