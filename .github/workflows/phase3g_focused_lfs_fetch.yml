@@ -62,6 +62,14 @@ jobs:
           PY
           GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 https://github.com/matheomedrana/Ran-Online-EP7-Complete-Files.git /tmp/ep7backup
           cd /tmp/ep7backup
+          git lfs install --local
+          # The backup repo's tracked .gitattributes is itself an LFS pointer,
+          # so declare LFS tracking locally for only the requested paths.
+          : > .git/info/attributes
+          while IFS= read -r p; do
+            [ -n "$p" ] || continue
+            printf '"%s" filter=lfs diff=lfs merge=lfs -text\n' "$p" >> .git/info/attributes
+          done < /tmp/phase3g_paths.txt
           git lfs pull --include="$(cat /tmp/phase3g_includes.txt)" --exclude="" 2>&1 | tee /tmp/phase3g_pull.log
           : > /tmp/phase3g_results.tsv
           while IFS= read -r p; do
