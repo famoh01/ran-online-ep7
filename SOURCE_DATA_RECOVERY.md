@@ -142,3 +142,20 @@ Run `45828309380` (commit `5b5a287`, annotations enabled) completed: Android and
 - Direct per-project builds failed because `$(SolutionDir)` was undefined when invoking `.vcxproj` files without the solution:
   - `enginelib\DxCommon9\dxstdafx.h(67,10): error C1083: Cannot open include file: 'd3dx9math.h': No such file or directory` for `enginelib.vcxproj`, `MfcExLib.vcxproj`, `netserverLib.vcxproj` while building `LoginServer`, `SessionServer`, `AgentServer`.
 - Fix applied (commit `aa54bc6`): every per-project `msbuild` invocation now passes `/p:SolutionDir=<workspace>\`, and annotations are emitted only for real compiler errors on non-zero exits. Third verification run `45833466593` was dispatched; full solution build takes ~28 minutes on `windows-latest`.
+
+### 16.6 Strict Windows build — per-project results and GameServer root cause
+
+Run `45833466593` (commit `aa54bc6`, after passing `SolutionDir`) produced these real per-project exit codes:
+
+| Target | Exit code |
+|---|---|
+| `Smtm2022.sln` (`Release|Win32`) | **0** |
+| `LoginServer.vcxproj` | **0** |
+| `SessionServer.vcxproj` | **0** |
+| `AgentServer.vcxproj` | **0** |
+| `FieldServer.vcxproj` | **0** |
+| `GameServer.vcxproj` | **1** |
+
+GameServer's exact error: `Microsoft.CppCommon.targets(790,5): error MSB6011: Invalid parameters passed to the Microsoft.Build.CPPTasks.CL task [GameServer.vcxproj]`. Source inspection shows `GameServer/GameServer.vcxproj` uses legacy numeric metadata `<PrecompiledHeader>3</PrecompiledHeader>` in all nine configurations, while the four other server projects use `Use`/`NotUsing`. This is a VS2022 project-compatibility issue, not a gameplay or protocol change.
+
+A command-line `/p:PrecompiledHeader=NotUsing` override did not help (item metadata wins over global properties), confirmed by fast run `45838132580`: same four servers exit 0, GameServer exit 1 with the same MSB6011. Fix committed as `b32f4b2`: CI creates a temporary `GameServer/GameServer.ci.vcxproj` copy with `3 → NotUsing` and builds that; the committed original `.vcxproj` is untouched. Fast verification run `45841659289` is in progress.
