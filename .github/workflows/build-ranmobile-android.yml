@@ -478,7 +478,23 @@ jobs:
             -gpu swiftshader_indirect -accel on \
             > emulator.log 2>&1 &
           ADB="$ANDROID_HOME/platform-tools/adb"
-          "$ADB" wait-for-device || true
+          # NOTE: 'adb wait-for-device' blocks forever if the emulator never comes
+          # up — poll 'adb devices' (never blocks) with a hard budget instead.
+          adb_ok=0
+          for i in $(seq 1 60); do
+            if "$ADB" devices 2>/dev/null | grep -qE "emulator-[0-9]+[[:space:]]+device"; then
+              adb_ok=1
+              echo "device online after ~$((i * 5))s"
+              break
+            fi
+            sleep 5
+          done
+          if [ "$adb_ok" != "1" ]; then
+            echo "::error::emulator device never appeared in adb within 300s"
+            tail -n 40 emulator.log | while IFS= read -r line; do echo "::error::$line"; done || true
+            "$ADB" devices -l || true
+            exit 1
+          fi
           boot_ok=0
           for i in $(seq 1 180); do
             boot=$("$ADB" shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")
