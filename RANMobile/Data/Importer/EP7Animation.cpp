@@ -208,15 +208,17 @@ bool ReadBoneTrack(ep7byte::Stream& s, EP7BoneTrack& out) {
     return false;
 }
 
-bool ReadTrackList(ep7byte::Stream& s, std::vector<EP7BoneTrack>& out) {
+bool ReadTrackList(ep7byte::Stream& s, std::vector<EP7BoneTrack>& out, bool append = false) {
     uint32_t count = 0;
     if (!s.ReadU32(count)) return false;
-    if (count > kMaxBoneTracks) {
+    if (!append) {
+        out.clear();
+    }
+    if (count > kMaxBoneTracks || count > kMaxBoneTracks - out.size()) {
         s.Fail("animation bone track count exceeds sanity limit");
         return false;
     }
-    out.clear();
-    out.reserve(count);
+    out.reserve(out.size() + count);
     for (uint32_t i = 0; i < count; ++i) {
         EP7BoneTrack track;
         if (!ReadBoneTrack(s, track)) return false;
@@ -310,7 +312,24 @@ EP7AnimClip EP7AnimationReader::ParseContainer(const std::vector<uint8_t>& bytes
     }
     clip.version = version;
 
-    if (version == 0x0103) {
+    if (version == 0x0104) {
+        // SAnimContainer::Load_0104 (Lib_Engine/Meshs/SAnimationSaveLoad.cpp:444-479, 670-699):
+        // main list (m_listAnimation), then two consecutive up-body lists both appended in
+        // order to m_listAniUPBODY.
+        if (!ReadTrackList(stream, clip.mainTracks)) {
+            clip.error = stream.Error().empty() ? "invalid main track list" : stream.Error();
+            return clip;
+        }
+        if (!ReadTrackList(stream, clip.upBodyTracks)) {
+            clip.error = stream.Error().empty() ? "invalid up-body track list" : stream.Error();
+            return clip;
+        }
+        if (!ReadTrackList(stream, clip.upBodyTracks, /*append=*/true)) {
+            clip.error = stream.Error().empty() ? "invalid secondary up-body track list"
+                                                : stream.Error();
+            return clip;
+        }
+    } else if (version == 0x0103) {
         // SAnimContainer::Load_0103 (Lib_Engine/Meshs/SAnimationSaveLoad.cpp:412-442):
         // up-body list, DWORD dwGarbageValue (= 0x0103 + numUpBody + numMain), then main list.
         if (!ReadTrackList(stream, clip.upBodyTracks)) {
@@ -356,9 +375,9 @@ EP7AnimClip EP7AnimationReader::ParseContainer(const std::vector<uint8_t>& bytes
     } else {
         // Report the actual value: the authentic client contains containers this build does
         // not implement, and a bare "unsupported version" hides which ones are missing.
-        char message[128];
+        char message[160];
         std::snprintf(message, sizeof(message),
-                      "unsupported animation container version 0x%08X (implemented: 0x0100, 0x0101, 0x0102, 0x0103)",
+                      "unsupported animation container version 0x%08X (implemented: 0x0100, 0x0101, 0x0102, 0x0103, 0x0104)",
                       version);
         clip.error = message;
         return clip;

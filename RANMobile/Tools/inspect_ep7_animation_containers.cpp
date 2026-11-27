@@ -682,10 +682,12 @@ inline bool TraceUnmodifiedReaderContainer(const std::vector<uint8_t>& bytes,
     uint32_t hdrVer = 0;
     if (!s.ReadFileType(hdrType, hdrVer)) return false;
 
-    auto walkList = [&](const char* name, uint32_t* declaredOut, uint32_t* parsedOut) -> bool {
+    auto walkList = [&](const char* name, uint32_t* declaredOut, uint32_t* parsedOut,
+                        bool accumulate = false) -> bool {
         const size_t cntPos = s.Position();
         uint32_t count = 0;
-        if (!s.ReadU32(count) || count > kMaxTracks) {
+        const uint32_t priorDeclared = (accumulate && declaredOut) ? *declaredOut : 0u;
+        if (!s.ReadU32(count) || count > kMaxTracks || count > kMaxTracks - priorDeclared) {
             if (rec) {
                 rec->failList = name;
                 rec->failOffset = cntPos;
@@ -693,16 +695,24 @@ inline bool TraceUnmodifiedReaderContainer(const std::vector<uint8_t>& bytes,
             }
             return false;
         }
-        if (declaredOut) *declaredOut = count;
+        if (declaredOut) *declaredOut = accumulate ? (priorDeclared + count) : count;
+        const uint32_t baseParsed = (accumulate && parsedOut) ? *parsedOut : 0u;
         for (uint32_t i = 0; i < count; ++i) {
             if (!TraceUnmodifiedReaderBoneTrack(s, rec, name, i)) return false;
-            if (parsedOut) *parsedOut = i + 1;
+            if (parsedOut) *parsedOut = baseParsed + i + 1;
         }
         return true;
     };
 
     bool ok = false;
-    if (outerVersion == 0x0103u) {
+    if (outerVersion == 0x0104u) {
+        ok = walkList("main", rec ? &rec->mainDeclared : nullptr,
+                      rec ? &rec->mainParsed : nullptr) &&
+             walkList("upBody1", rec ? &rec->upBodyDeclared : nullptr,
+                      rec ? &rec->upBodyParsed : nullptr) &&
+             walkList("upBody2", rec ? &rec->upBodyDeclared : nullptr,
+                      rec ? &rec->upBodyParsed : nullptr, /*accumulate=*/true);
+    } else if (outerVersion == 0x0103u) {
         uint32_t interGarbage = 0;
         ok = walkList("upBody", rec ? &rec->upBodyDeclared : nullptr,
                       rec ? &rec->upBodyParsed : nullptr) &&
@@ -985,7 +995,7 @@ inline BinInspectionRecord InspectSingleBin(const std::string& relPath,
 
     const bool outerSupported =
         (r.outerVersion == 0x0100u || r.outerVersion == 0x0101u || r.outerVersion == 0x0102u ||
-         r.outerVersion == 0x0103u);
+         r.outerVersion == 0x0103u || r.outerVersion == 0x0104u);
 
     if (!outerSupported) {
         r.bucket = BinBucket::UnsupportedOuterVersion;

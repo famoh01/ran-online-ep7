@@ -566,6 +566,101 @@ std::vector<uint8_t> AnimationBin0103() {
     return w.Data();
 }
 
+void AppendZeroKeyTrack0103(ByteWriter& w, const std::string& boneName) {
+    w.U32(0x0103);
+    w.Str(boneName);
+    w.U32(0);  // rotate
+    w.U32(static_cast<uint32_t>(boneName.size()));
+    w.U32(0);  // position
+    w.U32(0);  // quatpos
+    w.U32(0);  // matrix
+    w.U32(static_cast<uint32_t>(boneName.size()) + 0x0103u);
+    w.U32(0);  // scale
+}
+
+// SAnimContainer 0x0104 (Lib_Engine/Meshs/SAnimationSaveLoad.cpp:444-479, 670-699):
+//   outer: 128-byte "AnimContainer" header + u32(0x0104)
+//        + main list    (u32 numMain    + numMain    x SAnimation -> m_listAnimation)
+//        + upBody1 list (u32 numUpBody1 + numUpBody1 x SAnimation -> m_listAniUPBODY)
+//        + upBody2 list (u32 numUpBody2 + numUpBody2 x SAnimation -> appended to m_listAniUPBODY)
+//   (no inter-list garbage DWORD; plaintext payload).
+std::vector<uint8_t> AnimationBin0104() {
+    ByteWriter w;
+    std::vector<uint8_t> hdr(128, 0);
+    std::memcpy(hdr.data(), "AnimContainer", 14);
+    w.Raw(hdr);
+    w.U32(0x0104);  // container version
+
+    // ---- List 0: mainTracks (1 track: Bip01 quatPos @ t=0 y=+2.0, t=4800 y=+5.0) ----
+    w.U32(1);
+    {
+        const std::string bone = "Bip01";
+        w.U32(0x0103);
+        w.Str(bone);
+        w.U32(0);
+        w.U32(static_cast<uint32_t>(bone.size()));
+        w.U32(0);
+        w.U32(2);  // 2 quatPosKeys
+        w.U32(0);
+        w.F32(1.0f); w.F32(1.0f); w.F32(1.0f);
+        w.F32(0.0f); w.F32(2.0f); w.F32(0.0f);
+        w.U32((32767u << 16) | 32767u);
+        w.U32((32767u << 16) | 65535u);
+        w.U32(4800);
+        w.F32(1.0f); w.F32(1.0f); w.F32(1.0f);
+        w.F32(0.0f); w.F32(5.0f); w.F32(0.0f);
+        w.U32((32767u << 16) | 32767u);
+        w.U32((32767u << 16) | 65535u);
+        w.U32(0);
+        w.U32(static_cast<uint32_t>(bone.size()) + 0x0103u);
+        w.U32(0);
+    }
+
+    // ---- List 1: upBody1 (1 track: Bip01_Spine1 80B matrix @ t=960 y=+4.0) ----
+    w.U32(1);
+    {
+        const std::string bone = "Bip01_Spine1";
+        w.U32(0x0103);
+        w.Str(bone);
+        w.U32(0);
+        w.U32(static_cast<uint32_t>(bone.size()));
+        w.U32(0);
+        w.U32(0);
+        w.U32(1);  // 1 matrixKey (80B)
+        w.U32(960);
+        w.U32(0xDEADBEEFu); w.U32(0xCAFEBABEu); w.U32(0x13579BDFu);
+        w.F32(1.0f); w.F32(0.0f); w.F32(0.0f); w.F32(0.0f);
+        w.F32(0.0f); w.F32(1.0f); w.F32(0.0f); w.F32(0.0f);
+        w.F32(0.0f); w.F32(0.0f); w.F32(1.0f); w.F32(0.0f);
+        w.F32(0.0f); w.F32(4.0f); w.F32(0.0f); w.F32(1.0f);
+        w.U32(static_cast<uint32_t>(bone.size()) + 0x0103u);
+        w.U32(0);
+    }
+
+    // ---- List 2: upBody2 (2 tracks appended in order to upBodyTracks: Bip01_Head + "") ----
+    w.U32(2);
+    {
+        const std::string bone = "Bip01_Head";
+        w.U32(0x0103);
+        w.Str(bone);
+        w.U32(0);
+        w.U32(static_cast<uint32_t>(bone.size()));
+        w.U32(0);
+        w.U32(1);  // 1 quatPosKey @ t=0 y=+3.5
+        w.U32(0);
+        w.F32(1.0f); w.F32(1.0f); w.F32(1.0f);
+        w.F32(0.0f); w.F32(3.5f); w.F32(0.0f);
+        w.U32((32767u << 16) | 32767u);
+        w.U32((32767u << 16) | 65535u);
+        w.U32(0);
+        w.U32(static_cast<uint32_t>(bone.size()) + 0x0103u);
+        w.U32(0);
+    }
+    AppendZeroKeyTrack0103(w, "");
+
+    return w.Data();
+}
+
 // SANIMCONINFO 0x0107 (payload only, header present).
 // Emits the authentic SANIMCONINFO byte layout for each version, including the MSVC struct
 // padding the engine actually reads:
@@ -1595,9 +1690,171 @@ void TestAnimation() {
             }
         }
 
-        // Unimplemented container versions (0x0104, 0x0200) and unimplemented inner track
-        // versions (0x0104) remain explicitly rejected in B14.
-        for (uint32_t unsupOuter : {0x0104u, 0x0200u}) {
+        // ---- Phase 3J B15: Authentic outer container 0x0104 (main, upBody1, upBody2) ----
+        {
+            const std::vector<uint8_t> bin0104 = AnimationBin0104();
+            RANMobile::EP7AnimClip c104 =
+                RANMobile::EP7AnimationReader::ParseContainer(bin0104, true, false);
+            J_CHECK_MSG(c104.valid, c104.error);
+            J_CHECK(c104.version == 0x0104);
+            J_CHECK(c104.mainTracks.size() == 1);
+            // List 1 (1 track) + List 2 (2 tracks) must be appended in exact order into upBodyTracks!
+            J_CHECK(c104.upBodyTracks.size() == 3);
+            J_CHECK(c104.MaxKeyTime() == 4800);
+
+            if (c104.mainTracks.size() == 1 && c104.upBodyTracks.size() == 3) {
+                J_CHECK(c104.mainTracks[0].boneName == "Bip01");
+                J_CHECK(c104.upBodyTracks[0].boneName == "Bip01_Spine1");
+                J_CHECK(c104.upBodyTracks[1].boneName == "Bip01_Head");
+                J_CHECK(c104.upBodyTracks[2].boneName.empty());
+
+                // Bind & evaluate simultaneously across main + upBody1 + upBody2 on skeleton
+                // (paired with supported 0x0107 .cfg `info`).
+                RANMobile::EP7AnimationReader::BindToSkeleton(c104, skeleton);
+                J_CHECK(c104.mainTracks[0].boneIndex == skeleton.FindBoneIndex("Bip01"));
+                J_CHECK(c104.upBodyTracks[0].boneIndex == skeleton.FindBoneIndex("Bip01_Spine1"));
+                J_CHECK(c104.upBodyTracks[1].boneIndex == skeleton.FindBoneIndex("Bip01_Head"));
+                J_CHECK(c104.upBodyTracks[2].boneIndex == -1);
+
+                RANMobile::EP7AnimationPlayer p104;
+                p104.Play(&c104, &info);
+                J_CHECK(p104.IsPlaying() && p104.Loop());
+                skeleton.ResetToRestPose();
+                p104.ApplyToSkeleton(skeleton);
+                skeleton.UpdateBones(RANMobile::ep7math::Mat4::Identity());
+                const int32_t headIdx = skeleton.FindBoneIndex("Bip01_Head");
+                if (headIdx >= 0) {
+                    // Bip01 y=+2.0 (main) + Spine1 y=+4.0 (upBody1) + Head y=+3.5 (upBody2) => +9.5
+                    J_CHECK(FloatNear(skeleton.GetBone(static_cast<size_t>(headIdx)).combined.m[3][1],
+                                      9.5f, 1e-3f));
+                }
+            }
+
+            // Exact EOF + strict prefix truncation check: every prefix 0 .. size-1 must fail,
+            // proving ParseContainer consumed all three lists right to exact EOF.
+            for (size_t cutLen = 0; cutLen < bin0104.size(); ++cutLen) {
+                const std::vector<uint8_t> prefix(bin0104.begin(),
+                                                  bin0104.begin() + static_cast<long>(cutLen));
+                J_CHECK(!RANMobile::EP7AnimationReader::ParseContainer(prefix, true, false).valid);
+            }
+
+            // Trailing data check: CSerialFile Load_0104 stops immediately after upBody2 without
+            // reading a 4th list or trailing words. Appending sentinel bytes (including 0xFFFFFFFF)
+            // must leave mainTracks and upBodyTracks completely unchanged.
+            {
+                std::vector<uint8_t> withTrailing = bin0104;
+                ByteWriter extra;
+                extra.U32(0xFFFFFFFFu);
+                extra.U32(0xDEADBEEFu);
+                withTrailing.insert(withTrailing.end(), extra.Data().begin(), extra.Data().end());
+                const RANMobile::EP7AnimClip cTrail =
+                    RANMobile::EP7AnimationReader::ParseContainer(withTrailing, true, false);
+                J_CHECK_MSG(cTrail.valid, cTrail.error);
+                J_CHECK(cTrail.mainTracks.size() == 1 && cTrail.upBodyTracks.size() == 3);
+                if (cTrail.mainTracks.size() == 1 && cTrail.upBodyTracks.size() == 3) {
+                    J_CHECK(cTrail.mainTracks[0].boneName == "Bip01");
+                    J_CHECK(cTrail.upBodyTracks[0].boneName == "Bip01_Spine1");
+                    J_CHECK(cTrail.upBodyTracks[1].boneName == "Bip01_Head");
+                    J_CHECK(cTrail.upBodyTracks[2].boneName.empty());
+                }
+            }
+
+            // Empty vs populated combinations across all 8 subsets of (main, upBody1, upBody2),
+            // including (0,0,0) = 144 bytes (matching authentic a_item_lovely_step_bone.bin)
+            // and headerless 0x0104.
+            for (int mask = 0; mask < 8; ++mask) {
+                const uint32_t nMain = (mask & 1) ? 2u : 0u;
+                const uint32_t nUp1 = (mask & 2) ? 1u : 0u;
+                const uint32_t nUp2 = (mask & 4) ? 2u : 0u;
+                ByteWriter wm;
+                wm.Raw(std::vector<uint8_t>(128, 0));
+                wm.U32(0x0104);
+                wm.U32(nMain);
+                for (uint32_t i = 0; i < nMain; ++i) AppendZeroKeyTrack0103(wm, "Main_" + std::to_string(i));
+                wm.U32(nUp1);
+                for (uint32_t i = 0; i < nUp1; ++i) AppendZeroKeyTrack0103(wm, "Up1_" + std::to_string(i));
+                wm.U32(nUp2);
+                for (uint32_t i = 0; i < nUp2; ++i) AppendZeroKeyTrack0103(wm, "Up2_" + std::to_string(i));
+                if (mask == 0) J_CHECK(wm.Data().size() == 144u);
+
+                const RANMobile::EP7AnimClip cm =
+                    RANMobile::EP7AnimationReader::ParseContainer(wm.Data(), true, false);
+                J_CHECK_MSG(cm.valid, cm.error);
+                J_CHECK(cm.version == 0x0104);
+                J_CHECK(cm.mainTracks.size() == nMain);
+                J_CHECK(cm.upBodyTracks.size() == nUp1 + nUp2);
+                if (cm.upBodyTracks.size() == nUp1 + nUp2) {
+                    for (uint32_t i = 0; i < nUp1; ++i) {
+                        J_CHECK(cm.upBodyTracks[i].boneName == "Up1_" + std::to_string(i));
+                    }
+                    for (uint32_t i = 0; i < nUp2; ++i) {
+                        J_CHECK(cm.upBodyTracks[nUp1 + i].boneName == "Up2_" + std::to_string(i));
+                    }
+                }
+            }
+            {
+                ByteWriter wHl;
+                wHl.U32(0x0104);
+                wHl.U32(0); wHl.U32(1); AppendZeroKeyTrack0103(wHl, "Up1Only"); wHl.U32(1); AppendZeroKeyTrack0103(wHl, "Up2Only");
+                const RANMobile::EP7AnimClip hl104 =
+                    RANMobile::EP7AnimationReader::ParseContainer(wHl.Data(), false, false);
+                J_CHECK(hl104.valid && hl104.version == 0x0104 &&
+                        hl104.mainTracks.empty() && hl104.upBodyTracks.size() == 2 &&
+                        hl104.upBodyTracks[0].boneName == "Up1Only" &&
+                        hl104.upBodyTracks[1].boneName == "Up2Only");
+            }
+
+            // Count boundaries & malformed counts for 0x0104:
+            //   - upBody1=2048 + upBody2=2048 (combined == 4096 == kMaxBoneTracks) succeeds.
+            //   - upBody1=2048 + upBody2=2049 (combined == 4097 > kMaxBoneTracks) fails cleanly.
+            //   - Individual counts 4097 and 0xFFFFFFFF in main, upBody1, or upBody2 fail cleanly.
+            {
+                ByteWriter wMaxOk;
+                wMaxOk.Raw(std::vector<uint8_t>(128, 0));
+                wMaxOk.U32(0x0104);
+                wMaxOk.U32(0);     // main = 0
+                wMaxOk.U32(2048);  // upBody1 = 2048
+                for (uint32_t i = 0; i < 2048; ++i) AppendZeroKeyTrack0103(wMaxOk, "A");
+                wMaxOk.U32(2048);  // upBody2 = 2048 -> total upBody = 4096
+                for (uint32_t i = 0; i < 2048; ++i) AppendZeroKeyTrack0103(wMaxOk, "B");
+                const RANMobile::EP7AnimClip cMaxOk =
+                    RANMobile::EP7AnimationReader::ParseContainer(wMaxOk.Data(), true, false);
+                J_CHECK_MSG(cMaxOk.valid, cMaxOk.error);
+                J_CHECK(cMaxOk.upBodyTracks.size() == 4096u);
+                if (cMaxOk.upBodyTracks.size() == 4096u) {
+                    J_CHECK(cMaxOk.upBodyTracks[2047].boneName == "A");
+                    J_CHECK(cMaxOk.upBodyTracks[2048].boneName == "B");
+                }
+
+                ByteWriter wCombinedOver;
+                wCombinedOver.Raw(std::vector<uint8_t>(128, 0));
+                wCombinedOver.U32(0x0104);
+                wCombinedOver.U32(0);
+                wCombinedOver.U32(2048);
+                for (uint32_t i = 0; i < 2048; ++i) AppendZeroKeyTrack0103(wCombinedOver, "A");
+                wCombinedOver.U32(2049);  // combined 4097 > kMaxBoneTracks
+                const RANMobile::EP7AnimClip cOver =
+                    RANMobile::EP7AnimationReader::ParseContainer(wCombinedOver.Data(), true, false);
+                J_CHECK(!cOver.valid && !cOver.error.empty());
+            }
+            for (int badList = 0; badList < 3; ++badList) {
+                for (uint32_t badCount : {4097u, 0xFFFFFFFFu}) {
+                    ByteWriter wb;
+                    wb.Raw(std::vector<uint8_t>(128, 0));
+                    wb.U32(0x0104);
+                    wb.U32(badList == 0 ? badCount : 0u);
+                    wb.U32(badList == 1 ? badCount : 0u);
+                    wb.U32(badList == 2 ? badCount : 0u);
+                    const RANMobile::EP7AnimClip rej =
+                        RANMobile::EP7AnimationReader::ParseContainer(wb.Data(), true, false);
+                    J_CHECK(!rej.valid && !rej.error.empty());
+                }
+            }
+        }
+
+        // Unimplemented container version (0x0200) and unimplemented inner track
+        // version (0x0104) remain explicitly rejected in B15.
+        for (uint32_t unsupOuter : {0x0200u, 0x0201u}) {
             ByteWriter wu;
             wu.Raw(std::vector<uint8_t>(128, 0));
             wu.U32(unsupOuter);
@@ -1610,9 +1867,11 @@ void TestAnimation() {
         {
             ByteWriter wi;
             wi.Raw(std::vector<uint8_t>(128, 0));
-            wi.U32(0x0103);
-            wi.U32(1);
-            wi.U32(0x0104);  // unimplemented inner track version
+            wi.U32(0x0104);
+            wi.U32(0);  // main = 0
+            wi.U32(0);  // upBody1 = 0
+            wi.U32(1);  // upBody2 = 1
+            wi.U32(0x0104);  // unimplemented inner track version inside upBody2
             const RANMobile::EP7AnimClip ci =
                 RANMobile::EP7AnimationReader::ParseContainer(wi.Data(), true, false);
             J_CHECK(!ci.valid);
@@ -1790,6 +2049,7 @@ void TestRobustness() {
     fixtures.push_back(AnimationBin());
     fixtures.push_back(AnimationBin0100());
     fixtures.push_back(AnimationBin0103());
+    fixtures.push_back(AnimationBin0104());
     fixtures.push_back(AnimationCfg(true));
 
     RANMobile::EP7Skeleton skeleton;
