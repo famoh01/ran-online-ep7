@@ -10,6 +10,7 @@
 #include <chrono>
 #include <cstdio>
 #include <string>
+#include <sys/stat.h>
 #include "../Engine/Core/RANMobileEngine.h"
 #include "../Engine/Renderer/GpuSelfTest.h"
 #include "../UI/Login/LoginScreen.h"
@@ -123,6 +124,9 @@ static void InitEGL(AndroidAppContext* ctx, ANativeWindow* window) {
         ANativeActivity* activity = ctx_activity;
         const char* dataPath = activity->internalDataPath;
         const std::string outDir = (dataPath && *dataPath) ? dataPath : "/data/local/tmp";
+        // The files dir is created lazily by the framework; make sure it exists
+        // before the harness writes its verdict (best effort).
+        mkdir(outDir.c_str(), 0775);
         std::string shot = outDir + "/gpu_selftest.ppm";
         const RANMobile::GpuSelfTestResult result = RANMobile::RunGpuSelfTest(
             *ctx->engine.GetRenderer(), activity->assetManager, g_authAssetRoot, shot);

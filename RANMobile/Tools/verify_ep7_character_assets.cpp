@@ -176,10 +176,19 @@ struct B18Evidence {
 B18Evidence g_b18;
 
 void B18RememberEntry(const std::string& name, const std::vector<uint8_t>& bytes) {
-    if (g_b18.cacheFull) return;
-    if (g_b18.cacheBytes + bytes.size() > B18Evidence::kCacheCap) {
-        g_b18.cacheFull = true;
-        return;
+    // B19 fix: small character-data files (.chf/.cps/.x/.abf/.bin/.cfg) are always
+    // cached regardless of the cap — SkinObject.rcc's big textures exhausted the
+    // 160 MB budget before the first .chf was seen, leaving the bundle-plan and
+    // deep-dive without a character.  The cap now only throttles bulk textures.
+    const bool smallMeta = EndsWithNoCase(name, ".chf") || EndsWithNoCase(name, ".cps") ||
+                           EndsWithNoCase(name, ".x") || EndsWithNoCase(name, ".abf") ||
+                           EndsWithNoCase(name, ".bin") || EndsWithNoCase(name, ".cfg");
+    if (!smallMeta) {
+        if (g_b18.cacheFull) return;
+        if (g_b18.cacheBytes + bytes.size() > B18Evidence::kCacheCap) {
+            g_b18.cacheFull = true;
+            return;
+        }
     }
     std::string lower;
     lower.reserve(name.size());
@@ -567,7 +576,10 @@ int main(int argc, char** argv) {
             break;
         }
         if (chfName.empty()) {
-            std::printf("\nbundle-plan: no .chf matching '%s' found in packs\n", bundleChf.c_str());
+            std::printf("\nbundle-plan: no .chf matching '%s' found in packs (cached entries: "
+                        "%zu, cacheBytes: %zu, cacheFull: %d)\n",
+                        bundleChf.c_str(), g_b18.entries.size(), g_b18.cacheBytes,
+                        g_b18.cacheFull ? 1 : 0);
         } else {
             std::map<std::string, std::vector<uint8_t>> written;
             std::vector<std::string> requestedOrder;
