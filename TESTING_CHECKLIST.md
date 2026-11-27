@@ -500,3 +500,31 @@ string and one with a genuinely foreign string, so both classification branches 
 The split of the 6,228 reported `.bin` UNSUPPORTED entries. Determining how many are well-formed
 `SAnimContainer` files versus genuinely foreign data requires one run of a corrected classifier
 against authentic assets, which are unavailable in this sandbox.
+
+
+## 2026-11-27 — B11 verifier regression execution
+
+- [x] Test the actual verifier translation unit, not a duplicate classifier.
+- [x] Real `AnimContainer` string in 128-byte type field, NUL terminator, nonzero
+  padding after NUL, version DWORD at offset 128, payload at 132.
+- [x] Supported versions 0x0100/0101/0102, named zero-key track in 0x0102,
+  printable prefix accepted when parsing succeeds. ABI fixtures, not game data.
+- [x] Every strict truncation, excessive list count, unsupported track version,
+  foreign type with otherwise parsable body, unterminated type, all-zero type,
+  and headerless data cannot falsely pass.
+- [x] Recognized unsupported container version counted separately from malformed
+  header, unrecognized type and recognized-container parser failure.
+- [x] Existing cfg unsupported/chf/cps/skeleton failure/x skeleton success and
+  extension/path classifiers remain exercised.
+- [x] `bash RANMobile/Tests/run_ep7_verifier_tests.sh`: 590/0 normal; 590/0 with
+  ASan+UBSan+integrated LSan (`detect_leaks=1`), exit 0.
+- [x] Mutation (old ASCII gate restored) fails 373/590 checks, exit 1.
+- [x] Existing Phase 3J: 398/0. Core compiles; local data-dependent execution
+  stops at missing ThaiPack assertion; no assertion is disabled.
+- [ ] Post-fix remote core + verifier + sanitizer tests, Android ARM64 lib/APK/AAB,
+  and authentic release classification: results to be appended after CI.
+
+Baseline pack totals: 6,479 parsed / 3,550 failed / 1,631 unsupported. Compare
+pack totals separately from loose totals; the historical 6,228 printable-prefix
+figure includes more than the pack-only unsupported count. Do not equate it with
+valid AnimContainers. Retain full authentic verifier log as CI artifact.

@@ -454,3 +454,23 @@ Two consequences for this codebase:
 
 The `.cfg` reader (`ParseInfo`) *does* validate the family and reports *"not a SANIMCONINFO
 file"* for a genuine mismatch; that behaviour is correct and should be the model for `.bin`.
+
+
+## 2026-11-27 — B11 verifier-only classification boundary
+
+The tool's printable-ASCII rejection is removed. Source references:
+`SAnimation.cpp:22,1573-1735`, `basestream.h:16`, `SerialFile.cpp:34-65`.
+SAnimContainer is a 128-byte NUL-terminated `AnimContainer` type field followed
+by the version DWORD at byte 128, then payload at byte 132. Trailing type-field
+padding need not be zero. The original loader dispatches on the version; the
+mobile production parser is unchanged and does not enforce type identity.
+
+The verifier now adds explicit type/header validation before calling that parser,
+without a headerless fallback. PASS requires successful parsing. Only the parser's
+explicit unsupported-container-version error yields UNSUPPORTED. Truncated header,
+unrecognized type, and recognized-header parser rejection remain FAIL with distinct
+diagnostics. Unrecognized type is not proof of foreign data versus corruption;
+parser rejection is not proof of malformed data versus a reader limitation.
+`.bin` counters are split by diagnostic bucket and pack/loose scope. Other format
+classifiers and all runtime code are untouched. This tool is not a complete
+semantic validator: successful parsing does not prove animation playback/rendering.

@@ -140,6 +140,12 @@ jobs:
             -lpthread -o ranmobile_phase3j_tests
           ./ranmobile_phase3j_tests 2>&1 | tee phase3j_test_output.log
 
+      - name: Verifier regression tests (normal, ASan, UBSan, LSan)
+        run: |
+          set -o pipefail
+          bash RANMobile/Tests/run_ep7_verifier_tests.sh 2>&1 | tee verifier_test_output.log
+          echo "::notice title=Verifier regression and sanitizers::$(grep -E 'Verifier regression:|Sanitizers:' verifier_test_output.log | tr '\n' ';')"
+
       - name: Write Test Summary
         if: always()
         run: |
@@ -166,6 +172,7 @@ jobs:
           path: |
             test_output.log
             phase3j_test_output.log
+            verifier_test_output.log
 
   authentic-assets:
     name: Authentic EP7 asset verification (diagnostic)
@@ -261,6 +268,7 @@ jobs:
             2) echo "::warning title=Asset verification: UNSUPPORTED (B11)::$unsup_count pack entries are of a format this build has no definition for. NOT a regression and NOT counted as parsed; core tests are unaffected. ${packs}" ;;
             *) echo "::warning title=Asset verification: NOT FOUND::no authentic character entries were found; nothing was verified." ;;
           esac
+          echo "::notice title=B11 bin classifications::$(grep '^bin classifications' phase3j_authentic_assets.log | tr '\n' ';')"
           if [ -n "$reasons" ]; then
             echo "::warning title=Asset verification - failure reasons::${reasons}"
           fi
@@ -300,6 +308,12 @@ jobs:
             exit 1
           fi
 
+      - name: Upload authentic verifier log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase3j-authentic-assets-log
+          path: phase3j_authentic_assets.log
 
   android-arm64:
     name: Android ARM64 build (lib + APK/AAB)

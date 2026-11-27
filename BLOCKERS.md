@@ -717,3 +717,23 @@ production code.
 
 **Do not** implement an Anim parser on the strength of the old B11 text. That premise is
 disproved above.
+
+
+## 2026-11-27 — B11 verifier correction implementation update
+
+The printable-ASCII false-negative is corrected in the verifier only. Complete
+`AnimContainer` headers now reach the existing parser; header/type validation,
+explicit unsupported-version classification, and parser-rejection diagnostics
+replace the incorrect heuristic. No production parser change is made.
+
+Local verifier tests: 590/0 normal and ASan+UBSan+LSan; Phase 3J: 398/0. Authentic
+post-fix classification and Android build await CI and will be appended. The old
+6,228 printable-prefix count is NOT evidence that 6,228 valid containers exist.
+
+Remaining workflow limitation: PR #5 is still OPEN/DRAFT on another Arena session
+branch (`arena/42c5ac0c-ran-online-ep7`), while this session can push only
+`arena/1491d572-ran-online-ep7`. Its head cannot be updated here. No PR is merged,
+retargeted or marked ready. Authentic .chf/.cps/.abf/.cfg gaps are out of scope.
+Local core execution needs absent release data (tpStats.found); remote CI downloads
+that data. Parser-rejected bytes require further source/asset analysis to separate
+malformation from a parser limitation; this task must not modify the parser.
