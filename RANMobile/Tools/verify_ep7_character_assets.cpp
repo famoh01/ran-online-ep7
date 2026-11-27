@@ -1,0 +1,556 @@
+//
+// verify_ep7_character_assets — Authentic EP7 character-asset verification probe
+//
+// PURPOSE
+// -------
+// Host unit tests in this repository cannot ship the original EP7 client bytes (they are
+// multi-gigabyte release archives and are excluded from Git). Everything the Phase 3J
+// parsers claim about real files must therefore be verified against the *actual*
+// original data. This tool does that: it walks an extracted EP7 client tree, feeds every
+// authentic .chf / .cps / .skt / .x / .bin / .cfg file through the parsers, and reports
+// exactly what parsed and what did not.
+//
+// It never invents data: if a file fails, it is reported as failed with the parser's
+// error string. Each asset is classified as PASS, FAIL or UNSUPPORTED:
+//   PASS        bytes parsed by the real parser
+//   FAIL        the parser rejected data it should have accepted (a reader defect, or a
+//               corrupt/undecryptable entry)
+//   UNSUPPORTED the bytes are real, but the format/version has no definition anywhere in
+//               this repository (BLOCKERS.md B11). Reported, counted and warned about --
+//               never reported as parsed.
+// Exit codes:
+//   0 = PASS         all pack entries parsed
+//   1 = FAIL         at least one pack entry failed  (the build is wrong)
+//   2 = UNSUPPORTED  nothing failed, some formats are unknown (the build is incomplete)
+//   3 = NOT FOUND    no character entry found in any pack; nothing was verified
+//
+// USAGE
+//   verify_ep7_character_assets <ep7-data-root> [--max-files N]
+//
+// The root is an extracted client folder. Character assets are NOT loose files in the EP7
+// client: GLOGIC::InitFile (enginelib/G-Logic/GLogic.cpp:40-62) loads them from two
+// ZIP-based packs through CUnzipper::UnzipToMemory —
+//     SkinObject.rcc   .chf / .cps / skeleton .x / mesh .x
+//     Animation.rcc    .bin animation containers / .cfg metadata
+// so this tool first walks the directory tree for loose files and then opens every
+// *.rcc/*.zip it can find and verifies the entries inside them. That is the only way to
+// reach the authentic bytes.
+//
+#include <algorithm>
+#include <cctype>
+#include <cstdio>
+#include <map>
+#include <cstring>
+#include <string>
+#include <vector>
+
+#include "../Data/Importer/EP7Animation.h"
+#include "../Data/Importer/EP7RccArchive.h"
+#include "../Data/Importer/EP7CharacterFile.h"
+#include "../Data/Importer/EP7Skeleton.h"
+#include "../Data/Importer/EP7SkinPiece.h"
+#include "../Data/Importer/EP7SkinnedMesh.h"
+
+namespace {
+
+bool ReadWholeFile(const std::string& path, std::vector<uint8_t>& out, std::string& error) {
+    std::FILE* file = std::fopen(path.c_str(), "rb");
+    if (!file) {
+        error = "cannot open";
+        return false;
+    }
+    std::fseek(file, 0, SEEK_END);
+    const long size = std::ftell(file);
+    if (size < 0) {
+        std::fclose(file);
+        error = "cannot size";
+        return false;
+    }
+    std::fseek(file, 0, SEEK_SET);
+    out.resize(static_cast<size_t>(size));
+    const size_t read = size > 0 ? std::fread(out.data(), 1, out.size(), file) : 0;
+    std::fclose(file);
+    if (read != out.size()) {
+        error = "short read";
+        return false;
+    }
+    return true;
+}
+
+bool EndsWithNoCase(const std::string& value, const char* suffix) {
+    const size_t len = std::strlen(suffix);
+    if (value.size() < len) return false;
+    for (size_t i = 0; i < len; ++i) {
+        char a = value[value.size() - len + i];
+        char b = suffix[i];
+        if (a >= 'A' && a <= 'Z') a = static_cast<char>(a - 'A' + 'a');
+        if (b >= 'A' && b <= 'Z') b = static_cast<char>(b - 'A' + 'a');
+        if (a != b) return false;
+    }
+    return true;
+}
+
+std::string ExtractExtension(const std::string& path) {
+    const size_t dot = path.find_last_of('.');
+    if (dot == std::string::npos) return std::string();
+    return path.substr(dot);
+}
+
+// The client root contains many unrelated .bin/.x/.cfg files (cFileList.bin, effect data,
+// terrain). A probe that parses every one of them reports failures for files the engine
+// never treats as character assets. Character animation data lives under data/animation
+// (and the packs), so loose-file scanning is limited to that subtree; pack entries are
+// always in scope because the engine only loads character assets from the packs.
+bool IsInCharacterDataPath(const std::string& path) {
+    std::string lower = path;
+    std::transform(lower.begin(), lower.end(), lower.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return lower.find("/data/animation/") != std::string::npos ||
+           lower.find("/data/character/") != std::string::npos ||
+           lower.find("\\data\\animation\\") != std::string::npos ||
+           lower.find("\\data\\character\\") != std::string::npos;
+}
+
+// Outcome of verifying one asset. UNSUPPORTED is NOT a pass and NOT a failure: it means the
+// bytes belong to a format version this build has no definition for (BLOCKERS.md B11). It is
+// counted, printed and reported separately so it can never be mistaken for either.
+enum class Outcome { Pass, Fail, Unsupported };
+
+struct Counters {
+    uint32_t chfTotal = 0, chfOk = 0;
+    uint32_t cpsTotal = 0, cpsOk = 0;
+    uint32_t xTotal = 0, xSkeletonOk = 0, xMeshOk = 0;
+    uint32_t binTotal = 0, binOk = 0, binUnsupported = 0;
+    uint32_t binInvalidHeader = 0, binUnrecognizedType = 0, binParserRejected = 0;
+    uint32_t cfgTotal = 0, cfgOk = 0, cfgUnsupported = 0;
+    uint32_t extractFailures = 0;
+    uint32_t packOk = 0, packFailed = 0;   // entries inside .rcc/.zip (engine-authoritative)
+    uint32_t looseOk = 0, looseFailed = 0; // loose files under data/animation|character
+    uint32_t packUnsupported = 0;          // pack entries of a format with no definition
+    uint32_t looseUnsupported = 0;
+    uint32_t firstVersionSeenNonZero = 0;
+};
+
+// Reasons are aggregated so the summary survives CI's annotation cap (~10 per check run): a
+// client with 400 unimplemented animation versions must still say so in one line. Failures
+// and unsupported formats are accumulated in separate maps.
+std::map<std::string, uint32_t> g_failureReasons;
+std::map<std::string, uint32_t> g_unsupportedReasons;
+
+std::string ReasonKey(const std::string& detail) {
+    // Keep the leading clause only; trailing numbers/paths vary per file.
+    const size_t cut = detail.find(" — ");
+    std::string key = (cut == std::string::npos) ? detail : detail.substr(0, cut);
+    if (key.size() > 120) key.resize(120);
+    return key;
+}
+
+// Three-way report. The tag is deliberately unambiguous in a log that is read by humans and
+// by grep: [ OK ], [FAIL] and [UNSUP] are distinct tokens.
+void ReportOutcome(const char* kind, const std::string& path, Outcome outcome,
+                   const std::string& detail) {
+    const char* tag = outcome == Outcome::Pass ? " OK " : (outcome == Outcome::Fail ? "FAIL" : "UNSUP");
+    std::printf("  [%s] %-10s %s%s%s\n", tag, kind, path.c_str(),
+                detail.empty() ? "" : " — ", detail.c_str());
+    if (outcome == Outcome::Fail) ++g_failureReasons[std::string(kind) + ": " + ReasonKey(detail)];
+    if (outcome == Outcome::Unsupported) ++g_unsupportedReasons[std::string(kind) + ": " + ReasonKey(detail)];
+}
+
+}  // namespace
+
+// Verifies one asset buffer. `path` is only used for reporting (it may be
+// "<archive>:/entry/name" for packed entries).
+Outcome VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& bytes, Counters& counters) {
+    const std::string ext = ExtractExtension(path);
+
+    if (EndsWithNoCase(ext, ".chf")) {
+        ++counters.chfTotal;
+        const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(bytes, false);
+        if (info.valid) {
+            ++counters.chfOk;
+            char detail[256];
+            std::snprintf(detail, sizeof(detail), "v0x%04X pieces=%u skeleton=%s anims=%zu", info.version,
+                          info.PieceCount(), info.skeleton.c_str(), info.animations.size());
+            ReportOutcome("chf", path, Outcome::Pass, detail);
+        } else {
+            ReportOutcome("chf", path, Outcome::Fail, info.error);
+        }
+        return info.valid ? Outcome::Pass : Outcome::Fail;
+    }
+
+    if (EndsWithNoCase(ext, ".cps")) {
+        ++counters.cpsTotal;
+        const RANMobile::EP7SkinPieceInfo info = RANMobile::EP7SkinPieceReader::ParseFromBytes(bytes, false);
+        if (info.valid) {
+            ++counters.cpsOk;
+            char detail[320];
+            std::snprintf(detail, sizeof(detail), "v0x%04X type=%d mesh=%s skeleton=%s materials=%zu traces=%zu",
+                          info.fileVersion, static_cast<int>(info.pieceType), info.meshName.c_str(),
+                          info.skeletonFile.c_str(), info.materials.size(), info.traces.size());
+            ReportOutcome("cps", path, Outcome::Pass, detail);
+        } else {
+            ReportOutcome("cps", path, Outcome::Fail, info.error);
+        }
+        return info.valid ? Outcome::Pass : Outcome::Fail;
+    }
+
+    if (EndsWithNoCase(ext, ".skt") || EndsWithNoCase(ext, ".abf")) {
+        RANMobile::EP7Skeleton skeleton;
+        ++counters.xTotal;
+        const bool ok = skeleton.LoadFromXFile(bytes);
+        if (ok) {
+            ++counters.xSkeletonOk;
+            char detail[128];
+            std::snprintf(detail, sizeof(detail), "bones=%zu", skeleton.BoneCount());
+            ReportOutcome("skeleton", path, Outcome::Pass, detail);
+        } else {
+            ReportOutcome("skeleton", path, Outcome::Fail, skeleton.Error());
+        }
+        return ok ? Outcome::Pass : Outcome::Fail;
+    }
+
+    if (EndsWithNoCase(ext, ".x")) {
+        // The client stores skeletons and skinned meshes both as .x. A skinned mesh is
+        // wrapped in Frame objects too, so "does a skeleton parse?" does NOT identify a
+        // skeleton — the presence of a SkinWeights object does. Order matters: check the
+        // mesh first, then fall back to the skeleton.
+        ++counters.xTotal;
+        const RANMobile::EP7SkinnedMesh mesh =
+            RANMobile::EP7SkinnedMeshReader::Parse(bytes, std::string(), nullptr);
+        if (mesh.valid) {
+            ++counters.xMeshOk;
+            char detail[256];
+            std::snprintf(detail, sizeof(detail), "mesh=%s verts=%u tris=%zu bones=%zu stride=%u decoded=%s",
+                          mesh.name.c_str(), mesh.vertexCount, mesh.faces.size() / 3, mesh.bones.size(),
+                          mesh.vertexStride, mesh.geometryDecoded ? "yes" : "no");
+            ReportOutcome("x-mesh", path, Outcome::Pass, detail);
+            return Outcome::Pass;
+        }
+        RANMobile::EP7Skeleton skeleton;
+        if (skeleton.LoadFromXFile(bytes)) {
+            ++counters.xSkeletonOk;
+            char detail[128];
+            std::snprintf(detail, sizeof(detail), "skeleton bones=%zu", skeleton.BoneCount());
+            ReportOutcome("x-skeleton", path, Outcome::Pass, detail);
+            return Outcome::Pass;
+        }
+        ReportOutcome("x", path, Outcome::Fail, mesh.error + " | " + skeleton.Error());
+        return Outcome::Fail;
+    }
+
+    if (EndsWithNoCase(ext, ".bin")) {
+        ++counters.binTotal;
+        // SAnimation.cpp:22,1573-1617: SetFileType("AnimContainer", VERSION).
+        // SerialFile.cpp:57-65: 128 type bytes, then the LE version DWORD.
+        // Printable ASCII is expected here, not evidence of an unsupported format.
+        // Validate identity here: ParseContainer reads but does not validate the type.
+        // Bytes after the NUL in the 128-byte field need not be zero (StringCchCopy).
+        constexpr char type[] = "AnimContainer";
+        std::string fingerprint;
+        for (size_t i = 0; i < std::min<size_t>(bytes.size(), 16); ++i) {
+            char hex[4];
+            std::snprintf(hex, sizeof(hex), "%02X", bytes[i]);
+            fingerprint += hex;
+        }
+        const std::string diagnostic = " — prefix16=" + fingerprint +
+                                       " size=" + std::to_string(bytes.size());
+        if (bytes.size() < RANMobile::ep7byte::Stream::kHeaderSize) {
+            ++counters.binInvalidHeader;
+            ReportOutcome("bin", path, Outcome::Fail, "invalid/truncated container header" + diagnostic);
+            return Outcome::Fail;
+        }
+        if (std::memcmp(bytes.data(), type, sizeof(type)) != 0) {
+            ++counters.binUnrecognizedType;
+            // Could be foreign data, corruption, or an undocumented encoding. The bytes
+            // alone do not prove which; never invent an unsupported container version.
+            ReportOutcome("bin", path, Outcome::Fail, "unrecognized container type (foreign or damaged)" + diagnostic);
+            return Outcome::Fail;
+        }
+        // No headerless retry: it can mask a recognized header's real version/error.
+        const RANMobile::EP7AnimClip clip =
+            RANMobile::EP7AnimationReader::ParseContainer(bytes, true, false);
+        if (clip.valid) {
+            ++counters.binOk;
+            char detail[256];
+            std::snprintf(detail, sizeof(detail), "v0x%04X mainTracks=%zu upBodyTracks=%zu maxKeyTime=%u",
+                          clip.version, clip.mainTracks.size(), clip.upBodyTracks.size(), clip.MaxKeyTime());
+            ReportOutcome("bin", path, Outcome::Pass, detail);
+            return Outcome::Pass;
+        }
+        // Use the parser's explicit version rejection, not a guessed byte signature.
+        if (clip.error.rfind("unsupported animation container version ", 0) == 0) {
+            ++counters.binUnsupported;
+            ReportOutcome("bin", path, Outcome::Unsupported, clip.error + diagnostic);
+            return Outcome::Unsupported;
+        }
+        ++counters.binParserRejected;
+        // A rejected payload may be malformed OR expose a reader defect. Do not claim
+        // to distinguish those without further evidence. Preserve the actual error.
+        ReportOutcome("bin", path, Outcome::Fail, "recognized container parser rejection: " + clip.error + diagnostic);
+        return Outcome::Fail;
+    }
+
+    if (EndsWithNoCase(ext, ".cfg")) {
+        ++counters.cfgTotal;
+        const RANMobile::EP7AnimInfo info = RANMobile::EP7AnimationReader::ParseInfo(bytes, true, false);
+        if (info.valid) {
+            ++counters.cfgOk;
+            char detail[320];
+            std::snprintf(detail, sizeof(detail), "name=%s skeleton=%s main=%d sub=%d window=%u..%u loop=%s",
+                          info.name.c_str(), info.skeleton.c_str(), info.mainType, info.subType,
+                          info.startTime, info.endTime, info.IsLoop() ? "yes" : "no");
+            ReportOutcome("cfg", path, Outcome::Pass, detail);
+        } else if (info.unsupported) {
+            ++counters.cfgUnsupported;
+            ReportOutcome("cfg", path, Outcome::Unsupported, info.error);
+        } else {
+            ReportOutcome("cfg", path, Outcome::Fail, info.error);
+        }
+        return info.valid ? Outcome::Pass : (info.unsupported ? Outcome::Unsupported : Outcome::Fail);
+    }
+
+    return Outcome::Fail;  // recognised character extension we have no reader for
+}
+
+bool IsCharacterAssetName(const std::string& name) {
+    const std::string ext = ExtractExtension(name);
+    return EndsWithNoCase(ext, ".chf") || EndsWithNoCase(ext, ".cps") || EndsWithNoCase(ext, ".x") ||
+           EndsWithNoCase(ext, ".bin") || EndsWithNoCase(ext, ".cfg") || EndsWithNoCase(ext, ".skt") ||
+           EndsWithNoCase(ext, ".abf");
+}
+
+bool IsArchiveName(const std::string& name) {
+    return EndsWithNoCase(name, ".rcc") || EndsWithNoCase(name, ".zip");
+}
+
+int main(int argc, char** argv) {
+    if (argc < 2) {
+        std::fprintf(stderr,
+                     "usage: %s <ep7-data-root> [--max-files N]\n"
+                     "Verifies authentic EP7 character assets against the Phase 3J parsers.\n",
+                     argv[0]);
+        return 2;
+    }
+
+    const std::string root = argv[1];
+    size_t maxFiles = 20000;
+    for (int i = 2; i < argc; ++i) {
+        if (std::strcmp(argv[i], "--max-files") == 0 && i + 1 < argc) {
+            maxFiles = static_cast<size_t>(std::strtoul(argv[++i], nullptr, 10));
+        }
+    }
+
+    // Collect every file under the root ("find" is available on the CI runner).
+    std::string listCommand = "find '" + root + "' -type f 2>/dev/null";
+    std::FILE* pipe = popen(listCommand.c_str(), "r");
+    if (!pipe) {
+        std::fprintf(stderr, "cannot list %s\n", root.c_str());
+        return 2;
+    }
+
+    std::vector<std::string> looseFiles;
+    std::vector<std::string> archives;
+    size_t skippedUnrelated = 0;
+    char line[4096];
+    while (std::fgets(line, sizeof(line), pipe)) {
+        std::string path(line);
+        while (!path.empty() && (path.back() == '\n' || path.back() == '\r')) path.pop_back();
+        if (path.empty()) continue;
+        if (IsArchiveName(path)) {
+            archives.push_back(path);
+        } else if (IsCharacterAssetName(path) && IsInCharacterDataPath(path)) {
+            looseFiles.push_back(path);
+        } else if (IsCharacterAssetName(path)) {
+            ++skippedUnrelated;
+        }
+        if (looseFiles.size() + archives.size() >= maxFiles) break;
+    }
+    pclose(pipe);
+
+    std::sort(looseFiles.begin(), looseFiles.end());
+    std::sort(archives.begin(), archives.end());
+
+    std::printf("=== Phase 3J authentic character asset verification ===\n");
+    std::printf("root: %s\n", root.c_str());
+    // Two independent populations, reported separately: pack entries are what the engine
+    // actually loads, loose files are only informative.
+    std::printf("loose candidate files (data/animation, data/character): %zu\n", looseFiles.size());
+    std::printf("  ignored .bin/.x/.cfg elsewhere in the tree (not character data): %zu\n", skippedUnrelated);
+    std::printf("archives (.rcc/.zip): %zu\n\n", archives.size());
+
+    Counters counters;
+    std::vector<uint8_t> bytes;
+    std::string error;
+
+    for (const auto& path : looseFiles) {
+        if (!ReadWholeFile(path, bytes, error)) {
+            ReportOutcome("read", path, Outcome::Fail, error);
+            continue;
+        }
+        switch (VerifySingleAsset(path, bytes, counters)) {
+            case Outcome::Pass: ++counters.looseOk; break;
+            case Outcome::Fail: ++counters.looseFailed; break;
+            case Outcome::Unsupported: ++counters.looseUnsupported; break;
+        }
+    }
+
+    const Counters looseSnapshot = counters;
+
+    // The authentic assets live inside these packs (GLOGIC::InitFile).
+    for (const auto& archivePath : archives) {
+        std::printf("\n--- archive %s\n", archivePath.c_str());
+        if (!ReadWholeFile(archivePath, bytes, error)) {
+            ReportOutcome("read", archivePath, Outcome::Fail, error);
+            continue;
+        }
+        RANMobile::EP7RccArchive archive;
+        if (!archive.Open(bytes)) {
+            ReportOutcome("archive", archivePath, Outcome::Fail, archive.Error());
+            continue;
+        }
+        std::printf("     %zu entries\n", archive.EntryCount());
+
+        size_t checked = 0;
+        for (const auto& entry : archive.Entries()) {
+            if (!IsCharacterAssetName(entry.name)) continue;
+            if (checked >= maxFiles) break;
+            ++checked;
+
+            const std::string label = archivePath + ":" + entry.name;
+            std::vector<uint8_t> entryBytes;
+            if (!archive.Extract(entry, entryBytes)) {
+                // Report the method/flag/size triple: if the shipped packs ever use zip64,
+                // AES or a method other than stored/deflate, this line says so instead of
+                // leaving a mystery.
+                char detail[256];
+                std::snprintf(detail, sizeof(detail),
+                              "could not extract (method=%u flags=0x%04X csize=%u usize=%u) — corrupt, "
+                              "another password, or an unsupported method",
+                              entry.method, entry.flags, entry.compressedSize, entry.uncompressedSize);
+                ReportOutcome("extract", label, Outcome::Fail, detail);
+                // An entry we could not even decompress is an UNVERIFIED character asset. It
+                // must count against the pass rate; otherwise "2 entries, 1 unreadable" would
+                // still print "parsed 1 of 1" and exit 0.
+                ++counters.extractFailures;
+                ++counters.packFailed;
+                continue;
+            }
+            switch (VerifySingleAsset(label, entryBytes, counters)) {
+                case Outcome::Pass: ++counters.packOk; break;
+                case Outcome::Fail: ++counters.packFailed; break;
+                case Outcome::Unsupported: ++counters.packUnsupported; break;
+            }
+        }
+        if (checked == 0) std::printf("     (no character assets inside)\n");
+    }
+
+    std::printf("\n=== SUMMARY (verified against authentic files only) ===\n");
+    std::printf("chf  : %u ok / %u\n", counters.chfOk, counters.chfTotal);
+    std::printf("cps  : %u ok / %u\n", counters.cpsOk, counters.cpsTotal);
+    std::printf("x    : %u skeleton / %u mesh / %u parsed of %u\n", counters.xSkeletonOk, counters.xMeshOk,
+                counters.xSkeletonOk + counters.xMeshOk, counters.xTotal);
+    std::printf("bin  : %u ok / %u (%u unsupported format)\n", counters.binOk, counters.binTotal,
+                counters.binUnsupported);
+    auto printBins = [](const char* scope, const Counters& end, const Counters& start) {
+        std::printf("bin classifications (%s): %u parsed, %u unsupported-version, %u invalid-header, "
+                    "%u unrecognized-type, %u parser-rejected; total=%u\n", scope,
+                    end.binOk - start.binOk, end.binUnsupported - start.binUnsupported,
+                    end.binInvalidHeader - start.binInvalidHeader,
+                    end.binUnrecognizedType - start.binUnrecognizedType,
+                    end.binParserRejected - start.binParserRejected, end.binTotal - start.binTotal);
+    };
+    printBins("all", counters, Counters{});
+    printBins("loose", looseSnapshot, Counters{});
+    printBins("pack", counters, looseSnapshot);
+    std::printf("cfg  : %u ok / %u (%u unsupported version)\n", counters.cfgOk, counters.cfgTotal,
+                counters.cfgUnsupported);
+    std::printf("extract failures (could not decompress/decrypt): %u\n", counters.extractFailures);
+
+    // "0 ok / 0" is ambiguous between "all fine" and "never seen". Say which.
+    struct Expectation {
+        const char* ext;
+        uint32_t total;
+    };
+    const Expectation expectations[] = {{".chf", counters.chfTotal}, {".cps", counters.cpsTotal},
+                                        {".x", counters.xTotal},     {".bin", counters.binTotal},
+                                        {".cfg", counters.cfgTotal}};
+    bool anyMissing = false;
+    for (const auto& e : expectations) {
+        if (e.total == 0) {
+            if (!anyMissing) std::printf("\nno sample found for: ");
+            std::printf("%s ", e.ext);
+            anyMissing = true;
+        }
+    }
+    if (anyMissing) {
+        std::printf("\n(that category is untested against real data — not a pass)   \n");
+    }
+
+    if (!g_failureReasons.empty()) {
+        std::printf("\nfailure reasons (aggregated, so none are lost to log/annotation caps):\n");
+        for (const auto& [reason, count] : g_failureReasons) {
+            std::printf("  %4u x %s\n", count, reason.c_str());
+        }
+    }
+
+    const uint32_t parsed = counters.chfOk + counters.cpsOk + counters.xSkeletonOk + counters.xMeshOk +
+                            counters.binOk + counters.cfgOk;
+    const uint32_t attempted = counters.chfTotal + counters.cpsTotal + counters.xTotal + counters.binTotal +
+                               counters.cfgTotal + counters.extractFailures;
+    std::printf("\nparsed %u of %u candidate authentic files\n", parsed, attempted);
+    if (attempted == 0) {
+        std::printf("NOTE: no authentic candidate files found under the given root.\n");
+        std::printf("      Nothing was verified. This is reported, not silently treated as success.\n");
+    }
+
+    // Exit codes are deliberately distinct so CI and callers cannot mistake "found nothing"
+    // for "everything passed":
+    //   0 = at least one authentic entry was found and every one of them parsed
+    //   1 = authentic entries were found but at least one failed to parse
+    //   2 = no authentic candidate was found at all; nothing was verified
+    std::printf("\npack entries (what the engine actually loads): %u parsed, %u failed, %u unsupported\n",
+                counters.packOk, counters.packFailed, counters.packUnsupported);
+    std::printf("loose files (informational only):            %u parsed, %u failed, %u unsupported\n",
+                counters.looseOk, counters.looseFailed, counters.looseUnsupported);
+
+    if (!g_unsupportedReasons.empty()) {
+        std::printf("\nunsupported formats (real data, no definition in this build -- B11):\n");
+        for (const auto& [reason, count] : g_unsupportedReasons) {
+            std::printf("  %4u x %s\n", count, reason.c_str());
+        }
+    }
+
+    // The verdict is about pack entries ONLY. The engine resolves character assets through
+    // GLOGIC::openfile_basestream(bENGLIB_ZIPFILE, ...), i.e. from SkinObject.rcc /
+    // Animation.rcc. Loose files are reported for information; failing on data the engine
+    // never reads would be a false alarm, and ignoring pack failures would be the opposite.
+    //
+    // Three outcomes, three exit codes -- and UNSUPPORTED outranks a clean pass because a
+    // build that cannot read half the client is not "verified", even if nothing is broken:
+    //   0  PASS         every pack entry parsed
+    //   1  FAIL         at least one pack entry is genuinely broken (reader defect)
+    //   2  UNSUPPORTED  nothing failed, but some entries are of a format this build has no
+    //                   definition for (B11) -- coverage gap, tracked, not a defect
+    //   3  NOT FOUND    no character entry was found inside any pack; nothing verified
+    if (counters.packOk == 0 && counters.packFailed == 0 && counters.packUnsupported == 0) {
+        std::printf("\nVERDICT: NOT FOUND — no character entries were found inside any pack. "
+                    "Nothing was verified.\n");
+        return 3;
+    }
+    if (counters.packFailed != 0) {
+        std::printf("\nVERDICT: FAIL — %u pack entr(y/ies) could not be parsed. This build cannot "
+                    "load that data.\n", counters.packFailed);
+        return 1;
+    }
+    if (counters.packUnsupported != 0) {
+        std::printf("\nVERDICT: UNSUPPORTED — %u pack entr(y/ies) parsed cleanly, but %u are of a "
+                    "format this build has no definition for (see B11). No reader defect was "
+                    "observed; coverage is incomplete.\n",
+                    counters.packOk, counters.packUnsupported);
+        return 2;
+    }
+    std::printf("\nVERDICT: PASS — every character entry inside the packs parsed.\n");
+    (void)parsed;
+    (void)attempted;
+    return 0;
+}
