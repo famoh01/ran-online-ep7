@@ -5,10 +5,15 @@
 namespace RANMobile {
 namespace {
 
-// SVERTEXINFLU::VERSION — enginelib/Meshs/DxSkinMeshContainer9.cpp.
-// `const DWORD SVERTEXINFLU::VERSION` is defined in that translation unit; its value is
-// the sanitised serialization tag 0x0100 that LoadFile compares against.
-constexpr uint32_t kVertexInfluenceVersion = 0x0100;
+// SVERTEXINFLU::VERSION — enginelib/Meshs/DxSkinMeshContainer9.cpp:36 and
+// enginelib/Meshs/SMeshContainer.cpp:29, both of which define
+//     const DWORD SVERTEXINFLU::VERSION = 0x0101;
+// SVERTEXINFLU::SaveFile() writes that same constant as the record tag, and
+// SVERTEXINFLU::LoadFile() compares the tag it reads against it.  This is the
+// version every trace-point record in an authentic .cps carries; using any other
+// value makes LoadFile take the `SetOffSet(GetfTell() + dwSize)` branch for every
+// trace and desynchronises the stream.
+constexpr uint32_t kVertexInfluenceVersion = 0x0101;
 
 // SANITY LIMITS — not present in the original (which trusts the file). We impose upper
 // bounds so a malformed asset cannot trigger multi-gigabyte allocations.

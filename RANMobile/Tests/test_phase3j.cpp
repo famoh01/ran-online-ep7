@@ -13,6 +13,7 @@
 // RANMobile/Tools/verify_ep7_character_assets against an extracted client (see
 // PHASE3J_CHARACTER_ANIMATION.md).
 //
+#include <algorithm>
 #include "../Data/Importer/EP7Animation.h"
 #include "../Data/Importer/EP7ByteFormat.h"
 #include "../Data/Importer/EP7CharacterFile.h"
@@ -224,6 +225,39 @@ std::vector<uint8_t> PieceCps(int32_t pieceType) {
     w.U32(0);                 // trace count
     w.U32(0);                 // effect count  -> parse stops here
     w.Bool(false);            // flag (read only when effectCount == 0)
+    return w.Data();
+}
+
+// .cps 0x0107 carrying one trace point.  The SVERTEXINFLU record is written exactly as
+// SVERTEXINFLU::SaveFile() writes it (DxSkinMeshContainer9.cpp:59): tag 0x0101, a
+// dwSize that double-counts the bone arrays, then index/vector/normal/numBone/bones/
+// weights.  Regression fixture for the 2,664 `cps: truncated trace name` failures:
+// LoadFile ignores dwSize when the tag matches, so the correct reader must consume the
+// body by structure and land exactly on the effect count.
+std::vector<uint8_t> PieceCpsWithTrace() {
+    ByteWriter w;
+    w.Raw(std::vector<uint8_t>(128, 0));  // basestream file-type block
+    w.U32(0);                 // header fileId
+    w.U32(0x00000107);        // payload version (DxSkinPiece::LoadPiece)
+    w.U32(1);                 // m_dwRef
+    w.Str("body.x");          // xFileName
+    w.Str("m_bone.skt");      // skeleton
+    w.U32(0);                 // m_emType -> Head
+    w.U32(0);                 // m_emWeaponWhereBack (0x0106+)
+    w.Str("BodyMesh");        // mesh name
+    w.U32(0);                 // material count
+    w.U32(1);                 // trace count
+    w.Str("Bip01 Spine");     // trace name
+    w.U32(0x0101);            // SVERTEXINFLU::VERSION
+    w.U32(32 + 16 * 2);       // dwSize exactly as SaveFile() computes it (over-counts)
+    w.U32(0);                 // m_dwIndex
+    w.F32(1.0f); w.F32(2.0f); w.F32(3.0f);      // m_vVector
+    w.F32(0.0f); w.F32(1.0f); w.F32(0.0f);      // m_vNormal
+    w.U32(2);                 // m_dwNumBone
+    w.U32(3); w.U32(7);       // m_pBone
+    w.F32(0.75f); w.F32(0.25f);                 // m_pWeights
+    w.U32(0);                 // effect count
+    w.Bool(false);            // m_dwFlag
     return w.Data();
 }
 
@@ -568,6 +602,60 @@ void TestSkinPiece() {
 
     // Empty buffer.
     J_CHECK(!RANMobile::EP7SkinPieceReader::ParseFromBytes(std::vector<uint8_t>(), false).valid);
+}
+
+// Regression for the authentic-data failure `cps: truncated trace name` (2,664 of the
+// 6,812 CI FAILs).  SVERTEXINFLU::VERSION is 0x0101 — not 0x0100 — in both engine
+// definitions (DxSkinMeshContainer9.cpp:36, SMeshContainer.cpp:29).  With the wrong tag
+// the reader took LoadFile's unknown-version branch, skipped `dwSize` bytes (which
+// SaveFile over-states), and began the next trace name part-way into ASCII, so the
+// bogus length tripped the sanity limit.  Evidence: PROGRESS_REVIEW.md (Phase 3J
+// follow-up, CPS forensic investigation).
+void TestSkinPieceTraceInfluence() {
+    Section(".cps trace point / SVERTEXINFLU version 0x0101");
+    const std::vector<uint8_t> bytes = PieceCpsWithTrace();
+    const RANMobile::EP7SkinPieceInfo info =
+        RANMobile::EP7SkinPieceReader::ParseFromBytes(bytes, false);
+
+    J_CHECK_MSG(info.valid, info.error);
+    J_CHECK(info.traces.size() == 1);
+    if (info.traces.size() == 1) {
+        const RANMobile::EP7TracePoint& trace = info.traces[0];
+        J_CHECK(trace.name == "Bip01 Spine");
+        J_CHECK(trace.influence.valid);
+        J_CHECK(trace.influence.index == 0u);
+        J_CHECK(trace.influence.position[0] == 1.0f);
+        J_CHECK(trace.influence.position[1] == 2.0f);
+        J_CHECK(trace.influence.position[2] == 3.0f);
+        J_CHECK(trace.influence.normal[1] == 1.0f);
+        J_CHECK(trace.influence.boneCount == 2u);
+        J_CHECK(trace.influence.bones[0] == 3u);
+        J_CHECK(trace.influence.bones[1] == 7u);
+        J_CHECK(trace.influence.weights[0] == 0.75f);
+        J_CHECK(trace.influence.weights[1] == 0.25f);
+    }
+    // Reading the whole record correctly means the trailing fields were reached:
+    // effectCount == 0 and m_dwFlag == 0 are only reachable if the influence consumed
+    // exactly its structural body and not the over-stated dwSize.
+    J_CHECK(info.effectCount == 0u);
+    J_CHECK(!info.effectsPresent);
+    J_CHECK(!info.error.empty() == false);
+
+    // The 0x0100 tag must now be treated as the *unknown* version, matching the engine:
+    // it is not SVERTEXINFLU::VERSION, so LoadFile skips dwSize and the influence is
+    // not populated.  Locate the tag by value rather than by a hand-computed offset.
+    std::vector<uint8_t> oldTag = bytes;
+    {
+        const std::vector<uint8_t> tag = {0x01, 0x01, 0x00, 0x00};
+        auto it = std::search(oldTag.begin(), oldTag.end(), tag.begin(), tag.end());
+        J_CHECK(it != oldTag.end());
+        if (it != oldTag.end()) *it = 0x00;  // 0x0101 -> 0x0100
+    }
+    const RANMobile::EP7SkinPieceInfo oldInfluence =
+        RANMobile::EP7SkinPieceReader::ParseFromBytes(oldTag, false);
+    if (!oldInfluence.traces.empty()) {
+        J_CHECK(!oldInfluence.traces[0].influence.valid);
+    }
 }
 
 void TestCharacterFile() {
@@ -1188,6 +1276,7 @@ int main() {
     TestSkeleton();
     TestSkinnedMesh();
     TestSkinPiece();
+    TestSkinPieceTraceInfluence();
     TestCharacterFile();
     TestAnimation();
     TestCharacterScene();

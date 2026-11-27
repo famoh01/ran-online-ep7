@@ -262,3 +262,38 @@ Outcome matrix confirmed locally with synthetic clients:
 
 Core-failure handling was also reproduced verbatim (`test_main.cpp:186` assertion, exit 134):
 the step's shell propagates the failure (`exit $TEST_EXIT`) and emits `::error::`.
+
+---
+
+## 13. Phase 3J follow-up — `.cps` trace-point regression (`SVERTEXINFLU::VERSION`)
+
+| Item | Requirement | Result |
+|---|---|---|
+| Unit regression | `.cps` trace record with tag `0x0101` and `numBone = 2` parses structurally | PASS |
+| Field fidelity | `index`, `position[3]`, `normal[3]`, `boneCount`, `bones[2]`, `weights[2]` all exact | PASS |
+| Boundary | `effectCount` and `m_dwFlag` reached ⇒ cursor landed on the structure, not the over-stated skip | PASS |
+| Negative gating | tag flipped to `0x0100` leaves `influence.valid == false` (engine's unknown-version branch) | PASS |
+| Defect reproduction | reverting the constant to `0x0100` fails 4 checks in the new test | PASS (reproduced) |
+| Full 3J suite | build `-Wall -Wextra -Werror` + run | PASS — **294 checks, 0 failures** (was 276) |
+| Sanitizers | ASan + UBSan + LSan on the full suite | PASS — clean, exit 0 |
+| Core suite compile | workflow command, `-Werror` | PASS — exit 0 |
+| Core suite run | `test_main.cpp:186` external-data assertion | exit 134 — **pre-existing, unchanged** (no authentic data in sandbox) |
+| Authentic-data verification | re-run probe against real assets | **NOT RUN** — assets unreachable here (`gh release download` → `EOF`) |
+
+### What this test does and does not establish
+
+The fixture is an **ABI fixture**, written by hand to the layout recovered from
+`SVERTEXINFLU::SaveFile` / `LoadFile` — it is not game data. It establishes that the reader
+honours the engine's real version tag and consumes the body structurally. It does **not**
+establish that authentic `.cps` files now parse end-to-end; that requires the CI
+authentic-asset job with the release asset present, which cannot be executed in this sandbox.
+
+### Check counts by stage
+
+| Stage | Checks | Failures |
+|---|---|---|
+| Before this change | 276 | 0 |
+| After adding `TestSkinPieceTraceInfluence` | **294** | **0** |
+| Old constant restored (control) | 283 | 4 |
+
+The control run confirms the new test is sensitive to the defect rather than passing vacuously.

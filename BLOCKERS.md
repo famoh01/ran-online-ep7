@@ -397,3 +397,64 @@ misaligned stream at an earlier field — **not** a missing format definition.
 This must be established from a **byte dump of one failing `.cps`** (offsets + candidate
 field boundaries), not by adjusting offsets until something parses. That dump is the next
 required artefact and is **not** part of this change.
+
+---
+
+## B12 — CLOSED: authentic `.cps` "truncated trace name" (wrong `SVERTEXINFLU::VERSION`)
+
+**Status: RESOLVED from source** (branch `arena/42c5ac0c-ran-online-ep7`).
+
+The `.cps` failure described at the end of the previous section is **not** a missing format
+definition and **not** an incorrect trace count. It was a single wrong constant in the mobile
+reader.
+
+`SVERTEXINFLU::VERSION` is **`0x0101`**, defined identically in two engine translation units
+(`enginelib/Meshs/DxSkinMeshContainer9.cpp:36` and `enginelib/Meshs/SMeshContainer.cpp:29`).
+`SVERTEXINFLU::SaveFile()` writes that constant as the record tag; `SVERTEXINFLU::LoadFile()`
+compares the tag it reads against it. `RANMobile/Data/Importer/EP7SkinPiece.cpp` compared
+against `0x0100`, so every authentic trace record fell into `LoadFile`'s unknown-version
+branch and was skipped by `dwSize`.
+
+`dwSize` cannot be trusted for that skip because `SaveFile` over-states it: the bone and weight
+arrays are added twice (`sizeof(DWORD)*m_dwNumBone + sizeof(float)*m_dwNumBone` in the initial
+expression, then `+= sizeof(DWORD)*m_dwNumBone + sizeof(float)*m_dwNumBone` again in the
+`if (m_dwNumBone > 0 && m_dwNumBone != COL_ERR)` block). Measured deltas:
+`n=1 → +8`, `n=2 → +16`, `n=6 → +48`; with `n=0` there is no delta.
+
+The over-skip lands the cursor inside the next trace's ASCII name; those bytes are read as a
+length prefix, exceed `kMaxPathString`, and surface as `truncated trace name`.
+
+**Fix:** `kVertexInfluenceVersion` and `EP7VertexInfluence::kVersion` `0x0100` → `0x0101`.
+No other parser logic touched. Regression: `TestSkinPieceTraceInfluence()` in
+`RANMobile/Tests/test_phase3j.cpp`; reverting the constant reproduces 4 failures, restoring it
+gives 294 checks / 0 failures.
+
+**Confirmation evidence:** CI reported zero material-stage and zero trace-count failures, so
+alignment up to the trace count is sound; and the failure tally closes exactly —
+3,221 desync-cascade (2,664 + 438 + 58 + 56 + 5) + 3,138 version-gate + 243 `.chf` + 210
+skeleton = **6,812**, the exact CI FAIL count.
+
+## B13 — OPEN: `.cps` versions `0x0101`–`0x0103` rejected by the reader's version gate
+
+**Status: OPEN, deliberately out of scope for the forensic investigation.**
+
+3,138 authentic `.cps` entries fail with `unsupported .cps version (expected 0x0104..0x0107)`.
+These are genuinely supported by the original engine: `DxSkinPiece::LoadPiece` has complete
+`else if` branches for `0x0103` (`DxSkinPieceContainer.cpp:366`), `0x0102` (`:437`) and
+`0x0101` (`:513`), reading the same header but with `SMATERIAL_PIECE` absent (`0x0102`/`0x0103`
+read no `m_dwMaterialNum`) and with `STraceArray::LoadFile` used instead of the inline
+name+`SVERTEXINFLU` pair.
+
+Implementing those branches is a format-implementation task, not a forensic one, and was **not**
+attempted here. It is the next natural step for the `.cps` layer and is fully specified by the
+engine source above.
+
+## B14 — OPEN (informational): `SVERTEXINFLU::SaveFile` over-states `dwSize`
+
+Recorded because it is the reason an unknown-version skip is unsafe for this record type, and
+because any future writer in this codebase must not reproduce it. `SaveFile`
+(`DxSkinMeshContainer9.cpp:59`) adds the bone/weight arrays twice, so `dwSize` exceeds the
+bytes actually written whenever `0 < m_dwNumBone <= MAX_BONE`. The loader only uses `dwSize` on
+the unknown-version path, which is why the authentic engine never noticed. The mobile reader
+now consumes the body structurally on a version match, so it is immune; it still skips by
+`dwSize` on a mismatch, exactly as the engine does.

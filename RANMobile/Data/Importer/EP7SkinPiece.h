@@ -83,7 +83,9 @@ enum class EP7WeaponBackSlot : int32_t {
 struct EP7VertexInfluence {
     static constexpr uint32_t kMaxBone = 6;
     static constexpr uint32_t kColErr = 0xFFFFFFFFu;  // (DWORD)-1
-    static constexpr uint32_t kVersion = 0x0100;      // SVERTEXINFLU::VERSION (see cpp)
+    // SVERTEXINFLU::VERSION — defined as 0x0101 in DxSkinMeshContainer9.cpp:36 and
+    // SMeshContainer.cpp:29, written by SaveFile() and compared by LoadFile().
+    static constexpr uint32_t kVersion = 0x0101;
 
     uint32_t index = kColErr;
     float position[3] = {0.0f, 0.0f, 0.0f};

@@ -154,3 +154,46 @@ Rules this layer enforces:
 For the record of *why* `0x0108`–`0x0115` stay unimplemented, see `BLOCKERS.md` B11: the
 matching constants in the engine belong to the landscape (`DxLandMan`) family, whose
 `FILEMARK` is `"LAND.MAN"`, so reusing them for animation would fabricate a layout.
+
+---
+
+## Appendix — `.cps` trace-point record: `SVERTEXINFLU` (Phase 3J follow-up)
+
+Clarifies the `.cps` layout note earlier in this document, which lists a trace as
+"string name, then `SVERTEXINFLU::LoadFile`" but does not pin the nested record's version tag.
+
+**`SVERTEXINFLU::VERSION` is `0x0101`.** It is defined identically in two translation units —
+`enginelib/Meshs/DxSkinMeshContainer9.cpp:36` and `enginelib/Meshs/SMeshContainer.cpp:29` —
+and is used symmetrically: `SaveFile` (`:59`) writes it as the record tag, `LoadFile` (`:94` /
+`SMeshContainer.cpp:95`) compares the tag it reads against it. A reader that compares against a
+different value silently takes the unknown-version branch for every trace.
+
+On-disk record, exactly as produced by `SVERTEXINFLU::SaveFile` and consumed structurally by
+`LoadFile` on a version match (little-endian, no padding):
+
+```
+DWORD   dwVer        == 0x0101 (SVERTEXINFLU::VERSION)
+DWORD   dwSize       // body byte count — the writer over-states this, see below
+DWORD   m_dwIndex
+float   m_vVector[3]
+float   m_vNormal[3]
+DWORD   m_dwNumBone  // 0xFFFFFFFF (COL_ERR) means "no influence"; MAX_BONE is 6
+DWORD   m_pBone[numBone]     // present only when 0 < numBone <= MAX_BONE
+float   m_pWeights[numBone]  // present only when 0 < numBone <= MAX_BONE
+```
+
+Structural body sizes: `32` bytes for `numBone == 0` or `COL_ERR`, otherwise `32 + 8*numBone`
+(40 / 48 / 64 bytes for `numBone` = 1 / 2 / 6).
+
+**Caveat on `dwSize`.** `SaveFile` adds the bone and weight arrays twice — once in the initial
+`dwSize` expression and once inside the `if (m_dwNumBone > 0 && m_dwNumBone != COL_ERR)` block —
+so `dwSize` reports `32 + 16*numBone` while the record actually occupies `32 + 8*numBone`.
+The engine never notices because `LoadFile` uses `dwSize` **only** on the unknown-version path.
+A reader that matches the version must consume the body structurally, and one that does not
+match must skip `dwSize` (mirroring the engine) rather than assuming the value is exact.
+
+`RANMobile/Data/Importer/EP7SkinPiece.cpp` (`ReadVertexInfluence`) implements exactly this:
+structural consume on a `0x0101` match, `Skip(blockSize)` otherwise. The nested block is then
+followed by the effect list (`DWORD count`, each `DWORD TypeID` + effect payload) and
+`m_dwFlag`, which is what makes a mis-consumed influence visible as a desync on the *next*
+trace's name rather than at the influence itself.

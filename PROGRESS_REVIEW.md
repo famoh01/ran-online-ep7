@@ -272,3 +272,139 @@ Also recorded: the `"Anim"`-magic `.bin` files are **loose files only**; no `.bi
 packs has been observed carrying that magic. If that holds, B11's `.bin` half may not affect
 the runtime path at all. Resolving it needs more annotation budget than GitHub's ~10-line cap
 allows, so the probe's aggregated summary is the right next tool.
+
+---
+
+## Phase 3J follow-up — CPS forensic investigation: root cause confirmed
+
+**Date:** 2026-11-26 · **Branch:** `arena/42c5ac0c-ran-online-ep7` · **Base commit:** `95df8e5`
+
+### Summary
+
+The authentic `.cps` failure is **not** a missing format definition and **not** a wrong trace
+count. It is a **single wrong constant**: `SVERTEXINFLU::VERSION`.
+
+### Confirmed cause
+
+`SVERTEXINFLU` records are written and read with the tag **`0x0101`**, in two independent
+engine translation units:
+
+- `enginelib/Meshs/DxSkinMeshContainer9.cpp:36` — `const DWORD SVERTEXINFLU::VERSION = 0x0101;`
+- `enginelib/Meshs/SMeshContainer.cpp:29` — `const DWORD SVERTEXINFLU::VERSION = 0x0101;`
+
+`SVERTEXINFLU::SaveFile()` (`DxSkinMeshContainer9.cpp:59`) writes `VERSION` as the record tag,
+and `SVERTEXINFLU::LoadFile()` (`:94`) compares the tag it reads against the same constant.
+The mobile reader in `RANMobile/Data/Importer/EP7SkinPiece.cpp` compared against **`0x0100`**,
+so every authentic trace record took `LoadFile`'s *unknown-version* branch:
+
+```cpp
+else { SFile.SetOffSet ( SFile.GetfTell() + dwSize ); }
+```
+
+That skip is wrong for two independent reasons:
+
+1. **The tag never matches**, so the body (`index`, `vector`, `normal`, `numBone`,
+   `bones[n]`, `weights[n]`) is never consumed structurally.
+2. **`dwSize` is over-stated by the writer.** `SaveFile` adds the bone/weight arrays twice —
+   once in the initial `dwSize` expression (`sizeof(DWORD)*m_dwNumBone + sizeof(float)*m_dwNumBone`)
+   and again in the `if (m_dwNumBone > 0 && m_dwNumBone != COL_ERR)` block. Measured:
+   `numBone=1 → dwSize 0x30 vs 0x28 actual`, `numBone=2 → 0x40 vs 0x30`,
+   `numBone=6 → 0x80 vs 0x50`. (With `numBone == 0` the two agree, `0x20`.)
+
+The over-skip lands the read cursor *inside* the next trace's ASCII name. The next 4 bytes of
+ASCII are then read as a length prefix, exceed `kMaxPathString` (1024), and surface as
+**`truncated trace name`** — the exact message reported 2,664 times by CI.
+
+### Corroborating evidence
+
+- **Material stage is clean.** CI reported **zero** `material`-stage and **zero**
+  `trace count` failures. Every authentic `.cps` therefore reaches the trace count with a
+  correctly aligned stream, which rules out the header, path strings, mesh name, material
+  array and `SMATERIAL_PIECE` block as the defect site.
+- **The failure-count arithmetic closes exactly.**
+
+  | Reason | Count | Class |
+  |---|---|---|
+  | `cps: truncated trace name` | 2,664 | desync cascade |
+  | `cps: effect count exceeds sanity limit` | 438 | desync cascade |
+  | `cps: truncated trace vertex influence` | 58 | desync cascade |
+  | `cps: truncated piece flag` | 56 | desync cascade |
+  | `cps: truncated effect count` | 5 | desync cascade |
+  | **desync-cascade subtotal** | **3,221** | |
+  | `cps: unsupported .cps version (0x0104..0x0107)` | 3,138 | separate gate issue |
+  | `chf: unsupported .chf version (0x0100..0x0102)` | 243 | correctly gated |
+  | `skeleton: no named Frame objects` | 210 | skeleton layer |
+  | **TOTAL** | **6,812** | **= CI FAIL count exactly** |
+
+  The 3,221 desync-cascade entries are precisely the `.cps` files whose trace list is non-empty.
+  Files rejected earlier by the version gate (3,138) never reach the trace loop.
+
+### Byte-level read trace (reconstructed from `SaveFile`, not from a sample)
+
+The extraction steps (2–3) could **not** be executed in this sandbox: `external/` is absent and
+`gh release download` for `ran-online-ep7` release assets fails with `EOF`
+(`release-assets.githubusercontent.com` unreachable). No hex dump was fabricated. The layout
+below is the engine's own writer/reader pair:
+
+```
+[128-byte basestream file-type block][header fileId]
+[0x0107][m_dwRef]
+[len][xFileName...]  [len][skeleton...]
+[m_emType][m_emWeaponWhereBack]        <- 0x0106/0x0107 only
+[len][meshName...]
+[m_dwMaterialNum]  { SMATERIAL_PIECE... }
+[traceCount]
+   per trace:  [len][name...]                       <- CSerialFile::operator>>(std::string)
+               [0x0101][dwSize]                     <- SVERTEXINFLU::VERSION
+               [index][vector(3f)][normal(3f)][numBone]
+               [bones u32 * n][weights f32 * n]     <- n = numBone when 0 < n <= 6
+[effectCount] { TypeID + effect payload... }
+[m_dwFlag]
+```
+
+`CSerialFile::operator>>(std::string&)` (`enginelib/Common/SerialFile.cpp:609`) and
+`CSerialMemory::operator>>` (`:381`) both read **`DWORD dwSize` then `dwSize` bytes**, and
+`operator<<(const std::string&)` (`:460`) writes `strlen+1` including the NUL — the reader's
+`ReadString` / `ReadFixedString` convention already matched this correctly and was left alone.
+
+### Fix applied
+
+Minimal, source-backed, no offset guessing:
+
+- `RANMobile/Data/Importer/EP7SkinPiece.cpp` — `kVertexInfluenceVersion` `0x0100` → **`0x0101`**,
+  with the two engine definition sites cited in the comment.
+- `RANMobile/Data/Importer/EP7SkinPiece.h` — `EP7VertexInfluence::kVersion` `0x0100` → **`0x0101`**.
+
+No other reader logic changed. Field order, string convention, `dwSize` handling on the
+*unknown-version* path and every sanity limit are untouched.
+
+### Regression test
+
+`RANMobile/Tests/test_phase3j.cpp` — `PieceCpsWithTrace()` + `TestSkinPieceTraceInfluence()`.
+The fixture writes a trace record exactly as `SVERTEXINFLU::SaveFile()` does: tag `0x0101`,
+an over-stated `dwSize` (`32 + 16*2`), and `numBone = 2`. It asserts the influence is parsed
+structurally (`index`, `position`, `normal`, `boneCount`, `bones`, `weights`) and that the
+trailing `effectCount` / `m_dwFlag` are reached — i.e. the cursor landed on the structure, not
+on the over-stated skip. A negative check flips the tag to `0x0100` (located by value, not by a
+hand-computed offset) and asserts the influence is left unpopulated, matching the engine's
+unknown-version branch.
+
+**Proof the test catches the defect:** rebuilding the suite against the old `0x0100` constant
+reproduces 4 failures (`truncated trace vertex influence`, `traces.size() == 1`,
+`error.empty()`, and the negative check) — 283 checks / 4 failures. With the fix: **294 checks,
+0 failures**.
+
+### Remaining uncertainties
+
+- **No authentic sample was read.** The conclusion rests on the engine's writer/reader pair
+  being mutually consistent and on the CI failure arithmetic closing exactly (3,221 + 3,138 +
+  243 + 210 = 6,812). Both are strong, but a byte dump of one real `.cps` remains the
+  gold-standard confirmation and is still unobtainable here.
+- **The 3,138 `.cps` files rejected as "unsupported version" are a separate, unfixed issue.**
+  Those are versions `0x0101`–`0x0103`, for which `DxSkinPiece::LoadPiece` *does* have
+  complete branches (`DxSkinPieceContainer.cpp:366`, `:437`, `:513`). Widening the gate is a
+  distinct format-implementation task and was deliberately **not** attempted under this
+  investigation's scope.
+- The 210 skeleton failures and the 243 `.chf` failures are unrelated to this defect. The
+  `.chf` gate is correct (`DxSkinCharData.h:22` `VERSION = 0x0102`; the loader's `switch`
+  accepts only `0x0100`–`0x0102` and returns `FALSE` otherwise).
