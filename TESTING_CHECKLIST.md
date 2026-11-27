@@ -297,3 +297,24 @@ authentic-asset job with the release asset present, which cannot be executed in 
 | Old constant restored (control) | 283 | 4 |
 
 The control run confirms the new test is sensitive to the defect rather than passing vacuously.
+
+### 13.1 Executed validation against authentic assets (CI run `45917078958`, commit `802f0c0`)
+
+| Item | Result |
+|---|---|
+| `Core C++17 tests (blocking)` job | **success** |
+| `Android ARM64 build (lib + APK/AAB)` job | **success** |
+| `Authentic EP7 asset verification` job | failure (probe exit 1 — 3,679 FAILs remain) |
+| `cps: truncated trace name` | **2,664 → 0** |
+| `cps: effect count exceeds sanity limit` | **438 → 0** |
+| `cps: truncated trace vertex influence` | **58 → 0** |
+| `cps: truncated effect count` | **5 → 0** |
+| Total FAIL reasons | **6,812 → 3,679** (−3,133; reconciles exactly, see PROGRESS_REVIEW.md) |
+| `cps` entries now parsing cleanly | the trace section is reached and completed for every `.cps` that is not gate-rejected |
+
+The asset job still fails, and must continue to: 3,679 genuine FAILs remain (B13 3,138 + B15 88
++ `.chf` 243 + skeleton 210). It must not be made green by relaxing a check.
+
+Read the probe's **aggregated reason table** for comparisons, not the raw annotation list — the
+~10-annotation cap moves which reasons are visible between runs (UNSUPPORTED reasons now appear
+that were previously crowded out).

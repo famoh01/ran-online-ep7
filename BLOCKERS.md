@@ -458,3 +458,33 @@ bytes actually written whenever `0 < m_dwNumBone <= MAX_BONE`. The loader only u
 the unknown-version path, which is why the authentic engine never noticed. The mobile reader
 now consumes the body structurally on a version match, so it is immune; it still skips by
 `dwSize` on a mismatch, exactly as the engine does.
+
+## B15 — OPEN: `.cps` "truncated piece flag" (88 entries, newly visible)
+
+**Status: OPEN — distinct from B12, which is closed.**
+
+After the `SVERTEXINFLU::VERSION` fix, 88 authentic `.cps` entries fail with
+`truncated piece flag`. The count was 56 before the fix; the same population is involved, it is
+simply better observed now.
+
+Mechanism: these files carry `effectCount == 0`, so the reader proceeds to read `m_dwFlag` as
+the final DWORD — and the buffer ends first. Previously most of them aborted earlier at a trace
+name or influence and were counted under those reasons, so the flag truncation was invisible.
+
+What this means: for these files the entire header, path strings, mesh name, material array and
+**trace section (including every `SVERTEXINFLU` record) parsed to completion**, and the file then
+ran out of bytes exactly one DWORD early. Either these files are genuinely truncated on disk,
+or a field between the trace section and `m_dwFlag` exists that the 0x0104–0x0107 branches in
+`DxSkinPieceContainer.cpp` do not read. The engine's reader has no such field — it reads the
+flag immediately after the effect list — so a missing field would have to be version- or
+producer-dependent.
+
+This **cannot be settled without a byte dump of one of the 88 files**, which is unobtainable in
+this sandbox (`external/` absent; `gh release download` → `EOF`). Do not guess an extra field
+or relax the truncation check to make them pass: relaxing it would report a short file as
+parsed, which is exactly the failure mode B11 warns about.
+
+## B13 / B14 cross-reference
+
+See this document's B13 (`.cps` 0x0101–0x0103 version gate, 3,138 entries) and B14
+(`SVERTEXINFLU::SaveFile` over-states `dwSize`). Both remain open and unchanged by the fix.

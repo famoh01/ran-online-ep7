@@ -408,3 +408,47 @@ reproduces 4 failures (`truncated trace vertex influence`, `traces.size() == 1`,
 - The 210 skeleton failures and the 243 `.chf` failures are unrelated to this defect. The
   `.chf` gate is correct (`DxSkinCharData.h:22` `VERSION = 0x0102`; the loader's `switch`
   accepts only `0x0100`–`0x0102` and returns `FALSE` otherwise).
+
+### Verification against authentic data — executed in CI (run `45917078958`, commit `802f0c0`)
+
+The fix was verified against the real client assets by the `Authentic EP7 asset verification`
+job, which downloads the release asset and runs the probe. **This is executed evidence, not a
+projection.** Job outcome: `failure` (the probe still exits 1, because 3,679 FAILs remain); the
+other two jobs were `success` (`Core C++17 tests (blocking)`, `Android ARM64 build`).
+
+**Failure reasons, aggregated by the probe** (the probe accumulates reasons in a map and prints
+one line per reason precisely so they are not lost to GitHub's ~10-annotation cap):
+
+| Reason | before (`95df8e5`) | after (`802f0c0`) |
+|---|---|---|
+| `cps: truncated trace name` | 2,664 | **0 — eliminated** |
+| `cps: effect count exceeds sanity limit` | 438 | **0 — eliminated** |
+| `cps: truncated trace vertex influence` | 58 | **0 — eliminated** |
+| `cps: truncated effect count` | 5 | **0 — eliminated** |
+| `cps: truncated piece flag` | 56 | 88 |
+| `cps: unsupported .cps version (0x0104..0x0107)` | 3,138 | 3,138 (B13, unchanged) |
+| `chf: unsupported .chf version` | 243 | 243 (unchanged) |
+| `skeleton: no named Frame objects` | 210 | 210 (unchanged) |
+| **total FAIL reasons** | **6,812** | **3,679** |
+
+The four desync-cascade reasons are gone entirely. The net change reconciles exactly:
+
+```
+eliminated desync cascade        3,165   (2,664 + 438 + 58 + 5)
+truncated piece flag  56 -> 88     +32
+predicted net change            -3,133
+observed  net change     3,679 - 6,812 = -3,133
+```
+
+The +32 on `truncated piece flag` is not a regression: those `.cps` files previously aborted at
+a trace and never reached the flag, so they were counted under a trace reason. Now they get as
+far as `m_dwFlag` and stop there, which means the trace section — and the `SVERTEXINFLU`
+records inside it — parsed to completion and the file then ended early. They are a distinct,
+newly *visible* truncation issue (see B15).
+
+Caveat on reading CI annotations directly: the new run's annotations also show
+`bin: not an EP7 basestream container` (6,228) and `cfg: UNSUPPORTED ...` (2,058 + 328 + 34)
+lines that the old run did not surface. Those are **UNSUPPORTED** (informational, B11), not
+FAIL, and their appearance is an artefact of the annotation cap: with ~10 annotations per run,
+4 of the old run's FAIL reason lines consumed the budget that the new run has spare. The
+aggregated FAIL table above is the authoritative comparison; annotation presence alone is not.
