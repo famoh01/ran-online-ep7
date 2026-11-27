@@ -218,3 +218,114 @@ Source-derived decode results: authentic `mapslist.mst` is binary `GLMAPS_LIST` 
 - **No-fallback enforcement & case-insensitive resolution (`EP7SceneIndexBuilder`, `EP7SceneRenderer`, `RANMobileEngine`)**: Defaults to `StrictAuthentic` (refusing plain INI, JSON, legacy `0x0104` / `0x0101`, or demo fallbacks unless `LegacySourceCompat` is explicitly chosen) and resolves case-mismatched references (`innerzone_01.lev` → `innerzone_01.Lev`, `loading_032.dds` `1024×512`).
 - **Verification**: Local `g++ -std=c++17 -Wall -Wextra -Werror` build (0 warnings) and `RANMOBILE_REQUIRE_AUTHENTIC_PHASE3G=1 ./external/recovery/phase3h_tests` both passed (`ALL TESTS PASSED!`). GitHub Actions run `45882553115` on commit `2ea77ce` passed all Linux C++17 tests, ARM64 NDK (`r26d`, `android-24`) build (`libranmobile-arm64-v8a` `2,032,860 B`), and APK/AAB packaging (`ranmobile-android-packages` `1,938,104 B`).
 
+
+---
+
+## Phase 3J recovery (2026-11-26, character / skeleton / animation)
+
+This section records the original-source facts Phase 3J depends on, so they are recoverable
+without re-reading the engine. Every entry names the file and line that establishes it.
+
+### 14.1 Serialisation container (`enginelib/Common/`)
+
+| Fact | Evidence |
+|---|---|
+| Every EP7 asset begins with a 128-byte file-type block + `DWORD` file ID; payload starts at absolute offset 132 | `SerialFile.cpp:ReadFileType`, `SerialMemory.cpp:ReadFileType`, `basestream.h:FILETYPESIZE` |
+| `GetfTell()/SetOffSet()` are payload-relative (`m_DefaultOffSet`) | `SerialFile.cpp:SetOffSet`, `GetfTell` |
+| `operator<<(std::string)` writes `DWORD(strlen+1)` and then `strlen+1` bytes (NUL included) | `SerialFile.cpp:460` |
+| `operator>>(std::string)` allocates `dwSize`, reads that many bytes | `SerialFile.cpp:609` |
+| `BeginBlock()` writes a placeholder `DWORD`, `EndBlock()` back-patches the body length | `SerialFile.cpp:BeginBlock`, `EndBlock` |
+| `m_bencode` applies the compbyte permutation per byte | `CompByte.cpp` (256-entry table) |
+| Short reads used to zero-fill silently | `CSerialMemory::read` |
+
+### 14.2 Skeleton (`.x` → bones)
+
+* `DxSkeleton::LoadFile` creates a synthetic `"__ROOT"` bone **before** enumerating
+  (`DxBoneCollector.cpp:300`); all top-level `Frame` objects become its children.
+* `DxSkeleton::LoadBoneTrans` (`:336`): nameless frame → `goto e_Exit` (dropped);
+  `FrameTransformMatrix` → `matRot = matRotOrig = *pmatNew`;
+  a child named exactly `"Bip01_Spine1"` becomes `EMBODY_UPBODY` and passes that down.
+* `DxBoneTrans::AddBoneTrans` keeps the **first** child as the sibling-list head.
+
+### 14.3 Character definition (`.chf`)
+
+`DxSkinCharData::LoadFile` (`:349`) reads the payload version (`SFile >> dwVer`) and switches:
+
+* `VERSION`/`0x0101` → `LOAD_Ver101`
+* `0x0100` → `LOAD_Ver100` (no scale, fixed 260-byte skeleton field, fixed 128-byte animation
+  names)
+
+`LOAD_Ver101` order: scale, piece count (`> PIECE_SIZE` → fail), per-slot BOOL + name,
+skeleton name, animation count + names, bbox flag + 6 floats, optional world-object flag,
+optional height/radius, trailing flag. A file that simply ends after the bbox returns
+`TRUE` — absence of the optional tails is legal.
+
+### 14.4 Skin piece (`.cps`)
+
+`DxSkinPiece::LoadFile` (`DxSkinPieceContainer.cpp:356`):
+
+* version gate `0x0104`–`0x0107`; older versions are not handled
+* refCount, `.x` file name, skeleton name, piece type, weapon-back slot (**0x0106+ only**),
+  mesh name, material array, trace array, effect list
+
+`SMATERIAL_PIECE::LoadFile` (`:124`) reads `dwVERSION` **and** `dwBLOCKSIZE` unconditionally; a
+version mismatch skips `dwBLOCKSIZE` bytes. `SaveFile` (`:108`) wraps the body in
+`BeginBlock/EndBlock`, which is where the block size comes from.
+
+### 14.5 Skinned mesh (`.x`)
+
+* `DxSkinMesh::LoadMesh` (`DxSkinMeshLoad.cpp:416`) → `D3DXLoadSkinMeshFromXof`; the container
+  name falls back to the parent frame name when the `Mesh` has no instance name.
+* Runtime declaration (`DxSkinMesh9_HLSL.cpp:96-107`): POSITION f3, NORMAL f3, TEXCOORD f2,
+  TANGENT f3, BLENDWEIGHT f4, BLENDINDICES f4 → **at most 4 influences per vertex**.
+* Palette (`DxSkinMesh9_CPU.cpp:625`): `g_pBoneMatrices[i] = pBoneOffsetMatrices[i] × ppBoneMatrixPtrs[i]`.
+* Missing bone → `SetupBoneMatrixPointersOnMesh` returns `E_FAIL` (hard failure).
+* Exporter attaches `SkinWeights` to the `Mesh` object: `xskinexp/ExportXFile.cpp:2823`
+  (`pParent->AddDataObject`).
+
+### 14.6 Animation (`.bin` / `.cfg`)
+
+* `SAnimContainer::SaveToFile` (`SAnimation.cpp:1573`): `SetFileType(szFILETYPE, VERSION)` →
+  the container version lives in the **header file ID**, not the payload.
+* Track layout 0x0102 (`SAnimation::Load`): version DWORD, bone name, rotate keys (20 B),
+  position keys (16 B), garbage DWORD, quatpos keys (36 B), garbage DWORD, matrix keys
+  (80 B), scale keys (16 B).
+* `SAnimation::SaveToFile` (`:1353`) proves the two garbage DWORDs are `m_strBone.length()`
+  and `m_strBone.length() + VERSION`.
+* `SMatrixKey` embeds `D3DXMATRIXA16`, which is `__declspec(align(16))` → `sizeof` is 80 on
+  the 32-bit client (12 bytes of padding after `dwTime`).
+* 0x0101 track layout: position, rotate, scale, matrix, quatpos, **bone name last**.
+* `SANIMCONINFO::SaveFile` streams members individually: `m_sStrikeEff[ACF_STRIKE=9]` is always
+  written/read in full, and `SChaSoundData` is written with `sizeof(SChaSoundData)` (386 bytes
+  of meaningful content).
+* `DecompressionQuaternion` (`SAnimation.cpp:52`) subtracts 32767 from **all four** halves
+  including `w` — an authentic quirk that Phase 3J reproduces deliberately.
+* Clock: `UNITANIKEY_PERSEC 4800` (`DxSkinAniControl.cpp`); `ANIMCONTNODE::FrameMove` (`:937`)
+  clamps to `[m_dwSTime, m_dwETime]`, sets `bEndAnim` inside the last `m_UNITTIME*2` for
+  non-looping clips, and freezes at `m_dwETime` when `bEndFreeze`.
+
+### 14.6b Asset packaging — the character data is inside ZIP archives
+
+* `GLOGIC::InitFile` (`GLogic.cpp:40-62`) registers two packs:
+  `DxSkinObject::GetPath() + "SkinObject.rcc"` and
+  `DxSkinAniMan::GetPath() + "Animation.rcc"`, and calls `CUnzipper::LOADFILE_RCC` on both.
+* Every character asset open goes through
+  `GLOGIC::openfile_basestream(bENGLIB_ZIPFILE, ...)` → `CUnzipper::UnzipToMemory`
+  (`Unzipper.cpp:569`).
+* Entry lookup is case-insensitive: both `LOADFILE_RCC` and `GOTOFILEPOS` lowercase the
+  composed key `zipName + entryName`.
+* Encrypted entries are opened with `unzOpenCurrentFilePassword(m_uzFile, "tkqwlf")`
+  (traditional ZipCrypto).
+* Therefore `.chf/.cps/.skt/.x/.bin/.cfg` are **not** loose files in a client install; an
+  asset tool must read the `.rcc` archives.
+* Implemented as `RANMobile/Data/Importer/EP7RccArchive.{h,cpp}` (central directory, stored
+  + deflate via a self-contained canonical-Huffman inflater, ZipCrypto, CRC-32, bounds
+  checks). Not implemented: zip64, multi-disk, AES, other methods.
+
+### 14.7 Still unrecovered (Phase 3J scope)
+
+* `.cps` effect payloads (`DxEffAniData` subclasses) — count parsed, bodies skipped.
+* `.cfg` versions 0x0101–0x0106 and the trailing `DxAniScale` block.
+* `ANIMCONTNODE` upper/lower-body cross-fade rules.
+* D3DX's vertex-declaration inference beyond the canonical 12/24/32-byte layouts.
+* Binary `.x` encodings (`bin`, `bzib`, `tzip`).

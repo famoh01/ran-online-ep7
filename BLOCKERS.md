@@ -132,3 +132,588 @@ Please tell me which blockers to clear and how (provide files/toolchain/server a
 - **Remaining gaps**: Animated skinned character rendering (`.chf`/`.cps`/`.abl`/`.bin`) is not yet integrated into the 3D scene pass; B1 (no physical Android emulator/device render test in sandbox), B3/B6 (live server auth/login), and B8 (GameServer DirectX header conflict) remain unchanged. PR #3 remains OPEN/DRAFT and untouched.
 
 
+
+---
+
+## Phase 3J update (2026-11-26, authentic character model / skeleton / animation)
+
+Phase 3J implemented the character pipeline (parsers, skeleton evaluation, animation sampling,
+CPU skinning, scene instances, touch UX, tests, CI tooling) entirely from original-source
+evidence. Two blockers are added and one existing blocker still governs the outcome.
+
+### B9. Authentic EP7 character assets are unavailable in this sandbox (extends B2)
+
+* `.chf`, `.cps`, `.skt`, character `.x`, animation `.bin` and `.cfg` files exist only inside
+  the original release archives (`ran-ep7-full-v1`), which cannot be downloaded here — the
+  same `curl (18) EOF` failure recorded in B2 for `release-assets.githubusercontent.com`.
+* Consequence: no authentic character was loaded, posed or rendered during this phase, and
+  **no real-data compatibility claim is made**.
+* Mitigation implemented: `RANMobile/Tools/verify_ep7_character_assets.cpp` runs the Phase 3J
+  parsers over an extracted client tree and reports per-file results. It is wired into
+  `.github/workflows/build-ranmobile-android.yml` after the client archive is extracted, and
+  its log is uploaded/summarised. If the directory is absent it prints "nothing verified".
+* What is unblocked already: the exact on-disk layouts were recovered from the original
+  sources and are exercised by `RANMobile/Tests/test_phase3j.cpp` (188 checks) using
+  suite-authored ABI fixtures — which validates the parsers' logic and safety, **not** real
+  asset compatibility.
+
+### B10. Phase 3J cannot integrate GPU skinning on this branch (renderer lives in PR #4)
+
+* `EP7SceneRenderer`, `EP7WorldParser` and the GLES3 3D pass exist only on
+  `origin/arena/be1e147d-ran-online-ep7` (PR #4, Draft, head `76b2c1c3`).
+* `main` (and therefore this branch) has `MobileRenderer` with UI/2D drawing only, so there is
+  no 3D draw path to attach a skinning program to. Adding one would duplicate PR #4's
+  renderer, which contradicts "do not replace existing engine architecture".
+* Decision: implement CPU skinning (the authentic `DxSkinMesh9_CPU` reference path) as the
+  verified baseline, keep `BuildBonePalette`/`EP7SkinnedMesh` ready for a palette-uniform
+  upload, and publish the integration contract in
+  `PHASE3J_CHARACTER_ANIMATION.md` §8. GPU skinning is documented as **not implemented**, not
+  as pending-and-done.
+
+### Unchanged blockers relevant to Phase 3J
+
+* **B1** still applies: no Android SDK/NDK/Gradle/JDK here, so the arm64 build and
+  `assembleDebug`/`assembleRelease`/`bundleRelease` remain CI-only.
+* **B2/B4** still apply to every other asset class.
+* No physical Android device was available; Phase 3J claims no device testing.
+
+### Repo-integrity note
+
+PR #3 (`7b355b3c`) and PR #4 (`76b2c1c3`) were verified untouched with `git ls-remote`
+before and after this work. Nothing was merged to `main` and no existing branch was rewritten.
+
+### B9 addendum — the authentic assets are inside `SkinObject.rcc` / `Animation.rcc`
+
+Follow-up discovery while building the verification tool (2026-11-26):
+
+`GLOGIC::InitFile` (`enginelib/G-Logic/GLogic.cpp:40-62`) loads character data exclusively
+through `CUnzipper::LOADFILE_RCC` on two ZIP archives
+(`SkinObject.rcc`, `Animation.rcc`), and every asset open goes through
+`CUnzipper::UnzipToMemory` (`enginelib/Common/Unzipper.cpp:569`) with the ZipCrypto password
+`"tkqwlf"`. A plain directory walk therefore finds no character assets at all.
+
+Consequences for B9:
+
+* The first version of `verify_ep7_character_assets` only walked the tree and would have
+  reported "0 candidate files" on a perfectly good client extraction — a false negative that
+  could be mistaken for "nothing to verify". This is fixed: the tool now opens every
+  `.rcc`/`.zip` it finds.
+* `Data/Importer/EP7RccArchive.{h,cpp}` was added (central directory, stored + deflate,
+  ZipCrypto with the client password, CRC-32 verification, full bounds checking) so the real
+  bytes are reachable in CI. It is covered by the test suite (208 checks total) including
+  ZipCrypto decryption feeding the real `.cps`/`.chf` parsers, and it was additionally
+  validated against a real Python-generated ZIP with stored and deflated entries.
+* Still unverified: whether the shipped packs use zip64, AES, or methods other than
+  stored/deflate. If they do, extraction fails loudly and this blocker stays open; the CI log
+  will say so explicitly because every entry reports its method and every failure is printed.
+* The sandbox still has no archives, so the `inflate` path has never been run against
+  authentic client data — only against a synthetic archive built to the same spec.
+
+### B11 — New: the authentic client ships animation data this build cannot parse
+
+First authentic-data results, read back from CI check-run annotations (2026-11-26):
+
+```
+[FAIL] cfg  external/ep7_release/client_original/data/animation/a_3boss_01_stay.cfg   — unsupported animation cfg version 0x00000106
+[FAIL] cfg  external/ep7_release/client_original/data/animation/a_6lvl_f.cfg          — unsupported animation cfg version 0x00000114
+[FAIL] cfg  external/ep7_release/client_original/data/animation/a_2017_victors_wings.cfg — unsupported animation cfg version 0x00000115
+[FAIL] bin  external/ep7_release/client_original/data/animation/*.bin                 — starts with magic 'Anim' (0x6D696E41)
+```
+
+This is the first time these parsers have been run against real client bytes, and the
+verdict is **the animation data is not in the format this build implements**. Two distinct
+incompatibilities:
+
+1. **`.cfg` versions beyond the engine source.** `SANIMCONINFO::VERSION` is `0x0107` and
+   `enginelib/Meshs/DxSkinAniManSaveLoad.cpp` implements readers for `0x0101`–`0x0107`.
+   The shipped files are `0x0106` (engine-compatible) and `0x0114`/`0x0115` (**not in the
+   engine source at all**).
+   **Update:** all versions the engine source defines are now implemented —
+   `0x0101`–`0x0107`, including the per-version block sizes (302 / 564 / 732 / 840 /
+   840 / 800 / 800) and the fact that 0x0101–0x0104 **end at the header block** with no
+   effect list. Final measurement:
+
+   ```
+   pack entries: 3217 parsed, 8443 failed
+     6228 x bin  magic "Anim"
+     2058 x cfg  0x0110   1303 x 0x0111   1016 x 0x0114     569 x 0x0115
+      328 x cfg  0x0108    226 x 0x0112     34 x 0x0109
+   ```
+
+   Every remaining failure is a format with **no definition in this repository**, not a
+   defect against the engine source.
+
+   `0x0108`–`0x0110`, `0x0114`, `0x0115` have no definition in this repository, and the
+   `"Anim"` magic appears in no loader. Those two layouts must be recovered from the data
+   (reverse engineering), not ported. See §14.7.
+2. **`.bin` files are a different container.** They begin with the ASCII magic `"Anim"`,
+   not the small version DWORD that `SAnimContainer::LoadAnimFromFile` expects
+   (`case 0x0100 / 0x0101 / VERSION(0x0102)`). The engine source contains no such magic,
+   so these are not the format `SAnimContainer` reads.
+
+Two readings are possible and the data so far cannot separate them:
+
+* the shipped `.rcc` packs contain an animation format newer than this engine source
+  (several `0x0114`/`0x0115` styles, a `"Anim"` container); or
+* `data/animation/*.bin|.cfg` is a **different dataset** from the one the engine consumes
+  (`Animation.rcc`), and the probe is reading files the engine never opens.
+
+What is *not* yet known, because only the first 10 annotations are retrievable: what the
+`.chf` / `.cps` / `.x` entries in `SkinObject.rcc` did. Those are the categories that matter
+most for "can this render an authentic character", and they are the ones still unproven.
+The aggregated reason histogram added to the probe's summary exists precisely to answer
+this in one line on the next run.
+
+Impact: `verify_ep7_character_assets` now exits **1**, so the "Verify Authentic EP7
+Character Assets" step is red. That is the honest signal — a green step would mean
+authentic data parsed — and it is deliberate, not a regression.
+
+---
+
+## B11 — status review, 2026-11-26 (evidence audit, no guessing)
+
+This section records what was actually checked, so B11 is not re-litigated from memory.
+
+### Investigation performed
+
+| Question | Method | Result |
+|---|---|---|
+| Does any loader in the repo know the `"Anim"` magic? | `grep -rn "'Anim'\|\"Anim\""` over `enginelib/`, `xskinexp/`, `EngineSoundLib/` | **No hits** outside our own probe/tests |
+| Do `0x0108`–`0x0115` appear as `SANIMCONINFO` versions? | `grep -rn "0x01xx"` over `enginelib/`, `xskinexp/`, `EngineSoundLib/` | Appear, but **all in the wrong file family** (see below) |
+| Is the struct defined for any of them? | `SAnimation.h` | Only `SANIMCONINFO_101`…`_106` and `SANIMCONINFO` (0x0107) |
+| Are authentic samples committed? | `find -name "*.rcc" -o -name "*.bin"` | **No** — `external/ep7_release/` is git-ignored; data exists only as release assets |
+
+### Why the `0x0108`–`0x0115` grep hits do **not** resolve B11
+
+Every hit belongs to the **landscape** family, not animation:
+
+```
+enginelib/DxOctree/DxLandManSaveLoad.cpp:30   const DWORD DxLandMan::VERSION = 0x0114;
+enginelib/DxOctree/DxLandManSaveLoad.cpp:742  if ( dwVersion>=0x0108 && dwVersion<=DxLandMan::VERSION )
+enginelib/DxOctree/DxLandManSaveLoad.cpp:752..764   0x0108 / 0x0109 / 0x0110 / 0x0111 / 0x0112
+enginelib/DxCommon/DxFogMan.h:57              enum { VERSION = 0x0108, };
+```
+
+`DxLandMan` identifies its files with `FILEMARK[128] = "LAND.MAN"`, a different basestream
+type from `SANIMCONINFO`. The two families merely happen to share small integer version
+numbers. **Treating those constants as animation layouts would be a fabricated format**, so
+they were explicitly rejected as evidence.
+
+### Resolution of the version/type question (implemented, evidence-backed)
+
+The 128-byte basestream header carries a type string. `ParseInfo` now reads it and
+distinguishes:
+
+* **type `SANIMCONINFO`, version `0x0108`–`0x0115`** → `unsupported = true`. This is B11: a
+  real animation file of a version whose struct exists nowhere in this repository.
+* **any other type** → a genuine `FAIL` ("not a SANIMCONINFO file"), **not** excused.
+
+This is the only B11 assertion made, and it rests solely on the type string that
+`CSerialFile::ReadFileType()` demonstrably reads (`EP7ByteFormat.h`). No offset, field size
+or layout is inferred.
+
+### What would be required to close B11
+
+1. **Newer engine source** containing `SANIMCONINFO_108` … `_115` or an `SAnimContainer`
+   reader that accepts the `"Anim"` magic — this would be definitive.
+2. **Format documentation** for the EP7 animation exporter that emits `"Anim"`.
+3. Otherwise, **reverse engineering from samples** with per-field validation: the probes for
+   `0x0108`–`0x0115` must first confirm the 302-byte prefix (`name[128]`, `skeleton[128]`,
+   `flag`, `STime`, `ETime`, `ETimeOrig`, `UNITTIME`, `MainType`, `SubType`, `DivCount`,
+   `DivFrame[8]`) is unchanged, since that prefix is identical for **every** version that
+   *is* defined in source.
+
+### Status: **OPEN** — implementation of those formats is stopped
+
+No structure, offset, size or decoder for `0x0108`–`0x0115` or the `"Anim"` container has
+been written, and none will be until evidence in (1)–(3) exists.
+
+### CI treatment of an open B11 (new, 2026-11-26)
+
+An open B11 must not be able to hide core-test results, and must not be mistakable for
+success. The verification tool therefore reports three outcomes with three exit codes:
+
+| Outcome | Exit | Meaning | CI effect |
+|---|---|---|---|
+| PASS | 0 | every pack entry parsed | job green |
+| FAIL | 1 | a pack entry is genuinely broken | **job fails** |
+| UNSUPPORTED | 2 | nothing broken, some formats undefined (B11) | job green, **warning + summary** |
+| NOT FOUND | 3 | no character entry in any pack | warning, not a failure |
+
+`UNSUPPORTED` is never counted as parsed and is never silent.
+
+---
+
+## Phase 3J CI run 45914698354 — first results with CI isolation in place
+
+The three-job split ran correctly on the first attempt:
+
+| Job | Result | Meaning |
+|---|---|---|
+| Core C++17 tests (blocking) | **success** | `test_main.cpp` suite + 276-check Phase 3J suite both green |
+| Android ARM64 build | **success** | NDK lib + `assembleDebug/Release`, `bundleRelease` all green |
+| Authentic EP7 asset verification | **failure** | exit 1 (FAIL) — see below |
+
+This is the behaviour the isolation was built for: a genuine asset-side defect is still
+reported as a failure, but it no longer suppresses the core tests, their summary, the log
+artifact, or the APK/AAB build.
+
+### New: three-way split of the 11,660 pack entries
+
+| Outcome | Count |
+|---|---|
+| parsed (PASS) | 3,217 |
+| **unsupported (UNSUPPORTED, B11)** | **1,631** |
+| **failed (FAIL)** | **6,812** |
+
+`8,443 → 1,631 unsupported + 6,812 failed`. The reclassification is not cosmetic: those
+1,631 entries were previously reported as failures even though nothing was wrong with the
+reader — their format simply has no definition here. The remaining 6,812 are a genuine and
+much larger defect surface than the previous two-state report could express.
+
+### B11 status remains OPEN — and the `.bin` question is now sharper
+
+`1,631` pack entries are `UNSUPPORTED`, all of them `.cfg` files whose basestream type really
+is `SANIMCONINFO` with a version outside `0x0101`–`0x0107`. No struct, offset or decoder has
+been written for them.
+
+The `"Anim"`-magic `.bin` files turn out to be **loose files only** (`11,762` loose
+`UNSUPPORTED`). **No `.bin` inside `SkinObject.rcc`/`Animation.rcc` has yet been observed to
+carry the `"Anim"` magic.** If the packs contain no such entries, the `"Anim"` container may
+not be part of the engine's runtime path at all — which would change B11 from "we cannot
+read 6,228 runtime assets" to "6,228 files exist in the client that the engine never loads".
+That distinction is worth resolving before investing in reverse engineering, and it cannot be
+answered from the current 10-annotation budget.
+
+### New evidence needed (added to the B11 list)
+
+`6,812` `.cps`/`.chf`/`.x` pack entries fail. The dominant single reason is
+`2,664 x cps: truncated trace name`, i.e. the trace count read just before it parses as
+`> 6`. The authoritative reader (`SMATERIAL_PIECE::LoadFile` /
+`DxSkinPieceContainer::LoadFile`) confirms the field order this build already implements
+(`VERSION`, `BLOCKSIZE`, `LENGTH`, `TEXTURE`, `FLAGS`, `ZBIAS`), so the likely cause is a
+misaligned stream at an earlier field — **not** a missing format definition.
+
+This must be established from a **byte dump of one failing `.cps`** (offsets + candidate
+field boundaries), not by adjusting offsets until something parses. That dump is the next
+required artefact and is **not** part of this change.
+
+---
+
+## B12 — CLOSED: authentic `.cps` "truncated trace name" (wrong `SVERTEXINFLU::VERSION`)
+
+**Status: RESOLVED from source** (branch `arena/42c5ac0c-ran-online-ep7`).
+
+The `.cps` failure described at the end of the previous section is **not** a missing format
+definition and **not** an incorrect trace count. It was a single wrong constant in the mobile
+reader.
+
+`SVERTEXINFLU::VERSION` is **`0x0101`**, defined identically in two engine translation units
+(`enginelib/Meshs/DxSkinMeshContainer9.cpp:36` and `enginelib/Meshs/SMeshContainer.cpp:29`).
+`SVERTEXINFLU::SaveFile()` writes that constant as the record tag; `SVERTEXINFLU::LoadFile()`
+compares the tag it reads against it. `RANMobile/Data/Importer/EP7SkinPiece.cpp` compared
+against `0x0100`, so every authentic trace record fell into `LoadFile`'s unknown-version
+branch and was skipped by `dwSize`.
+
+`dwSize` cannot be trusted for that skip because `SaveFile` over-states it: the bone and weight
+arrays are added twice (`sizeof(DWORD)*m_dwNumBone + sizeof(float)*m_dwNumBone` in the initial
+expression, then `+= sizeof(DWORD)*m_dwNumBone + sizeof(float)*m_dwNumBone` again in the
+`if (m_dwNumBone > 0 && m_dwNumBone != COL_ERR)` block). Measured deltas:
+`n=1 → +8`, `n=2 → +16`, `n=6 → +48`; with `n=0` there is no delta.
+
+The over-skip lands the cursor inside the next trace's ASCII name; those bytes are read as a
+length prefix, exceed `kMaxPathString`, and surface as `truncated trace name`.
+
+**Fix:** `kVertexInfluenceVersion` and `EP7VertexInfluence::kVersion` `0x0100` → `0x0101`.
+No other parser logic touched. Regression: `TestSkinPieceTraceInfluence()` in
+`RANMobile/Tests/test_phase3j.cpp`; reverting the constant reproduces 4 failures, restoring it
+gives 294 checks / 0 failures.
+
+**Confirmation evidence:** CI reported zero material-stage and zero trace-count failures, so
+alignment up to the trace count is sound; and the failure tally closes exactly —
+3,221 desync-cascade (2,664 + 438 + 58 + 56 + 5) + 3,138 version-gate + 243 `.chf` + 210
+skeleton = **6,812**, the exact CI FAIL count.
+
+## B13 — OPEN: `.cps` versions `0x0101`–`0x0103` rejected by the reader's version gate
+
+**Status: OPEN, deliberately out of scope for the forensic investigation.**
+
+3,138 authentic `.cps` entries fail with `unsupported .cps version (expected 0x0104..0x0107)`.
+These are genuinely supported by the original engine: `DxSkinPiece::LoadPiece` has complete
+`else if` branches for `0x0103` (`DxSkinPieceContainer.cpp:366`), `0x0102` (`:437`) and
+`0x0101` (`:513`), reading the same header but with `SMATERIAL_PIECE` absent (`0x0102`/`0x0103`
+read no `m_dwMaterialNum`) and with `STraceArray::LoadFile` used instead of the inline
+name+`SVERTEXINFLU` pair.
+
+Implementing those branches is a format-implementation task, not a forensic one, and was **not**
+attempted here. It is the next natural step for the `.cps` layer and is fully specified by the
+engine source above.
+
+## B14 — OPEN (informational): `SVERTEXINFLU::SaveFile` over-states `dwSize`
+
+Recorded because it is the reason an unknown-version skip is unsafe for this record type, and
+because any future writer in this codebase must not reproduce it. `SaveFile`
+(`DxSkinMeshContainer9.cpp:59`) adds the bone/weight arrays twice, so `dwSize` exceeds the
+bytes actually written whenever `0 < m_dwNumBone <= MAX_BONE`. The loader only uses `dwSize` on
+the unknown-version path, which is why the authentic engine never noticed. The mobile reader
+now consumes the body structurally on a version match, so it is immune; it still skips by
+`dwSize` on a mismatch, exactly as the engine does.
+
+## B15 — OPEN: `.cps` "truncated piece flag" (88 entries, newly visible)
+
+**Status: OPEN — distinct from B12, which is closed.**
+
+After the `SVERTEXINFLU::VERSION` fix, 88 authentic `.cps` entries fail with
+`truncated piece flag`. The count was 56 before the fix; the same population is involved, it is
+simply better observed now.
+
+Mechanism: these files carry `effectCount == 0`, so the reader proceeds to read `m_dwFlag` as
+the final DWORD — and the buffer ends first. Previously most of them aborted earlier at a trace
+name or influence and were counted under those reasons, so the flag truncation was invisible.
+
+What this means: for these files the entire header, path strings, mesh name, material array and
+**trace section (including every `SVERTEXINFLU` record) parsed to completion**, and the file then
+ran out of bytes exactly one DWORD early. Either these files are genuinely truncated on disk,
+or a field between the trace section and `m_dwFlag` exists that the 0x0104–0x0107 branches in
+`DxSkinPieceContainer.cpp` do not read. The engine's reader has no such field — it reads the
+flag immediately after the effect list — so a missing field would have to be version- or
+producer-dependent.
+
+This **cannot be settled without a byte dump of one of the 88 files**, which is unobtainable in
+this sandbox (`external/` absent; `gh release download` → `EOF`). Do not guess an extra field
+or relax the truncation check to make them pass: relaxing it would report a short file as
+parsed, which is exactly the failure mode B11 warns about.
+
+## B13 / B14 cross-reference
+
+See this document's B13 (`.cps` 0x0101–0x0103 version gate, 3,138 entries) and B14
+(`SVERTEXINFLU::SaveFile` over-states `dwSize`). Both remain open and unchanged by the fix.
+
+## B13 — RESOLVED (partially): `.cps` versions 0x0101–0x0103 now load
+
+**Status: code defect fixed and verified on authentic data. The blocker is now much smaller but
+not closed — see "what remains" below.**
+
+### What was wrong
+
+`DxSkinPiece::LoadPiece` (`DxSkinPieceContainer.cpp`) implements seven version branches —
+`0x0107` `:374`, `0x0106` `:459`, `0x0105` `:544`, `0x0104` `:629`, `0x0103` `:712`, `0x0102`
+`:783`, `0x0101` `:859` — and sends every other version to a terminal `else` that raises
+*"Can't Load Skin object"* and returns `E_FAIL` (`:934-943`). The mobile reader accepted only
+`0x0104..0x0107`, so it rejected files the engine loads.
+
+The legacy branches are not the modern layout with an older tag. Per branch:
+
+| Version | Materials | Traces | Trailing `m_dwFlag` |
+|---|---|---|---|
+| 0x0104 | count + `SMATERIAL_PIECE` | count + name + `SVERTEXINFLU` | **absent** |
+| 0x0103 | **absent** | count + name + `SVERTEXINFLU` | **absent** |
+| 0x0102 | **absent** | **10 fixed `SVERTEXINFLU` slots, no names** | **absent** |
+| 0x0101 | **absent** | **8 fixed `SVERTEXINFLU` slots, no names** | **absent** |
+
+For 0x0101/0x0102 the slot loops are `for (int i=0; i<8; i++)` (`:891`) and `<10` (`:815`) with
+no count field, and only slots 0..3 are ever emitted — guarded by
+`if (sTraceArray[k].m_dwIndex != COL_ERR)` and named from the hard-coded `STRACE_IMAGE01`,
+`IMAGE02`, `IMAGE11`, `IMAGE12` macros (`DxSkinPieceContainer.h:22-25`), which `STRACOR`
+truncates to 31 characters via `StringCchCopy`. Slots 4..7/4..9 are read and discarded.
+
+`m_dwFlag` is read by 0x0105 and newer only. For every legacy version it stays at the
+constructor's `0L` (`:192`) and is only ever `|=`-ed with effect flags (`:703`/`:774`/`:850`/`:925`).
+
+### The second defect found here
+
+Because the reader required a trailing flag for **all** accepted versions, a complete **0x0104**
+file — which ends at the effect count — was reported as `truncated piece flag`. That is the
+reason B15's 88 entries existed; they were valid 0x0104 files, not truncated ones.
+
+### Verified effect on authentic data (CI run `45923517031`, commit `a591320`)
+
+| | before | after | Δ |
+|---|---|---|---|
+| pack entries parsed | 6,350 | 6,479 | **+129** |
+| pack entries failed | 3,679 | 3,550 | **−129** |
+| `cps: unsupported .cps version` | 3,138 | 3,097 | **−41** |
+| `cps: truncated piece flag` | 88 | **0 (reason gone)** | **−88** |
+| total CPS failures | 3,226 | 3,097 | **−129** |
+
+41 + 88 = 129 = Δparsed = Δfailed. Every change is `.cps`; `.chf` (243), skeleton (210), `.bin`
+(6,228 unsupported), `.cfg` and `.x` are byte-for-byte identical to the previous run.
+
+### What remains — and why it is correct to stop here
+
+The residual **3,097** are `.cps` files whose **version DWORD is outside `0x0101..0x0107`**.
+The engine does not implement those either: they hit the same terminal `else`. The reader is
+therefore behaving exactly like the original, and the reason string is now the accurate signal
+rather than a masked one.
+
+Establishing whether any of those 3,097 are legitimately loadable would require reading their
+version DWORDs and, for any surprising value, a byte dump of the file. Neither is obtainable in
+this sandbox (`external/` absent; `gh release download` fails with `EOF`). Inventing a version
+branch to absorb them would be fabrication, so none was added.
+
+**Do not "fix" the remaining 3,097 by widening the version gate further without evidence.**
+
+## B15 — RESOLVED (superseded)
+
+The 88 `cps: truncated piece flag` entries were valid **0x0104** files. `LoadPiece` ends 0x0104
+after the effect list (`DxSkinPieceContainer.cpp:629-711`) and never reads `m_dwFlag`; the
+reader required it anyway. Gating the flag read to `>= 0x0105` makes all 88 parse, and the
+reason no longer occurs in run `45923517031`.
+
+See B13 above. B14 remains open and unchanged.
+
+## B14 — AUDITED / CLOSED: `SVERTEXINFLU::SaveFile` over- and under-states `dwSize`
+
+**Status: CLOSED. The defect is in the original engine's writer, confirmed by source; this
+codebase is not affected and needed no production change.** It is retained as a documented
+hazard rather than an open task.
+
+### Confirmed defect
+
+`SVERTEXINFLU::SaveFile` — `enginelib/Meshs/DxSkinMeshContainer9.cpp:59-92`, byte-identical in
+`enginelib/Meshs/SMeshContainer.cpp:52-85` — counts the bone and weight arrays **twice** while
+writing them **once**:
+
+```cpp
+DWORD dwSize = ... + sizeof(DWORD)*m_dwNumBone + sizeof(float)*m_dwNumBone;  // counted
+if ( m_dwNumBone > 0 && m_dwNumBone!=COL_ERR )
+    dwSize += sizeof(DWORD)*m_dwNumBone + sizeof(float)*m_dwNumBone;          // counted AGAIN
+...
+if ( m_dwNumBone > 0 && m_dwNumBone!=COL_ERR )
+{
+    SFile.WriteBuffer ( m_pBone,    sizeof(DWORD)*m_dwNumBone );  // written ONCE
+    SFile.WriteBuffer ( m_pWeights, sizeof(float)*m_dwNumBone );  // written ONCE
+}
+```
+
+### Exact arithmetic (compiled verbatim transcription, `DWORD` semantics)
+
+| `m_dwNumBone` | `dwSize` | body written | delta |
+|---|---|---|---|
+| 0 | 32 | 32 | **0** |
+| 1 | 48 | 40 | **+8** |
+| 2 | 64 | 48 | **+16** |
+| 3 | 80 | 56 | **+24** |
+| 4 | 96 | 64 | **+32** |
+| 5 | 112 | 72 | **+40** |
+| 6 | 128 | 80 | **+48** |
+| `COL_ERR` | **24** | **32** | **−8 (wraps)** |
+
+The previous 8/16/48 figures were correct for `n` = 1/2/6 but sampled only three points. Two
+cases were missing: `n == 0`, where the two terms coincide and the size is **right**, and
+`COL_ERR`, where the 32-bit sum **overflows and under-states**. The defect therefore errs in
+both directions.
+
+### Not version-specific, and not a `SMATERIAL_PIECE` problem
+
+`SVERTEXINFLU` is a nested record with its own tag (`0x0101`), independent of the `.cps`
+container version, so the same writer produced this for every version that stores traces
+(0x0101–0x0107). By contrast `SMATERIAL_PIECE::SaveFile` is **correct**: it wraps its body in
+`BeginBlock`/`EndBlock`, and `EndBlock` (`enginelib/Common/SerialFile.cpp:189-208`) computes the
+size from actual file positions, so it is measured rather than predicted.
+
+### Why nothing in RANMobile needed changing
+
+1. **There is no `.cps` writer in RANMobile.** `EP7SkinPiece` is reader-only. Fixing a writer
+   defect here would mean inventing a serializer — out of scope, and fabricated code.
+2. **The reader never trusts `dwSize` on a version match.** `ReadVertexInfluence`
+   (`EP7SkinPiece.cpp:38-66`) reads the body structurally when the tag matches and consults
+   `blockSize` only on the mismatch path, where it calls `Skip` — exactly mirroring
+   `SVERTEXINFLU::LoadFile`'s `else { SetOffSet(GetfTell() + dwSize); }`
+   (`DxSkinMeshContainer9.cpp:124-127`). A structural read cannot be displaced by a size the
+   writer got wrong.
+3. On that mismatch path the mobile reader is **safer** than the engine: `SetOffSet` is a bare
+   `fseek` (`SerialFile.cpp:161-168`) with no range check, while `Stream::Skip` is bounds-checked
+   via `Ensure` (`EP7ByteFormat.h:294-298`).
+
+### Guard rails now in place
+
+`TestSkinPieceInfluenceSizeAccounting` covers `numBone` = 0, `COL_ERR`, every legal count 0..6,
+and the mismatch-tag skip. Four controls confirm the tests bite; notably adding a
+`dwSize`-vs-body consistency check — the most likely future "hardening" — produces **31
+failures**. Anyone who later tries to make the reader trust `dwSize`, or who writes a `.cps`
+serializer, will be stopped by the suite.
+
+**If a `.cps` writer is ever added to RANMobile, it must compute the body size as
+`0x20 + 8n` and must not reproduce this arithmetic.**
+
+## B11 — RE-SCOPED: the "Anim" container is `SAnimContainer`, and it is already implemented
+
+**Status: the original B11 premise was wrong. There is no missing format definition.**
+
+B11 was recorded as *"`.bin` files with magic `Anim` — real data with no definition in this
+repository"*. The source says otherwise.
+
+### What the bytes actually are
+
+`"Anim"` is not a magic. It is the first four characters of the 128-byte basestream **file-type
+string** `"AnimContainer"`:
+
+```cpp
+// enginelib/Meshs/SAnimation.cpp:22
+const TCHAR SAnimContainer::szFILETYPE[] = _T("AnimContainer");
+// enginelib/Meshs/SAnimation.cpp:1583  (SAnimContainer::SaveToFile)
+SFile.SetFileType ( szFILETYPE, VERSION );
+```
+
+`CSerialFile::WriteFileType` (`SerialFile.cpp:57-66`) writes that field as 128 bytes, then the
+version DWORD. So a real file begins:
+
+```
+'A' 'n' 'i' 'm' 'C' 'o' 'n' 't' 'a' 'i' 'n' 'e' 'r' 0x00 ...  | 0x02 0x01 0x00 0x00
+<------- 128-byte type string (FILETYPESIZE) -------------->   <-- VERSION 0x0102 -->
+```
+
+**Every** EP7 basestream begins this way — `"AnimContainer"`, `"SANIMCONINFO"`, `"LAND.MAN"`,
+`"EFF_PROPGROUP"`, `"_FILEHEAD"`. A leading printable string is the *signature of a correct* EP7
+container, not of a foreign one.
+
+### The format is fully defined and already implemented
+
+| Component | Engine source | Mobile implementation |
+|---|---|---|
+| Container layout + list order | `SAnimContainer::SaveToFile` `SAnimation.cpp:1573` | `ParseContainer` `EP7Animation.cpp:267` |
+| Container version dispatch | `LoadAnimFromFile` `:1754` (0x0100/0x0101/0x0102) | same three branches |
+| Per-track layout | `SAnimation::SaveToFile` `:1353` | `ReadTrackList` |
+| Per-track version dispatch | `SAnimation::LoadFromFile` `:1400` (0x0100/0x0101/0x0102) | same |
+
+Executed proof: a source-accurate `SAnimContainer` (real `"AnimContainer"` type string, version
+0x0102, up-body list then main list, one rotate key each) parses through `ParseContainer` as
+`valid=1, up=1, main=1`, recovering `Bip01_Spine1` / `Bip01_Head` and their keys.
+
+### The real defect — in the verification tool, not the parser
+
+`RANMobile/Tools/verify_ep7_character_assets.cpp:242-259` pre-rejects any `.bin` whose first four
+bytes are printable, with the comment *"the client's own containers start with a small version
+DWORD"*. That comment is factually inverted: the version DWORD is at offset `0x80`, after the
+type string. Because the check runs **before** `ParseContainer`, every well-formed animation
+container is labelled UNSUPPORTED and never parsed.
+
+This is a **reporting false-negative only**. The heuristic appears nowhere outside the tool
+(`grep isprint` returns just those two lines); `EP7AssetImporter` and the loader path are clean.
+
+### Why the suite never caught it
+
+All 8 basestream fixtures in `test_phase3j.cpp` zero-fill the 128-byte type field. Nothing ever
+exercised a real type string. The `.cfg` path *does* validate its family
+(`ParseInfo` → *"not a SANIMCONINFO file"*, tested at `test_phase3j.cpp:1102`), so the concept
+existed — it was simply implemented backwards for `.bin`.
+
+### What is still genuinely unknown
+
+The **6,228** figure cannot be split without real bytes: some of those `.bin` files may be
+well-formed `SAnimContainer`s, while others (`.abf` skeleton assets, effect data, `cFileList.bin`)
+may be legitimately foreign. No authentic file could be inspected here (`external/` absent;
+`gh release download` → `EOF`). **No parser was written and none is needed.**
+
+### Recommended, separately scoped
+
+Fix the **classifier** in `verify_ep7_character_assets.cpp` (single file, tools layer): drop the
+printable-magic pre-check, let every `.bin` reach `ParseContainer`, and classify on the actual
+parse result — PASS / UNSUPPORTED (recognised container, unimplemented version) / FAIL (not a
+basestream, with the byte fingerprint as diagnostic detail only). Add fixtures for both a real
+`"AnimContainer"` header and a genuinely foreign one. Not done here: this task forbids touching
+production code.
+
+**Do not** implement an Anim parser on the strength of the old B11 text. That premise is
+disproved above.

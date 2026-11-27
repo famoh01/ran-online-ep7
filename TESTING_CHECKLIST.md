@@ -124,3 +124,379 @@ Android CI:
 - Not performed / still unverified: on-device or emulator Android execution, `.chf`/`.cps`/`.bin` skinned character rendering, live server login, and original `.exe` execution.
 
 
+
+---
+
+## 11. Phase 3J verification (2026-11-26, authentic character pipeline)
+
+### 11.1 Local host build (verified in this sandbox)
+
+```
+g++ 12.2.0, Linux x86-64
+g++ -std=c++17 -Wall -Wextra -Werror   # zero warnings, all 8 new sources + overlay + scene
+```
+
+Flags match the CI workflow's existing host build exactly.
+
+### 11.2 Local host tests
+
+| Target | Result |
+|---|---|
+| `RANMobile/Tests/test_phase3j.cpp` | **263 checks, 0 failures** |
+| same, `-fsanitize=address,undefined`, `detect_leaks=1` | **clean, no reports** |
+| `RANMobile/Tests/test_main.cpp` (Phase 3G–3I regression) | compiles clean with the 8 new sources linked; runtime stops at the **pre-existing** `assert(tpStats.found)` (line 186) because `external/ep7_release/thaipack_original` does not exist in this sandbox — unchanged behaviour, not a Phase 3J regression |
+
+Coverage details: see `PHASE3J_CHARACTER_ANIMATION.md` §9. The suite includes `.rcc`
+archive tests: case-insensitive lookup, stored entries, in-memory ZipCrypto decryption with
+the client password `"tkqwlf"` feeding the real `.cps`/`.chf` parsers, CRC-corruption
+rejection, and a truncation/byte-corruption sweep of the archive itself.
+
+### 11.3 Robustness sweep (part of the suite)
+
+Every truncated prefix of all six ABI fixtures, plus four byte values at every single byte
+offset, fed through all five parsers (`skeleton`, `skinned mesh`, `.chf`, `.cps`, `.bin`,
+`.cfg`). No crash, no sanitizer report.
+
+### 11.4 CI steps added (not yet executed — no CI run from this sandbox)
+
+New workflow steps in `.github/workflows/build-ranmobile-android.yml`:
+
+1. `Build & Run Phase 3J Character Tests` — builds and runs the suite with
+   `-Wall -Wextra -Werror`, writes `phase3j_test_output.log`.
+2. `Verify Authentic EP7 Character Assets` — builds
+   `RANMobile/Tools/verify_ep7_character_assets.cpp` and runs it against
+   `external/ep7_release/client_original`, writing `phase3j_authentic_assets.log`. The tool
+   walks loose files **and** opens every `.rcc`/`.zip` it finds, because the authentic
+   character data lives inside `SkinObject.rcc` / `Animation.rcc` (see BLOCKERS.md B9
+   addendum). The tool's exit code is part of the contract: `0` = every authentic entry
+   parsed, `1` = at least one failed (fails the step), `2` = nothing authentic found (loud
+   warning, step still green because an absent client is not a parser defect). The counts,
+   the exit code and every failure are also emitted as check-run annotations, so the verdict
+   is readable from the PR page even though the uploaded log needs credentials.
+3. Both logs are added to the job summary and to the `linux-test-failure-log` artifact.
+
+The existing 33-source host build now includes the 8 Phase 3J sources.
+
+### 11.5 Explicitly NOT verified by Phase 3J
+
+* No authentic `.chf/.cps/.x/.bin/.cfg` file was parsed (B9). The verification tool is the
+  only path to that evidence and has not been run on real data.
+* No character was rendered on screen.
+* No GPU skinning path exists to test.
+* Android arm64 build, `assembleDebug` / `assembleRelease` / `bundleRelease`: **CI-only**
+  (B1), not executed here.
+* No physical Android device was used.
+* No mobile performance measurement was taken.
+
+---
+
+## 12. CI isolation & authentic-asset outcome model — 2026-11-26
+
+### 12.1 Workflow structure (three independent jobs)
+
+`.github/workflows/build-ranmobile-android.yml` previously ran everything in **one job**.
+The authentic-asset step exits non-zero when real data cannot be parsed, so a coverage gap
+in an unimplemented format also skipped the core C++17 tests, the test summary, the log
+artifact and the whole Android build. That is fixed by splitting into three jobs with **no
+`needs:` between them**:
+
+| Job | Contents | Client data needed | Blocks CI |
+|---|---|---|---|
+| `core-tests` | `test_main.cpp` suite + Phase 3J character suite | no | **yes** |
+| `authentic-assets` | `verify_ep7_character_assets` against the real client | yes (~2.5 GB) | on `FAIL` only |
+| `android-arm64` | NDK arm64 lib + `assembleDebug/Release`, `bundleRelease` | no | yes |
+
+Because the jobs are independent, the workflow's overall status is the AND of three real
+statuses: a core failure can never be masked, and an asset verdict cannot stop core tests.
+
+### 12.2 Outcome model
+
+`verify_ep7_character_assets` classifies every entry as **PASS / FAIL / UNSUPPORTED** and
+returns one of four exit codes:
+
+| Exit | Outcome | Step behaviour |
+|---|---|---|
+| 0 | PASS | `::notice`, job green |
+| 1 | FAIL | `::error` + `exit 1` — **job fails** |
+| 2 | UNSUPPORTED | `::warning` + step summary table; job green (B11 coverage gap) |
+| 3 | NOT FOUND | `::warning`; job green (nothing to verify is not a defect) |
+
+`UNSUPPORTED` is never counted as parsed. `continue-on-error` is **not used anywhere**: the
+non-blocking decision for exit 2 is an explicit `case` in the step, so the reasoning is
+visible in the log.
+
+### 12.3 Verified commands (run 2026-11-26, Ubuntu sandbox, g++ 12)
+
+```bash
+# Phase 3J suite (276 checks)
+g++ -std=c++17 -Wall -Wextra -Werror \
+  RANMobile/Tests/test_phase3j.cpp \
+  RANMobile/Data/Importer/EP7CharacterFile.cpp RANMobile/Data/Importer/EP7SkinPiece.cpp \
+  RANMobile/Data/Importer/EP7Skeleton.cpp      RANMobile/Data/Importer/EP7XFile.cpp \
+  RANMobile/Data/Importer/EP7SkinnedMesh.cpp   RANMobile/Data/Importer/EP7Animation.cpp \
+  RANMobile/Data/Importer/EP7RccArchive.cpp    RANMobile/Engine/Scene/EP7CharacterScene.cpp \
+  RANMobile/Engine/Camera/MobileCamera.cpp     RANMobile/Engine/Renderer/MobileRenderer.cpp \
+  RANMobile/Engine/Core/Logger.cpp -o t && ./t
+
+# Sanitizers
+g++ -std=c++17 -g -fsanitize=address,undefined <same sources> -o t_asan
+LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=1 ./t_asan
+
+# Authentic-asset probe against any extracted client root
+g++ -std=c++17 -Wall -Wextra -Werror \
+  RANMobile/Data/Importer/EP7Animation.cpp RANMobile/Data/Importer/EP7CharacterFile.cpp \
+  RANMobile/Data/Importer/EP7RccArchive.cpp RANMobile/Data/Importer/EP7Skeleton.cpp \
+  RANMobile/Data/Importer/EP7SkinPiece.cpp RANMobile/Data/Importer/EP7SkinnedMesh.cpp \
+  RANMobile/Data/Importer/EP7XFile.cpp RANMobile/Tools/verify_ep7_character_assets.cpp \
+  -o verify && ./verify <extracted-client-root>; echo "exit=$?"
+```
+
+Outcome matrix confirmed locally with synthetic clients:
+
+| Client root | Probe exit | Expected |
+|---|---|---|
+| all assets parse | 0 | PASS |
+| `SANIMCONINFO` 0x0114 only | 2 | UNSUPPORTED |
+| corrupted pack entry | 1 | FAIL |
+| empty directory | 3 | NOT FOUND |
+
+Core-failure handling was also reproduced verbatim (`test_main.cpp:186` assertion, exit 134):
+the step's shell propagates the failure (`exit $TEST_EXIT`) and emits `::error::`.
+
+---
+
+## 13. Phase 3J follow-up — `.cps` trace-point regression (`SVERTEXINFLU::VERSION`)
+
+| Item | Requirement | Result |
+|---|---|---|
+| Unit regression | `.cps` trace record with tag `0x0101` and `numBone = 2` parses structurally | PASS |
+| Field fidelity | `index`, `position[3]`, `normal[3]`, `boneCount`, `bones[2]`, `weights[2]` all exact | PASS |
+| Boundary | `effectCount` and `m_dwFlag` reached ⇒ cursor landed on the structure, not the over-stated skip | PASS |
+| Negative gating | tag flipped to `0x0100` leaves `influence.valid == false` (engine's unknown-version branch) | PASS |
+| Defect reproduction | reverting the constant to `0x0100` fails 4 checks in the new test | PASS (reproduced) |
+| Full 3J suite | build `-Wall -Wextra -Werror` + run | PASS — **294 checks, 0 failures** (was 276) |
+| Sanitizers | ASan + UBSan + LSan on the full suite | PASS — clean, exit 0 |
+| Core suite compile | workflow command, `-Werror` | PASS — exit 0 |
+| Core suite run | `test_main.cpp:186` external-data assertion | exit 134 — **pre-existing, unchanged** (no authentic data in sandbox) |
+| Authentic-data verification | re-run probe against real assets | **NOT RUN** — assets unreachable here (`gh release download` → `EOF`) |
+
+### What this test does and does not establish
+
+The fixture is an **ABI fixture**, written by hand to the layout recovered from
+`SVERTEXINFLU::SaveFile` / `LoadFile` — it is not game data. It establishes that the reader
+honours the engine's real version tag and consumes the body structurally. It does **not**
+establish that authentic `.cps` files now parse end-to-end; that requires the CI
+authentic-asset job with the release asset present, which cannot be executed in this sandbox.
+
+### Check counts by stage
+
+| Stage | Checks | Failures |
+|---|---|---|
+| Before this change | 276 | 0 |
+| After adding `TestSkinPieceTraceInfluence` | **294** | **0** |
+| Old constant restored (control) | 283 | 4 |
+
+The control run confirms the new test is sensitive to the defect rather than passing vacuously.
+
+### 13.1 Executed validation against authentic assets (CI run `45917078958`, commit `802f0c0`)
+
+| Item | Result |
+|---|---|
+| `Core C++17 tests (blocking)` job | **success** |
+| `Android ARM64 build (lib + APK/AAB)` job | **success** |
+| `Authentic EP7 asset verification` job | failure (probe exit 1 — 3,679 FAILs remain) |
+| `cps: truncated trace name` | **2,664 → 0** |
+| `cps: effect count exceeds sanity limit` | **438 → 0** |
+| `cps: truncated trace vertex influence` | **58 → 0** |
+| `cps: truncated effect count` | **5 → 0** |
+| Total FAIL reasons | **6,812 → 3,679** (−3,133; reconciles exactly, see PROGRESS_REVIEW.md) |
+| `cps` entries now parsing cleanly | the trace section is reached and completed for every `.cps` that is not gate-rejected |
+
+The asset job still fails, and must continue to: 3,679 genuine FAILs remain (B13 3,138 + B15 88
++ `.chf` 243 + skeleton 210). It must not be made green by relaxing a check.
+
+Read the probe's **aggregated reason table** for comparisons, not the raw annotation list — the
+~10-annotation cap moves which reasons are visible between runs (UNSUPPORTED reasons now appear
+that were previously crowded out).
+
+---
+
+## 14. Phase 3J follow-up — `.cps` legacy versions 0x0101–0x0104 (B13 / B15)
+
+Source basis: `DxSkinPiece::LoadPiece` has seven branches and a terminal error path
+(`DxSkinPieceContainer.cpp:374/459/544/629/712/783/859`, `else` at `:934-943`).
+
+### Regression coverage added (`TestSkinPieceLegacyVersions`)
+
+| Item | Requirement | Result |
+|---|---|---|
+| 0x0104 | parses; materials present; trace name from file; ends at effect count | PASS |
+| 0x0104 trailing flag | a flag DWORD appended to the file is **not** consumed (`flag == 0`) | PASS |
+| 0x0103 | parses; **no** material list; traced names; no trailing flag | PASS |
+| 0x0102 | parses; **10** fixed slots; names `IMAGE01`/`IMAGE11`; `syntheticName` set | PASS |
+| 0x0101 | parses; **8** fixed slots; same name table | PASS |
+| COL_ERR slots | slots with `m_dwIndex == COL_ERR` produce no trace point (2 of 4 kept) | PASS |
+| slot count is load-bearing | 10-slot body read as 0x0101 fails; 8-slot body read as 0x0102 fails | PASS |
+| version gate | `0x0100` / `0x0108` / `0x0200` still rejected | PASS |
+| control: `hasTrailingFlag >= 0x0104` | 3 failures reproduce the old defect | PASS (reproduced) |
+| control: 10 slots for both legacy versions | 4 failures | PASS (reproduced) |
+| control: pre-fix reader | 8+ failures across the legacy section | PASS (reproduced) |
+
+### Executed local results
+
+| Stage | Checks | Failures |
+|---|---|---|
+| before this change | 294 | 0 |
+| after | **339** | **0** |
+
+ASan + UBSan + LSan: clean, exit 0. Core suite compile (`-Werror`): exit 0; run stops at the
+pre-existing `test_main.cpp:186` external-data assertion (exit 134), unchanged. Probe compiles
+clean under `-Werror`.
+
+### Executed CI results (run `45923517031`, commit `a591320`)
+
+| Job | Result |
+|---|---|
+| `Core C++17 tests (blocking)` | **success** |
+| `Android ARM64 build (lib + APK/AAB)` | **success** |
+| `Authentic EP7 asset verification` | failure — correct; genuine FAILs remain |
+
+Pack entries (the only measure that counts, from the probe's summary line):
+
+| | before `1e36e89` | after `a591320` | Δ |
+|---|---|---|---|
+| parsed | 6,350 | **6,479** | **+129** |
+| failed | 3,679 | **3,550** | **−129** |
+| unsupported | 1,631 | 1,631 | 0 |
+| total | 11,660 | 11,660 | 0 |
+
+Reason-level change, all `.cps`:
+
+| Reason | before | after |
+|---|---|---|
+| `cps: unsupported .cps version` | 3,138 | 3,097 (**−41**) |
+| `cps: truncated piece flag` | 88 | **0** (**−88**) |
+| `.chf` / skeleton / `.bin` / `.cfg` / `.x` | unchanged | unchanged |
+
+41 + 88 = 129 = Δparsed = Δfailed. **Authentic improvement is confirmed by CI**, not inferred.
+
+### What is deliberately not claimed
+
+The residual 3,097 `.cps` failures are files whose version DWORD is outside `0x0101..0x0107`.
+The engine rejects those too (same terminal `else`), so this is correct behaviour, not a
+remaining bug in the branch logic. No speculative version branch was added. Confirming whether
+any are legitimate would need the files themselves, which are unobtainable in this sandbox.
+
+---
+
+## 15. Phase 3J follow-up — `SVERTEXINFLU` `dwSize` accounting (B14)
+
+Source: `SVERTEXINFLU::SaveFile`, `DxSkinMeshContainer9.cpp:59-92` (copy at
+`SMeshContainer.cpp:52-85`); reader `:94-127`.
+
+### Regression coverage (`TestSkinPieceInfluenceSizeAccounting`)
+
+| Item | Requirement | Result |
+|---|---|---|
+| `numBone == 0` | `dwSize` and body agree; record parses; reaches `effectCount` | PASS |
+| `numBone == COL_ERR` | `dwSize` under-states (wrapped `0x18` vs `0x20` body); record parses | PASS |
+| `numBone` 0..6 | every legal count round-trips, `index`/`boneCount` exact, lands on `effectCount` and `m_dwFlag` | PASS |
+| mismatch tag | `dwSize` still honoured as the skip distance (engine parity) | PASS |
+| fixture fidelity | `PieceCpsWithInfluence` reproduces the writer's arithmetic before printing it | PASS |
+
+### Controls — the tests are load-bearing
+
+| Control | Injected change | Result |
+|---|---|---|
+| A | trust `dwSize` unconditionally on a match | many failures |
+| B | trust `dwSize` when it looks plausible | many failures |
+| C | drop the `COL_ERR` special case | many failures |
+| D | add a `dwSize`-vs-body consistency check | **31 failures**, incl. `numBone == 0` and `COL_ERR` |
+
+Control D is the guard rail that matters: a consistency check is the most likely future
+"hardening" and the suite now rejects it, because the writer is wrong rather than the reader.
+
+### Executed local results
+
+| Stage | Checks | Failures |
+|---|---|---|
+| before | 339 | 0 |
+| after | **398** | **0** |
+
+ASan + UBSan + LSan: clean, exit 0. Core suite compile (`-Werror`): exit 0; run stops at the
+pre-existing `test_main.cpp:186` external-data assertion (exit 134), unchanged.
+
+### Executed CI results (run `45926387844`, commit `80a6336`)
+
+| Job | Result |
+|---|---|
+| `Core C++17 tests (blocking)` | **success** |
+| `Android ARM64 build (lib + APK/AAB)` | **success** |
+| `Authentic EP7 asset verification` | failure — correct; genuine FAILs remain |
+
+| Pack entries | `6ee1b02` (before) | `80a6336` (after) |
+|---|---|---|
+| parsed | 6,479 | 6,479 |
+| failed | 3,550 | 3,550 |
+| unsupported | 1,631 | 1,631 |
+
+Identical, as expected for a test-only change. **No authentic-asset improvement is claimed and
+none was predicted** — B14 does not affect parsing. The value of this run is the negative
+result: adding the tests did not perturb behaviour.
+
+### Production code
+
+Unchanged. This task modified **only** `RANMobile/Tests/test_phase3j.cpp`. RANMobile has no
+`.cps` writer, and the reader already ignores `dwSize` on a version match, so there was nothing
+to correct.
+
+---
+
+## 16. Phase 3J follow-up — B11 "Anim" container investigation
+
+Investigation only. **No production code was modified; no parser was written.** The suite was run
+to confirm no regression.
+
+| Item | Result |
+|---|---|
+| Branch / HEAD | `arena/42c5ac0c-ran-online-ep7` @ `73d6d6d`, clean tree |
+| Production code changed | **none** |
+| C++ suite (ASan + UBSan + LSan) | **398 checks, 0 failures**, exit 0 |
+| Regression introduced | none |
+
+### Finding
+
+The `"Anim"` magic is the first four bytes of the 128-byte basestream type string
+`"AnimContainer"` (`SAnimation.cpp:22`, written by `SerialFile.cpp:57-66`). The format is
+`SAnimContainer`, and it is **already fully implemented** in `EP7Animation.cpp:267`.
+
+Source-accurate fixture, parsed through the real reader:
+
+| Input | Result |
+|---|---|
+| `"AnimContainer"` + `0x0102`, up-body then main list | `valid=1`, `up=1`, `main=1`, bone names and keys recovered |
+| same bytes through the probe's magic pre-check | classified **UNSUPPORTED**, never parsed |
+
+### Root of the misclassification
+
+`verify_ep7_character_assets.cpp:242-259` rejects any `.bin` whose first four bytes are printable,
+on the stated premise that *"the client's own containers start with a small version DWORD"*. That
+premise is inverted — the version DWORD is at offset `0x80`, after a 128-byte ASCII type string.
+The check runs before `ParseContainer` and therefore suppresses the parser for exactly the files
+it understands.
+
+This is a **tool-only** false negative: `grep isprint` matches only those two lines;
+`EP7AssetImporter` and the loader path contain no such heuristic.
+
+### Why the existing suite could not catch it
+
+All 8 basestream fixtures zero-fill the 128-byte type field. Per `SAnimContainer::LoadAnimFromFile`
+the type string is not consulted on load, so the fixtures pass while never exercising a real
+header. **Recommended addition (separate task):** a fixture with a genuine `"AnimContainer"` type
+string and one with a genuinely foreign string, so both classification branches are covered.
+
+### Not established
+
+The split of the 6,228 reported `.bin` UNSUPPORTED entries. Determining how many are well-formed
+`SAnimContainer` files versus genuinely foreign data requires one run of a corrected classifier
+against authentic assets, which are unavailable in this sandbox.

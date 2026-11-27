@@ -12,6 +12,7 @@ set(RANMOBILE_SOURCES
     Engine/Touch/TouchSystem.cpp
     Engine/Camera/MobileCamera.cpp
     Engine/Scene/EP7SceneRenderer.cpp
+    Engine/Scene/EP7CharacterScene.cpp
     Engine/Animation/AnimationManager.cpp
     Engine/Audio/AudioManager.cpp
     Engine/Network/NetworkClient.cpp
@@ -24,6 +25,13 @@ set(RANMOBILE_SOURCES
     Data/Importer/EP7TextureDecoder.cpp
     Data/Importer/EP7WorldCharParser.cpp
     Data/Importer/EP7WorldParser.cpp
+    Data/Importer/EP7Animation.cpp
+    Data/Importer/EP7CharacterFile.cpp
+    Data/Importer/EP7RccArchive.cpp
+    Data/Importer/EP7Skeleton.cpp
+    Data/Importer/EP7SkinPiece.cpp
+    Data/Importer/EP7SkinnedMesh.cpp
+    Data/Importer/EP7XFile.cpp
     Data/Converter/RANMobileDataConverter.cpp
     Data/Loader/GameDataLoader.cpp
     Data/Loader/ThaiPackLoader.cpp
@@ -38,6 +46,7 @@ set(RANMOBILE_SOURCES
     Client/Chat/ChatManager.cpp
     UI/Foundation/MobileUIKit.cpp
     UI/Login/LoginScreen.cpp
+    UI/Character/CharacterPreviewOverlay.cpp
     UI/Joystick/VirtualJoystick.cpp
     UI/Buttons/MobileButton.cpp
     UI/Buttons/MobileSkillButton.cpp
@@ -76,4 +85,13 @@ else()
     add_library(ranmobile_core STATIC ${RANMOBILE_SOURCES})
     add_executable(ranmobile_tests Tests/test_main.cpp)
     target_link_libraries(ranmobile_tests PRIVATE ranmobile_core pthread)
+
+    # Phase 3J: character / skeleton / animation parser + skinning tests.
+    # These use suite-authored ABI fixtures only; authentic-asset verification is the
+    # separate verify_ep7_character_assets tool below (needs an extracted EP7 client).
+    add_executable(ranmobile_phase3j_tests Tests/test_phase3j.cpp)
+    target_link_libraries(ranmobile_phase3j_tests PRIVATE ranmobile_core pthread)
+
+    add_executable(verify_ep7_character_assets Tools/verify_ep7_character_assets.cpp)
+    target_link_libraries(verify_ep7_character_assets PRIVATE ranmobile_core pthread)
 endif()
