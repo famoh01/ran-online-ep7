@@ -505,13 +505,27 @@ int main(int argc, char** argv) {
 
         size_t checked = 0;
         for (const auto& entry : archive.Entries()) {
-            if (!IsCharacterAssetName(entry.name)) continue;
+            // B19 FIX: shipped textures (.mtf/.dds) must be extracted and cached too —
+            // they sit OUTSIDE the character-asset name filter.  The B18 hook lived
+            // after the filter, so texture evidence and the texture cache stayed empty.
+            const bool isTexture = EndsWithNoCase(entry.name, ".mtf") || EndsWithNoCase(entry.name, ".dds");
+            if (!isTexture && !IsCharacterAssetName(entry.name)) continue;
             if (checked >= maxFiles) break;
             ++checked;
 
             const std::string label = archivePath + ":" + entry.name;
             std::vector<uint8_t> entryBytes;
             if (!archive.Extract(entry, entryBytes)) {
+                if (isTexture) {
+                    // Textures are outside the outcome model: an unextractable texture
+                    // is logged and skipped, never counted as a pack failure.
+                    char detail[256];
+                    std::snprintf(detail, sizeof(detail),
+                                  "could not extract texture (method=%u flags=0x%04X csize=%u usize=%u)",
+                                  entry.method, entry.flags, entry.compressedSize, entry.uncompressedSize);
+                    ReportOutcome("extract", label, Outcome::Fail, detail);
+                    continue;
+                }
                 // Report the method/flag/size triple: if the shipped packs ever use zip64,
                 // AES or a method other than stored/deflate, this line says so instead of
                 // leaving a mystery.
@@ -531,7 +545,7 @@ int main(int argc, char** argv) {
             // B18: shipped textures (.mtf/.dds) are classified additively — they are
             // not part of the B11-B17 character-entry outcome model, but the evidence
             // (decrypt/decode rates) and the bytes are kept for the deep-dive below.
-            if (EndsWithNoCase(entry.name, ".mtf") || EndsWithNoCase(entry.name, ".dds")) {
+            if (isTexture) {
                 if (EndsWithNoCase(entry.name, ".mtf")) {
                     ++g_b18.mtfTotal;
                     std::vector<uint8_t> raw;
@@ -615,7 +629,11 @@ int main(int argc, char** argv) {
                 std::printf("bundle-plan: chf '%s' loaded=%d pieces=%u\n", chfName.c_str(),
                             asset->loaded ? 1 : 0, asset->pieceCount);
                 // Texture names via the production ladder (cps materials + .x subsets).
-                for (uint32_t slot = 0; slot < RANMobile::kEP7PieceSize; ++slot) {
+                // B19 FIX: pieces is EMPTY when the .chf did not load (e.g. the
+                // documented unsupported-version gap) — indexing it without the
+                // loaded check was an out-of-bounds read (segfault).
+                for (uint32_t slot = 0;
+                     asset->loaded && slot < RANMobile::kEP7PieceSize; ++slot) {
                     const RANMobile::EP7CharacterPiece& piece = asset->pieces[slot];
                     if (!piece.loaded) continue;
                     std::map<std::string, int> names;
