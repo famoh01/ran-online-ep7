@@ -583,3 +583,21 @@ separate investigation; pre-existing pack .chf/.cps/.abf/.cfg coverage gaps; and
 PR #5 head belonging to another session branch. The verifier correction is done
 on `arena/1491d572-ran-online-ep7`; PR #5 remains OPEN/DRAFT, unmerged, with its
 head unchanged. This task does not authorize changing runtime/parser behavior.
+
+
+---
+
+## 16. Phase 3J B12 — Authentic Animation Container (`SAnimContainer` / `.bin`) Investigation
+
+- [x] Production `RANMobile/Data/Importer/EP7Animation.{h,cpp}` and B11 `RANMobile/Tools/verify_ep7_character_assets.cpp` verified `git diff` clean vs B11 commit `328e3d730ae37ac9f0fd276e0a723094acbe027a`.
+- [x] Read-only inspector unit & sanitizer suite (`bash RANMobile/Tests/run_ep7_animation_inspector_tests.sh`): **5,574 checks, 0 failures** in both `-O2` normal build and `-fsanitize=address,undefined` (`ASAN_OPTIONS=detect_leaks=1`) build.
+- [x] B11 verifier regression suite (`bash RANMobile/Tests/run_ep7_verifier_tests.sh`): **590 checks, 0 failures** normal and ASan+UBSan+LSan.
+- [x] Existing Phase 3J suite (`test_phase3j.cpp`): **398 checks, 0 failures**.
+- [x] Remote CI workflow `Phase 3J B12 Authentic Animation Container Investigation`:
+  - `Retrieve verified EP7 engine animation sources`: **success** — all 19 `Lib_Engine` LFS source files verified against SHA-256 OIDs (`matheomedrana/Ran-Online-EP7-Complete-Files` @ `f661fbf89612cc77f95a7c9b935ff06b22bc55e3`).
+  - `Inspect authentic ran-ep7-full-v1 animation containers`: **success** — `6,228` `data/animation/*.bin` files surveyed (`982` parsed / `4,037` unsupported / `1,209` parser-rejected / `0` invalid / `0` unrecognized), `6,228 / 6,228` (`384,339` tracks) verified to zero-trailing-byte `EXACT_EOF` under `SAnimationSaveLoad.cpp` read-only shadow spec, post-run asset SHA-256 immutability `YES`.
+- [x] Remote CI workflow `Build RANMobile Android (ARM64) & Verify EP7 Release`:
+  - `Core C++17 tests (blocking)`: **success**
+  - `Android ARM64 build (lib + APK/AAB)`: **success**
+  - `Authentic EP7 asset verification`: **expected non-blocking diagnostic failure (exit 1)** unchanged from B11 (`982` loose `.bin` parsed / `4,037` unsupported / `1,209` parser-rejected).
+

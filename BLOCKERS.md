@@ -792,3 +792,28 @@ separate investigation; pre-existing pack .chf/.cps/.abf/.cfg coverage gaps; and
 PR #5 head belonging to another session branch. The verifier correction is done
 on `arena/1491d572-ran-online-ep7`; PR #5 remains OPEN/DRAFT, unmerged, with its
 head unchanged. This task does not authorize changing runtime/parser behavior.
+
+
+## 2026-11-27 — Phase 3J B12: Authentic Animation Container (`SAnimContainer` / `.bin`) Investigation
+
+**Status: INVESTIGATED & FULLY SPECIFIED (`ANIMATION_CONTAINER_INVESTIGATION.md`). Production `EP7Animation.{h,cpp}` and B11 `verify_ep7_character_assets.cpp` remain untouched.**
+
+Using verified EP7 engine animation sources from `matheomedrana/Ran-Online-EP7-Complete-Files` @ `f661fbf89612cc77f95a7c9b935ff06b22bc55e3` (`Lib_Engine/Meshs/SAnimationSaveLoad.cpp`, SHA-256 `e0768610...a644b`) and read-only CI forensic inspection (`RANMobile/Tools/inspect_ep7_animation_containers.cpp`, CI run [`45982141864`](https://github.com/famoh01/ran-online-ep7/actions/runs/45982141864)) across all `6,228` loose `data/animation/*.bin` files in `ran-ep7-full-v1`:
+
+1. **All `6,228 / 6,228` (`100.00%`) authentic `data/animation/*.bin` files (`384,339` bone tracks) parse to zero-trailing-byte `EXACT_EOF` under the `SAnimationSaveLoad.cpp` specification.** Zero authentic `.bin` files are corrupt or truncated.
+2. **Exact root cause of the `1,209` B11 `parser-rejected` files:**
+   - All `1,209 / 1,209` are outer `0x0100` containers (`numMain >= 1`) whose first bone track at byte offset `136` has `SAnimation` `dwVersion == 0x0100`.
+   - `EP7AnimationReader::ParseContainer` (`EP7Animation.cpp:330`) accepts outer `0x0100` (allowing `0`-track `a_mob_wdm_stay01.bin`, `136` B, to pass), while `ReadBoneTrack` (`EP7Animation.cpp:18-205`) implements only `0x0102` and `0x0101` and omits `SAnimation::Load_0100` (`posKeys`, `rotKeys`, `scaleKeys`, `matrixKeys`, `m_strBone`; note `22` authentic `0x0100` files also contain tracks with empty `m_strBone`).
+3. **Critical latent parser defect uncovered in `EP7Animation.cpp` (`SMatrixKey` 68B read vs 80B stride):**
+   - `SMatrixKey` on 32-bit MSVC has `sizeof == 80` (`u32 dwTime` + **12-byte `D3DXMATRIXA16` `align(16)` heap padding** + `64`-byte `4x4` float matrix).
+   - `EP7Animation.cpp:94-104` (`0x0102`) and `168-178` (`0x0101`) check `CanReadElements(count, 80)` (`kMatrixKeySize`) but read `4 + 64 = 68` bytes without `s.Skip(12)`, reading Win32 heap padding into `mat[0..2]` and misaligning the stream by `12 * count` bytes.
+   - None of the `982` currently accepted `0x0101`/`0x0102` files have `m_cMatrixKeys > 0` (`ConvertMatToQuat` replaced them with `SQuatPosKey`), whereas **`1,205 / 1,210` (`99.6%`)** authentic `0x0100` files have `m_cMatrixKeys > 0`. Fixing `s.Skip(12)` is a mandatory prerequisite before enabling `SAnimation::Load_0100`.
+4. **Exact layouts of the `4,037` unsupported outer versions (`SAnimation` track `0x0103` throughout):**
+   - `0x0103` (`1,533` files): plaintext `upBody` list, `u32 dwGarbageValue` (`== 0x0103 + numUpBody + numMain` in `1,533/1,533` files), `main` list.
+   - `0x0104` (`2,495` files): plaintext `main` list (`2,491` non-empty), `upBody1` list (`810` non-empty), `upBody2` list (`628` non-empty; both append to `m_listAniUPBODY`).
+   - `0x0200` (`9` files): 132B plaintext header + `EMBYTECRYPT_BIN` (`ARRAY_BIN_VAR1[256]`) encoded payload (`upBody` list, `main` list).
+   - Track `0x0103` (`244,046` tracks): `m_strBone`, `rotKeys`, `u32 dwGarbage1`, `posKeys`, `quatPosKeys`, `matrixKeys` (`80`B), `u32 dwGarbage2`, `scaleKeys`.
+5. **Companion `.cfg` coupling:** `1,208 / 1,210` `0x0100` `.bin` files already pair with supported `.cfg` `0x0103`–`0x0107`, whereas `3,813 / 4,028` `0x0103`+`0x0104` `.bin` files pair with `.cfg` `0x0108`–`0x0115` (`Lib_Engine/Meshs/SAnimationInfoSaveLoad.cpp`).
+
+See `ANIMATION_CONTAINER_INVESTIGATION.md` Section 13 for the staged follow-up implementation plan.
+

@@ -1,0 +1,415 @@
+# Phase 3J B12 — Authentic EP7 Animation Container (`SAnimContainer` / `.bin`) Investigation
+
+- **Date:** 2026-11-27
+- **Branch:** `arena/00fd13f9-ran-online-ep7` (stacked Draft PR #7 -> `arena/42c5ac0c-ran-online-ep7` -> Draft PR #5 -> `main`)
+- **Scope:** Read-only forensic source + authentic-asset investigation. **Zero production importer (`RANMobile/Data/Importer/EP7Animation.{h,cpp}`) or B11 verifier (`RANMobile/Tools/verify_ep7_character_assets.cpp`) behavior was modified.**
+
+---
+
+## 1. Executive Summary
+
+Following the Phase 3J B11 `.bin` verifier correction, authentic release verification against `ran-ep7-full-v1` (`RAN-EP7-Client-TH.zip`) classified the `6,228` loose `.bin` files under `data/animation/` into:
+
+- **`982` parsed** (`0x0100`: `1`, `0x0101`: `907`, `0x0102`: `74`)
+- **`4,037` unsupported outer container version** (`0x0103`: `1,533`, `0x0104`: `2,495`, `0x0200`: `9`)
+- **`1,209` parser-rejected** after a recognized `AnimContainer` header (`0x0100`: `1,209`)
+- **`0` invalid-header**, **`0` unrecognized-type**, and **`0` `.bin` entries inside `.rcc` packs**
+
+This B12 investigation retrieved the complete EP7 engine animation serialization sources from the verified backup repository (`matheomedrana/Ran-Online-EP7-Complete-Files` @ `f661fbf89612cc77f95a7c9b935ff06b22bc55e3`) and executed a read-only forensic inspection + source-derived shadow verification across **all `6,228` authentic `data/animation/*.bin` files (`384,339` bone tracks)** in CI run [`45982141864`](https://github.com/famoh01/ran-online-ep7/actions/runs/45982141864).
+
+### Key Conclusions
+
+1. **Every single one of the `6,228` authentic `data/animation/*.bin` files (`100.00%`) is a valid, uncorrupted `SAnimContainer` binary that parses to zero-trailing-byte `EXACT_EOF` under the authoritative `Lib_Engine/Meshs/SAnimationSaveLoad.cpp` specification.** None of the `1,209` `parser-rejected` files are malformed assets.
+2. **Exact root cause of all `1,209` `parser-rejected` files:**
+   - All `1,209 / 1,209` files have outer container version `0x0100` (`numMain >= 1`) and store per-bone `SAnimation` tracks with **`dwVersion = 0x0100`**.
+   - `EP7AnimationReader::ParseContainer()` (`EP7Animation.cpp:330-335`) accepts outer container `0x0100`, so the single `0`-track file `data/animation/a_mob_wdm_stay01.bin` (`136` bytes) succeeds without entering `ReadBoneTrack()`.
+   - Every one of the remaining `1,209` `0x0100` files has `numMain >= 1`, enters `ReadBoneTrack()` at **byte offset `136`** (`list="main"`, `trackIndex=0`), reads `trackVer = 0x0100`, and is immediately rejected because `ReadBoneTrack()` only implements `0x0102` and `0x0101` (`EP7Animation.cpp:18-205`), failing with `"unsupported animation version"`.
+3. **Critical latent parser defect discovered in `EP7Animation.cpp` (`SMatrixKey` 68-byte read vs 80-byte on-disk stride):**
+   - On 32-bit Windows MSVC (`_MSC_VER`, x86), `SMatrixKey` (` { DWORD dwTime; D3DXMATRIXA16 mat; } `) has `sizeof(SMatrixKey) == 80` because `D3DXMATRIXA16` carries `__declspec(align(16))`, inserting **12 bytes of uninitialized heap padding at struct bytes `[4..15]`** before the 64-byte `4x4` float matrix at `[16..79]`.
+   - `EP7AnimationReader` correctly defines `kMatrixKeySize = 80` and checks `s.CanReadElements(count, kMatrixKeySize)`, **but its read loops (`EP7Animation.cpp:88-104` for `0x0102` and `166-178` for `0x0101`) read `ReadU32(time)` + `16 * ReadF32(mat)` = `68` bytes without `s.Skip(12)`!**
+   - This reads 12 bytes of Win32 heap garbage into `mat[0..2]` and shifts the stream cursor backward by `12 * m_cMatrixKeys` bytes.
+   - Why this defect did not trigger on the `982` currently accepted files: `0` of those `982` `0x0101`/`0x0102` files have `m_cMatrixKeys > 0` (all `979` non-empty accepted files had converted matrices to `SQuatPosKey` via `SAnimation::ConvertMatToQuat()`).
+   - Why this defect was masked in synthetic unit tests: in `RANMobile/Tests/test_phase3j.cpp:406-434` (`AnimationBin`) and `1033-1047` (`TestAnimation`), `AnimationBin()` explicitly wrote a real 80-byte `SMatrixKey` (with 12 zero padding bytes at `:429` and identity matrix ending in `0.0f, 0.0f, 1.0f`), and `ParseContainer()` misread the final three floats (`0.0f, 0.0f, 1.0f`) as `scaleCount = 0` and `mainTrackCount = 0` (`upBody` came first in `0x0102`, `main` had 0 tracks!), returning `clip.valid == true` with 12 unread trailing bytes while `clip.upBodyTracks[0].matrixKeys[0].mat[0]` silently became `0.0f` instead of `1.0f`!
+   - **Blast radius on `0x0100`:** **`1,205` of `1,210` (`99.59%`)** authentic `0x0100` files have `m_cMatrixKeys > 0`. Adding `SAnimation::Load_0100` without first fixing the 12-byte `SMatrixKey` alignment-padding skip would corrupt or desynchronize `1,205` authentic files.
+4. **Complete specifications verified for all unsupported outer versions (`4,037` files):**
+   - **`0x0103` (`1,533` files):** unencrypted; `upBody` list (`SAnimation` `0x0103`), **`DWORD dwGarbageValue` (`4` B; equals `0x0103 + numUpBody + numMain` in `1,533 / 1,533` files)**, `main` list (`SAnimation` `0x0103`).
+   - **`0x0104` (`2,495` files):** unencrypted; **three** sequential track lists (`SAnimation` `0x0103`): `main` list (`2,491` non-empty), `upBody` list #1 (`810` non-empty), and `upBody` list #2 (`628` non-empty; both `upBody` lists append to `m_listAniUPBODY` in `SAnimContainer::Load_0104`).
+   - **`0x0200` (`9` files):** 132-byte header is plaintext; payload `[132..EOF)` is byte-encoded with **`EMBYTECRYPT_BIN` (`ARRAY_BIN_VAR1`, 256-byte substitution table)**; decoded payload has the exact `0x0102` container layout (`upBody` list, `main` list) containing `SAnimation` `0x0103` tracks.
+   - **Per-bone track `0x0103` (`244,046` tracks across `0x0103`/`0x0104`/`0x0200` containers):** differs from `0x0102` ONLY in the placement of the two `DWORD` obfuscation words (`dwGarbage1 = m_strBone.length()` moves **before** `posKeys`; `dwGarbage2 = m_strBone.length() + 0x0103` moves **after** `matrixKeys`). All keyframe struct layouts and quaternion compression (`QUATCOMP`) are 100% unchanged across `0x0100`–`0x0200`.
+
+---
+
+## 2. Verified Baseline & B11 Reconciliation
+
+| Metric | `data/animation/` Scope (matches B11 verifier) | Non-Animation Loose `.bin` Outside `data/animation/` | Tree-Wide Loose `.bin` Total | `.rcc` Pack `.bin` Entries |
+|---|---:|---:|---:|---:|
+| Total `.bin` files | **6,228** | 357 | 6,585 | **0** |
+| `parsed` (unmodified `EP7AnimationReader`) | **982** | 0 | 982 | 0 |
+| `unsupported-version` (`0x0103`, `0x0104`, `0x0200`) | **4,037** | 0 | 4,037 | 0 |
+| `parser-rejected` (`AnimContainer` header, parser failed) | **1,209** | 0 | 1,209 | 0 |
+| `invalid-header` (`< 132` B or unterminated type string) | **0** | 34 | 34 | 0 |
+| `unrecognized-type` (132B header, type `!= "AnimContainer"`) | **0** | 323 | 323 | 0 |
+
+- Every `data/animation/*.bin` bucket (`982 + 4,037 + 1,209 + 0 + 0 = 6,228`) reconciles to the exact integer with B11 (`verify_ep7_character_assets.cpp`).
+- The `357` non-animation `.bin` files outside `data/animation/` are root patch metadata (`cVer.bin`, `cFileList.bin`) and `data/glogic/*.bin` / `data/glogicserver/*.bin` logic tables (`verify_ep7_character_assets.cpp` properly scopes loose `.bin` scanning to `data/animation/`).
+- All `6,228` `AnimContainer` 128-byte `szFileType` headers are strictly zero-padded (`zero_padded = 6,228`, `nonzero_trailing_bytes = 0`).
+
+---
+
+## 3. Authoritative Source Evidence Provenance
+
+Two engine source trees were cross-checked:
+
+1. **Current repository (`famoh01/ran-online-ep7`):**
+   - `enginelib/Meshs/SAnimation.h` (`SAnimation::VERSION = 0x0102`, `SAnimContainer::VERSION = 0x0102`)
+   - `enginelib/Meshs/SAnimation.cpp` (implements `SAnimation::Load_0100`, `Load_0101`, `Load_0102`, and `SAnimContainer::Load_0100`, `Load_0101`, `Load_0102` at lines `1184`–`1560`)
+   - `enginelib/Meshs/DxAniKeys.h` (`UNITANIKEY_PERSEC = 4800`, `SPositionKey`, `SRotateKey`, `SScaleKey`, `SMatrixKey`, `SQuatPosKey`)
+2. **Verified full EP7 engine backup repository (`matheomedrana/Ran-Online-EP7-Complete-Files` @ commit `f661fbf89612cc77f95a7c9b935ff06b22bc55e3`, identical tree to Google Drive `Ran-Online-Episode-7-main.zip` SHA-256 `9c11d62d9f2b12b8869a49c42bf6c55c063abdb8a60ac611a1b53b165fd2256c`):**
+   - Retrieved via targeted Git LFS fetch in `.github/workflows/phase3j_b12_animation_investigation.yml` (`b12-engine-anim-sources`, check run `140448637476`), with every file verified byte-for-byte against its committed Git LFS SHA-256 pointer:
+
+| Backup Repo Path | Bytes | Verified LFS SHA-256 | Key Contents |
+|---|---:|---|---|
+| `Lib_Engine/Meshs/SAnimation.h` | 5,420 | `90c9a3673bddeeb9739c25b19b2e07c55228f1b819b2b770f943102607119002` | `SAnimation::VERSION = 0x0103`; `SAnimContainer::VERSION = 0x0200`, `VERSION_ENCODE = 0x0200` |
+| `Lib_Engine/Meshs/SAnimationSaveLoad.cpp` | 18,473 | `e07686104ca1bbbfb431c63c8e79a954b4fb366ef36b048205e2a776d5da644b` | Full `SAnimation::Load_0100`–`0103` + `SaveToFile` (`0x0103`); `SAnimContainer::Load_0100`–`0104`, `Load_0200`, `SaveToFile` (`0x0200` + `EMBYTECRYPT_BIN`) |
+| `Lib_Engine/Meshs/SAnimation.cpp` | 34,515 | `187bd5e515df14df5ba2c46109e249897be4a009749996d544be47503981b48e` | `SetTime`, `SetMix`, `ConvertMatToQuat`, `UpdateTime`, `UpdateMix`, `.x` loader |
+| `Lib_Engine/Meshs/SAnimationInfo.h` | 7,377 | `c877c09767b54a8364a5b214ed58e0d8c0f246db40a0e004f8015772d5027f75` | `SANIMCONINFO::VERSION = 0x0200`, `ACF_*` flags, `AN_TYPE_SIZE = 34`, `AN_SUB_00_SIZE = 100` |
+| `Lib_Engine/Meshs/SAnimationInfoSaveLoad.cpp` | 13,516 | `279a50708cd9778b9703cf47b470c7484f36e34f38411f90f457dc3444da62e2` | `SANIMCONINFO::Load_0101`–`Load_0115`, `Load_0200` (`EMBYTECRYPT_CFG`) |
+| `Lib_Engine/Meshs/DxAniKeys.h` | 6,931 | `d3020d82c6f1b8bf822301573026243b2421265c9615035a5a19833d20961ca4` | `UNITANIKEY_PERSEC = 4800`, `SPositionKey`, `SRotateKey`, `SScaleKey`, `SMatrixKey`, `SQuatPosKey`, `QUATCOMP` |
+| `Lib_Engine/Meshs/DxAniBoneScale.h` | 1,913 | `85358bf4b6f3b025551a0bf2b51343299a9e1a36b8da4221bf8f4f5c79e904d2` | `DxAniScale` / `DxAniScaleMAIN` |
+| `Lib_Engine/Meshs/DxAniBoneScale.cpp` | 6,284 | `be5b21a5b9496e900cfde171ab27bc5bc987a77b933688890878a5d81948aa7e` | `.cfg` bone-scale table serialization |
+| `Lib_Engine/Meshs/DxSkinAniMan.cpp` | 16,177 | `d9b0b123b165c7ab56395b2069b274d35e54079b80be3540a57f976610968696` | `LoadAnimContainer` pairing `.cfg` + `.bin` |
+| `Lib_Engine/Meshs/DxSkinAniControl.cpp` | 27,236 | `b782abdc0328cb5b79c64b0c0153a548155a96db338a02e88a675a66466d3230` | Runtime playback, upper/lower body mixing |
+| `Lib_Engine/Common/basestream.h` | 5,625 | `6021a56bd3bc6fd60d5044932bb04016b162f6d9da143949c1cf36b007b58565` | `FILETYPESIZE = 128`, `m_FileID` |
+| `Lib_Engine/Common/SerialFile.cpp` | 13,895 | `21564a020e3df749c54f93e7c71fdca72652a7a3fd87d396608b4984499b5276` | `ReadFileType`, `SetEncodeType`, `BYTECRYPT::byte_decode`, `operator>>(std::string&)` |
+| `Lib_Engine/Common/ByteCrypt.h` | 1,601 | `29f1a10e00eb108a3de765e54cf3111c670f8b67d1b069f92bc5e28d18adfc15` | `EMBYTECRYPT_BIN = 19`, `EMBYTECRYPT_CFG = 17` |
+| `Lib_Engine/Common/ByteCrypt.cpp` | 5,593 | `5081906dd78a1b19aa1fd7a1a8c17946f0e5c8e35ef82b19a2de521b55c92b0e` | `byte_encode` / `byte_decode` 256-byte bijective table inversion |
+| `Lib_Engine/Common/ByteCryptDefVer1.h` | 32,493 | `fe42183b4a0715bf6a3cd147f951c487c0c1c3e2bc175d5e109fd8886e909120` | `ARRAY_BIN_VAR1[256]` and `ARRAY_CFG_VAR1[256]` |
+
+---
+
+## 4. Authentic Release Archive Provenance
+
+All authentic asset measurements were performed read-only against `famoh01/ran-online-ep7` GitHub Release `ran-ep7-full-v1`:
+
+| Release Artifact | SHA-256 |
+|---|---|
+| `RAN-EP7-Client-TH.zip.part00` | `a68df3ae793b7301ccf5cc91d28613c0dee0b72015a8e38d06195559f6612356` |
+| `RAN-EP7-Client-TH.zip.part01` | `a0351ea3720f2065c847eaf226e3438f36637cee7c96c547e6c8fcd098a8f992` |
+| Reassembled `RAN-EP7-Client-TH.zip` | `6866e84b46e7ea081988f94532c505dd1219c3540081c7ba00beaba40a64c4e3` |
+| `data/animation/animation.rcc` (`6,734` `.cfg` entries, `0` `.bin` entries) | `116bb1a5e4743ebac07ed8c368b985b1f76a0720562a6bc9284ee6a82aa1aced` |
+| `data/skinobject/skinobject.rcc` (`0` `.bin` entries) | `448dc74477c52baa223e4289aa0b7ed4dcb1f6c3fee6e87a10aedafe83aa6941` |
+
+`inspect_ep7_animation_containers` recorded the pre-run SHA-256 of every sampled loose `.bin` file and re-computed its SHA-256 at exit (`sample_hashes_unchanged_after_run: true`).
+
+---
+
+## 5. Complete `SAnimContainer` Outer Header & Container Version Specification
+
+Source: `Lib_Engine/Meshs/SAnimationSaveLoad.cpp:299-555` and `Lib_Engine/Common/SerialFile.cpp:48-68, 219-244`.
+
+### 5.1 132-Byte `CSerialFile` Header (`[0..131]`, Always Unencrypted)
+
+| Byte Offset | Size | C++ Type / Field | Value in Authentic `data/animation/*.bin` |
+|---:|---:|---|---|
+| `0` | `128` | `char szFileType[128]` | `"AnimContainer\0"` (`41 6e 69 6d 43 6f 6e 74 61 69 6e 65 72 00`) + `114` zero bytes (`0x00`) in all `6,228 / 6,228` files |
+| `128` | `4` | `DWORD dwVersion` (`m_FileID`) | Little-endian `uint32_t`: `0x0100`, `0x0101`, `0x0102`, `0x0103`, `0x0104`, or `0x0200` |
+
+Note on `SAnimContainer::LoadAnimFromFile` (`SAnimationSaveLoad.cpp:307-313`):
+- `CSerialFile::OpenFile(FOT_READ, ...)` reads the 132-byte header in plaintext (`ReadFileType()`), setting `m_DefaultOffSet = 132`.
+- Immediately after `GetFileType(szFileType, FILETYPESIZE, dwVersion)`, the engine checks:
+  ```cpp
+  if ( dwVersion >= VERSION_ENCODE ) // VERSION_ENCODE = 0x0200
+      SFile.SetEncodeType( EMBYTECRYPT_BIN );
+  ```
+- Therefore bytes `[0..131]` are **never** encrypted even for `0x0200`; `EMBYTECRYPT_BIN` applies strictly to bytes `[132..EOF)`.
+
+### 5.2 Outer Container Version Table (`[132..EOF)`)
+
+Each track list is serialized as `DWORD dwCount` followed by `dwCount` consecutive `SAnimation` track records:
+
+| Outer `dwVersion` | Files in `ran-ep7-full-v1` | Payload Encoding `[132..EOF)` | Exact Sequential Payload Layout (`SAnimationSaveLoad.cpp`) | Track `dwVER` Observed in Authentic Assets | Current `EP7AnimationReader` Status |
+|---|---:|---|---|---|---|
+| `0x0100` | **1,210** | Plaintext | `u32 numMain; SAnimation main[numMain];` (`upBody` is empty) (`Load_0100`, `:328-346`) | `0x0100` (`63,226` tracks across `1,209` files; `1` file has `numMain = 0`) | **Broken for non-empty files:** outer `0x0100` accepted, but `ReadBoneTrack` lacks `0x0100` -> `1` parsed (`0` tracks), **`1,209` parser-rejected** |
+| `0x0101` | **907** | Plaintext | `u32 numMain; SAnimation main[numMain];`<br>`u32 numUpBody; SAnimation upBody[numUpBody];` (`Load_0101`, `:348-378`) | `0x0101` (`71,783` tracks) | Supported (`907` parsed; latent `SMatrixKey` bug not hit because `m_cMatrixKeys == 0` in all `907`) |
+| `0x0102` | **74** | Plaintext | `u32 numUpBody; SAnimation upBody[numUpBody];`<br>`u32 numMain; SAnimation main[numMain];` (`Load_0102`, `:380-410`) | `0x0102` (`5,284` tracks) | Supported (`74` parsed; `m_cMatrixKeys == 0` in all `74`) |
+| `0x0103` | **1,533** | Plaintext | `u32 numUpBody; SAnimation upBody[numUpBody];`<br>**`u32 dwGarbageValue;`**<br>`u32 numMain; SAnimation main[numMain];` (`Load_0103`, `:412-449`) | `0x0103` (`114,210` tracks) | Unsupported (`1,533` unsupported-version) |
+| `0x0104` | **2,495** | Plaintext | `u32 numMain; SAnimation main[numMain];`<br>`u32 numUpBody1; SAnimation upBody1[numUpBody1];`<br>`u32 numUpBody2; SAnimation upBody2[numUpBody2];` (`Load_0104`, `:451-486`) | `0x0103` (`129,379` tracks) | Unsupported (`2,495` unsupported-version) |
+| `0x0200` | **9** | **`EMBYTECRYPT_BIN`** (`ARRAY_BIN_VAR1[256]`) | After byte-table decode:<br>`u32 numUpBody; SAnimation upBody[numUpBody];`<br>`u32 numMain; SAnimation main[numMain];` (`Load_0200`, `:488-519`, `SaveToFile`, `:521-555`) | `0x0103` (`457` tracks) | Unsupported (`9` unsupported-version) |
+
+### 5.3 Verified Structural Invariants on `0x0103`, `0x0104`, and `0x0200`
+
+1. **`0x0103` Inter-List `dwGarbageValue` (`SAnimationSaveLoad.cpp:427`):**
+   - `Load_0103` reads and discards a single `DWORD dwGarbageValue` between `m_listAniUPBODY` and `m_listAnimation`.
+   - Across all **`1,533 / 1,533` (`100%`)** authentic `0x0103` `.bin` files in `ran-ep7-full-v1`, the writer populated that word using the exact formula `dwGarbageValue == 0x0103 + numUpBody + numMain` (e.g. `a_event_pierrot.bin`: `upBody = 14`, `main = 21`, `dwGarbageValue = 0x0126 = 0x0103 + 35`). Consistent with `Load_0103`, a reader must consume and ignore this `uint32_t` without enforcing the writer's formula.
+2. **`0x0104` Three-List Semantics (`SAnimationSaveLoad.cpp:451-486`):**
+   - `Load_0104` reads three sequential counted track lists:
+     - List 0 (`dwSize` at `:459`) -> `m_listAnimation` (`mainTracks`), non-empty in **`2,491 / 2,495`** files.
+     - List 1 (`dwSize` at `:467`) -> `m_listAniUPBODY` (`upBodyTracks`), non-empty in **`810 / 2,495`** files.
+     - List 2 (`dwSize` at `:475`) -> **also** `m_listAniUPBODY.push_back(pAnimation)` (`upBodyTracks`), non-empty in **`628 / 2,495`** files (`4` files have `0, 0, 0`, e.g. `144`-byte `a_item_lovely_step_bone.bin`).
+   - Because `628` production `0x0104` files store real upper-body tracks in List 2, both List 1 and List 2 must append into `clip.upBodyTracks`.
+3. **`0x0200` `EMBYTECRYPT_BIN` Lookup Table (`ByteCryptDefVer1.h` `ARRAY_BIN_VAR1`):**
+   - `BYTECRYPT::byte_encode` replaces each plaintext byte `p` with `ARRAY_BIN_VAR1[p]`; `BYTECRYPT::byte_decode` builds the inverse 256-byte bijection `DEC[ARRAY_BIN_VAR1[i]] = i` and maps each ciphertext byte `c` at `[132..EOF)` to `DEC[c]`.
+   - Applying `DEC` to all `9 / 9` authentic `0x0200` `.bin` files (`a.bin`, `a2.bin`, `budots.bin`, etc.) yields standard `Load_0200` (`upBody`, `main`) streams with `SAnimation` `0x0103` tracks reaching exact EOF on all `9` files.
+
+---
+
+## 6. Complete `SAnimation` Per-Bone Track & Keyframe Specification
+
+Source: `Lib_Engine/Meshs/SAnimationSaveLoad.cpp:15-297`, `Lib_Engine/Meshs/DxAniKeys.h:1-215`, `Lib_Engine/Common/SerialFile.cpp:433-443, 582-597`.
+
+### 6.1 Keyframe Struct Binary Layouts (Unchanged Across `0x0100`–`0x0103`)
+
+Time units across all versions use `UNITANIKEY_PERSEC = 4800` ticks/second (`DxAniKeys.h`).
+
+| Engine Struct (`DxAniKeys.h`) | On-Disk Size | Exact Little-Endian Field Layout | Notes |
+|---|---:|---|---|
+| `SPositionKey` | **`16` B** | `u32 dwTime` (`[0..3]`), `f32 vPos[3]` (`[4..15]`) | Unchanged |
+| `SRotateKey` | **`20` B** | `u32 dwTime` (`[0..3]`), `f32 quatRotate[4]` (`x, y, z, w` at `[4..19]`) | DirectX `D3DXQUATERNION` `(x,y,z,w)` |
+| `SScaleKey` | **`16` B** | `u32 dwTime` (`[0..3]`), `f32 vScale[3]` (`[4..15]`) | Unchanged |
+| `SQuatPosKey` | **`36` B** | `u32 m_dwTime` (`[0..3]`), `f32 m_vScale[3]` (`[4..15]`), `f32 m_vPos[3]` (`[16..27]`), `u32 m_vQuatComp.dwFirst` (`[28..31]`), `u32 m_vQuatComp.dwSecond` (`[32..35]`) | `QUATCOMP` codec (`32767.f` / `32768` / `65535.f` + sign bit `0x80000000` for `w`) is identical in both engine trees and `EP7AnimationReader::DecompressQuaternion` |
+| `SMatrixKey` | **`80` B** | `u32 dwTime` (`[0..3]`), **`u8 _align16_pad[12]` (`[4..15]`)**, `f32 mat[16]` (`[16..79]`, row-major `D3DXMATRIXA16`) | **`D3DXMATRIXA16` has `align(16)` on Win32 MSVC**, placing `mat` at offset `16` and making `sizeof(SMatrixKey) == 80` |
+
+### 6.2 `CSerialFile` String Encoding & Empty Bone Name Edge Case
+
+- `CSerialFile::operator<<(const std::string& str)` (`SerialFile.cpp:438-440`) writes `DWORD(str.length() + 1)` followed by `str.length() + 1` bytes including the trailing `'\0'`.
+- An empty `m_strBone` (`""`) is serialized on disk as `01 00 00 00 00` (`len = 1`, payload `"\0"`).
+- **Authentic asset edge case:** **`22` authentic `0x0100` `.bin` files** contain at least one `SAnimation` track whose `m_strBone` is empty (`""`). `SAnimationSaveLoad.cpp` accepts empty `m_strBone` (`SFile >> m_strBone` without non-empty rejection, skipping bone binding only at runtime if `m_pSkeleton->FindBone` returns `NULL`). `EP7ByteFormat.h`'s `Stream::ReadString` already strips trailing `'\0'` and returns `true` on `""`, so `ReadBoneTrack` must **not** reject `boneName.empty()`.
+
+### 6.3 Per-Bone `SAnimation` Track Version Table (`0x0100`–`0x0103`)
+
+Every `SAnimation` record begins with `DWORD dwVersion`. Each key array is serialized as `DWORD count` followed (if `count > 0`) by `count * sizeof(KeyStruct)` raw bytes (`SFile.WriteBuffer` / `SFile.ReadBuffer`):
+
+| Track `dwVersion` | Source Function (`SAnimationSaveLoad.cpp`) | Exact Field Order After `DWORD dwVersion` | Authentic Track Count in `ran-ep7-full-v1` |
+|---|---|---|---:|
+| **`0x0100`** | `SAnimation::Load_0100` (`:15-50`) | 1. `posKeys` (`u32 cPos` + `16 * cPos` B)<br>2. `rotKeys` (`u32 cRot` + `20 * cRot` B)<br>3. `scaleKeys` (`u32 cScale` + `16 * cScale` B)<br>4. `matrixKeys` (`u32 cMat` + **`80 * cMat` B**)<br>5. `std::string m_strBone` (`u32 len` + `len` B)<br>*(Engine calls `ConvertMatToQuat()` after load)* | **63,226** (in `1,209` `0x0100` files) |
+| **`0x0101`** | `SAnimation::Load_0101` (`:52-95`) | 1. `posKeys` (`16` B/key)<br>2. `rotKeys` (`20` B/key)<br>3. `scaleKeys` (`16` B/key)<br>4. `matrixKeys` (**`80` B/key**)<br>5. `quatPosKeys` (`36` B/key)<br>6. `std::string m_strBone` | **71,783** (in `907` `0x0101` files) |
+| **`0x0102`** | `SAnimation::Load_0102` (`:97-152`) | 1. `std::string m_strBone`<br>2. `rotKeys` (`20` B/key)<br>3. `posKeys` (`16` B/key)<br>4. **`u32 dwGarbage1`**<br>5. `quatPosKeys` (`36` B/key)<br>6. **`u32 dwGarbage2`**<br>7. `matrixKeys` (**`80` B/key**)<br>8. `scaleKeys` (`16` B/key) | **5,284** (in `74` `0x0102` files) |
+| **`0x0103`** | `SAnimation::Load_0103` (`:154-209`) & `SaveToFile` (`:236-297`) | 1. `std::string m_strBone`<br>2. `rotKeys` (`20` B/key)<br>3. **`u32 dwGarbage1`** *(written as `m_strBone.length()`)*<br>4. `posKeys` (`16` B/key)<br>5. `quatPosKeys` (`36` B/key)<br>6. `matrixKeys` (**`80` B/key**)<br>7. **`u32 dwGarbage2`** *(written as `m_strBone.length() + 0x0103`)*<br>8. `scaleKeys` (`16` B/key) | **244,046** (`114,210` in `0x0103`, `129,379` in `0x0104`, `457` in `0x0200`) |
+
+Look at the exact difference between track `0x0102` and track `0x0103`:
+- No struct sizes, key semantics, or compression changed.
+- Only the two `DWORD` obfuscation fields moved:
+  - `dwGarbage1` moved from **after `posKeys`** (`0x0102`) to **before `posKeys`** (`0x0103`).
+  - `dwGarbage2` moved from **before `matrixKeys`** (`0x0102`) to **after `matrixKeys`** (`0x0103`).
+
+---
+
+## 7. Root-Cause Dissection of the `1,209` `parser-rejected` Files
+
+Across all `1,209` files in `data/animation/` that B11 classified as `recognized container parser rejection`:
+
+- **100% (`1,209 / 1,209`) share the exact same root cause and failure site:**
+  ```text
+  1209 x 0x0100 | list=main | idx=0 | byte_offset=136 | trackVer=0x0100 | err=unsupported animation version
+  ```
+- **Why `1` `0x0100` file (`data/animation/a_mob_wdm_stay01.bin`, `136` B) passed in B11 while `1,209` failed:**
+  - `a_mob_wdm_stay01.bin` (`sha256 = 2b1bb00cb510ff91ccde93e1072ab9c562e85512ee6aeeb362849c501f6047d5`) has bytes `[128..135] = 00 01 00 00 00 00 00 00` (`outerVersion = 0x0100`, `numMain = 0`).
+  - `EP7AnimationReader::ParseContainer()` (`EP7Animation.cpp:330-335`) handles `version == 0x0100` by calling `ReadTrackList(stream, clip.mainTracks)`. When `count == 0`, the loop runs zero times and never calls `ReadBoneTrack()`.
+  - All other `1,209` `0x0100` files have `numMain >= 1` and immediately invoke `ReadBoneTrack()` at offset `136`, where `version == 0x0100` hits the terminal failure (`EP7Animation.cpp:203-205`).
+- **Historical reason `0x0100` uses `SMatrixKey` (`1,205 / 1,210` files):**
+  - As shown in `SAnimation.cpp:1241-1265` (`SAnimation::ConvertMatToQuat`), `#define USE_ANI_QUATERNION` was introduced starting with `0x0101` to decompose `80`-byte `SMatrixKey` arrays into `36`-byte `SQuatPosKey` arrays (`m_cMatrixKeys = 0L; SAFE_DELETE_ARRAY(m_pMatrixKeys);`).
+  - Pre-`0x0101` (`0x0100`) `.bin` files predated `SQuatPosKey` and serialized raw `SMatrixKey` arrays directly; `SAnimation::Load_0100` (`SAnimationSaveLoad.cpp:45`) calls `ConvertMatToQuat()` on load.
+
+---
+
+## 8. Defects & Hazards Discovered in Existing `RANMobile/Data/Importer/EP7Animation.{h,cpp}`
+
+Per Phase 3J B12 scope rules, production `EP7Animation.{h,cpp}` was left **100% untouched** during this investigation. Auditing `EP7Animation.{h,cpp}` against `SAnimationSaveLoad.cpp` and authentic `.bin` bytes uncovered three distinct issues that any future implementation PR must address:
+
+### 8.1 Critical Defect #1 — `SMatrixKey` 68-Byte Read vs 80-Byte On-Disk Stride (`EP7Animation.cpp:88-104`, `166-178`)
+
+In `EP7Animation.cpp:88-104` (`0x0102`) and `166-178` (`0x0101`):
+
+```cpp
+// EP7Animation.h: kMatrixKeySize = 80 (u32 time + 12B align16 pad + 16 floats)
+
+// EP7Animation.cpp:94-104 (and identically at 168-178):
+if (!s.CanReadElements(count, EP7AnimationReader::kMatrixKeySize)) { ... }
+out.matrixKeys.resize(count);
+for (uint32_t i = 0; i < count; ++i) {
+    if (!s.ReadU32(out.matrixKeys[i].time)) return false; // reads 4 bytes [0..3]
+    // BUG: MISSING s.Skip(12) for Win32 D3DXMATRIXA16 16-byte alignment padding [4..15]!
+    for (int k = 0; k < 16; ++k) {
+        if (!s.ReadF32(out.matrixKeys[i].mat[k])) return false; // reads [4..67] instead of [16..79]!
+    }
+}
+```
+
+- **Binary proof on authentic `0x0100` sample `data/animation/a_gbox_stay.bin` (`sha256 = 81576bcf...e85d`, `10,918` B):**
+  - Track 0 (`"Bip01"`, `122` matrix keys) starts its first `SMatrixKey` at byte offset `156`:
+    - `[156..159]`: `00 00 00 00` -> `dwTime = 0`
+    - `[160..171]`: `68 80 15 03 2d 32 33 54 31 33 3a 34` -> **12 bytes of uninitialized Win32 heap padding**
+    - `[172..235]`: 16 IEEE-754 floats forming a valid orthonormal `4x4` rigid-body transform (`row0 = (-0.000, 0.506, -0.863, 0.0)`, `row1 = (-0.000, 0.863, 0.506, 0.0)`, `row2 = (1.000, 0.000, 0.000, 0.0)`, `row3 = (-0.300, 0.036, 93.758, 1.0)`).
+  - Skipping `[160..171]` (`stride = 80`) lands cleanly on key 1 (`dwTime = 160` at offset `236`) and reaches exact EOF at byte `10,918`. Reading `68` bytes without `s.Skip(12)` ingests heap garbage into `mat[0..2]` and desynchronizes the stream by `12 * 122 = 1,464` bytes on Track 0 alone.
+- **Why existing synthetic unit test `TestAnimation()` (`RANMobile/Tests/test_phase3j.cpp:406-434, 1033-1047`) missed this bug:**
+  - `AnimationBin()` (`test_phase3j.cpp:429`) explicitly wrote an **80-byte** `SMatrixKey` (`time`, `12` zero padding bytes, and `16` identity matrix floats ending in `0.0f, 0.0f, 1.0f`).
+  - `ParseContainer()` read `68` bytes (leaving the last `12` bytes `00 00 00 00 | 00 00 00 00 | 00 00 80 3f` unconsumed), then read the next `u32` (`0x00000000`) as `scaleCount = 0`, and the next `u32` (`0x00000000`) as `mainTrackCount = 0`, exiting with `12` unread bytes (`00 00 80 3f` + real `scaleCount=0` + real `mainCount=0`) and `clip.upBodyTracks[0].matrixKeys[0].mat[0] == 0.0f` instead of `1.0f` — which `TestAnimation()` never asserted!
+
+### 8.2 Defect #2 — Outer `0x0100` Accepted Without `SAnimation::Load_0100` in `ReadBoneTrack`
+
+- `EP7Animation.cpp:330` accepts `version == 0x0100`, while `ReadBoneTrack` (`EP7Animation.cpp:18-205`) rejects `version == 0x0100`, causing `0`-track `0x0100` files to pass and all `1,209` non-empty `0x0100` files to fail.
+
+### 8.3 Defect #3 — Unchecked `fileType` and Missing `unsupported` Flag on `EP7AnimClip`
+
+- Unlike `EP7AnimationReader::ParseInfo()` (`EP7Animation.cpp:432-449`), which checks `IsSanimconinfoType(info.fileType)` and sets `info.unsupported = true` on unimplemented versions, `ParseContainer()` (`EP7Animation.cpp:268-348`) ignores `fileType` and has no `bool unsupported = false` field on `EP7AnimClip`.
+
+---
+
+## 9. Authentic Byte-Level Hex Dissections Across All 6 Outer Versions
+
+All byte offsets below are 0-based file offsets from authentic `ran-ep7-full-v1` samples (all start with `[0..15] = 416e696d436f6e7461696e6572000000` `"AnimContainer\0"` and zeros through `[127]`):
+
+### 9.1 `0x0100` Zero-Track Container (`parsed`) — `data/animation/a_mob_wdm_stay01.bin`
+- **Size:** `136` B | **SHA-256:** `2b1bb00cb510ff91ccde93e1072ab9c562e85512ee6aeeb362849c501f6047d5`
+- `[128..131] = 00 01 00 00` (`outerVersion = 0x0100`)
+- `[132..135] = 00 00 00 00` (`numMain = 0`) -> **EOF at `136`**.
+
+### 9.2 `0x0100` Matrix-Keyed Container (`parser-rejected`) — `data/animation/a_gum_mix.bin`
+- **Size:** `9,444` B | **SHA-256:** `373dd54902deec3aed3a22ce2c6d449468e35da5d8319fe4a944218b347fad7d`
+- `[128..131] = 00 01 00 00` (`outerVersion = 0x0100`)
+- `[132..135] = 0f 00 00 00` (`numMain = 15`)
+- `[136..139] = 00 01 00 00` (`track[0].dwVersion = 0x0100` — **exact rejection offset of `EP7AnimationReader`**)
+- `[140..151] = 00 00 00 00 | 00 00 00 00 | 00 00 00 00` (`cPos = 0`, `cRot = 0`, `cScale = 0`)
+- `[152..155] = 08 00 00 00` (`cMatrix = 8` -> `8 * 80 = 640` bytes `[156..795]`, each key `[time(4B) + pad(12B) + mat4x4(64B)]`)
+- `[796..811]`: `std::string m_strBone` (`"Bip01 Spine1\0"`), followed by tracks `1..14` -> **exact EOF at `9,444`**.
+
+### 9.3 `0x0101` Container (`parsed`) — `data/animation/101_5f_enemy_boss_attack.bin`
+- **Size:** `78,491` B | **SHA-256:** `380df2d3b29e9e91beab1948b6a0f2acf477842ed04f7ad65a0a709de41e254e`
+- `[128..131] = 01 01 00 00` (`outerVersion = 0x0101`)
+- `[132..135] = 50 00 00 00` (`numMain = 80`)
+- `[136..139] = 01 01 00 00` (`track[0].dwVersion = 0x0101`)
+- `[140..159]`: `cPos=0`, `cRot=0`, `cScale=0`, `cMatrix=0`, `cQuatPos = 0x1A (26)` (`26 * 36 = 936` B), then `m_strBone`, ..., `numUpBody` -> **exact EOF at `78,491`**.
+
+### 9.4 `0x0102` Container (`parsed`) — `data/animation/a_trap_atk.bin`
+- **Size:** `1,011` B | **SHA-256:** `558c5b884ab511f85b1d915460c67b54bd47efe5c1a24f829ff9f1b2bea0d7a9`
+- `[128..131] = 02 01 00 00` (`outerVersion = 0x0102`)
+- `[132..135] = 00 00 00 00` (`numUpBody = 0`), `[136..139] = 01 00 00 00` (`numMain = 1`)
+- `[140..154] = 02 01 00 00 | 07 00 00 00 | 42 6f 6e 65 30 31 00` (`trackVer = 0x0102`, `m_strBone = "Bone01\0"`)
+- `[155..170] = 00 00 00 00 (cRot=0) | 00 00 00 00 (cPos=0) | 06 00 00 00 (g1=6) | 17 00 00 00 (cQuatPos=23)` -> **exact EOF at `1,011`**.
+
+### 9.5 `0x0103` Container (`unsupported-version`) — `data/animation/a_as_tiger_weapon_01_stay.bin` & `a_event_pierrot.bin`
+- **`a_as_tiger_weapon_01_stay.bin`** (`5,996` B, `sha256 = efbf1ab4e51e946a803aed6d438692a70bff12f1f7d5083e16a8a2d61d1fa1e0`):
+  - `[128..131] = 03 01 00 00` (`outerVersion = 0x0103`)
+  - `[132..135] = 00 00 00 00` (`numUpBody = 0`)
+  - `[136..139] = 07 01 00 00` (**inter-list `dwGarbageValue = 0x0107 == 0x0103 + 0 + 4`**)
+  - `[140..143] = 04 00 00 00` (`numMain = 4`)
+  - `[144..183]`: `trackVer = 0x0103`, `m_strBone = "tiger_bow_01_rota02\0"` (`len = 20`), `cRot = 0`, `dwGarbage1 = 0x13 (19)`, `cPos = 0`, `cQuatPos = 0x3E (62)` -> **exact EOF at `5,996`**.
+- **`a_event_pierrot.bin`** (`76,261` B, `sha256 = 206ee569db0d48b460f8e53243966a2c2929d04e09a93039ccbd08eb846d26cf`):
+  - `numUpBody = 14` (`[132..135] = 0e 00 00 00`), followed by 14 `0x0103` upper-body tracks (`"Bip01_Spine1\0"`, ...), then `dwGarbageValue = 0x0126` (`0x0103 + 14 + 21`), then `numMain = 21` -> **exact EOF at `76,261`**.
+
+### 9.6 `0x0104` Container (`unsupported-version`) — `data/animation/a_w_mc_ks_weapon_01_stay.bin`
+- **Size:** `260` B | **SHA-256:** `327f9d1ac8cfd65f5101c6c68eba875b45310356e8463b802275ec7eed615848`
+- `[128..131] = 04 01 00 00` (`outerVersion = 0x0104`)
+- `[132..135] = 01 00 00 00` (`numMain = 1`)
+- `[136..251]`: 1 `SAnimation` `0x0103` track (`"Bone043\0"`, `cRot=0`, `g1=7`, `cPos=0`, `cQuatPos=2` (`72` B), `cMat=0`, `g2=0x010A`, `cScale=0` = `116` B)
+- `[252..255] = 00 00 00 00` (`numUpBody1 = 0`), `[256..259] = 00 00 00 00` (`numUpBody2 = 0`) -> **exact EOF at `260`**.
+
+### 9.7 `0x0200` Encrypted Container (`unsupported-version`) — `data/animation/budots.bin`
+- **Size:** `171,912` B | **SHA-256:** `04c1a05221a719a41237a02b08eddcc6cbf1c0c185724d0a19b2ba7bcbef98d1`
+- `[128..131] = 00 02 00 00` (`outerVersion = 0x0200 >= VERSION_ENCODE`)
+- Raw ciphertext `[132..160]`: `45 00 00 00 e2 f0 00 00 88 00 00 00 df bd 09 6b eb 22 3a 09 bd 46 94 eb 00`
+- Decoded via `EMBYTECRYPT_BIN` (`ARRAY_BIN_VAR1` inverse):
+  `22 00 00 00 | 03 01 00 00 | 0d 00 00 00 | 42 69 70 30 31 5f 53 70 69 6e 65 31 00`
+  (`numUpBody = 34`, `track[0].dwVersion = 0x0103`, `m_strBone = "Bip01_Spine1\0"`, ..., `numMain = 21`) -> **exact EOF at `171,912`**.
+
+---
+
+## 10. Full `6,228`-File Read-Only Shadow Verification Results
+
+Executed in GitHub Actions run [`45982141864`](https://github.com/famoh01/ran-online-ep7/actions/runs/45982141864) (`b12-authentic-anim-survey`, check run `140449383184`; `b12_anim_survey.json` SHA-256 `34df29de8d3a33132c931f2f8a138d83342bfa4314a41555a41a119cb634e38a`):
+
+| Outer Version | Authentic Files | Shadow Spec `EXACT_EOF` (`trailing_bytes == 0`) | Total Bone Tracks | Track Version | Files w/ `m_cMatrixKeys > 0` | Files w/ `m_cQuatPosKeys > 0` | Empty/0-Track Files |
+|---|---:|---:|---:|---|---:|---:|---:|
+| `0x0100` | `1,210` | **`1,210 / 1,210` (`100%`)** | `63,226` | `0x0100` | **`1,205`** | `0` | `1` (`0` tracks) + `4` (`pos`/`rot`/`scale` only) |
+| `0x0101` | `907` | **`907 / 907` (`100%`)** | `71,783` | `0x0101` | `0` | `905` | `2` |
+| `0x0102` | `74` | **`74 / 74` (`100%`)** | `5,284` | `0x0102` | `0` | `74` | `0` |
+| `0x0103` | `1,533` | **`1,533 / 1,533` (`100%`)** | `114,210` | `0x0103` | `0` | `1,532` | `1` |
+| `0x0104` | `2,495` | **`2,495 / 2,495` (`100%`)** | `129,379` | `0x0103` | `0` | `2,492` | `3` |
+| `0x0200` | `9` | **`9 / 9` (`100%`)** | `457` | `0x0103` | `0` | `9` | `0` |
+| **TOTAL** | **`6,228`** | **`6,228 / 6,228` (`100.00%`)** | **`384,339`** | `0x0100`–`0x0103` | **`1,205`** | **`5,012`** | **`7` zero-key/empty** |
+
+---
+
+## 11. Companion `.cfg` (`SANIMCONINFO`) Cross-Version Dependency Matrix
+
+`DxSkinAniMan::LoadAnimContainer` (`DxSkinAniMan.cpp:562-598`) pairs each `data/animation/<stem>.bin` with `animation.rcc#<stem>.cfg` (`SANIMCONINFO`, carrying `m_szSkeletion`, `m_dwSTime`, `m_dwETime`, `m_UNITTIME`, `m_dwFlag` / `ACF_LOOP`, strike frames, sound data, animation effects, and bone scales). Currently `EP7AnimationReader::ParseInfo()` implements `.cfg` versions **`0x0101`–`0x0107`**.
+
+Cross-tabulating all `6,228` `.bin` files against the `6,734` `.cfg` entries in `animation.rcc`:
+
+| `.bin` Outer Version | Total `.bin` | Paired w/ Currently Supported `.cfg` (`0x0103`–`0x0107`) | Paired w/ Newer `.cfg` (`0x0108`–`0x0115`) | No Matching `.cfg` Stem | Exact `.cfg` Version Breakdown |
+|---|---:|---:|---:|---:|---|
+| `0x0100` | `1,210` | **`1,208` (`99.8%`)** | `1` | `1` | `0x0103`: 5, `0x0104`: 231, `0x0105`: 145, `0x0106`: 824, `0x0107`: 3, `0x0110`: 1, `no-cfg`: 1 |
+| `0x0101` | `907` | **`895` (`98.7%`)** | `12` | `0` | `0x0104`: 30, `0x0105`: 2, `0x0106`: 25, `0x0107`: 838, `0x0108`: 3, `0x0110`: 9 |
+| `0x0102` | `74` | **`74` (`100.0%`)** | `0` | `0` | `0x0106`: 10, `0x0107`: 64 |
+| `0x0103` | `1,533` | `161` (`10.5%`) | **`1,349` (`88.0%`)** | `23` | `0x0107`: 161, `0x0108`: 164, `0x0109`: 17, `0x0110`: 1,056, `0x0111`: 110, `0x0112`: 1, `0x0114`: 1, `no-cfg`: 23 |
+| `0x0104` | `2,495` | `21` (`0.8%`) | **`2,464` (`98.8%`)** | `10` | `0x0104`: 1, `0x0105`: 2, `0x0106`: 15, `0x0107`: 3, `0x0110`: 12, `0x0111`: 714, `0x0112`: 177, `0x0114`: 996, `0x0115`: 565, `no-cfg`: 10 |
+| `0x0200` | `9` | **`8` (`88.9%`)** | `0` | `1` | `0x0107`: 8, `no-cfg`: 1 |
+
+**Architectural implication:**
+- Fixing `SMatrixKey` + adding `SAnimation::Load_0100` immediately yields **`1,208` complete `.bin` + `.cfg` pairs** because `99.8%` of `0x0100` `.bin` files already pair with supported `.cfg` `0x0103`–`0x0107`.
+- By contrast, `88.0%` of `0x0103` `.bin` files and `98.8%` of `0x0104` `.bin` files pair with `.cfg` `0x0108`–`0x0115` (whose full reader specifications are already retrieved and verified in `Lib_Engine/Meshs/SAnimationInfoSaveLoad.cpp`, `Load_0108`–`Load_0115` + `Load_0200` `EMBYTECRYPT_CFG`). Thus `.bin` `0x0103`/`0x0104` support and `.cfg` `0x0108`–`0x0115` support are natural companion stages for end-to-end runtime playback.
+
+---
+
+## 12. Read-Only Forensic Tooling & Reproducibility Commands
+
+Added in this B12 investigation (without touching any production importer or B11 verifier file):
+- `RANMobile/Tools/inspect_ep7_animation_containers.cpp` — standalone read-only C++17 forensic inspector with built-in RFC 6234 SHA-256 self-test, unmodified `EP7AnimationReader` bucket & rejection-offset tracer, full `SAnimationSaveLoad.cpp` read-only shadow verifier (`0x0100`–`0x0104` + `0x0200`/`EMBYTECRYPT_BIN`), `.cfg` stem cross-tabulator, strict ASCII/UTF-8 JSON output, and post-run SHA-256 immutability verification.
+- `RANMobile/Tests/test_ep7_animation_inspector.cpp` + `RANMobile/Tests/run_ep7_animation_inspector_tests.sh` — `5,574` unit checks covering RFC 6234 SHA-256 vectors, strict JSON escaping, `0x0100`–`0x0200` container/track layouts, `SMatrixKey` 80B-vs-68B discrepancy detection, and directory survey immutability under both `-O2` and `-fsanitize=address,undefined` (`detect_leaks=1`).
+- `.github/workflows/phase3j_b12_animation_investigation.yml` — reproducible read-only CI workflow verifying all 19 `Lib_Engine` LFS sources and surveying `ran-ep7-full-v1`.
+
+```bash
+# 1. Run B12 inspector unit & sanitizer tests (5,574 checks, normal + ASan+UBSan+LSan)
+bash RANMobile/Tests/run_ep7_animation_inspector_tests.sh
+
+# 2. Run B11 verifier regression tests (590 checks, normal + ASan+UBSan+LSan, untouched)
+bash RANMobile/Tests/run_ep7_verifier_tests.sh
+
+# 3. Build & run read-only forensic survey against an extracted EP7 client root
+g++ -std=c++17 -Wall -Wextra -Werror -O2 \
+  RANMobile/Data/Importer/EP7Animation.cpp \
+  RANMobile/Data/Importer/EP7RccArchive.cpp \
+  RANMobile/Data/Importer/EP7Skeleton.cpp \
+  RANMobile/Data/Importer/EP7XFile.cpp \
+  RANMobile/Tools/inspect_ep7_animation_containers.cpp \
+  -o inspect_ep7_animation_containers
+./inspect_ep7_animation_containers external/ep7_release/client_original \
+  --json b12_anim_survey.json --samples-tsv b12_samples.tsv
+```
+
+---
+
+## 13. Staged Future Implementation Proposal & Risk Analysis
+
+> **Scope Boundary:** No parser or runtime changes were made in B12. Each stage below is designed as a small, independently testable, source-backed follow-up PR with explicit regression gates and expected authentic-asset verifier deltas.
+
+### Stage 1 (Highest Priority / Bugfix + `1,209` FAIL Elimination) — Fix `SMatrixKey` 80-Byte Alignment Padding + Implement `SAnimation::Load_0100` + Enforce Header/Unsupported Contract
+- **Scope (`EP7Animation.{h,cpp}` + `test_phase3j.cpp`):**
+  1. **Fix `SMatrixKey` read loop** in `ReadBoneTrack` (`EP7Animation.cpp:94-104` and `168-178`): call `s.Skip(12)` after `s.ReadU32(out.matrixKeys[i].time)` before reading the `16` floats (`4 + 12 + 64 = 80 == kMatrixKeySize`), and add explicit `matrixKeys[0].mat[0] == 1.0f` / `mat[15] == 1.0f` + exact-EOF assertions to `TestAnimation()` (`test_phase3j.cpp:1033-1047`).
+  2. **Implement `SAnimation::Load_0100`** (`version == 0x0100` in `ReadBoneTrack`, per `SAnimationSaveLoad.cpp:15-50`): `posKeys` (`16`B), `rotKeys` (`20`B), `scaleKeys` (`16`B), `matrixKeys` (`80`B with `s.Skip(12)`), `ReadString(out.boneName, kMaxNameLen)` (allowing `boneName.empty()` for the `22` authentic empty-bone files). `EP7AnimationPlayer::ApplyToSkeleton()` (`EP7Animation.cpp:669-680`) already samples `track.matrixKeys` directly (`SAnimation::SetMatrix`), so `0x0100` matrix-keyed tracks require no player-side plumbing changes unless optional `ConvertMatToQuat` memory compression is desired later.
+  3. **Header & `unsupported` contract parity with `EP7AnimInfo`:** check `hdr.fileType == "AnimContainer"` inside `ParseContainer()` and add `bool unsupported = false` to `EP7AnimClip` for outer versions outside the implemented set.
+- **Projected `verify_ep7_character_assets` loose `.bin` impact:**
+  - `loose .bin parsed`: `982` -> **`2,191` (`+1,209`)**
+  - `loose .bin parser-rejected (FAIL)`: `1,209` -> **`0` (`-1,209`)**
+  - `loose .bin unsupported`: `4,037` (unchanged)
+  - Unlocks `1,208` complete `.bin` + `.cfg` clips immediately.
+- **Risk:** Low, provided `SMatrixKey` `s.Skip(12)` and `SampleBone` `SMatrixKey` evaluation / `ConvertMatToQuat` decomposition are tested together and `boneName.empty()` is permitted.
+
+### Stage 2 (Unencrypted EP7 Expansion — `+4,028` `.bin` Files) — Implement `SAnimation::Load_0103` and `SAnimContainer::Load_0103` / `Load_0104`
+- **Scope (`EP7Animation.{h,cpp}` + `verify_ep7_character_assets.cpp` version constant):**
+  1. Add `version == 0x0103` to `ReadBoneTrack` (`SAnimationSaveLoad.cpp:154-209`: `boneName`, `rotKeys`, `u32 garbage1`, `posKeys`, `quatPosKeys`, `matrixKeys` (`80`B), `u32 garbage2`, `scaleKeys`).
+  2. Add outer `hdr.version == 0x0103` (`upBodyTracks`, `u32 dwGarbageValue`, `mainTracks`) and `hdr.version == 0x0104` (`mainTracks`, `upBodyTracks` list 1, `upBodyTracks` list 2 appended to `upBodyTracks`).
+- **Projected `verify_ep7_character_assets` loose `.bin` impact:**
+  - `loose .bin parsed`: `2,191` -> **`6,219` (`+4,028`)**
+  - `loose .bin unsupported`: `4,037` -> **`9` (`-4,028`, leaving only `0x0200`)**
+  - `loose .bin failed`: **`0`**
+
+### Stage 3 (`ByteCrypt` `0x0200` Container Support — Final `+9` `.bin` Files -> `6,228 / 6,228`)
+- **Scope (`EP7ByteFormat.h` + `EP7Animation.cpp`):**
+  1. Add a shared, table-driven `ByteCryptDecode(uint8_t*, size_t, ByteCryptKind)` helper in `EP7ByteFormat.h` (reusable across `EMBYTECRYPT_BIN`, `EMBYTECRYPT_CFG`, `EMBYTECRYPT_PIECE`, `EMBYTECRYPT_CONTAINER`, etc., from verified `ByteCryptDefVer1.h`).
+  2. When `hdr.version == 0x0200` in `ParseContainer`, decode a copy of `[132..EOF)` with `EMBYTECRYPT_BIN` and parse `upBodyTracks` + `mainTracks` (`Load_0200`).
+- **Projected `verify_ep7_character_assets` loose `.bin` impact:**
+  - `loose .bin parsed`: `6,219` -> **`6,228 / 6,228` (`100.00%`)**, `0` unsupported, `0` failed.
+
+### Companion Stage 4 (Recommended Alongside Stages 2–3) — `SANIMCONINFO` `.cfg` `0x0108`–`0x0115` (+ `0x0200` `EMBYTECRYPT_CFG`)
+- Because `3,813` of the `4,028` `0x0103`/`0x0104` `.bin` files pair with `.cfg` versions `0x0108`–`0x0115` in `animation.rcc`, implementing `SANIMCONINFO::Load_0108`–`Load_0115` from the already-verified `Lib_Engine/Meshs/SAnimationInfoSaveLoad.cpp` (`sha256 = 279a5070...62e2`) will simultaneously eliminate the `.cfg` `UNSUPPORTED` entries inside `animation.rcc` and supply full `startTime`/`endTime`/`unitTime`/`ACF_LOOP` metadata for all `6,228` animations.

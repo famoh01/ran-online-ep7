@@ -1083,3 +1083,23 @@ separate investigation; pre-existing pack .chf/.cps/.abf/.cfg coverage gaps; and
 PR #5 head belonging to another session branch. The verifier correction is done
 on `arena/1491d572-ran-online-ep7`; PR #5 remains OPEN/DRAFT, unmerged, with its
 head unchanged. This task does not authorize changing runtime/parser behavior.
+
+
+## 2026-11-27 — Phase 3J B12: Authentic Animation Container (`SAnimContainer` / `.bin`) Investigation (`arena/00fd13f9-ran-online-ep7`)
+
+Completed read-only source + authentic-asset forensic investigation of all `6,228` loose `data/animation/*.bin` containers in `ran-ep7-full-v1` on branch `arena/00fd13f9-ran-online-ep7` (stacked Draft PR #7 -> `arena/42c5ac0c-ran-online-ep7` -> Draft PR #5 -> `main`). Production `RANMobile/Data/Importer/EP7Animation.{h,cpp}` and `RANMobile/Tools/verify_ep7_character_assets.cpp` remain 100% untouched.
+
+### Deliverables Added
+
+- `ANIMATION_CONTAINER_INVESTIGATION.md` — full version-by-version binary format specification (`SAnimContainer` `0x0100`–`0x0104` + `0x0200`/`EMBYTECRYPT_BIN`, `SAnimation` `0x0100`–`0x0103`), authentic SHA-256 hex dissections, `EP7Animation.cpp` defect audit, `.bin` x `.cfg` cross-version matrix, and 4-stage follow-up implementation plan.
+- `RANMobile/Tools/inspect_ep7_animation_containers.cpp` — standalone read-only forensic C++17 CLI reproducing B11 buckets, pinpointing rejection offsets, running a read-only `SAnimationSaveLoad.cpp` shadow verifier, and verifying asset SHA-256 immutability.
+- `RANMobile/Tests/test_ep7_animation_inspector.cpp` + `RANMobile/Tests/run_ep7_animation_inspector_tests.sh` — `5,574` checks passing under both `-O2` and `-fsanitize=address,undefined` (`detect_leaks=1`).
+- `.github/workflows/phase3j_b12_animation_investigation.yml` — reproducible CI workflow retrieving and SHA-256-verifying all 19 `Lib_Engine` animation/serialization LFS files from `matheomedrana/Ran-Online-EP7-Complete-Files` (`f661fbf8...`) and surveying `ran-ep7-full-v1`.
+
+### Summary of Verified Findings ([CI run 45982141864](https://github.com/famoh01/ran-online-ep7/actions/runs/45982141864))
+
+- **B11 `data/animation/*.bin` reconciliation:** `982` parsed (`1` `0x0100` 0-track + `907` `0x0101` + `74` `0x0102`), `4,037` unsupported outer (`1,533` `0x0103` + `2,495` `0x0104` + `9` `0x0200`), `1,209` parser-rejected (`1,209` non-empty `0x0100`), `0` invalid-header, `0` unrecognized-type (`6,228` total; `0` `.bin` in `.rcc` packs; `357` non-animation `.bin` outside `data/animation/`).
+- **100% authentic asset validity:** Read-only shadow verification implementing `Lib_Engine/Meshs/SAnimationSaveLoad.cpp` reaches **`EXACT_EOF` (`trailing_bytes == 0`) on `6,228 / 6,228` (`100.00%`)** authentic `.bin` files (`384,339` bone tracks).
+- **Exact cause of `1,209` parser rejections:** `1,209 / 1,209` fail at `list=main, idx=0, offset=136` with `trackVer=0x0100` because `ParseContainer` accepts outer `0x0100` while `ReadBoneTrack` omits `SAnimation::Load_0100`.
+- **Critical `SMatrixKey` padding defect uncovered:** `EP7Animation.cpp:94-104` and `168-178` check `kMatrixKeySize = 80` (`u32 time` + `12`B Win32 `D3DXMATRIXA16` `align(16)` padding + `64`B matrix) but read `68` bytes without `s.Skip(12)`. Masked in `test_phase3j.cpp:429` (`12` unread bytes, `mat[0]` silently read as `0.0f`) and unhit in the `982` accepted files (`0` have `m_cMatrixKeys > 0`), but affects **`1,205 / 1,210`** authentic `0x0100` files.
+
