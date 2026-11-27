@@ -422,9 +422,10 @@ jobs:
 
       - name: Select authentic character files for the APK bundle
         run: |
+          mkdir -p bundle
           ./verify_ep7_character_assets external/ep7_release/client_original --bundle-plan bundle "" || true
           ls -la bundle/
-          [ -f bundle/manifest.txt ] || { echo "::error::bundle-plan produced no manifest"; exit 1; }
+          [ -f bundle/manifest.txt ] || { echo "::error::bundle-plan produced no manifest (see the tool output above)"; exit 1; }
 
       - name: Copy authentic files into APK assets
         run: |

@@ -38,6 +38,8 @@
 //
 #include <algorithm>
 #include <cctype>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <cstdio>
 #include <map>
 #include <cstring>
@@ -568,6 +570,12 @@ int main(int argc, char** argv) {
     // (a bundle failure is printed, not turned into a verdict change).
     // ---------------------------------------------------------------------------
     if (!bundleDir.empty()) {
+        // Create the output directory (best effort — CI pre-creates it too).
+#ifdef _WIN32
+        std::system(("mkdir " + bundleDir).c_str());
+#else
+        mkdir(bundleDir.c_str(), 0777);
+#endif
         std::string chfName;
         for (const auto& kv : g_b18.entries) {
             if (!EndsWithNoCase(kv.first, ".chf")) continue;
