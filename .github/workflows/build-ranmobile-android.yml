@@ -468,11 +468,17 @@ jobs:
       - name: Create AVD and boot emulator (SwiftShader GLES3)
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
+          # Newer avdmanager writes AVDs under ~/.config/.android/avd while the
+          # emulator searches $ANDROID_AVD_HOME then ~/.android/avd — pin both to
+          # one directory so "create" and "launch" agree (B19 CI fix).
+          ANDROID_AVD_HOME: /home/runner/.android/avd
         run: |
+          mkdir -p "$ANDROID_AVD_HOME"
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "system-images;android-30;default;x86_64" >/dev/null
           "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd -n gpu-test \
             -k "system-images;android-30;default;x86_64" -d pixel --force
+          ls -la "$ANDROID_AVD_HOME" || true
           nohup "$ANDROID_HOME/emulator/emulator" -avd gpu-test \
             -no-window -no-audio -no-boot-anim -no-snapshot \
             -gpu swiftshader_indirect -accel on \
