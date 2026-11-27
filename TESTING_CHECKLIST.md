@@ -528,3 +528,52 @@ Baseline pack totals: 6,479 parsed / 3,550 failed / 1,631 unsupported. Compare
 pack totals separately from loose totals; the historical 6,228 printable-prefix
 figure includes more than the pack-only unsupported count. Do not equate it with
 valid AnimContainers. Retain full authentic verifier log as CI artifact.
+
+
+### 2026-11-27 — B11 post-correction CI evidence (final results)
+
+Implementation commit `80f932b287ebb2c5144014b8eb59f897efe1fc74` was tested in
+[CI run 45937494300](https://github.com/famoh01/ran-online-ep7/actions/runs/45937494300).
+Core C++ tests with downloaded release data PASSED; Phase 3J PASSED; verifier
+590/0 normal and 590/0 ASan+UBSan+integrated LSan PASSED. Android ARM64 native
+library and debug/release APK + release AAB PASSED. The authentic verifier ran
+against the extracted release and correctly remained FAIL (exit 1), not a green
+coverage claim. Full log artifact: `phase3j-authentic-assets-log`; core/sanitizer
+logs and Android outputs are also uploaded.
+
+#### Exact comparison: same pack baseline, separate loose .bin result
+
+| Scope / metric | Before | After | Delta |
+|---|---:|---:|---:|
+| Pack parsed | 6,479 | 6,479 | 0 |
+| Pack failed | 3,550 | 3,550 | 0 |
+| Pack unsupported | 1,631 | 1,631 | 0 |
+| Loose .bin parsed | 0 | 982 | +982 |
+| Loose .bin failed (parser-rejected after recognized header) | 0 | 1,209 | +1,209 |
+| Loose .bin unsupported | 6,228 (incorrect printable gate) | 4,037 (explicit version rejection) | -2,191 |
+| Loose .bin total | 6,228 | 6,228 | 0 |
+
+After correction: **0 invalid-header**, **0 unrecognized-type** among these 6,228.
+All have the recognized header, but only **982 parse successfully**. The 4,037
+unsupported outer container versions are **0x0103: 1,533**, **0x0104: 2,495**,
+**0x0200: 9**. All 1,209 recognized-header parser rejections report the existing
+parser diagnostic `unsupported animation version` (track-level, NOT the explicit
+outer-container-version error). They remain FAIL/parser-rejected; no assertion is
+made that the original files are corrupt or that every such failure is a parser
+bug. No parser implementation is changed to force them green.
+
+**Critical scope finding:** every .bin candidate in this release scan is a loose
+file under `data/animation`; **zero .bin entries were encountered inside packs**.
+That is why the pack verdict/counts remain unchanged. This does not prove no pack
+in any EP7 distribution contains .bin files; it describes this run only. The
+historical 6,228 figure must not be presented as a pack-only count or as 6,228
+valid animations. Header recognition/parse success also does not prove gameplay
+or rendered animation correctness. The old binUnsupported summary counter was
+not incremented; the before figure here is the actual emitted UNSUPPORTED outcome
+count, not that erroneous zero-valued counter.
+
+Remaining blockers: unsupported versions above; 1,209 parser rejections requiring
+separate investigation; pre-existing pack .chf/.cps/.abf/.cfg coverage gaps; and
+PR #5 head belonging to another session branch. The verifier correction is done
+on `arena/1491d572-ran-online-ep7`; PR #5 remains OPEN/DRAFT, unmerged, with its
+head unchanged. This task does not authorize changing runtime/parser behavior.
