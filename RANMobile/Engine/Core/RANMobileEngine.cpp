@@ -8,6 +8,10 @@
 #include "../../Data/Loader/GameDataLoader.h"
 #include "../../UI/Login/LoginScreen.h"
 #include "../../UI/HUD/MobileHUD.h"
+#include "../Scene/EP7CharacterScene.h"
+#include "../../Data/Importer/EP7SkinPiece.h"
+
+#include <cmath>
 
 RANMobileEngine::RANMobileEngine() = default;
 RANMobileEngine::~RANMobileEngine() {
@@ -31,6 +35,7 @@ bool RANMobileEngine::Initialize() {
     m_gameDataLoader = std::make_unique<RANMobile::GameDataLoader>();
     m_loginScreen = std::make_unique<LoginScreen>();
     m_mobileHUD = std::make_unique<RANMobile::MobileHUD>();
+    m_characterScene = std::make_unique<RANMobile::EP7CharacterScene>();
 
     if (!m_renderer->Initialize(1280, 720)) {
         RANMobile::Logger::Error("RANMobileEngine", "Failed to initialize MobileRenderer");
@@ -66,6 +71,16 @@ void RANMobileEngine::Update(float deltaTime) {
     if (!m_initialized || !m_running) {
         return;
     }
+    // B17 mobile-runtime clock hardening (documented): the original PC FrameMove
+    // trusted fElapsedTime from the D3D loop and never clamped it. On Android the
+    // wall clock can jump across app pause/resume or a blocked frame, which would
+    // teleport animation poses (fTime leaps by whole clip lengths). Negative and
+    // non-finite deltas are dropped; anything above 250 ms advances at most 250 ms.
+    if (!std::isfinite(deltaTime) || deltaTime <= 0.0f) {
+        deltaTime = 0.0f;
+    } else if (deltaTime > 0.25f) {
+        deltaTime = 0.25f;
+    }
     m_totalTime += deltaTime;
     m_frameCount++;
 
@@ -78,6 +93,9 @@ void RANMobileEngine::Update(float deltaTime) {
     if (m_networkClient) {
         m_networkClient->Poll(deltaTime);
     }
+    if (m_screenState == EngineScreenState::CharacterPreview && m_characterScene && m_camera) {
+        m_characterScene->Update(deltaTime);
+    }
 }
 
 void RANMobileEngine::Render() {
@@ -85,7 +103,43 @@ void RANMobileEngine::Render() {
         return;
     }
     m_renderer->BeginFrame();
-    if (m_screenState == EngineScreenState::Login && m_loginScreen) {
+    if (m_screenState == EngineScreenState::CharacterPreview && m_characterScene && m_camera) {
+        // B17: authentic character pass — evaluated poses are submitted before the UI
+        // so HUD/overlays always draw on top (BeginScene3D enables depth + culling,
+        // EndScene3D restores the UI state).
+        if (m_renderer->BeginScene3D(*m_camera)) {
+            for (const auto& instance : m_characterScene->Instances()) {
+                if (!instance->visible || !instance->poseValid || !instance->inFrustum) continue;
+                const size_t vertexCount = instance->skinnedPositions.size() / 3;
+                if (vertexCount == 0) continue;
+                // One draw per loaded piece: skinned positions/normals are concatenated
+                // in piece order, so every submission advances the base pointer by the
+                // piece's vertex offset — piece.mesh.faces indexes piece-local vertices
+                // (indexing the concatenation start would skin slot > 0 against piece-0
+                // vertices). A piece that fails the bounds check is skipped; geometry is
+                // never substituted or fabricated.
+                bool submitted = false;
+                if (instance->asset) {
+                    for (uint32_t slot = 0; slot < RANMobile::kEP7PieceSize; ++slot) {
+                        const auto& piece = instance->asset->pieces[slot];
+                        if (!piece.loaded || piece.mesh.faces.empty()) continue;
+                        const uint32_t offset = instance->pieceVertexOffsets[slot];
+                        if (static_cast<size_t>(offset) + piece.mesh.vertexCount > vertexCount) continue;
+                        RANMobile::SkinnedDrawInput pieceInput;
+                        pieceInput.positions = instance->skinnedPositions.data() + static_cast<size_t>(offset) * 3;
+                        pieceInput.normals = instance->skinnedNormals.data() + static_cast<size_t>(offset) * 3;
+                        pieceInput.vertexCount = piece.mesh.vertexCount;
+                        pieceInput.indices = piece.mesh.faces.data();
+                        pieceInput.indexCount = static_cast<uint32_t>(piece.mesh.faces.size());
+                        pieceInput.textureId = 0;
+                        submitted = m_renderer->DrawSkinnedMesh(pieceInput) || submitted;
+                    }
+                }
+                (void)submitted;
+            }
+        }
+        m_renderer->EndScene3D();
+    } else if (m_screenState == EngineScreenState::Login && m_loginScreen) {
         m_loginScreen->Draw(m_renderer.get());
     } else if (m_screenState == EngineScreenState::InGame && m_mobileHUD) {
         m_mobileHUD->Draw(m_renderer.get());
@@ -100,6 +154,10 @@ void RANMobileEngine::Resize(int width, int height) {
 }
 
 void RANMobileEngine::Pause() {
+    // B17: pause stops the update loop only; all animation state lives in RAM
+    // (controls, clocks, skeletons), so resume continues the pose exactly where it
+    // stopped. The post-resume wall-clock jump is absorbed by the delta clamp in
+    // Update() — no animation state is rebuilt or reset on resume.
     m_running = false;
 }
 

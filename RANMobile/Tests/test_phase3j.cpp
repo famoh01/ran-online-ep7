@@ -27,6 +27,7 @@
 #include "../Engine/Scene/EP7CharacterScene.h"
 
 #include <cmath>
+#include <limits>
 #include <cstdio>
 #include <cstring>
 #include <map>
@@ -2322,26 +2323,63 @@ void TestCharacterScene() {
     J_CHECK(instance != nullptr);
     if (!instance) return;
 
-    // Pose evaluation follows the bind pose with no animation playing.
+    // B17: authentic creation semantics. DxSkinChar::SetCharDataData (DxSkinChar.cpp:242)
+    // always selects an animation at creation: SETCURTIME + SELECTANI(MType, SType),
+    // falling back to SELECTANI(AN_PLACID, SType) and finally DEFAULTANI() = nodes[0];
+    // every selection starts blended in (DxSkinAniControl.cpp:516 sets m_fWeight = 0.f
+    // and FrameMove ramps it +7/s). Spawn mirrors that fallback chain without a gameplay
+    // state machine: DEFAULTANI = nodes[0] plays immediately, so an animated character
+    // has no "bind pose with no animation playing" state.
+    J_CHECK(instance->currentClip == 0);  // DEFAULTANI = nodes[0] already playing
     J_CHECK(RANMobile::EP7CharacterScene::EvaluatePose(*instance, nullptr));
     J_CHECK(instance->poseValid);
     J_CHECK(instance->skinnedPositions.size() == 8 * 3);  // 2 pieces x 4 verts x 3 floats
     J_CHECK(instance->drawCalls == 2);                        // no material subsets parsed -> 1 per piece
     J_CHECK(instance->triangles == 4);
 
+    // Bind-pose reference: the SAME .chf resolved without animation files. With no clip
+    // registered, DEFAULTANI has nothing to select (DxSkinAniControl.cpp:527 -> CleanUp)
+    // and the pose evaluation is the plain bind pose.
+    static std::vector<std::pair<std::string, std::vector<uint8_t>>> entriesRest;
+    entriesRest.clear();
+    for (const auto& entry : entries) {
+        if (entry.first.rfind("st_walk", 0) != 0) entriesRest.emplace_back(entry.first, entry.second);
+    }
+    static ResolverMap mapRest;
+    mapRest.entries = &entriesRest;
+    RANMobile::EP7CharacterLoader loaderRest;
+    loaderRest.SetResolver(&MapResolver, &mapRest);
+    const RANMobile::EP7CharacterAsset assetRest = loaderRest.LoadCharacter(CharacterChf(), false);
+    J_CHECK_MSG(assetRest.loaded, assetRest.error);
+    J_CHECK(assetRest.animationCount == 0);
+    RANMobile::EP7CharacterScene sceneRest;
+    const uint32_t idRest = sceneRest.Spawn(std::make_shared<RANMobile::EP7CharacterAsset>(assetRest), 0, 0, 0, 0);
+    J_CHECK(idRest != 0);
+    RANMobile::EP7CharacterInstance* instRest = sceneRest.Find(idRest);
+    J_CHECK(instRest != nullptr);
+    if (!instRest) return;
+    J_CHECK(RANMobile::EP7CharacterScene::EvaluatePose(*instRest, nullptr));
+    J_CHECK(instRest->poseValid);
+    const std::vector<float> bindPosePositions = instRest->skinnedPositions;
+    J_CHECK(sceneRest.Destroy(idRest));
+
     // Playing an authentic clip name from the .chf works; unknown names do not.
+    // Re-selecting the current clip succeeds: DxAniControl::SetAnimation reports FALSE
+    // for the same node and DxSkinAniControl::SELECTANI still returns TRUE.
     scene.SetPreviewTarget(id);
     J_CHECK(scene.PlayAnimation(id, "st_walk"));
     J_CHECK(!scene.PlayAnimation(id, "no_such_clip"));
     J_CHECK(instance->currentClip == 0);
 
-    // Advance: the clip moves the Spine1 bone, so the head vertex set must translate.
-    std::vector<float> before = instance->skinnedPositions;
+    // Advance: the clip's Spine1 matrix key replaces the bone's rest local (SAnimation::
+    // SetTime dispatches matrix keys through SetMatrix, a direct 64-byte memcpy with no
+    // weight involvement, SAnimation.cpp:359), translating its child Head and therefore
+    // the Head-bound vertices. The skinned result must differ from the bind pose.
     for (int i = 0; i < 30; ++i) scene.Update(1.0f / 60.0f);
-    J_CHECK(instance->player.CurrentTime() > 0.0f);
+    J_CHECK(instance->aniControl.CurrentTime() > 0.0f);
     bool moved = false;
-    for (size_t i = 0; i < before.size() && i < instance->skinnedPositions.size(); ++i) {
-        if (std::fabs(before[i] - instance->skinnedPositions[i]) > 1e-4f) {
+    for (size_t i = 0; i < bindPosePositions.size() && i < instance->skinnedPositions.size(); ++i) {
+        if (std::fabs(bindPosePositions[i] - instance->skinnedPositions[i]) > 1e-4f) {
             moved = true;
             break;
         }
@@ -2414,11 +2452,27 @@ void TestCharacterScene() {
         RANMobile::EP7CharacterInstance* instB16 = sceneB16.Find(idB16);
         J_CHECK(instB16 != nullptr);
         if (!instB16) return;
-        // Pose once in the bind pose so the baseline matches the first test (captured
-        // before its PlayAnimation call).
-        J_CHECK(RANMobile::EP7CharacterScene::EvaluatePose(*instB16, nullptr));
+        // B17: Spawn already plays DEFAULTANI (see the first test), so the bind-pose
+        // baseline again comes from the same .chf resolved without animation files.
+        entriesRest.clear();
+        for (const auto& entry : entries) {
+            if (entry.first.rfind("st_walk", 0) != 0) entriesRest.emplace_back(entry.first, entry.second);
+        }
+        RANMobile::EP7CharacterLoader loaderB16Rest;
+        loaderB16Rest.SetResolver(&MapResolver, &mapRest);
+        const RANMobile::EP7CharacterAsset assetB16Rest = loaderB16Rest.LoadCharacter(CharacterChf(), false);
+        J_CHECK_MSG(assetB16Rest.loaded, assetB16Rest.error);
+        RANMobile::EP7CharacterScene sceneB16Rest;
+        const uint32_t idB16Rest = sceneB16Rest.Spawn(std::make_shared<RANMobile::EP7CharacterAsset>(assetB16Rest), 0, 0, 0, 0);
+        J_CHECK(idB16Rest != 0);
+        RANMobile::EP7CharacterInstance* instB16Rest = sceneB16Rest.Find(idB16Rest);
+        J_CHECK(instB16Rest != nullptr);
+        if (!instB16Rest) return;
+        J_CHECK(RANMobile::EP7CharacterScene::EvaluatePose(*instB16Rest, nullptr));
+        const std::vector<float> beforeB16 = instB16Rest->skinnedPositions;
+        J_CHECK(sceneB16Rest.Destroy(idB16Rest));
+
         sceneB16.SetPreviewTarget(idB16);
-        std::vector<float> beforeB16 = instB16->skinnedPositions;
         J_CHECK(sceneB16.PlayAnimation(idB16, "st_walk"));
         for (int i = 0; i < 30; ++i) sceneB16.Update(1.0f / 60.0f);
         bool movedB16 = false;
@@ -2430,6 +2484,164 @@ void TestCharacterScene() {
         }
         J_CHECK_MSG(movedB16, "a 0x0115 .cfg must drive the same clip playback as 0x0107");
         J_CHECK(sceneB16.Destroy(idB16));
+    }
+}
+
+void TestB17RuntimeSemantics() {
+    Section("B17 runtime semantics (matrix->quatPos conversion + control state)");
+    using namespace RANMobile;
+    using RANMobile::ep7math::DecompressQuaternion;
+
+    // ------------------------------------------------------------------
+    // SAnimation::ConvertMatToQuat mirror (SAnimation.cpp:1326): a matrix-only
+    // track becomes a quatPos track and its matrix keys are freed; a track with
+    // quatPos keys skips the conversion and keeps its matrix keys (the
+    // !m_pQuatPosKeys guard), because SetTime dispatches matrix keys first.
+    // ------------------------------------------------------------------
+    {
+        EP7AnimClip clip;
+        clip.valid = true;
+
+        // Matrix-only main track: 90-degree Y rotation, uniform scale 2, translation
+        // (1,2,3) — composed in the D3DX row-vector order (scale * rotation * translate).
+        EP7BoneTrack matrixOnly;
+        matrixOnly.boneName = "Bip01";
+        matrixOnly.boneIndex = 1;
+        EP7MatrixKey mk;
+        mk.time = 960;
+        const ep7math::Quat rotY90(0.0f, std::sin(0.7853981633974483f), 0.0f, std::cos(0.7853981633974483f));
+        const ep7math::Mat4 mat = ep7math::Multiply(
+            ep7math::Multiply(ep7math::Scaling(2.0f, 2.0f, 2.0f), ep7math::RotationQuaternion(rotY90)),
+            ep7math::Translation(1.0f, 2.0f, 3.0f));
+        for (int r = 0; r < 4; ++r) {
+            for (int c = 0; c < 4; ++c) {
+                mk.mat[r * 4 + c] = mat.m[r][c];
+            }
+        }
+        matrixOnly.matrixKeys.push_back(mk);
+        clip.mainTracks.push_back(matrixOnly);
+
+        // Matrix-only upBody track: identity matrix.
+        EP7BoneTrack upMatrixOnly;
+        upMatrixOnly.boneName = "Bip01_Head";
+        upMatrixOnly.boneIndex = 3;
+        upMatrixOnly.matrixKeys.push_back(EP7MatrixKey{});
+        clip.upBodyTracks.push_back(upMatrixOnly);
+
+        // A track that already has quatPos keys keeps its matrix keys.
+        EP7BoneTrack bothKeys;
+        bothKeys.boneName = "Bip01_Spine1";
+        bothKeys.boneIndex = 2;
+        bothKeys.matrixKeys.push_back(EP7MatrixKey{});
+        bothKeys.quatPosKeys.push_back(EP7QuatPosKey{});
+        clip.mainTracks.push_back(bothKeys);
+
+        EP7AnimationReader::ConvertMatToQuat(clip);
+
+        J_CHECK(clip.mainTracks[0].matrixKeys.empty());
+        J_CHECK(clip.mainTracks[0].quatPosKeys.size() == 1);
+        const EP7QuatPosKey& k = clip.mainTracks[0].quatPosKeys[0];
+        J_CHECK(k.time == 960);
+        J_CHECK(FloatNear(k.scale[0], 2.0f, 1e-4f));
+        J_CHECK(FloatNear(k.scale[1], 2.0f, 1e-4f));
+        J_CHECK(FloatNear(k.scale[2], 2.0f, 1e-4f));
+        J_CHECK(FloatNear(k.pos[0], 1.0f, 1e-4f));
+        J_CHECK(FloatNear(k.pos[1], 2.0f, 1e-4f));
+        J_CHECK(FloatNear(k.pos[2], 3.0f, 1e-4f));
+        const ep7math::Quat q = DecompressQuaternion(k.quatComp0, k.quatComp1);
+        // Compression canonicalizes to the w>=0 hemisphere before storing.
+        J_CHECK(q.w >= 0.0f);
+        J_CHECK(FloatNear(std::fabs(q.w), 0.70710678118654752f, 1e-3f));
+        // Re-compressing the decompressed quaternion must reproduce the stored words
+        // exactly (the pack is the original's, including truncation).
+        uint32_t recompressed0 = 0;
+        uint32_t recompressed1 = 0;
+        ep7math::CompressionQuaternion(q, recompressed0, recompressed1);
+        J_CHECK(recompressed0 == k.quatComp0);
+        J_CHECK(recompressed1 == k.quatComp1);
+
+        // upBody tracks convert too (BindToSkeleton/ConvertMatToQuat cover both lists).
+        J_CHECK(clip.upBodyTracks[0].matrixKeys.empty());
+        J_CHECK(clip.upBodyTracks[0].quatPosKeys.size() == 1);
+        const EP7QuatPosKey& identityKey = clip.upBodyTracks[0].quatPosKeys[0];
+        J_CHECK(identityKey.time == 0);
+        J_CHECK(FloatNear(identityKey.scale[0], 1.0f, 1e-5f));
+        J_CHECK(FloatNear(identityKey.pos[0], 0.0f, 1e-5f));
+        const ep7math::Quat identityQ = DecompressQuaternion(identityKey.quatComp0, identityKey.quatComp1);
+        J_CHECK(FloatNear(identityQ.w, 1.0f, 1e-4f));
+
+        // The guard: quatPos present -> conversion skipped, matrix keys kept.
+        J_CHECK(clip.mainTracks[1].matrixKeys.size() == 1);
+        J_CHECK(clip.mainTracks[1].quatPosKeys.size() == 1);
+
+        // An empty track is a no-op (no matrix keys, no quatPos keys).
+        EP7AnimClip emptyClip;
+        emptyClip.valid = true;
+        EP7BoneTrack emptyTrack;
+        emptyTrack.boneName = "Bip01";
+        emptyClip.mainTracks.push_back(emptyTrack);
+        EP7AnimationReader::ConvertMatToQuat(emptyClip);
+        J_CHECK(emptyClip.mainTracks[0].matrixKeys.empty());
+        J_CHECK(emptyClip.mainTracks[0].quatPosKeys.empty());
+    }
+
+    // ------------------------------------------------------------------
+    // CompressionQuaternion hardening: non-finite input compresses the identity
+    // quaternion instead of invoking out-of-range float->DWORD casts (the original
+    // would wrap; mobile matrices are guarded at the conversion call site).
+    // ------------------------------------------------------------------
+    {
+        const float nan = std::numeric_limits<float>::quiet_NaN();
+        uint32_t c0 = 0;
+        uint32_t c1 = 0;
+        ep7math::CompressionQuaternion(ep7math::Quat(nan, nan, nan, nan), c0, c1);
+        const ep7math::Quat q = DecompressQuaternion(c0, c1);
+        J_CHECK(FloatNear(q.x, 0.0f, 1e-4f));
+        J_CHECK(FloatNear(q.y, 0.0f, 1e-4f));
+        J_CHECK(FloatNear(q.z, 0.0f, 1e-4f));
+        J_CHECK(FloatNear(q.w, 1.0f, 1e-4f));
+
+        // Hemisphere canonicalization: -q compresses to the same words as q.
+        ep7math::Quat rot(0.1f, 0.2f, 0.3f, 0.9f);
+        rot = ep7math::Normalize(rot);
+        ep7math::Quat flipped = rot;
+        flipped.x = -flipped.x;
+        flipped.y = -flipped.y;
+        flipped.z = -flipped.z;
+        flipped.w = -flipped.w;
+        uint32_t a0 = 0;
+        uint32_t a1 = 0;
+        uint32_t b0 = 0;
+        uint32_t b1 = 0;
+        ep7math::CompressionQuaternion(rot, a0, a1);
+        ep7math::CompressionQuaternion(flipped, b0, b1);
+        J_CHECK(a0 == b0 && a1 == b1);
+    }
+
+    // ------------------------------------------------------------------
+    // DxAniControl::SetAnimation same-node semantics: re-selecting the current
+    // clip keeps playing (returns success at the SELECTANI level) — covered
+    // end-to-end in TestCharacterScene; here the SQT evaluation contract is
+    // asserted directly: ResetToRestPose restores ORIG into CUR and PREV, so a
+    // fresh evaluation never accumulates on top of a previous frame.
+    // ------------------------------------------------------------------
+    {
+        // SkeletonX()/SkinnedMeshX() fixtures are used end-to-end in
+        // TestCharacterScene; here only the pure bone-state contract is checked.
+        const std::string skelText = SkeletonX();
+        EP7Skeleton skeleton;
+        J_CHECK(skeleton.LoadFromXFile(reinterpret_cast<const uint8_t*>(skelText.data()), skelText.size()));
+        J_CHECK(skeleton.BoneCount() == 5);
+        EP7Bone& spine = const_cast<EP7Bone&>(skeleton.GetBone(2));
+        spine.position = ep7math::Vec3(0.0f, 9.0f, 0.0f);
+        spine.rotation = ep7math::Quat(0.1f, 0.2f, 0.3f, 0.9f);
+        spine.rotation = ep7math::Normalize(spine.rotation);
+        skeleton.ResetToRestPose();
+        const EP7Bone& spineRest = skeleton.GetBone(2);
+        J_CHECK(FloatNear(spineRest.position.y, 4.0f, 1e-5f));   // ORIG translation restored
+        J_CHECK(FloatNear(spineRest.rotation.w, 1.0f, 1e-5f));   // ORIG rotation restored
+        J_CHECK(!spineRest.useBlending);
+        J_CHECK(!spineRest.useAniAdd);
     }
 }
 
@@ -2792,6 +3004,7 @@ int main() {
     TestCharacterFile();
     TestAnimation();
     TestCharacterScene();
+    TestB17RuntimeSemantics();
     TestMath();
     TestRobustness();
     TestRccArchive();

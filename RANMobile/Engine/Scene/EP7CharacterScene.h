@@ -31,6 +31,7 @@
 #include "../../Data/Importer/EP7Skeleton.h"
 #include "../../Data/Importer/EP7SkinPiece.h"
 #include "../../Data/Importer/EP7SkinnedMesh.h"
+#include "../Animation/EP7SkinAniControl.h"
 #include "../Camera/MobileCamera.h"
 #include "../Renderer/MobileRenderer.h"
 
@@ -100,8 +101,10 @@ struct EP7CharacterInstance {
     float yawDegrees = 0.0f;
     float scale = 1.0f;
 
-    // Playback.
-    EP7AnimationPlayer player;
+    // Playback: the authentic DxSkinAniControl state machine (B17). Spawn registers
+    // every valid clip and plays DEFAULTANI (registry entry 0) exactly like the
+    // original does when it has no explicit selection yet.
+    EP7SkinAniControl aniControl;
     int32_t currentClip = -1;
 
     // Render state produced by EvaluatePose().
@@ -109,8 +112,17 @@ struct EP7CharacterInstance {
     std::vector<float> skinnedNormals;
     std::vector<uint32_t> pieceVertexOffsets;
 
+    // B17: persistent scratch buffers — the per-frame pose path must not allocate
+    // (engine-quality requirement); capacity is reused across frames.
+    std::vector<ep7math::Mat4> skinPaletteScratch;
+    std::vector<float> skinPosScratch;
+    std::vector<float> skinNormScratch;
+
     bool visible = true;
     bool poseValid = false;
+    // TRUE while a non-looping clip is playing and has reported its end
+    // (ANIMCONTNODE::FrameMove bEndAnim) — the gameplay layer re-selects on this.
+    bool animationEnded = false;
     // World-space AABB, from the authentic .chf bounding box when present.
     float boundsMin[3] = {0.0f, 0.0f, 0.0f};
     float boundsMax[3] = {0.0f, 0.0f, 0.0f};
@@ -158,6 +170,14 @@ public:
     // name is not part of the character.
     bool PlayAnimation(uint32_t instanceId, const std::string& clipName);
     bool PlayAnimationIndex(uint32_t instanceId, int32_t clipIndex);
+
+    // B17: authentic type-based selection (DxSkinAniControl::SELECTANI(MType, SType,
+    // dwFlags, dwSelect)) and the DEFAULTANI / end-state helpers for the gameplay layer.
+    bool SelectAnimationByType(uint32_t instanceId, int32_t mainType, int32_t subType = 0, uint32_t select = 0);
+    void DefaultAnimation(uint32_t instanceId);
+    void DoShockMix(uint32_t instanceId);
+    // TRUE while a non-looping clip is playing and has reached its end window.
+    bool IsAnimationEnded(uint32_t instanceId) const;
 
     // Advances animation clocks and re-evaluates poses.
     void Update(float deltaSeconds);

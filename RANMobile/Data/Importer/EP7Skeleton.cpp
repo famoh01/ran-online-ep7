@@ -287,6 +287,12 @@ bool EP7Skeleton::LoadFromXFile(const uint8_t* data, size_t size) {
     }
 
     RebuildLinks();
+
+    // DxBoneCollector.cpp:362 — bind pose SQT: CUR = ORIG = PREV = D3DXMatrixToSQT(matRot).
+    for (auto& bone : m_bones) {
+        ep7math::MatrixToSQT(bone.localRest, bone.restScale, bone.restRotation, bone.restPosition);
+    }
+
     m_valid = true;
     ResetToRestPose();
     return true;
@@ -305,34 +311,70 @@ int32_t EP7Skeleton::FindBoneIndex(const std::string& name) const {
 }
 
 void EP7Skeleton::ResetToRestPose() {
+    // DxBoneTrans::ResetBone (DxBoneCollector.cpp:34, USE_ANI_QUATERNION branch):
+    //   m_dwFlag = 0; m_fScale = 1; m_vQuatMIX = identity;
+    //   m_pQuatPosCUR = m_pQuatPosORIG; m_pQuatPosPREV = m_pQuatPosORIG;
+    // (plus the non-quaternion matRot = matRotOrig, which is `local = localRest` here).
     for (auto& bone : m_bones) {
         bone.local = bone.localRest;
         bone.localIsFromSqt = false;
+        bone.scale = bone.restScale;
+        bone.position = bone.restPosition;
+        bone.rotation = bone.restRotation;
+        bone.prevScale = bone.restScale;
+        bone.prevPosition = bone.restPosition;
+        bone.prevRotation = bone.restRotation;
+        bone.useBlending = false;
+        bone.useAniAdd = false;
+        bone.mixRotation = ep7math::Quat(0.0f, 0.0f, 0.0f, 1.0f);
+        bone.aniScale = 1.0f;
     }
 }
 
-void EP7Skeleton::UpdateBones(const ep7math::Mat4& matRoot) {
+void EP7Skeleton::UpdateBones(const ep7math::Mat4& matRoot, float blendWeight) {
     for (int32_t root : m_roots) {
-        UpdateBonesRecursive(root, matRoot);
+        UpdateBonesRecursive(root, matRoot, blendWeight);
     }
 }
 
-void EP7Skeleton::UpdateBonesRecursive(int32_t index, const ep7math::Mat4& parentCombined) {
+void EP7Skeleton::UpdateBonesRecursive(int32_t index, const ep7math::Mat4& parentCombined, float blendWeight) {
     if (index < 0 || index >= static_cast<int32_t>(m_bones.size())) return;
     EP7Bone& bone = m_bones[static_cast<size_t>(index)];
 
-    // DxSkeleton::UpdateBones, USE_ANI_QUATERNION path: build the rotation matrix from the
-    // CUR quaternion, multiply in the per-axis scale, then matCombined = matRot * matParent.
+    // DxSkeleton::UpdateBones, USE_ANI_QUATERNION path (DxBoneCollector.cpp:71+):
+    //   1. base SQuatPos = m_pQuatPosCUR
+    //   2. if (m_dwFlag & USE_ANI_BLENDING): lerp/slerp PREV -> CUR by g_fWeight
+    //   3. if (m_dwFlag & USE_ANI_ADD): vQuat = m_vQuatMIX * vQuat (both normalized)
+    //   4. local matrix = RotationQuaternion(quat), rows scaled by per-axis scale * m_fScale,
+    //      translation = pos
+    //   5. matCombined = local * matParent
     if (bone.localIsFromSqt) {
-        ep7math::Mat4 rot = ep7math::RotationQuaternion(bone.rotation);
-        for (int c = 0; c < 3; ++c) {
-            rot.m[0][c] *= bone.scale.x;
-            rot.m[1][c] *= bone.scale.y;
-            rot.m[2][c] *= bone.scale.z;
+        ep7math::Vec3 scale = bone.scale;
+        ep7math::Vec3 position = bone.position;
+        ep7math::Quat rotation = bone.rotation;
+
+        if (bone.useBlending) {
+            // D3DXVec3Lerp + D3DXQuaternionSlerp against m_pQuatPosPREV with g_fWeight.
+            const float w = (blendWeight < 0.0f) ? 0.0f : ((blendWeight > 1.0f) ? 1.0f : blendWeight);
+            scale = ep7math::Lerp(bone.prevScale, bone.scale, w);
+            position = ep7math::Lerp(bone.prevPosition, bone.position, w);
+            rotation = ep7math::Slerp(bone.prevRotation, bone.rotation, w);
         }
-        rot.m[3][0] = bone.position.x;
-        rot.m[3][1] = bone.position.y;
-        rot.m[3][2] = bone.position.z;
+
+        if (bone.useAniAdd) {
+            // D3DXQuaternionNormalize both, then vQuat = m_vQuatMIX * vQuat.
+            rotation = ep7math::Multiply(ep7math::Normalize(bone.mixRotation), ep7math::Normalize(rotation));
+        }
+
+        ep7math::Mat4 rot = ep7math::RotationQuaternion(rotation);
+        for (int c = 0; c < 3; ++c) {
+            rot.m[0][c] *= scale.x * bone.aniScale;
+            rot.m[1][c] *= scale.y * bone.aniScale;
+            rot.m[2][c] *= scale.z * bone.aniScale;
+        }
+        rot.m[3][0] = position.x;
+        rot.m[3][1] = position.y;
+        rot.m[3][2] = position.z;
         bone.local = rot;
     }
 
@@ -341,7 +383,7 @@ void EP7Skeleton::UpdateBonesRecursive(int32_t index, const ep7math::Mat4& paren
     int32_t child = bone.firstChild;
     while (child >= 0) {
         const int32_t next = m_bones[static_cast<size_t>(child)].nextSibling;
-        UpdateBonesRecursive(child, bone.combined);
+        UpdateBonesRecursive(child, bone.combined, blendWeight);
         child = next;
     }
 }

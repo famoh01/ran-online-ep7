@@ -1,5 +1,6 @@
 #include "EP7Animation.h"
 
+#include <algorithm>
 #include <cstdio>
 
 #include <cmath>
@@ -528,9 +529,9 @@ bool ParseCfgEffects(ep7byte::Stream& s, EP7AnimInfo& info) {
 }
 
 // DxAniScale::Load (DxAniBoneScale.cpp): DWORD mapSize, then per entry a length-prefixed
-// TSTRING anim name plus a DxAniScaleMAIN block (DWORD count + count * (DWORD key +
-// float scale)). Scale key values are consumed for stream alignment and bounds-checked,
-// but not retained; the entry names and key counts are recorded on EP7AnimInfo.
+// TSTRING bone name plus a DxAniScaleMAIN block (DWORD count + count * (DWORD key +
+// float scale)). Since B17 the key values are retained on EP7AnimInfo (they drive
+// DxAniScaleMAIN::UpdateBoneScale at runtime) — same bytes, same bounds checks.
 bool ParseCfgAniScale(ep7byte::Stream& s, EP7AnimInfo& info) {
     uint32_t mapSize = 0;
     if (!s.ReadU32(mapSize)) {
@@ -570,11 +571,39 @@ bool ParseCfgAniScale(ep7byte::Stream& s, EP7AnimInfo& info) {
                 s.Fail("truncated cfg ani scale key");
                 return false;
             }
+            entry.keys.emplace_back(keyTime, scale);
         }
         entry.keyCount = keyCount;
         info.aniScaleEntries.push_back(std::move(entry));
     }
     return true;
+}
+
+// SAnimation::SetMix, quatPos-key branch (SAnimation.cpp:419-436): the overlay
+// rotation is quat(key@dwKey) * inverse(quat(key0)), applied to m_vQuatMIX with the
+// USE_ANI_ADD flag. The authentic code looks the key up with the RAW (unwrapped)
+// global time — reproduced verbatim; dwKey is clamped to the last key.
+void ApplyMixTrack(const EP7BoneTrack& track, float fGlobalTime, EP7Skeleton& skeleton) {
+    if (track.quatPosKeys.empty()) return;
+
+    EP7Bone* bone = skeleton.FindBone(track.boneName);
+    if (!bone) return;
+
+    const size_t count = track.quatPosKeys.size();
+    const size_t found = ep7anim::LowerBoundKey(track.quatPosKeys, static_cast<uint32_t>(fGlobalTime));
+    size_t dwKey = ep7anim::SampleKeyIndex(found, count);
+
+    // m_pQuatOrigRot[i] = decompress(key[i]) * inverse(decompress(key[0])); computed
+    // on demand (the original caches it lazily in m_pQuatOrigRot, same semantics).
+    const ep7math::Quat key0 = ep7math::DecompressQuaternion(
+        track.quatPosKeys[0].quatComp0, track.quatPosKeys[0].quatComp1);
+    const ep7math::Quat key0Inv = ep7math::Inverse(key0);
+    const ep7math::Quat keyN = ep7math::DecompressQuaternion(
+        track.quatPosKeys[dwKey].quatComp0, track.quatPosKeys[dwKey].quatComp1);
+    if (!ep7math::IsFinite(key0) || !ep7math::IsFinite(keyN)) return;  // hardening
+
+    bone->useAniAdd = true;  // pBoneToAnimate->m_dwFlag |= USE_ANI_ADD
+    bone->mixRotation = ep7math::Multiply(keyN, key0Inv);
 }
 
 }  // namespace
@@ -1097,6 +1126,42 @@ void EP7AnimationReader::BindToSkeleton(EP7AnimClip& clip, EP7Skeleton& skeleton
     bind(clip.upBodyTracks);
 }
 
+void EP7AnimationReader::ConvertMatToQuat(EP7AnimClip& clip) {
+    auto convert = [](EP7BoneTrack& track) {
+        // The original guard: only matrix-only tracks are converted; a track with
+        // quatPos keys keeps its matrix keys (SAnimation.cpp:1331).
+        if (!track.quatPosKeys.empty() || track.matrixKeys.empty()) return;
+        track.quatPosKeys.reserve(track.quatPosKeys.size() + track.matrixKeys.size());
+        for (const EP7MatrixKey& key : track.matrixKeys) {
+            ep7math::Mat4 mat;
+            for (int r = 0; r < 4; ++r) {
+                for (int c = 0; c < 4; ++c) {
+                    mat.m[r][c] = key.mat[r * 4 + c];
+                }
+            }
+            ep7math::Vec3 scale;
+            ep7math::Vec3 pos;
+            ep7math::Quat quat;
+            ep7math::MatrixToSQT(mat, scale, quat, pos);
+            EP7QuatPosKey out;
+            out.time = key.time;
+            out.scale[0] = scale.x;
+            out.scale[1] = scale.y;
+            out.scale[2] = scale.z;
+            out.pos[0] = pos.x;
+            out.pos[1] = pos.y;
+            out.pos[2] = pos.z;
+            ep7math::CompressionQuaternion(quat, out.quatComp0, out.quatComp1);
+            track.quatPosKeys.push_back(out);
+        }
+        // The original frees the matrix keys after conversion (SAnimation.cpp:1353-1354).
+        track.matrixKeys.clear();
+        track.matrixKeys.shrink_to_fit();
+    };
+    for (EP7BoneTrack& track : clip.mainTracks) convert(track);
+    for (EP7BoneTrack& track : clip.upBodyTracks) convert(track);
+}
+
 // ---------------------------------------------------------------------------
 // EP7AnimationPlayer
 // ---------------------------------------------------------------------------
@@ -1166,11 +1231,17 @@ bool EP7AnimationPlayer::Advance(float deltaSeconds) {
 }
 
 void EP7AnimationPlayer::ApplyToSkeleton(EP7Skeleton& skeleton) const {
+    // Plain single-control update: DxAniControlCORE::UpdateTime in the no-upbody case
+    // (m_sDownBodyAC.UpdateTime(1.f, TRUE, EMBODY_DEFAULT)).
+    ApplyToSkeleton(skeleton, true, EP7EmBody::Default);
+}
+
+void EP7AnimationPlayer::ApplyToSkeleton(EP7Skeleton& skeleton, bool bFirst, EP7EmBody emBody) const {
     if (!m_clip) return;
 
     const uint32_t time = static_cast<uint32_t>(m_time > 0.0f ? m_time : 0.0f);
 
-    auto applyTracks = [&skeleton, time](const std::vector<EP7BoneTrack>& tracks) {
+    auto applyTracks = [&skeleton, time, bFirst](const std::vector<EP7BoneTrack>& tracks) {
         for (const auto& track : tracks) {
             if (track.boneIndex < 0) continue;
             EP7Bone& bone = const_cast<EP7Bone&>(skeleton.GetBone(static_cast<size_t>(track.boneIndex)));
@@ -1194,14 +1265,32 @@ void EP7AnimationPlayer::ApplyToSkeleton(EP7Skeleton& skeleton) const {
                 const size_t found = ep7anim::LowerBoundKey(track.quatPosKeys, time);
                 const size_t index = ep7anim::SampleKeyIndex(found, track.quatPosKeys.size());
                 const EP7QuatPosKey& key = track.quatPosKeys[index];
-                bone.scale = ep7math::Vec3(key.scale[0], key.scale[1], key.scale[2]);
-                bone.position = ep7math::Vec3(key.pos[0], key.pos[1], key.pos[2]);
-                bone.rotation = ep7math::DecompressQuaternion(key.quatComp0, key.quatComp1);
-                if (bone.rotation.x == 0.0f && bone.rotation.y == 0.0f && bone.rotation.z == 0.0f &&
-                    bone.rotation.w == 0.0f) {
-                    bone.rotation.w = 1.0f;  // degenerate compressed key: keep a valid rotation
+                const ep7math::Vec3 keyScale(key.scale[0], key.scale[1], key.scale[2]);
+                const ep7math::Vec3 keyPos(key.pos[0], key.pos[1], key.pos[2]);
+                ep7math::Quat keyQuat = ep7math::DecompressQuaternion(key.quatComp0, key.quatComp1);
+                if (keyQuat.x == 0.0f && keyQuat.y == 0.0f && keyQuat.z == 0.0f && keyQuat.w == 0.0f) {
+                    keyQuat.w = 1.0f;  // degenerate compressed key: keep a valid rotation
                 }
-                bone.localIsFromSqt = true;
+                // Mobile-runtime hardening (documented): non-finite file values would
+                // poison the whole pose chain downstream, so the write is skipped.
+                if (!ep7math::IsFinite(keyScale) || !ep7math::IsFinite(keyPos) || !ep7math::IsFinite(keyQuat)) {
+                    continue;
+                }
+                if (bFirst) {
+                    // SetPosQuat bFirst=TRUE: write m_pQuatPosCUR (SAnimation.cpp:461).
+                    bone.scale = keyScale;
+                    bone.position = keyPos;
+                    bone.rotation = keyQuat;
+                    bone.localIsFromSqt = true;
+                } else {
+                    // SetPosQuat bFirst=FALSE: write m_pQuatPosPREV and raise
+                    // USE_ANI_BLENDING so UpdateBones lerps PREV->CUR by g_fWeight
+                    // (SAnimation.cpp:469, DxSkeleton::UpdateBones blending branch).
+                    bone.prevScale = keyScale;
+                    bone.prevPosition = keyPos;
+                    bone.prevRotation = keyQuat;
+                    bone.useBlending = true;
+                }
                 continue;
             }
 
@@ -1315,8 +1404,114 @@ void EP7AnimationPlayer::ApplyToSkeleton(EP7Skeleton& skeleton) const {
         }
     };
 
-    applyTracks(m_clip->upBodyTracks);
-    applyTracks(m_clip->mainTracks);
+    // SAnimContainer::UpdateTime (SAnimation.cpp:1236) emBody switch — the authentic
+    // list selection for each EMBODY value. DEFAULT applies the upBody list first,
+    // then the main list (the original iterates m_listAniUPBODY before m_listAnimation).
+    switch (emBody) {
+        case EP7EmBody::UpBody:
+            applyTracks(m_clip->upBodyTracks);
+            break;
+        case EP7EmBody::DownBody:
+            applyTracks(m_clip->mainTracks);
+            break;
+        case EP7EmBody::Default:
+        default:
+            applyTracks(m_clip->upBodyTracks);
+            applyTracks(m_clip->mainTracks);
+            break;
+    }
+}
+
+void EP7AnimationPlayer::ApplyBoneScale(EP7Skeleton& skeleton, float weight, bool bFirst) const {
+    // DxAniScaleMAIN::UpdateBoneScale (DxAniBoneScale.cpp:5-48) for every entry of the
+    // clip's .cfg DxAniScale block, driven by SANIMCONINFO::m_pAniScale via
+    // SAnimContainer::UpdateBoneScale (SAnimation.cpp:1315).
+    if (!m_clip || !m_info) return;
+    if (m_info->aniScaleEntries.empty()) return;
+
+    const float fSTime = static_cast<float>(m_info->startTime);
+    const float fETime = static_cast<float>(m_info->endTime);
+    const float unitTime = static_cast<float>(m_info->unitTime);
+    const float fTime = m_time;
+
+    for (const auto& entry : m_info->aniScaleEntries) {
+        EP7Bone* bone = skeleton.FindBone(entry.animName);
+        if (!bone) continue;  // DxAniScale::UpdateBoneScale would pass NULL to FindBone's result here
+
+        // DxAniScaleMAIN stores std::map<DWORD,float> — ordered by frame key — while the
+        // .cfg stores them in file order; rebuild the authentic iteration order.
+        std::vector<std::pair<uint32_t, float>> ordered(entry.keys);
+        std::sort(ordered.begin(), ordered.end(),
+                  [](const std::pair<uint32_t, float>& a, const std::pair<uint32_t, float>& b) {
+                      return a.first < b.first;
+                  });
+
+        float fStartTime = 0.0f;
+        float dwStartSCALE = 1.0f;
+        float dwEndSCALE_BACK = 1.0f;
+        float fScale = 1.0f;
+        bool resolved = false;
+
+        for (const auto& kv : ordered) {
+            const float fEndTime = static_cast<float>(kv.first) * unitTime - fSTime;
+            const float dwEndSCALE = kv.second;
+            if (kv.first == 0) dwEndSCALE_BACK = dwEndSCALE;
+
+            if (fTime >= fStartTime && fTime < fEndTime) {
+                const float span = fEndTime - fStartTime;
+                // Authentic linear ramp between the surrounding keys; span==0 (duplicate
+                // keys) would divide by zero, so the target scale is used directly.
+                const float fDiffScale = (span > 0.0f) ? ((dwEndSCALE - dwStartSCALE) / span) : 0.0f;
+                fScale = dwStartSCALE + (fTime - fStartTime) * fDiffScale;
+                resolved = true;
+                break;
+            } else if (fTime == fEndTime) {
+                fScale = dwEndSCALE;
+                resolved = true;
+                break;
+            }
+            fStartTime = fEndTime;
+            dwStartSCALE = dwEndSCALE;
+        }
+
+        if (!resolved) {
+            // After the last key the authentic code interpolates toward the key-0 scale
+            // across [lastKeyTime, ETime].
+            const float fEndTime = fETime;
+            const float dwEndSCALE = dwEndSCALE_BACK;
+            if (fTime >= fStartTime && fTime < fEndTime) {
+                const float span = fEndTime - fStartTime;
+                const float fDiffScale = (span > 0.0f) ? ((dwEndSCALE - dwStartSCALE) / span) : 0.0f;
+                fScale = dwStartSCALE + (fTime - fStartTime) * fDiffScale;
+            } else if (fTime == fEndTime) {
+                fScale = dwEndSCALE;
+            } else {
+                fScale = dwStartSCALE;
+            }
+        }
+
+        if (bFirst) {
+            bone->aniScale = fScale * weight;  // m_fScale = fScale * fWeight
+        } else {
+            bone->aniScale += fScale * weight;  // m_fScale += fScale * fWeight
+        }
+    }
+}
+
+void EP7AnimationPlayer::ApplyMix(EP7Skeleton& skeleton) const {
+    // SAnimContainer::UpdateMix (SAnimation.cpp:1293) -> SAnimation::SetMix
+    // (SAnimation.cpp:387). Only the quatPos-key branch drives the shipped pose:
+    // it raises USE_ANI_ADD and writes m_vQuatMIX = quat(key@time) * inverse(quat(key0)).
+    // The matrix-key branch composes into matRot, which the USE_ANI_QUATERNION build
+    // never reads — reproduced as a documented no-op.
+    if (!m_clip) return;
+
+    for (const auto& track : m_clip->mainTracks) {
+        ApplyMixTrack(track, m_time, skeleton);
+    }
+    for (const auto& track : m_clip->upBodyTracks) {
+        ApplyMixTrack(track, m_time, skeleton);
+    }
 }
 
 float EP7AnimationPlayer::NormalizedTime() const {

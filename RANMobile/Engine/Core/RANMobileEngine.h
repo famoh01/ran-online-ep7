@@ -11,6 +11,7 @@ namespace RANMobile {
     class MobileCamera;
     class NetworkClient;
     class GameDataLoader;
+    class EP7CharacterScene;
 }
 class LoginScreen;
 namespace RANMobile { class MobileHUD; }
@@ -18,7 +19,8 @@ namespace RANMobile { class MobileHUD; }
 enum class EngineScreenState {
     Login,
     CharacterSelect,
-    InGame
+    InGame,
+    CharacterPreview  // B17: authentic character/animation preview (engine diagnostic path)
 };
 
 class RANMobileEngine {
@@ -48,6 +50,12 @@ public:
     void SetScreenState(EngineScreenState state) { m_screenState = state; }
     EngineScreenState GetScreenState() const { return m_screenState; }
 
+    // B17: authentic character/animation runtime. The engine owns the scene; assets
+    // are registered through EP7CharacterScene (EP7CharacterLoader with an asset
+    // resolver — pack archive, Android assets, or test fixtures). The scene updates
+    // and renders inside the CharacterPreview screen state with the shared camera.
+    RANMobile::EP7CharacterScene* GetCharacterScene() const { return m_characterScene.get(); }
+
     bool IsInitialized() const { return m_initialized; }
     bool IsRunning() const { return m_running; }
 
@@ -75,5 +83,6 @@ private:
     std::unique_ptr<RANMobile::GameDataLoader> m_gameDataLoader;
     std::unique_ptr<LoginScreen> m_loginScreen;
     std::unique_ptr<RANMobile::MobileHUD> m_mobileHUD;
+    std::unique_ptr<RANMobile::EP7CharacterScene> m_characterScene;
     EngineScreenState m_screenState = EngineScreenState::Login;
 };

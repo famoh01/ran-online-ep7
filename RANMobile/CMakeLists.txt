@@ -13,6 +13,7 @@ set(RANMOBILE_SOURCES
     Engine/Camera/MobileCamera.cpp
     Engine/Scene/EP7CharacterScene.cpp
     Engine/Animation/AnimationManager.cpp
+    Engine/Animation/EP7SkinAniControl.cpp
     Engine/Audio/AudioManager.cpp
     Engine/Network/NetworkClient.cpp
     Data/Validator/DataValidator.cpp

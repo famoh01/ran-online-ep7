@@ -62,6 +62,7 @@ jobs:
             RANMobile/Engine/Touch/TouchSystem.cpp \
             RANMobile/Engine/Camera/MobileCamera.cpp \
             RANMobile/Engine/Animation/AnimationManager.cpp \
+            RANMobile/Engine/Animation/EP7SkinAniControl.cpp \
             RANMobile/Engine/Audio/AudioManager.cpp \
             RANMobile/Engine/Network/NetworkClient.cpp \
             RANMobile/Data/Validator/DataValidator.cpp \
@@ -122,6 +123,7 @@ jobs:
             RANMobile/Engine/Renderer/MobileRenderer.cpp \
             RANMobile/Engine/Camera/MobileCamera.cpp \
             RANMobile/Engine/Scene/EP7CharacterScene.cpp \
+            RANMobile/Engine/Animation/EP7SkinAniControl.cpp \
             RANMobile/Data/Importer/EP7Animation.cpp \
             RANMobile/Data/Importer/EP7CharacterFile.cpp \
             RANMobile/Data/Importer/EP7RccArchive.cpp \

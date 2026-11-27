@@ -205,9 +205,92 @@ inline Vec3 NormalizeVec3(const Vec3& v) {
     return Vec3(v.x * inv, v.y * inv, v.z * inv);
 }
 
+// D3DXQuaternionRotationMatrix — standard trace-based extraction used by D3DXMatrixToSQT.
+inline Quat QuaternionRotationMatrix(const Mat4& mat) {
+    // Diagonal trace method (D3DX respects the row-vector convention; the axis/trace
+    // form below is sign-safe for proper rotation matrices).
+    const float trace = mat.m[0][0] + mat.m[1][1] + mat.m[2][2];
+    Quat out;
+    if (trace > 0.0f) {
+        const float s = std::sqrt(trace + 1.0f) * 2.0f;  // 4w
+        out.w = 0.25f * s;
+        out.x = (mat.m[2][1] - mat.m[1][2]) / s;
+        out.y = (mat.m[0][2] - mat.m[2][0]) / s;
+        out.z = (mat.m[1][0] - mat.m[0][1]) / s;
+    } else if (mat.m[0][0] > mat.m[1][1] && mat.m[0][0] > mat.m[2][2]) {
+        const float s = std::sqrt(1.0f + mat.m[0][0] - mat.m[1][1] - mat.m[2][2]) * 2.0f;  // 4x
+        out.w = (mat.m[2][1] - mat.m[1][2]) / s;
+        out.x = 0.25f * s;
+        out.y = (mat.m[0][1] + mat.m[1][0]) / s;
+        out.z = (mat.m[0][2] + mat.m[2][0]) / s;
+    } else if (mat.m[1][1] > mat.m[2][2]) {
+        const float s = std::sqrt(1.0f + mat.m[1][1] - mat.m[0][0] - mat.m[2][2]) * 2.0f;  // 4y
+        out.w = (mat.m[0][2] - mat.m[2][0]) / s;
+        out.x = (mat.m[0][1] + mat.m[1][0]) / s;
+        out.y = 0.25f * s;
+        out.z = (mat.m[1][2] + mat.m[2][1]) / s;
+    } else {
+        const float s = std::sqrt(1.0f + mat.m[2][2] - mat.m[0][0] - mat.m[1][1]) * 2.0f;  // 4z
+        out.w = (mat.m[1][0] - mat.m[0][1]) / s;
+        out.x = (mat.m[0][2] + mat.m[2][0]) / s;
+        out.y = (mat.m[1][2] + mat.m[2][1]) / s;
+        out.z = 0.25f * s;
+    }
+    return Normalize(out);
+}
+
+// D3DXMatrixToSQT — decompose a rigid TRS matrix into scale / rotation / translation.
+// Scale is the length of each rotation row (authentic D3DX behaviour); the rotation is
+// extracted from the rows normalized by those scales.
+inline void MatrixToSQT(const Mat4& mat, Vec3& outScale, Quat& outQuat, Vec3& outPos) {
+    const float sx = std::sqrt(mat.m[0][0] * mat.m[0][0] + mat.m[0][1] * mat.m[0][1] + mat.m[0][2] * mat.m[0][2]);
+    const float sy = std::sqrt(mat.m[1][0] * mat.m[1][0] + mat.m[1][1] * mat.m[1][1] + mat.m[1][2] * mat.m[1][2]);
+    const float sz = std::sqrt(mat.m[2][0] * mat.m[2][0] + mat.m[2][1] * mat.m[2][1] + mat.m[2][2] * mat.m[2][2]);
+    outScale = Vec3(sx > 1e-9f ? sx : 1.0f, sy > 1e-9f ? sy : 1.0f, sz > 1e-9f ? sz : 1.0f);
+    outPos = Vec3(mat.m[3][0], mat.m[3][1], mat.m[3][2]);
+
+    Mat4 rot;
+    rot.m[0][0] = mat.m[0][0] / outScale.x; rot.m[0][1] = mat.m[0][1] / outScale.x; rot.m[0][2] = mat.m[0][2] / outScale.x;
+    rot.m[1][0] = mat.m[1][0] / outScale.y; rot.m[1][1] = mat.m[1][1] / outScale.y; rot.m[1][2] = mat.m[1][2] / outScale.y;
+    rot.m[2][0] = mat.m[2][0] / outScale.z; rot.m[2][1] = mat.m[2][1] / outScale.z; rot.m[2][2] = mat.m[2][2] / outScale.z;
+    rot.m[3][0] = rot.m[3][1] = rot.m[3][2] = 0.0f;
+    rot.m[0][3] = rot.m[1][3] = rot.m[2][3] = 0.0f; rot.m[3][3] = 1.0f;
+    outQuat = QuaternionRotationMatrix(rot);
+}
+
+inline bool IsFinite(float v) { return std::isfinite(v) != 0; }
+inline bool IsFinite(const Vec3& v) { return IsFinite(v.x) && IsFinite(v.y) && IsFinite(v.z); }
+inline bool IsFinite(const Quat& q) { return IsFinite(q.x) && IsFinite(q.y) && IsFinite(q.z) && IsFinite(q.w); }
+
 // Quaternion compression/decompression constants (SAnimation.cpp:24-26).
 inline constexpr float kDiv1_65535 = 0.000015259021896f;
 inline constexpr float kDiv1_32768 = 0.000030517578125f;
+
+// CompressionQuaternion (SAnimation.cpp:27) — the 16-bit pack used by
+// SAnimation::ConvertMatToQuat. x/y/z map [-1,1] -> [0,1] via (v+1)*0.5 and store
+// (DWORD)(v*0xffff); w (canonicalized to the w>=0 hemisphere first) stores
+// (DWORD)(w*0xffff) directly. DecompressQuaternion is the exact inverse (x/y/z via
+// (stored-32767)/32768, w via stored/65535). Mobile hardening: a non-finite input
+// compresses the identity quaternion and the pre-truncation values are clamped to
+// [0,1] so a malformed matrix key can never produce an out-of-range DWORD cast
+// (the original would wrap); in-range values are bit-exact with the original.
+inline void CompressionQuaternion(Quat v, uint32_t& outFirst, uint32_t& outSecond) {
+    if (!IsFinite(v)) {
+        v = Quat(0.0f, 0.0f, 0.0f, 1.0f);
+    }
+    if (v.w < 0.0f) {
+        v.x = -v.x;
+        v.y = -v.y;
+        v.z = -v.z;
+        v.w = -v.w;
+    }
+    const float x = ((v.x + 1.0f) * 0.5f) < 0.0f ? 0.0f : (((v.x + 1.0f) * 0.5f) > 1.0f ? 1.0f : (v.x + 1.0f) * 0.5f);
+    const float y = ((v.y + 1.0f) * 0.5f) < 0.0f ? 0.0f : (((v.y + 1.0f) * 0.5f) > 1.0f ? 1.0f : (v.y + 1.0f) * 0.5f);
+    const float z = ((v.z + 1.0f) * 0.5f) < 0.0f ? 0.0f : (((v.z + 1.0f) * 0.5f) > 1.0f ? 1.0f : (v.z + 1.0f) * 0.5f);
+    const float w = v.w < 0.0f ? 0.0f : (v.w > 1.0f ? 1.0f : v.w);
+    outFirst = (static_cast<uint32_t>(x * 65535.0f) << 16) + static_cast<uint32_t>(y * 65535.0f);
+    outSecond = (static_cast<uint32_t>(z * 65535.0f) << 16) + static_cast<uint32_t>(w * 65535.0f);
+}
 
 // Authentic QUATCOMP -> quaternion (SAnimation.cpp DecompressionQuaternion).
 inline Quat DecompressQuaternion(uint32_t dwFirst, uint32_t dwSecond) {

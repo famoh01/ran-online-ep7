@@ -1,4 +1,5 @@
 #include "MobileRenderer.h"
+#include "../Camera/MobileCamera.h"
 #include "../Core/Logger.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -65,6 +66,48 @@ static GLuint CompileShader(GLenum type, const char* src) {
     }
     return shader;
 }
+
+// ---------------------------------------------------------------------------
+// B17: 3D character pass shaders.  The CPU pose path (EP7CharacterScene ->
+// DxSkinMesh9_CPU-equivalent skinning) already outputs world-space positions and
+// normals, so the vertex stage only applies the camera view-projection — the same
+// D3DTS_WORLD=Identity convention DxSkinMesh9_CPU uses (its skinned vertices are
+// produced in world space and the world transform is identity).
+// ---------------------------------------------------------------------------
+static const char* kCharVertexShader = R"(#version 300 es
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in vec3 aNormal;
+layout(location = 2) in vec2 aUV;
+uniform mat4 uVP;
+out vec3 vNormal;
+out vec2 vUV;
+void main() {
+    gl_Position = uVP * vec4(aPos, 1.0);
+    vNormal = aNormal;
+    vUV = aUV;
+}
+)";
+
+static const char* kCharFragmentShader = R"(#version 300 es
+precision mediump float;
+uniform vec4 uColor;
+uniform int uUseTexture;
+uniform sampler2D uTex;
+in vec3 vNormal;
+in vec2 vUV;
+out vec4 FragColor;
+void main() {
+    // Fixed directional key light + ambient floor (match the visible skeleton pose;
+    // the authentic renderer's full material stack arrives with the texture pipeline).
+    vec3 lightDir = normalize(vec3(0.4, 0.8, 0.45));
+    float ndl = max(dot(normalize(vNormal), lightDir), 0.0);
+    vec3 lit = uColor.rgb * (0.35 + 0.65 * ndl);
+    if (uUseTexture == 1) {
+        lit *= texture(uTex, vUV).rgb;
+    }
+    FragColor = vec4(lit, uColor.a);
+}
+)";
 #endif
 
 uint32_t MobileRenderer::DecodeUTF8(const std::string& text, size_t& index) {
@@ -177,6 +220,35 @@ bool MobileRenderer::Initialize(int width, int height) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    // B17: 3D character pass program + buffers (dynamic VBO/EBO, grown on demand).
+    GLuint cvs = CompileShader(GL_VERTEX_SHADER, kCharVertexShader);
+    GLuint cfs = CompileShader(GL_FRAGMENT_SHADER, kCharFragmentShader);
+    if (cvs && cfs) {
+        m_charProgram = glCreateProgram();
+        glAttachShader(m_charProgram, cvs);
+        glAttachShader(m_charProgram, cfs);
+        glLinkProgram(m_charProgram);
+        glDeleteShader(cvs);
+        glDeleteShader(cfs);
+        m_uVPLoc = glGetUniformLocation(m_charProgram, "uVP");
+        m_uColorLoc3D = glGetUniformLocation(m_charProgram, "uColor");
+        m_uUseTexLoc3D = glGetUniformLocation(m_charProgram, "uUseTexture");
+        m_uTexLoc3D = glGetUniformLocation(m_charProgram, "uTex");
+    }
+    glGenVertexArrays(1, &m_charVAO);
+    glGenBuffers(1, &m_charVBO);
+    glGenBuffers(1, &m_charEBO);
+    glBindVertexArray(m_charVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_charVBO);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(0));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(6 * sizeof(float)));
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_charEBO);
+    glBindVertexArray(0);
 #endif
 
     m_initialized = true;
@@ -201,8 +273,13 @@ void MobileRenderer::Shutdown() {
     if (m_uiVBO) { glDeleteBuffers(1, &m_uiVBO); m_uiVBO = 0; }
     if (m_uiVAO) { glDeleteVertexArrays(1, &m_uiVAO); m_uiVAO = 0; }
     if (m_uiProgram) { glDeleteProgram(m_uiProgram); m_uiProgram = 0; }
+    if (m_charEBO) { glDeleteBuffers(1, &m_charEBO); m_charEBO = 0; }
+    if (m_charVBO) { glDeleteBuffers(1, &m_charVBO); m_charVBO = 0; }
+    if (m_charVAO) { glDeleteVertexArrays(1, &m_charVAO); m_charVAO = 0; }
+    if (m_charProgram) { glDeleteProgram(m_charProgram); m_charProgram = 0; }
 #endif
     m_glyphCache.clear();
+    m_scene3DActive = false;
     m_initialized = false;
 }
 
@@ -422,6 +499,197 @@ void MobileRenderer::DeleteTexture(uint32_t texId) {
     GLuint id = static_cast<GLuint>(texId);
     glDeleteTextures(1, &id);
 #endif
+}
+
+// ---------------------------------------------------------------------------
+// B17: 3D character pass (see MobileRenderer.h).
+// Camera math uses GL column-major matrices (transpose of the D3D row-vector
+// convention the animation pipeline uses); EP7Math stays render-agnostic.
+// ---------------------------------------------------------------------------
+namespace {
+
+struct GlMat4 {
+    float m[16] = {0};
+    GlMat4() { m[0] = m[5] = m[10] = m[15] = 1.0f; }
+    float& operator[](size_t i) { return m[i]; }
+    const float& operator[](size_t i) const { return m[i]; }
+};
+
+GlMat4 GlPerspective(float fovYRadians, float aspect, float nearZ, float farZ) {
+    GlMat4 out;
+    const float f = 1.0f / std::tan(fovYRadians * 0.5f);
+    out[0] = f / aspect;
+    out[5] = f;
+    out[10] = (farZ + nearZ) / (nearZ - farZ);
+    out[11] = -1.0f;
+    out[14] = (2.0f * farZ * nearZ) / (nearZ - farZ);
+    out[15] = 0.0f;
+    return out;
+}
+
+void GlNormalize(float* v) {
+    const float len = std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+    if (len <= 1e-9f) return;
+    v[0] /= len;
+    v[1] /= len;
+    v[2] /= len;
+}
+
+GlMat4 GlLookAt(const float* eye, const float* center, const float* up) {
+    float f[3] = {center[0] - eye[0], center[1] - eye[1], center[2] - eye[2]};
+    GlNormalize(f);
+    float s[3] = {
+        f[1] * up[2] - f[2] * up[1],
+        f[2] * up[0] - f[0] * up[2],
+        f[0] * up[1] - f[1] * up[0]
+    };
+    GlNormalize(s);
+    float u[3] = {
+        s[1] * f[2] - s[2] * f[1],
+        s[2] * f[0] - s[0] * f[2],
+        s[0] * f[1] - s[1] * f[0]
+    };
+    GlMat4 out;
+    out[0] = s[0];  out[4] = s[1];  out[8]  = s[2];
+    out[1] = u[0];  out[5] = u[1];  out[9]  = u[2];
+    out[2] = -f[0]; out[6] = -f[1]; out[10] = -f[2];
+    out[12] = -(s[0] * eye[0] + s[1] * eye[1] + s[2] * eye[2]);
+    out[13] = -(u[0] * eye[0] + u[1] * eye[1] + u[2] * eye[2]);
+    out[14] = (f[0] * eye[0] + f[1] * eye[1] + f[2] * eye[2]);
+    return out;
+}
+
+GlMat4 GlMultiply(const GlMat4& a, const GlMat4& b) {
+    GlMat4 out;
+    for (int c = 0; c < 4; ++c) {
+        for (int r = 0; r < 4; ++r) {
+            float sum = 0.0f;
+            for (int k = 0; k < 4; ++k) {
+                sum += a.m[k * 4 + r] * b.m[c * 4 + k];
+            }
+            out.m[c * 4 + r] = sum;
+        }
+    }
+    return out;
+}
+
+}  // namespace
+
+bool MobileRenderer::BeginScene3D(const MobileCamera& camera) {
+    // Orbit eye position from the MobileCamera state (MobileCamera::Update semantics:
+    // yaw/pitch in degrees, distance back from the target).
+    const float yawRad = camera.GetYaw() * 3.14159265358979323846f / 180.0f;
+    const float pitchRad = camera.GetPitch() * 3.14159265358979323846f / 180.0f;
+    float target[3] = {0.0f, 10.0f, 0.0f};  // ~waist height of the authentic bounds box
+
+    float eye[3] = {
+        target[0] + camera.GetDistance() * std::cos(pitchRad) * std::sin(yawRad),
+        target[1] + camera.GetDistance() * std::sin(pitchRad),
+        target[2] + camera.GetDistance() * std::cos(pitchRad) * std::cos(yawRad)
+    };
+    const float up[3] = {0.0f, 1.0f, 0.0f};
+
+    const float aspect = (m_height > 0) ? static_cast<float>(m_width) / static_cast<float>(m_height) : 1.0f;
+    const float farZ = (m_settings.viewDistance > 0.0f) ? m_settings.viewDistance * 4.0f : 500.0f;
+    const GlMat4 proj = GlPerspective(45.0f * 3.14159265358979323846f / 180.0f, aspect, 0.1f, farZ);
+    const GlMat4 view = GlLookAt(eye, target, up);
+    const GlMat4 vp = GlMultiply(proj, view);
+
+    m_scene3DActive = true;
+#ifdef __ANDROID__
+    if (m_initialized && m_charProgram) {
+        for (int i = 0; i < 16; ++i) m_viewProj[i] = vp.m[i];
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+        glDisable(GL_BLEND);
+        glUseProgram(m_charProgram);
+        glUniformMatrix4fv(m_uVPLoc, 1, GL_FALSE, m_viewProj);
+        glUniform4f(m_uColorLoc3D, 0.75f, 0.75f, 0.75f, 1.0f);
+        glUniform1i(m_uUseTexLoc3D, 0);
+        glUniform1i(m_uTexLoc3D, 0);
+        return true;
+    }
+#else
+    (void)vp;
+#endif
+    return m_scene3DActive;
+}
+
+void MobileRenderer::EndScene3D() {
+    m_scene3DActive = false;
+#ifdef __ANDROID__
+    if (m_initialized) {
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glUseProgram(m_uiProgram);
+    }
+#endif
+}
+
+bool MobileRenderer::DrawSkinnedMesh(const SkinnedDrawInput& input) {
+    if (!m_scene3DActive) return false;
+    if (!input.positions || !input.indices || input.vertexCount == 0 || input.indexCount == 0) return false;
+    if (input.indexCount % 3 != 0) return false;
+
+    m_stats.drawCalls++;
+    m_stats.triangles += input.indexCount / 3;
+
+#ifdef __ANDROID__
+    if (!m_initialized || !m_charProgram) return false;
+
+    // Interleave position + normal + uv into the dynamic VBO (grown on demand).
+    const bool hasUV = input.texcoords != nullptr;
+    const size_t strideFloats = 8;
+    const size_t needed = static_cast<size_t>(input.vertexCount) * strideFloats * sizeof(float);
+    if (needed > m_charVBOBytes) {
+        m_charVBOBytes = needed + needed / 2;  // grow geometrically, no per-frame realloc
+        glBindBuffer(GL_ARRAY_BUFFER, m_charVBO);
+        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(m_charVBOBytes), nullptr, GL_DYNAMIC_DRAW);
+    }
+    std::vector<float> staging(static_cast<size_t>(input.vertexCount) * strideFloats);
+    for (uint32_t v = 0; v < input.vertexCount; ++v) {
+        float* dst = staging.data() + static_cast<size_t>(v) * strideFloats;
+        dst[0] = input.positions[v * 3 + 0];
+        dst[1] = input.positions[v * 3 + 1];
+        dst[2] = input.positions[v * 3 + 2];
+        dst[3] = input.normals ? input.normals[v * 3 + 0] : 0.0f;
+        dst[4] = input.normals ? input.normals[v * 3 + 1] : 1.0f;
+        dst[5] = input.normals ? input.normals[v * 3 + 2] : 0.0f;
+        dst[6] = hasUV ? input.texcoords[v * 2 + 0] : 0.0f;
+        dst[7] = hasUV ? input.texcoords[v * 2 + 1] : 0.0f;
+    }
+    const size_t eboNeeded = static_cast<size_t>(input.indexCount) * sizeof(uint32_t);
+    if (eboNeeded > m_charEBOBytes) {
+        m_charEBOBytes = eboNeeded + eboNeeded / 2;
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_charEBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(m_charEBOBytes), nullptr, GL_DYNAMIC_DRAW);
+    }
+
+    glBindVertexArray(m_charVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_charVBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(needed), staging.data());
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_charEBO);
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(eboNeeded), input.indices);
+
+    glUseProgram(m_charProgram);
+    glUniformMatrix4fv(m_uVPLoc, 1, GL_FALSE, m_viewProj);
+    glUniform4f(m_uColorLoc3D, input.colorR, input.colorG, input.colorB, input.colorA);
+    if (input.textureId != 0) {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, input.textureId);
+        glUniform1i(m_uTexLoc3D, 0);
+        glUniform1i(m_uUseTexLoc3D, 1);
+    } else {
+        glUniform1i(m_uUseTexLoc3D, 0);
+    }
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(input.indexCount), GL_UNSIGNED_INT, nullptr);
+    glBindVertexArray(0);
+#endif
+    return true;
 }
 
 } // namespace RANMobile

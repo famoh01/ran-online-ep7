@@ -239,12 +239,14 @@ struct EP7AnimInfo {
     };
     std::vector<CfgEffectAni> effects;  // populated for 0x0108+; 0x0105..0x0107 stop at the count
 
-    // DxAniScale block (DxAniBoneScale.cpp): map of anim name -> scale-key list.
-    // Key values are consumed for stream alignment but not retained; the entry names
-    // and key counts are recorded.
+    // DxAniScale block (DxAniBoneScale.cpp): map of bone name -> scale-key list.
+    // Since B17 the key values are retained (u32 frame key -> f32 uniform scale) so the
+    // runtime can apply DxAniScaleMAIN::UpdateBoneScale; the TSTRING is the BONE name
+    // (DxAniScale::UpdateBoneScale feeds it to pSkeleton->FindBone).
     struct CfgAniScaleEntry {
-        std::string animName;
+        std::string animName;   // bone name (DxAniScale::m_mapAniScaleMain key)
         uint32_t keyCount = 0;
+        std::vector<std::pair<uint32_t, float>> keys;  // (frame, scale) in file order
     };
     std::vector<CfgAniScaleEntry> aniScaleEntries;  // populated for 0x0108+
 
@@ -290,6 +292,16 @@ public:
     // Resolve track bone names against a skeleton (original: pSkeleton->FindBone).
     static void BindToSkeleton(EP7AnimClip& clip, EP7Skeleton& skeleton);
 
+    // SAnimation::ConvertMatToQuat (SAnimation.cpp:1326, USE_ANI_QUATERNION) — the
+    // load-time matrix -> quatPos conversion every SAnimation::Load_* variant runs
+    // after reading a track. A track with quatPos keys skips the conversion (the
+    // `!m_pQuatPosKeys` guard) and KEEPS its matrix keys: SAnimation::SetTime
+    // dispatches matrix keys first, so those still animate through the matrix branch.
+    // Matrix-only tracks become quatPos tracks and their matrix keys are freed
+    // ("메트릭스를 변환후에는 삭제한다" — SAnimation.cpp:1352), so the runtime pose
+    // state machine never sees a matrix-only track.
+    static void ConvertMatToQuat(EP7AnimClip& clip);
+
     static constexpr size_t kRotateKeySize = 20;
     static constexpr size_t kPositionKeySize = 16;
     static constexpr size_t kQuatPosKeySize = 36;
@@ -306,6 +318,17 @@ public:
 // "key units" of 1/4800 s, so a delta of one second advances 4800 units.
 inline constexpr uint32_t kUnitAniKeyPerSec = 4800;
 
+// EMBODY (enginelib/Meshs/DxBoneCollector.h) — which track list an UpdateTime pass
+// drives. SAnimContainer::UpdateTime switches on it:
+//   EMBODY_DEFAULT  -> m_listAniUPBODY tracks first, then m_listAnimation tracks
+//   EMBODY_UPBODY   -> m_listAniUPBODY tracks only
+//   EMBODY_DOWNBODY -> m_listAnimation tracks only
+enum class EP7EmBody : int32_t {
+    Default = 0,
+    UpBody = 1,
+    DownBody = 2,
+};
+
 class EP7AnimationPlayer {
 public:
     void Play(const EP7AnimClip* clip, const EP7AnimInfo* info);
@@ -318,7 +341,28 @@ public:
     // Applies the current time to every track (SAnimation::SetTime / SetMatrix).
     void ApplyToSkeleton(EP7Skeleton& skeleton) const;
 
+    // B17: full ANIMCONTNODE update (SAnimContainer::UpdateTime + SetPosQuat /
+    // SetTime with bFirst).  `bFirst=false` writes the blend layer pose
+    // (m_pQuatPosPREV + USE_ANI_BLENDING flag) instead of the current pose,
+    // exactly like the DxAniControl*_LAYER controls.  `emBody` selects the track
+    // list(s), per the SAnimContainer::UpdateTime switch.
+    void ApplyToSkeleton(EP7Skeleton& skeleton, bool bFirst, EP7EmBody emBody) const;
+
+    // B17: m_pAniScale->UpdateBoneScale (DxAniBoneScale.cpp) for the clip's
+    // .cfg DxAniScale block: per-bone uniform scale keyed by frame*UNITTIME-STime,
+    // linearly interpolated, wrapping to the key-0 scale after the last key.
+    // `bFirst` -> bone.aniScale = scale*weight; else bone.aniScale += scale*weight.
+    void ApplyBoneScale(EP7Skeleton& skeleton, float weight, bool bFirst) const;
+
+    // B17: SAnimContainer::UpdateMix / SAnimation::SetMix — the shock-mix overlay.
+    // QuatPos-keyed tracks set bone.useAniAdd and bone.mixRotation =
+    // quat(key@time) * inverse(quat(key0)); matrix-keyed tracks would write
+    // matRot (dead in the USE_ANI_QUATERNION build) and are skipped, documented.
+    void ApplyMix(EP7Skeleton& skeleton) const;
+
     float CurrentTime() const { return m_time; }
+    // SETCURTIME / ToStartTime (DxSkinAniControl): set the animation clock directly.
+    void SetTime(float time) { m_time = time; }
     bool Loop() const { return m_loop; }
     void SetLoop(bool loop) { m_loop = loop; }
     // 0..1 normalized position inside [startTime, endTime]; 0 when the clip is empty.

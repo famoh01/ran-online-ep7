@@ -134,6 +134,11 @@ EP7CharacterAsset EP7CharacterLoader::LoadCharacter(const std::vector<uint8_t>& 
         asset->clips[i] = EP7AnimationReader::ParseContainer(binBytes, true, compByteEncoded);
         if (!asset->clips[i].valid) continue;
         EP7AnimationReader::BindToSkeleton(asset->clips[i], *skeleton);
+        // SAnimation::Load_* variants run ConvertMatToQuat right after reading a track
+        // (USE_ANI_QUATERNION): matrix-only tracks become quatPos tracks, tracks with
+        // quatPos keys keep their matrix keys. The byte-level reader stays untouched —
+        // this is the runtime load transform, not a parser change.
+        EP7AnimationReader::ConvertMatToQuat(asset->clips[i]);
 
         std::vector<uint8_t> cfgBytes;
         if (Resolve(base + ".cfg", cfgBytes) && !cfgBytes.empty()) {
@@ -177,6 +182,18 @@ uint32_t EP7CharacterScene::Spawn(const AssetPtr& asset, float x, float y, float
     instance->yawDegrees = yawDegrees;
     instance->scale = asset->file.scale > 0.0f ? asset->file.scale : 1.0f;
     instance->id = m_nextId++;
+
+    // B17: register every valid clip in the instance's animation registry
+    // (DxSkinAniControl::LoadAnimation + ClassifyAnimation) and play the default
+    // clip (DEFAULTANI: m_vecAnim[0]) so the character is posed like the original.
+    for (size_t i = 0; i < asset->clips.size(); ++i) {
+        const EP7AnimClip& clip = asset->clips[i];
+        if (!clip.valid) continue;
+        const EP7AnimInfo* info = asset->clipInfos[i].valid ? &asset->clipInfos[i] : nullptr;
+        instance->aniControl.AddAnimation(&clip, info, asset->file.animations[i]);
+    }
+    instance->aniControl.DefaultAnimation();
+    instance->currentClip = instance->aniControl.CurrentClipIndex();
 
     m_instances.push_back(std::move(instance));
     return m_instances.back()->id;
@@ -226,18 +243,49 @@ bool EP7CharacterScene::PlayAnimationIndex(uint32_t instanceId, int32_t clipInde
     const EP7AnimClip& clip = instance->asset->clips[static_cast<size_t>(clipIndex)];
     if (!clip.valid) return false;
 
-    const EP7AnimInfo& info = instance->asset->clipInfos[static_cast<size_t>(clipIndex)];
-    instance->player.Play(&clip, info.valid ? &info : nullptr);
-    instance->currentClip = clipIndex;
+    // B17: route through the DxSkinAniControl state machine (restart/blend semantics).
+    if (!instance->aniControl.SelectAnimationIndex(clipIndex)) return false;
+    instance->currentClip = instance->aniControl.CurrentClipIndex();
     return true;
+}
+
+bool EP7CharacterScene::SelectAnimationByType(uint32_t instanceId, int32_t mainType, int32_t subType,
+                                              uint32_t select) {
+    // DxSkinAniControl::SELECTANI(MType, SType, dwFlags, dwSelect).
+    EP7CharacterInstance* instance = Find(instanceId);
+    if (!instance) return false;
+    const bool ok = instance->aniControl.SelectAnimation(mainType, subType, select);
+    instance->currentClip = instance->aniControl.CurrentClipIndex();
+    return ok;
+}
+
+void EP7CharacterScene::DefaultAnimation(uint32_t instanceId) {
+    EP7CharacterInstance* instance = Find(instanceId);
+    if (!instance) return;
+    instance->aniControl.DefaultAnimation();
+    instance->currentClip = instance->aniControl.CurrentClipIndex();
+}
+
+void EP7CharacterScene::DoShockMix(uint32_t instanceId) {
+    EP7CharacterInstance* instance = Find(instanceId);
+    if (!instance) return;
+    instance->aniControl.DoShockMix();
+}
+
+bool EP7CharacterScene::IsAnimationEnded(uint32_t instanceId) const {
+    for (const auto& instance : m_instances) {
+        if (instance->id == instanceId) return instance->aniControl.CurrentEnded();
+    }
+    return false;
 }
 
 void EP7CharacterScene::Update(float deltaSeconds) {
     for (auto& instance : m_instances) {
         if (!instance->visible) continue;
-        if (instance->player.IsPlaying()) {
-            instance->player.Advance(deltaSeconds);
-        }
+        // B17: the authentic DxSkinAniControl::FrameMove drives all controls
+        // (clocks, end flags, blend layers, mix overlay clock).
+        instance->aniControl.FrameMove(deltaSeconds);
+        instance->animationEnded = instance->aniControl.CurrentEnded();
         float skinMs = 0.0f;
         EvaluatePose(*instance, &skinMs);
         instance->lastSkinMs = skinMs;
@@ -251,13 +299,15 @@ bool EP7CharacterScene::EvaluatePose(EP7CharacterInstance& instance, float* outS
 
     EP7Skeleton& skeleton = *instance.poseSkeleton;
 
-    // 1. Reset to the bind pose, then let the playing clip drive the bones.
+    // 1. DxSkinAniControl::Render pose pipeline (DxSkinAniControl.cpp:814-860):
+    //    ResetBone -> UpdateTime(weight) [bone scale applied at its tail] ->
+    //    UpdateMix -> skeleton UpdateBones(matRot) with g_fWeight.
     skeleton.ResetToRestPose();
-    if (instance.player.IsPlaying()) {
-        instance.player.ApplyToSkeleton(skeleton);
-    }
+    instance.aniControl.UpdateTime(skeleton);
+    instance.aniControl.UpdateMix(skeleton);
 
-    // 2. Accumulate world transforms (DxSkeleton::UpdateBones).
+    // 2. Accumulate world transforms (DxSkeleton::UpdateBones), passing the blend
+    //    weight (DxSkeleton::g_fWeight) for USE_ANI_BLENDING bones.
     ep7math::Mat4 worldRoot;
     const float yawRad = instance.yawDegrees * 3.14159265358979323846f / 180.0f;
     ep7math::Mat4 rot = ep7math::RotationQuaternion(
@@ -266,7 +316,7 @@ bool EP7CharacterScene::EvaluatePose(EP7CharacterInstance& instance, float* outS
     ep7math::Mat4 translate = ep7math::Translation(instance.position[0], instance.position[1], instance.position[2]);
     worldRoot = ep7math::Multiply(ep7math::Multiply(scale, rot), translate);
 
-    skeleton.UpdateBones(worldRoot);
+    skeleton.UpdateBones(worldRoot, instance.aniControl.Weight());
 
     // 3. Skin every loaded piece with the posed skeleton (CPU reference path).
     instance.skinnedPositions.clear();
@@ -276,15 +326,17 @@ bool EP7CharacterScene::EvaluatePose(EP7CharacterInstance& instance, float* outS
     instance.triangles = 0;
     instance.poseValid = false;
 
-    std::vector<ep7math::Mat4> palette;
+    // B17: scratch buffers are instance-owned; std::vector::resize keeps their
+    // capacity, so the per-frame pose path performs no heap allocations.
+    std::vector<ep7math::Mat4>& palette = instance.skinPaletteScratch;
     for (uint32_t slot = 0; slot < kEP7PieceSize; ++slot) {
         EP7CharacterPiece& piece = instance.asset->pieces[slot];
         if (!piece.loaded) continue;
 
         BuildBonePalette(piece.mesh, skeleton, palette);
 
-        std::vector<float> positions;
-        std::vector<float> normals;
+        std::vector<float>& positions = instance.skinPosScratch;
+        std::vector<float>& normals = instance.skinNormScratch;
         if (!SkinVerticesCPU(piece.mesh, palette, positions, normals)) continue;
 
         instance.pieceVertexOffsets[slot] = static_cast<uint32_t>(instance.skinnedPositions.size() / 3);
@@ -379,8 +431,14 @@ EP7CharacterDiagnostics EP7CharacterScene::GetDiagnostics() const {
 
         if (!instance->asset->loaded || !instance->asset->skeleton) diag.authenticAssetsOnly = false;
 
-        if (instance->player.IsPlaying()) {
-            const EP7AnimClip* clip = instance->player.GetClip();
+        if (instance->aniControl.UpBodyActive() || instance->currentClip >= 0) {
+            const EP7AnimClip* clip = instance->aniControl.CurrentClip();
+            const size_t activeIndex =
+                (instance->currentClip >= 0) ? static_cast<size_t>(instance->currentClip)
+                                             : (instance->asset ? instance->asset->clips.size() : 0);
+            if (!clip && instance->asset && activeIndex < instance->asset->clips.size()) {
+                clip = &instance->asset->clips[activeIndex];
+            }
             if (clip) {
                 auto countAnimated = [](const std::vector<EP7BoneTrack>& tracks) {
                     uint32_t n = 0;
