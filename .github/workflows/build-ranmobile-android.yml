@@ -27,6 +27,31 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # Restored in the merged session (2026-11-27): the core tests include data-dependent
+      # assertions (ThaiPackLoader ntk/qst counts, EP7 asset pipeline). PR #4's single job
+      # downloaded the release data before running them and was green; PR #5's split job
+      # compiled the core binary but never executed it, which silently dropped those checks.
+      # The download step is duplicated from the authentic-assets job on purpose: each job
+      # must be independently runnable.
+      - name: Download & Extract Original EP7 Client Data (ran-ep7-full-v1)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p external/ep7_release/original external/ep7_release/client_original external/ep7_release/thaipack_original
+          gh release download ran-ep7-full-v1 \
+            --repo famoh01/ran-online-ep7 \
+            --pattern "RAN-EP7-Client-TH.zip.part*" \
+            --pattern "RAN-EP7-ThaiPack-FamHawaii.zip" \
+            --dir external/ep7_release/original
+          cat external/ep7_release/original/RAN-EP7-Client-TH.zip.part00 \
+              external/ep7_release/original/RAN-EP7-Client-TH.zip.part01 \
+              > external/ep7_release/original/RAN-EP7-Client-TH.zip
+          unzip -t external/ep7_release/original/RAN-EP7-Client-TH.zip > /dev/null
+          unzip -q -o external/ep7_release/original/RAN-EP7-Client-TH.zip -d external/ep7_release/client_original
+          unzip -q -o external/ep7_release/original/RAN-EP7-ThaiPack-FamHawaii.zip -d external/ep7_release/thaipack_original
+          echo "=== EP7 DATA VERIFICATION ==="
+          find external/ep7_release/client_original -maxdepth 3 \( -iname "mapslist.mst" -o -iname "crow.mnsf" -o -iname "item.isf" -o -iname "skill.ssf" -o -iname "quest.lst" \)
+
       - name: Run Linux C++17 Unit & Integration Tests
         run: |
           g++ -std=c++17 -Wall -Wextra -Werror \
@@ -81,9 +106,24 @@ jobs:
             RANMobile/Tests/test_main.cpp \
             -lpthread -o ranmobile_tests 2>&1 | tee -a compile_output.log
 
+      - name: Run Linux C++17 Tests
+        run: |
+          set +e
+          ./ranmobile_tests > test_output.log 2>&1
+          TEST_EXIT=$?
+          set -e
+          echo "TEST_EXIT=$TEST_EXIT" >> $GITHUB_ENV
+          cat test_output.log
+          if [ $TEST_EXIT -ne 0 ]; then
+            ERR_LINE=$(grep -i "Assertion\|Aborted\|Error\|fail" test_output.log | tail -n 5 | tr '\n' ' ')
+            echo "::error::ranmobile_tests failed (exit $TEST_EXIT): $ERR_LINE"
+          fi
+          exit $TEST_EXIT
+
       - name: Build & Run Phase 3J Character Tests
         run: |
           set -e
+          set -o pipefail
           g++ -std=c++17 -Wall -Wextra -Werror \
             RANMobile/Engine/Core/Logger.cpp \
             RANMobile/Engine/Renderer/MobileRenderer.cpp \
@@ -113,6 +153,9 @@ jobs:
             echo '```'
             tail -n 30 phase3j_test_output.log 2>/dev/null || echo "No phase3j_test_output.log"
             echo '```'
+            echo "### external/ep7_release"
+            ls -la external/ep7_release 2>/dev/null || echo "Missing external/ep7_release"
+            ls -la external/ep7_release/thaipack_original 2>/dev/null | head -n 20 || echo "Missing thaipack_original"
           } >> $GITHUB_STEP_SUMMARY
 
       - name: Upload Failed Test Log

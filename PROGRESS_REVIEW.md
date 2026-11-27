@@ -964,3 +964,59 @@ propose a separately scoped implementation.
 | after (no code changed) | **398** | **0** |
 
 ASan + UBSan + LSan clean (exit 0). Production code and all parsers untouched.
+
+---
+
+## Session merge (2026-11-27) — reuniting the parallel Phase 3B–3I and Phase 3J lines
+
+The two lines were developed on separate Arena session branches, each forked from `main`
+(`47f3c6d`), and had not been combined anywhere. This session merged both into one branch:
+
+- `origin/arena/be1e147d-ran-online-ep7` (PR #4): Phase 3B–3I — mobile engine, authentic asset
+  decoding, Android IME, binary map list/LEV parsers, `.wld` octree geometry, `.pie`/`.pis`,
+  TGA/JPEG, GLES3 3D world renderer (merge commit `994c028`).
+- `origin/arena/42c5ac0c-ran-online-ep7` (PR #5): Phase 3J — authentic character model /
+  skeleton / animation / skinning, `.rcc` pack reader, `.cfg`/`.cps` version work, B11/B13/B14
+  investigations (merge commit `1720412`).
+
+Conflict resolution (7 files):
+
+| File | Resolution |
+|---|---|
+| `RANMobile/CMakeLists.txt` | Union: 3I world/scene sources + 3J character sources compiled together for the first time |
+| `.github/workflows/build-ranmobile-android.yml` | PR #5's 3-job structure + the core compile list as the union of both lines |
+| `ARCHITECTURE.md` | PR #4's master document (sections 0–6) + PR #5's folder tree (as section 7), Phase 3J layer and all appendices |
+| `BLOCKERS.md`, `PROGRESS_REVIEW.md`, `SOURCE_DATA_RECOVERY.md`, `TESTING_CHECKLIST.md` | PR #5's copies are strict supersets of PR #4's (byte-verified prefix), so they were taken wholesale |
+
+### Verification executed locally (sandbox, g++ 12.2, `-Wall -Wextra -Werror`)
+
+| Check | Result |
+|---|---|
+| Union core compile (`ranmobile_tests`, all 3I + 3J sources in one binary) | clean, 0 warnings-as-errors |
+| Phase 3J tests (`ranmobile_phase3j_tests`) | **398 checks, 0 failures** |
+| `verify_ep7_character_assets` on absent dir | correct `NOT FOUND` verdict, exit 3 semantics |
+| Core `ranmobile_tests` execution | aborts at `tpStats.found` — **expected** (B2: no release data in sandbox), see below |
+
+### CI defect found and fixed during the merge
+
+PR #5's split `core-tests` job compiled `ranmobile_tests` but **never executed it** — the
+"Run Linux C++17 Tests" step was dropped when the job was split out of PR #4's single job.
+That silently disabled the data-dependent assertions (`InspectThaiPack` ntk/qst counts and the
+rest of the core suite) in CI. PR #4's single job did execute them and was green, because it
+downloaded `ran-ep7-full-v1` first.
+
+Fix applied in the merged workflow:
+
+1. The `Download & Extract Original EP7 Client Data` step was added to `core-tests` (duplicated
+   from `authentic-assets` on purpose so each job stays independently runnable), and the
+   `Run Linux C++17 Tests` execution step was restored — the core suite now actually runs,
+   against real data, as PR #4 did.
+2. `set -o pipefail` was added to the Phase 3J test step; previously `./ranmobile_phase3j_tests
+   | tee` masked the test binary's exit code, so a failing phase-3J run would have reported a
+   green step.
+3. The step summary now also reports the `external/ep7_release` state, as PR #4's summary did.
+
+The local `tpStats.found` abort is the data-dependent assertion firing in a sandbox without the
+release archive (B2/B9 environment limitation) — with the fix above, CI runs it where the data
+exists. No production parser code was changed by the merge; the only behavioral change is that
+CI now verifies what it previously only compiled.
