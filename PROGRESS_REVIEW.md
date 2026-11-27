@@ -797,3 +797,170 @@ repository: there is nothing here to fix. It would matter only if someone (a) wr
 serializer in RANMobile, or (b) changes the influence reader to trust `dwSize` on a version
 match. Both are now guarded by tests and documented. `SMATERIAL_PIECE` needs no change; its
 block size is measured by `EndBlock`.
+
+---
+
+## Phase 3J follow-up — B11 "Anim" container: source investigation
+
+**Date:** 2026-11-26 · **Branch:** `arena/42c5ac0c-ran-online-ep7` · **Commit:** `73d6d6d`
+
+**Scope discipline:** this was an investigation only. **No production code was changed.** The
+finding is a classification defect in the *verification tool*, plus a correction to a B11
+premise that had been carried forward unexamined.
+
+### Headline
+
+The unsupported format the probe reports as *magic `"Anim"`* is **`SAnimContainer`**, the EP7
+animation container — and its layout is **already fully implemented** in
+`RANMobile/Data/Importer/EP7Animation.cpp`. It is not an unknown format.
+
+The `"Anim"` magic is not a magic at all: it is the first four bytes of the 128-byte
+basestream **file-type string** `"AnimContainer"`, which is exactly how every EP7 basestream
+begins.
+
+### Source evidence
+
+**Writer** — `SAnimContainer::SaveToFile`, `enginelib/Meshs/SAnimation.cpp:1573-1607`:
+
+```cpp
+const TCHAR SAnimContainer::szFILETYPE[] = _T("AnimContainer");   // SAnimation.cpp:22
+...
+SFile.SetFileType ( szFILETYPE, VERSION );                        // :1583
+if ( !SFile.OpenFile ( FOT_WRITE, strPath.c_str() ) ) return E_FAIL;
+SFile << (DWORD)m_listAniUPBODY.size();      // up-body list FIRST
+for ( ... ) (*iter)->SaveToFile(SFile);
+SFile << (DWORD)m_listAnimation.size();      // main list
+for ( ... ) (*iter)->SaveToFile(SFile);
+```
+
+`SAnimContainer::VERSION = 0x0102` (`SAnimation.h:355`).
+
+**Header encoding** — `CSerialFile::WriteFileType` (`SerialFile.cpp:57-66`) writes
+`m_szFileType` as **128 bytes** then `m_FileID` as one DWORD. `SetFileType`
+(`SerialFile.cpp:34-38`) `StringCchCopy`s the type string into that 128-byte field. So the file
+literally begins:
+
+```
+offset 0x00 : 'A' 'n' 'i' 'm' 'C' 'o' 'n' 't' 'a' 'i' 'n' 'e' 'r' 0x00 ... (128 bytes)
+offset 0x80 : 0x02 0x01 0x00 0x00        <- VERSION 0x0102
+offset 0x84 : payload (first list count)
+```
+
+**Reader** — `SAnimContainer::LoadAnimFromFile`, `SAnimation.cpp:1754-1776`:
+
+```cpp
+SFile.GetFileType( szFileType, FILETYPESIZE, dwVersion );
+switch ( dwVersion )
+{
+case 0x0100: Load_0100( ... ); break;
+case 0x0101: Load_0101( ... ); break;
+case VERSION: Load( ... );     break;     // 0x0102
+default:     return E_FAIL;
+}
+```
+
+Note carefully: **`szFileType` is read but never compared** in this function. Dispatch is
+**purely on `dwVersion`**. (A `strcmp` against the type string exists only in the landscape
+loader, `DxLandManSaveLoad.cpp:733`.) This matters for the recommendation below.
+
+**Payload** — `SAnimation::SaveToFile` (`:1353-1400`) writes, per track: `VERSION`(0x0102),
+`m_strBone` (length-prefixed), `m_cRotateKeys` + keys, `m_cPositionKeys` + keys, a "garbage"
+DWORD, `m_cQuatPosKeys` + keys, a second "garbage" DWORD, `m_cMatrixKeys` + keys, `m_cScaleKeys`
++ keys. `SAnimation::VERSION = 0x0102` (`SAnimation.h:34`). `SAnimation::LoadFromFile`
+(`:1400-1417`) dispatches on that per-track version (0x0102 / 0x0101 / 0x0100).
+
+### Every premises verified, and one disproved
+
+| Question | Answer | Evidence |
+|---|---|---|
+| Is `"Anim"` a magic? | **No** — prefix of `"AnimContainer"` | `SAnimation.cpp:22`, `SerialFile.cpp:57-66` |
+| Is the format undocumented? | **No** — writer + reader + all three version branches | `:1573`, `:1754`, `:1779`/`:1796`/`:1812` |
+| Is it loaded from packs? | Yes — `Animation.rcc`, via the same basestream path | `EP7ByteFormat.h` header model |
+| Does the mobile parser implement it? | **Yes, completely** | `EP7Animation.cpp:267` `ParseContainer` |
+| Is a file starting with `"Anim"` foreign? | **No — that is the normal, correct header** | see below |
+
+### The actual defect: a wrong heuristic in the verification tool
+
+`RANMobile/Tools/verify_ep7_character_assets.cpp:242-259` decides:
+
+```cpp
+// A .bin that begins with printable ASCII is not an EP7 basestream container at all
+// (the client's own containers start with a small version DWORD).
+if ( bytes.size() >= 4 && std::isprint(bytes[0]) && ... std::isprint(bytes[3]) ) {
+    ... "not an EP7 basestream container — starts with magic '%s' ..."
+    ReportOutcome("bin", path, Outcome::Unsupported, detail);
+    return Outcome::Unsupported;      // <-- ParseContainer is NEVER CALLED
+}
+```
+
+The comment states the opposite of what the engine does. EP7 basestreams **do not** start with a
+version DWORD — they start with a 128-byte type string (`WriteFileType`). The version DWORD sits
+at offset `0x80`. The heuristic therefore rejects every well-formed `SAnimContainer` file
+**before** the parser that understands it is ever invoked.
+
+**Proof, executed.** A source-accurate `SAnimContainer` (type string `"AnimContainer"`, version
+`0x0102`, up-body list then main list, one 20-byte rotate key each) was built and passed to the
+real parser:
+
+```
+valid=1  version=0x0102  up=1  main=1  err=''
+  up[0].bone   = 'Bip01_Spine1'   rotKeys=1
+  main[0].bone = 'Bip01_Head'     rotKeys=1
+probe magic pre-check -> UNSUPPORTED (never parsed)
+```
+
+The parser handles the real header perfectly. The probe would never show it.
+
+**Scope of the impact.** The heuristic exists **only** in the verification tool. It is absent
+from `EP7AssetImporter`, `EP7Animation`, and the loader path (grep for `isprint` returns only
+those two lines). So this is a **false-negative in reporting**, not a runtime parsing defect.
+
+### Why this was never caught
+
+All eight basestream fixtures in `test_phase3j.cpp` write **zero-filled** type fields
+(`std::vector<uint8_t>(128, 0)`), so no test ever exercised a real EP7 type string. Every
+fixture would still parse with the type field blanked because, per `SAnimContainer::LoadAnimFromFile`,
+the type string is not consulted.
+
+The `.cfg` path *does* check the family (`ParseInfo` rejects a foreign type with
+*"not a SANIMCONINFO file"*, covered at `test_phase3j.cpp:1102-1117`), so the concept was
+understood — it was simply implemented backwards for `.bin`.
+
+### Evidence still missing
+
+- **No authentic `.bin` was inspected.** The conclusion rests on the engine's writer/reader pair
+  plus an executed parse of a source-derived fixture, not on real bytes. `external/` is absent
+  and `gh release download` fails with `EOF` in this sandbox.
+- Consequently the **6,228 count cannot yet be split**. If every one of those files begins with
+  `"AnimContainer"`, they are well-formed and the count would collapse to near zero. If a subset
+  begins with something else (the `.abf` skeleton assets, effect `.bin`s, `cFileList.bin`), those
+  are genuinely foreign. Determining the split needs one run of a corrected classifier.
+- Whether the 3,097 remaining `.cps` version failures share a similar reporting artefact was
+  **not** examined here (out of scope per Step 6).
+
+### Recommended next step — a separate, separately-scoped task
+
+**Do not** add an Anim parser; none is needed. The indicated fix is in the **verification tool
+only** (one file, `RANMobile/Tools/verify_ep7_character_assets.cpp`):
+
+1. Delete the printable-magic pre-check — it encodes a false premise about the container format.
+2. Let every `.bin` reach `ParseContainer`, which already handles `"AnimContainer"`, and classify
+   on the actual result: header type `/` version accepted → PASS; recognised container with an
+   unimplemented version → UNSUPPORTED; not a basestream at all → FAIL with the byte fingerprint.
+3. Optionally keep the byte fingerprint as *diagnostic detail* only, never as a pre-emptive
+   verdict.
+4. Add a regression fixture carrying a **real** `"AnimContainer"` type string, plus a genuinely
+   foreign one, so both branches are exercised.
+
+That change would make the reported `.bin` numbers reflect the parser's true capability. It was
+deliberately **not** made in this task, per the instruction not to modify production code and to
+propose a separately scoped implementation.
+
+### Test results (executed, no regression)
+
+| Stage | Checks | Failures |
+|---|---|---|
+| before | 398 | 0 |
+| after (no code changed) | **398** | **0** |
+
+ASan + UBSan + LSan clean (exit 0). Production code and all parsers untouched.

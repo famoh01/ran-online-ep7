@@ -636,3 +636,84 @@ serializer, will be stopped by the suite.
 
 **If a `.cps` writer is ever added to RANMobile, it must compute the body size as
 `0x20 + 8n` and must not reproduce this arithmetic.**
+
+## B11 — RE-SCOPED: the "Anim" container is `SAnimContainer`, and it is already implemented
+
+**Status: the original B11 premise was wrong. There is no missing format definition.**
+
+B11 was recorded as *"`.bin` files with magic `Anim` — real data with no definition in this
+repository"*. The source says otherwise.
+
+### What the bytes actually are
+
+`"Anim"` is not a magic. It is the first four characters of the 128-byte basestream **file-type
+string** `"AnimContainer"`:
+
+```cpp
+// enginelib/Meshs/SAnimation.cpp:22
+const TCHAR SAnimContainer::szFILETYPE[] = _T("AnimContainer");
+// enginelib/Meshs/SAnimation.cpp:1583  (SAnimContainer::SaveToFile)
+SFile.SetFileType ( szFILETYPE, VERSION );
+```
+
+`CSerialFile::WriteFileType` (`SerialFile.cpp:57-66`) writes that field as 128 bytes, then the
+version DWORD. So a real file begins:
+
+```
+'A' 'n' 'i' 'm' 'C' 'o' 'n' 't' 'a' 'i' 'n' 'e' 'r' 0x00 ...  | 0x02 0x01 0x00 0x00
+<------- 128-byte type string (FILETYPESIZE) -------------->   <-- VERSION 0x0102 -->
+```
+
+**Every** EP7 basestream begins this way — `"AnimContainer"`, `"SANIMCONINFO"`, `"LAND.MAN"`,
+`"EFF_PROPGROUP"`, `"_FILEHEAD"`. A leading printable string is the *signature of a correct* EP7
+container, not of a foreign one.
+
+### The format is fully defined and already implemented
+
+| Component | Engine source | Mobile implementation |
+|---|---|---|
+| Container layout + list order | `SAnimContainer::SaveToFile` `SAnimation.cpp:1573` | `ParseContainer` `EP7Animation.cpp:267` |
+| Container version dispatch | `LoadAnimFromFile` `:1754` (0x0100/0x0101/0x0102) | same three branches |
+| Per-track layout | `SAnimation::SaveToFile` `:1353` | `ReadTrackList` |
+| Per-track version dispatch | `SAnimation::LoadFromFile` `:1400` (0x0100/0x0101/0x0102) | same |
+
+Executed proof: a source-accurate `SAnimContainer` (real `"AnimContainer"` type string, version
+0x0102, up-body list then main list, one rotate key each) parses through `ParseContainer` as
+`valid=1, up=1, main=1`, recovering `Bip01_Spine1` / `Bip01_Head` and their keys.
+
+### The real defect — in the verification tool, not the parser
+
+`RANMobile/Tools/verify_ep7_character_assets.cpp:242-259` pre-rejects any `.bin` whose first four
+bytes are printable, with the comment *"the client's own containers start with a small version
+DWORD"*. That comment is factually inverted: the version DWORD is at offset `0x80`, after the
+type string. Because the check runs **before** `ParseContainer`, every well-formed animation
+container is labelled UNSUPPORTED and never parsed.
+
+This is a **reporting false-negative only**. The heuristic appears nowhere outside the tool
+(`grep isprint` returns just those two lines); `EP7AssetImporter` and the loader path are clean.
+
+### Why the suite never caught it
+
+All 8 basestream fixtures in `test_phase3j.cpp` zero-fill the 128-byte type field. Nothing ever
+exercised a real type string. The `.cfg` path *does* validate its family
+(`ParseInfo` → *"not a SANIMCONINFO file"*, tested at `test_phase3j.cpp:1102`), so the concept
+existed — it was simply implemented backwards for `.bin`.
+
+### What is still genuinely unknown
+
+The **6,228** figure cannot be split without real bytes: some of those `.bin` files may be
+well-formed `SAnimContainer`s, while others (`.abf` skeleton assets, effect data, `cFileList.bin`)
+may be legitimately foreign. No authentic file could be inspected here (`external/` absent;
+`gh release download` → `EOF`). **No parser was written and none is needed.**
+
+### Recommended, separately scoped
+
+Fix the **classifier** in `verify_ep7_character_assets.cpp` (single file, tools layer): drop the
+printable-magic pre-check, let every `.bin` reach `ParseContainer`, and classify on the actual
+parse result — PASS / UNSUPPORTED (recognised container, unimplemented version) / FAIL (not a
+basestream, with the byte fingerprint as diagnostic detail only). Add fixtures for both a real
+`"AnimContainer"` header and a genuinely foreign one. Not done here: this task forbids touching
+production code.
+
+**Do not** implement an Anim parser on the strength of the old B11 text. That premise is
+disproved above.

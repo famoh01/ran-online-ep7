@@ -449,3 +449,54 @@ result: adding the tests did not perturb behaviour.
 Unchanged. This task modified **only** `RANMobile/Tests/test_phase3j.cpp`. RANMobile has no
 `.cps` writer, and the reader already ignores `dwSize` on a version match, so there was nothing
 to correct.
+
+---
+
+## 16. Phase 3J follow-up — B11 "Anim" container investigation
+
+Investigation only. **No production code was modified; no parser was written.** The suite was run
+to confirm no regression.
+
+| Item | Result |
+|---|---|
+| Branch / HEAD | `arena/42c5ac0c-ran-online-ep7` @ `73d6d6d`, clean tree |
+| Production code changed | **none** |
+| C++ suite (ASan + UBSan + LSan) | **398 checks, 0 failures**, exit 0 |
+| Regression introduced | none |
+
+### Finding
+
+The `"Anim"` magic is the first four bytes of the 128-byte basestream type string
+`"AnimContainer"` (`SAnimation.cpp:22`, written by `SerialFile.cpp:57-66`). The format is
+`SAnimContainer`, and it is **already fully implemented** in `EP7Animation.cpp:267`.
+
+Source-accurate fixture, parsed through the real reader:
+
+| Input | Result |
+|---|---|
+| `"AnimContainer"` + `0x0102`, up-body then main list | `valid=1`, `up=1`, `main=1`, bone names and keys recovered |
+| same bytes through the probe's magic pre-check | classified **UNSUPPORTED**, never parsed |
+
+### Root of the misclassification
+
+`verify_ep7_character_assets.cpp:242-259` rejects any `.bin` whose first four bytes are printable,
+on the stated premise that *"the client's own containers start with a small version DWORD"*. That
+premise is inverted — the version DWORD is at offset `0x80`, after a 128-byte ASCII type string.
+The check runs before `ParseContainer` and therefore suppresses the parser for exactly the files
+it understands.
+
+This is a **tool-only** false negative: `grep isprint` matches only those two lines;
+`EP7AssetImporter` and the loader path contain no such heuristic.
+
+### Why the existing suite could not catch it
+
+All 8 basestream fixtures zero-fill the 128-byte type field. Per `SAnimContainer::LoadAnimFromFile`
+the type string is not consulted on load, so the fixtures pass while never exercising a real
+header. **Recommended addition (separate task):** a fixture with a genuine `"AnimContainer"` type
+string and one with a genuinely foreign string, so both classification branches are covered.
+
+### Not established
+
+The split of the 6,228 reported `.bin` UNSUPPORTED entries. Determining how many are well-formed
+`SAnimContainer` files versus genuinely foreign data requires one run of a corrected classifier
+against authentic assets, which are unavailable in this sandbox.

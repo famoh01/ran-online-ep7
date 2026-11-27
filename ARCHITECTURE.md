@@ -330,3 +330,62 @@ Measured, therefore exact. That is why the material block can be skipped safely 
 the influence record cannot. When reading a block, establish which of the two conventions
 applies — measured (`BeginBlock`/`EndBlock`) or predicted (hand-summed). Only the former may be
 trusted for a skip.
+
+---
+
+## Appendix — basestream file-type header: why every EP7 file starts with ASCII
+
+This corrects an assumption embedded in the verification tool (see `BLOCKERS.md` B11).
+
+### The header is a 128-byte string, not a numeric magic
+
+```cpp
+// enginelib/Common/SerialFile.cpp:57-66
+void CSerialFile::WriteFileType ()
+{
+    fwrite ( &m_szFileType, sizeof(char), FILETYPESIZE, m_FileStream );  // 128 bytes
+    fwrite ( &m_FileID, sizeof(DWORD), 1, m_FileStream );                // version
+    m_DefaultOffSet = ftell ( m_FileStream );                            // = 132
+}
+```
+
+`FILETYPESIZE` is `128` (`enginelib/Common/basestream.h:16`). `SetFileType`
+(`SerialFile.cpp:34-38`) copies a caller-supplied string into that field, so the first bytes of
+every container are that string's first bytes:
+
+| Type string | Set at | First 4 bytes on disk |
+|---|---|---|
+| `"AnimContainer"` | `SAnimation.cpp:22`, used `:1583` | `A n i m` |
+| `"SANIMCONINFO"` | `DxSkinAniManSaveLoad.cpp:188` | `S A N I` |
+| `"LAND.MAN"` | `DxLandManSaveLoad.cpp:31` | `L A N D` |
+| `"EFF_PROPGROUP"` | `DxEffSinglePropGMan.cpp:596` | `E F F _` |
+
+So an EP7 basestream **always** begins with printable ASCII. Observed layout:
+
+```
+0x00 .. 0x7F : file-type string, NUL-padded to 128 bytes   (FILETYPESIZE)
+0x80 .. 0x83 : version / file id DWORD                     (m_FileID)
+0x84 ..      : payload                                     (GetfTell() == 0 here)
+```
+
+This is why `EP7ByteFormat.h` models `kFileTypeSize = 128` and
+`kHeaderSize = 132`, and why `GetfTell()`/`SetOffSet()` are relative to offset 132.
+
+### The type string is usually *not* validated
+
+`SAnimContainer::LoadAnimFromFile` (`SAnimation.cpp:1754-1776`) reads the type into
+`szFileType` and then **ignores it** — dispatch is on `dwVersion` alone. A `strcmp` against the
+type appears only in the landscape loader (`DxLandManSaveLoad.cpp:733`). Consequently a file with
+a blanked or foreign type string but a valid version still loads in the original engine.
+
+Two consequences for this codebase:
+
+1. **Tests that zero-fill the header cannot detect a type-string problem.** All 8 basestream
+   fixtures in `test_phase3j.cpp` do exactly that. A fixture carrying a real `"AnimContainer"`
+   string is needed to exercise the header path faithfully.
+2. **Do not infer "foreign format" from printable leading bytes.** It is the normal case. To
+   decide whether a buffer is a known container, read the 128-byte type plus the version at
+   `0x80` and attempt the parse — not the other way round.
+
+The `.cfg` reader (`ParseInfo`) *does* validate the family and reports *"not a SANIMCONINFO
+file"* for a genuine mismatch; that behaviour is correct and should be the model for `.bin`.
