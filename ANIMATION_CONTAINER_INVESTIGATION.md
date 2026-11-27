@@ -503,4 +503,52 @@ Verified against all `6,228` authentic `data/animation/*.bin` files in `ran-ep7-
 - **CI `Core C++17 tests (blocking)` (run `45995539967`, job `140493888315`):** **success** (including data-dependent `ranmobile_tests`, `ranmobile_phase3j_tests`, and verifier sanitizer suite).
 - **CI `Android ARM64 build (lib + APK/AAB)` (run `45995539967`, job `140493888339`):** **success** — `libranmobile-arm64-v8a` (`2,303,142` B, artifact `15195193779`) and `ranmobile-android-packages` (`assembleDebug` + `assembleRelease` + `bundleRelease`, `1,989,193` B, artifact `15194554934`).
 
+---
+
+## 16. Phase 3J B15 Implementation & Authentic Validation Update (`SAnimContainer` `0x0104`)
+
+Implemented in commit `263ef9cf7ae0e355b1363c0a615415ecaac291a6` on branch `arena/00fd13f9-ran-online-ep7` (Draft PR #7):
+
+### 16.1 Production Parser Changes (`RANMobile/Data/Importer/EP7Animation.cpp`)
+1. **Implemented authentic outer container `SAnimContainer::Load_0104` (`hdr.version == 0x0104` in `ParseContainer`):**
+   - Verified directly against both `SAnimContainer::Load_0104(CSerialFile&)` and static `SAnimContainer::Load_0104(CSerialFile&, const DxSkeleton*, SANILIST&, SANILIST&)` in `Lib_Engine/Meshs/SAnimationSaveLoad.cpp:444-479, 670-699`:
+     - `128`-byte `"AnimContainer"` header + `u32(0x0104)` (plaintext: `0x0104 < VERSION_ENCODE(0x0200)`)
+     - List 0 (`mainTracks` / `m_listAnimation`): `u32 numMain` + `numMain` `SAnimation` tracks
+     - List 1 (`upBodyTracks` / `m_listAniUPBODY`): `u32 numUpBody1` + `numUpBody1` `SAnimation` tracks
+     - List 2 (appended in order to `upBodyTracks` / `m_listAniUPBODY`): `u32 numUpBody2` + `numUpBody2` `SAnimation` tracks (no inter-list garbage `DWORD`)
+   - Extended `ReadTrackList` with `bool append = false` and combined overflow-safe track limit enforcement (`count > kMaxBoneTracks || count > kMaxBoneTracks - out.size()`), reusing the verified `ReadBoneTrack` implementation (`0x0100`–`0x0103`).
+   - Preserved `0x0100`, `0x0101`, `0x0102`, and `0x0103` behavior unchanged, and preserved explicit rejection of unimplemented `0x0200` (`EMBYTECRYPT_BIN`) with `"unsupported animation container version 0x00000200 (implemented: 0x0100, 0x0101, 0x0102, 0x0103, 0x0104)"`.
+2. **Synchronized B12/B15 inspector trace (`RANMobile/Tools/inspect_ep7_animation_containers.cpp`):**
+   - Updated `TraceUnmodifiedReaderContainer` and `outerSupported` to include `0x0104` (`main`, `upBody1`, and accumulated `upBody2`) so `acceptedTrailingBytes` directly verifies exact-EOF consumption across all `6,219` plaintext authentic `.bin` files.
+
+### 16.2 Authentic `ran-ep7-full-v1` Validation Results (CI Runs `45999738432` & `45999738400`)
+Verified against all `6,228` authentic `data/animation/*.bin` files in `ran-ep7-full-v1` via both `verify_ep7_character_assets` (run [`45999738432`](https://github.com/famoh01/ran-online-ep7/actions/runs/45999738432), job `140508021418`) and `inspect_ep7_animation_containers` (run [`45999738400`](https://github.com/famoh01/ran-online-ep7/actions/runs/45999738400), check run `140508852646`, JSON report blob `bd9250ca49297e09aa8322f2e5d44768ac47869a` / SHA-256 `4e5147d31621177c15c08dafd3ab97e1a2098da2d0f67d33ced42e2cb4fc98cb`):
+
+| Metric (`data/animation/*.bin`, `total = 6,228`) | Pre-B15 (B14 Verified) | Post-B15 (Actual Verified) | Delta |
+|---|---:|---:|---:|
+| **`0x0100` parsed (`63,226` tracks)** | `1,210 / 1,210` | **`1,210 / 1,210` (`100.00%`)** | `0` |
+| **`0x0101` parsed (`71,783` tracks)** | `907 / 907` | **`907 / 907` (`100.00%`)** | `0` |
+| **`0x0102` parsed (`5,284` tracks)** | `74 / 74` | **`74 / 74` (`100.00%`)** | `0` |
+| **`0x0103` parsed (`114,210` tracks)** | `1,533 / 1,533` | **`1,533 / 1,533` (`100.00%`)** | `0` |
+| **`0x0104` parsed (`129,379` tracks: `2,491` non-empty `main`, `810` `upBody1`, `628` `upBody2`; `3` zero-track)** | `0 / 2,495` | **`2,495 / 2,495` (`100.00%`)** | **`+2,495`** |
+| **Total loose `.bin` parsed (`383,882` tracks; `100.00%` of plaintext `.bin`)** | `3,724` | **`6,219`** | **`+2,495`** |
+| **Parsed files reaching `EXACT_EOF` (`trailing_bytes == 0`)** | `3,724 / 3,724` | **`6,219 / 6,219` (`100.00%`)** | **`+2,495`** |
+| **Loose `.bin` `parser-rejected` (FAIL)** | `0` | **`0`** | `0` |
+| **Loose `.bin` `unsupported-version` (`0x0200` `EMBYTECRYPT_BIN` only)** | `2,504` | **`9`** | **`-2,495`** |
+| **Loose `.bin` `invalid-header` / `unrecognized-type`** | `0` / `0` | **`0` / `0`** | `0` |
+| **Pack entries (`SkinObject.rcc` + `Animation.rcc`)** | `6,479` ok / `3,550` fail / `1,631` unsup | **`6,479` ok / `3,550` fail / `1,631` unsup** | `0` |
+
+- **Actual `.cfg` (`SANIMCONINFO`) compatibility for the `2,495` `0x0104` `.bin` files:**
+  - **`21` (`0.84%`)** pair with currently supported `.cfg` `0x0101`–`0x0107` (`1` `0x0104`, `2` `0x0105`, `15` `0x0106`, `3` `0x0107`), increasing total supported `.bin`+`.cfg` pairs from `2,338` to **`2,359` (`+21`)**.
+  - **`2,464` (`98.76%`)** pair with currently **unsupported** `.cfg` versions `0x0110`–`0x0115` (`12` `0x0110`, `714` `0x0111`, `177` `0x0112`, `996` `0x0114`, `565` `0x0115`), which remain explicitly classified `UNSUPPORTED` in `EP7AnimationReader::ParseInfo`.
+  - **`10` (`0.40%`)** have no matching `.cfg` stem.
+
+### 16.3 Regression Suites & Android ARM64 Build Verification
+- **Phase 3J character/animation suite (`test_phase3j.cpp`):** **`2,084` checks, `0` failures** (up from `1,499`, sweeping 9 ABI fixtures across truncations and 4x single-byte corruptions, including `AnimationBin0104()`, all 8 empty/populated `(main, upBody1, upBody2)` combinations, `2048 + 2048 == 4096` combined `upBody` boundary, `2048 + 2049 == 4097` overflow rejection, exact EOF + trailing data, `0x0100`–`0x0103` regressions, and `0x0200` rejection) under both `-O2 -Wall -Wextra -Werror` and `-fsanitize=address,undefined` (`detect_leaks=1`).
+- **B11/B15 verifier regression suite (`run_ep7_verifier_tests.sh`):** **`3,755` checks, `0` failures** (up from `2,784`) under normal and `ASan + UBSan + integrated LSan`.
+- **B12/B15 inspector regression suite (`run_ep7_animation_inspector_tests.sh`):** **`9,702` checks, `0` failures** (up from `8,303`) under normal and `ASan + UBSan + integrated LSan`.
+- **CI `Core C++17 tests (blocking)` (run `45999738432`, job `140508021895`):** **success** (including data-dependent `ranmobile_tests`, `ranmobile_phase3j_tests`, and verifier sanitizer suite).
+- **CI `Android ARM64 build (lib + APK/AAB)` (run `45999738432`, job `140508021781`):** **success** — `libranmobile-arm64-v8a` (`libranmobile.so`, `2,304,051` B, artifact `15197203199`) and `ranmobile-android-packages` (`assembleDebug` + `assembleRelease` + `bundleRelease`, `1,989,679` B, artifact `15197378275`).
+
+
 

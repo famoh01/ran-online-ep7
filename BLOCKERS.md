@@ -858,4 +858,25 @@ Implemented in commit `63c8c805ff66c3c89a3e8143757efe11c4c29a9a` on `arena/00fd1
    - **Unchanged environment/runtime blockers:** B1 (no local Android SDK/NDK or physical device/emulator execution in sandbox), B3/B6 (no live server login/gameplay test), B8 (`GameServer` DirectX header conflict), and B10 (GPU skinning / 3D character draw pass integration).
 
 
+## 2026-11-27 — Phase 3J B15: Authentic Animation Container `0x0104` Implementation
+
+**Status: RESOLVED for outer container `0x0104` (`2,495 / 2,495` authentic `0x0104` `.bin` files and `6,219 / 6,219` (`100.00%`) of all plaintext authentic `.bin` files parsed with `0` trailing bytes; `0 / 6,228` `parser-rejected` loose `.bin` files; only `9` `0x0200` `EMBYTECRYPT_BIN`-encoded `.bin` files remain unsupported).**
+
+Implemented in commit `263ef9cf7ae0e355b1363c0a615415ecaac291a6` on `arena/00fd13f9-ran-online-ep7` (Draft PR #7) and verified in GitHub Actions runs [`45999738432`](https://github.com/famoh01/ran-online-ep7/actions/runs/45999738432) and [`45999738400`](https://github.com/famoh01/ran-online-ep7/actions/runs/45999738400):
+
+1. **Resolved in B15:**
+   - **Authentic outer `SAnimContainer::Load_0104` (`EP7Animation.cpp`):** Implemented `hdr.version == 0x0104` (`mainTracks`, `upBodyTracks` list 1, and `upBodyTracks` list 2 appended in order via `ReadTrackList(..., /*append=*/true)` with combined `kMaxBoneTracks = 4096` overflow guard) per `Lib_Engine/Meshs/SAnimationSaveLoad.cpp:444-479, 670-699`, reusing `ReadBoneTrack` (`0x0100`–`0x0103`).
+   - **Authentic EP7 Release (`ran-ep7-full-v1`) proof:**
+     - `verify_ep7_character_assets` (`45999738432`, job `140508021418`): `6,219 parsed, 9 unsupported-version, 0 invalid-header, 0 unrecognized-type, 0 parser-rejected; total=6,228`.
+     - `inspect_ep7_animation_containers` (`45999738400`, check run `140508852646`, JSON report blob `bd9250ca49297e09aa8322f2e5d44768ac47869a`): **`2,495 / 2,495` (`100.00%`)** `0x0104` files (`129,379` `0x0103` tracks across `2,491` non-empty `main`, `810` non-empty `upBody1`, `628` non-empty `upBody2`; `3` zero-track) plus all `3,724` `0x0100`–`0x0103` files (`254,503` tracks) parse with **`trailing_bytes=0` (`6,219 / 6,219` `EXACT_EOF`, `383,882` tracks total)**.
+     - **Companion `.cfg` pairing:** `21 / 2,495` `0x0104` `.bin` files pair with currently supported `.cfg` `0x0104`–`0x0107` (bringing supported `.bin`+`.cfg` pairs to `2,359`), `2,464 / 2,495` pair with unsupported `.cfg` `0x0110`–`0x0115`, and `10 / 2,495` have no `.cfg` stem.
+   - **Regression & Android ARM64 builds:** `test_phase3j` (`2,084` checks, normal + ASan/UBSan/LSan), verifier suite (`3,755` checks, normal + ASan/UBSan/LSan), inspector suite (`9,702` checks, normal + ASan/UBSan/LSan), CI `Core C++17 tests` (`140508021895`), and CI `Android ARM64 build (lib + APK/AAB)` (`140508021781`: `libranmobile-arm64-v8a` `2,304,051` B, `ranmobile-android-packages` `1,989,679` B) all **PASSED**.
+2. **Remaining animation & character asset blockers (deferred to separate tasks per scope):**
+   - **Unsupported `.bin` outer container version `0x0200` (`9` loose `.bin` files):** `EMBYTECRYPT_BIN`-encoded containers (`457` `0x0103` tracks; `8` pair with supported `.cfg` `0x0107`, `1` has no `.cfg`).
+   - **Unsupported companion `.cfg` (`SANIMCONINFO`) versions in `Animation.rcc` (`1,631` pack entries):** versions `0x0108`–`0x0115` (+ `0x0200` `EMBYTECRYPT_CFG`), needed for metadata pairing on `3,826` loose `.bin` stems (`1` `0x0100`, `12` `0x0101`, `1,349` `0x0103`, `2,464` `0x0104`).
+   - **Pre-existing `SkinObject.rcc` pack gaps (`3,550` failed pack entries):** `243` unsupported `.chf` versions, `3,097` unsupported `.cps` versions, and `210` `.abf` binary skeleton files (unchanged from B11–B14).
+   - **Unchanged environment/runtime blockers:** B1 (no local Android SDK/NDK or physical device/emulator execution in sandbox), B3/B6 (no live server login/gameplay test), B8 (`GameServer` DirectX header conflict), and B10 (GPU skinning / 3D character draw pass integration).
+
+
+
 
