@@ -439,3 +439,158 @@ discriminator).
   without duplicating PR #4's renderer.
 
 Details in `BLOCKERS.md` (Phase 3J update section).
+
+---
+
+## 14. Phase 3J B17 — Authentic Animation Runtime Integration & Skeleton Evaluation (`arena/00fd13f9-ep7`)
+
+**Status: the authentic EP7 animation pipeline is connected end-to-end in the mobile runtime —
+`.cfg` (SANIMCONINFO) → `.bin` (SAnimContainer) → SAnimation tracks → skeleton (DxSkeleton
+equivalent) → DxSkinAniControl-equivalent state machine → bone/pose evaluation → character model →
+renderer. Parsing success is now playback success: the chain evaluates authentic poses every frame.**
+
+### 14.1 What was built (chain mapping)
+
+| Authentic source | Mobile runtime | Evidence |
+|---|---|---|
+| `SANIMCONINFO::LoadFile_*` (.cfg) | `EP7AnimationReader::ParseInfo` (B16, unchanged) | B16 survey 3,903/3,903 |
+| `SAnimContainer::Load` (.bin 0x0100–0x0104) | `EP7AnimationReader::ParseContainer` (B12–B15, unchanged) | byte-level reader untouched |
+| `SAnimation::Load_*` + `ConvertMatToQuat` | `EP7AnimationReader::BindToSkeleton` + **NEW `ConvertMatToQuat`** | SAnimation.cpp:1326, 1459, 1511, 1568 |
+| `DxBoneCollector` skeleton + `DxBoneTrans` SQT state | `EP7Skeleton` (bind pose, `MatrixToSQT` at bind, `ResetToRestPose` = `ResetBone` mirror) | DxBoneCollector.cpp `ResetBone`: flags=0/scale=1/mix=id/CUR=PREV=ORIG |
+| `DxSkinAniControl` + `DxAniControl` + `DxAniControlCORE` | **NEW `EP7SkinAniControl.{h,cpp}`** (registry, SELECTANI/DEFAULTANI/SELECTSKILLANI semantics, FrameMove, UpdateTime, UpdateMix, DoShockMix) | DxSkinAniControl.cpp:155/523/584/742/753/771/843 |
+| `SANIMCONINFO::UpdateTime` / `SAnimation::SetTime` | `EP7AnimationPlayer::ApplyToSkeleton(sk, bFirst, emBody)` (B17 rework) | SAnimation.cpp:480–1236, SAnimContainer::UpdateTime:1236 |
+| `DxAniScaleMAIN::UpdateBoneScale` | `EP7AnimationPlayer::ApplyBoneScale` + control tail (`UpdateTime` NON-const applies bone scale exactly like the original's tail call) | DxAniBoneScale.cpp:5–48, DxSkinAniControl.cpp:194 |
+| `SAnimation::SetMix` (latent raw-time bug) | `EP7AnimationPlayer::ApplyMix` + `UpdateMix` | SAnimation.cpp:387; documented, not silently "fixed" |
+| `DxSkeleton::UpdateBones` | `EP7Skeleton::UpdateBones(worldRoot, blendWeight)` (BLENDING lerp/slerp PREV→CUR, ADD quat multiply, aniScale rows, firstChild/nextSibling recursion) | DxBoneCollector.cpp USE_ANI_QUATERNION path |
+| `DxSkinMesh9_CPU` skinning | `BuildBonePalette` + `SkinVerticesCPU` (palette = offsetMatrix · matCombined) | DxSkinMesh9_CPU.cpp |
+| `DxSkinChar::SetCharDataData` creation | `EP7CharacterScene::Spawn`: register every valid clip (`LoadAnimation`+`ClassifyAnimation`) → `DEFAULTANI` (nodes[0]) → animated immediately | DxSkinChar.cpp:242–254 |
+| renderer 3D pass | `MobileRenderer::BeginScene3D/DrawSkinnedMesh/EndScene3D` (GLES2-compatible shaders, orbit camera, one draw per piece) | new; UI state preserved |
+
+### 14.2 Resolved source question — `SAnimation::ConvertMatToQuat`
+
+`SAnimation.cpp:1326–1356` (USE_ANI_QUATERNION): if the track has **no** quatPos keys and has matrix
+keys, every matrix key is decomposed (`D3DXMatrixToSQT` + `CompressionQuaternion`, SAnimation.cpp:27)
+into an `SQuatPosKey`, and **the matrix keys are then freed** (`m_cMatrixKeys = 0; SAFE_DELETE_ARRAY`)
+— the Korean comment states the translation: "after converting, the matrices are deleted". Every
+`SAnimation::Load_*` variant calls it right after reading a track (SAnimation.cpp:1459, 1511, 1568)
+and the qualified-reader path does too (SAnimation.cpp:1135). The `!m_pQuatPosKeys` guard means a
+track that carries BOTH quatPos and matrix keys keeps its matrix keys — and `SAnimation::SetTime`
+dispatches matrix keys first (SAnimation.cpp:499), so those still animate through the direct-memcpy
+`SetMatrix` branch (SAnimation.cpp:359, no weight involvement).
+
+Mobile mirror: `EP7AnimationReader::ConvertMatToQuat` (called by the character loader after
+`BindToSkeleton`) implements the same transform — matrix-only tracks become quatPos tracks and drop
+their matrix keys; tracks with quatPos keys keep them. The byte-level reader stays untouched (this
+is the runtime load transform, not a parser change). `ep7math::CompressionQuaternion` reproduces the
+original pack (hemisphere canonicalization, `(DWORD)(v*0xffff)` truncation) with one documented
+hardening: non-finite quaternion input compresses the identity and pre-truncation values clamp to
+[0,1] so a malformed matrix key can never wrap the DWORD cast.
+
+### 14.3 Playback semantics implemented (source-confirmed only)
+
+* **Clock:** keys are unit-anikey (`kUnitAniKeyPerSec = 4800`); the control advances
+  `m_fTime += elapsed * 4800` (DxSkinAniControl.cpp:742 comment parity via `EP7AnimationPlayer::Advance`).
+* **Windows:** non-loop end > `m_dwETime − m_UNITTIME*2` freezes at the end window; loop wraps to
+  `m_dwSTime`; `EMANI_ENDFREEZE` (flag 0x0001) pins the end; `wDivFrame` stop points recorded but
+  gameplay always continues (documented `bContinue`).
+* **Selection:** `SELECTANI(name|M,S)` → `SetAnimation`: same node + no reset → FALSE but the caller
+  reports success (a re-select keeps playing); every successful selection sets `m_fWeight = 0`
+  (DxSkinAniControl.cpp:516/562/598) and `FrameMove` ramps it +7/s clamped to 1 — the blend-in.
+  `DEFAULTANI` = nodes[0]; missing `SELECTSKILLANI` target → `downBody.endAnim = TRUE` + fallback
+  nodes[0] (DxSkinAniControl.cpp:588–596).
+* **Creation auto-plays:** `DxSkinChar::SetCharDataData` (DxSkinChar.cpp:242) always selects
+  (requested type → `AN_PLACID` → `DEFAULTANI`) — there is no "bind pose with nothing playing"
+  state for a character that owns animations. `EP7CharacterScene::Spawn` mirrors this; the bind-pose
+  path only exists for characters with zero loadable clips.
+* **Switching:** the previous node's clock/clip/end state is preserved in a backup control
+  (`sAniControlBACKUP`, DxSkinAniControl.cpp:160–164).
+* **EMBODY routing:** `SAnimContainer::UpdateTime` (SAnimation.cpp:1236) `emBody` switch — DEFAULT
+  applies upBody tracks then main tracks; UPBODY/DOWNBODY apply their own list. B-first flags follow
+  `DxAniControlCORE::UpdateTime` (upBody+layer first with `bFirst=TRUE`... per control pair).
+* **Upper/lower mixing:** `DoShockMix` selects the first mainType-11 clip (deterministic, documented)
+  and mixes through `q_i · inv(q₀)` quaternion composition with the raw-`fGlobalTime` sampling the
+  original uses (SAnimation.cpp:387 latent bug reproduced, not silently altered).
+
+### 14.4 Engine-quality requirements (§7)
+
+* Frame-rate-independent update: the engine clamps non-finite/≤0 dt to 0 and >0.25 s to 0.25 s
+  (documented divergence: the original trusts `fElapsedTime`).
+* No blocking loads on the render thread: assets load through the loader before `Spawn`; the render
+  path only consumes evaluated buffers.
+* No per-frame allocations: the pose path reuses instance-owned scratch buffers (palette/pos/norm)
+  and geometric-growth VBO/EBO; measured alloc-stability over 2,000 frames (§14.8).
+* Stable orientation & pause/resume: instance yaw/scale compose the world root each frame; the dt
+  clamp freezes motion (not time-jumps) across suspensions.
+* Extensibility: `EP7SkinAniControl` exposes SELECTANI/DEFAULTANI/SELECTSKILLANI/DoShockMix for the
+  upcoming touch/UI phases; `CharacterPreviewOverlay` already compiles against the new scene API and
+  stays unwired until those phases (B17 scope excludes Login/UI work).
+
+### 14.5 Rendering with real assets (§6)
+
+`RANMobileEngine::Render` (CharacterPreview state) submits only authentic, successfully parsed
+geometry: per visible/posed instance, per loaded piece with faces, `DrawSkinnedMesh` receives the
+piece's own skinned vertex window (`pieceVertexOffsets[slot]` base-pointer advance — the concatenated
+buffer is indexed piece-locally exactly like the pieces' own `mesh.faces`). A piece that fails the
+bounds check is skipped; geometry is never substituted or fabricated. Textures are not bound yet
+(`textureId = 0`, default gray material) — `.dds/.tga` decode/upload remains future work; the
+authentic subset/texture names are parsed and recorded.
+
+### 14.6 B11–B16 compatibility (§5)
+
+* Byte-level `.bin` reader and `.cfg` reader untouched (0x0113 stays UNSUPPORTED; 0x0200
+  EMBYTECRYPT stays not-implemented; trailing bytes never reinterpreted).
+* Suites re-run on the final code: phase3j **5,732 checks / 0 failures** (up from 5,686), verifier
+  **3,757 / 0**, inspector **13,423 / 0 ×2**, all also under `ASan+UBSan+LSan`.
+* CI-exact compile (`-std=c++17 -Wall -Wextra -Werror`) of the phase3j line and the full core test
+  line both clean.
+
+### 14.7 Test coverage (§8 categories)
+
+`TestB17RuntimeSemantics` (new) + reworked `TestCharacterScene`: cfg/bin load (B11–B16, unchanged),
+track→bone binding, hierarchy accumulation, bind pose (now via a no-clip resolution of the same
+.chf), local/global matrices, frame progression (`CurrentTime`), pos/rot/scale keys, playback start,
+re-select semantics, loop wrap vs non-loop end reporting (`animationEnded`), switching with weight
+blend-in, matrix→quatPos conversion (time/scale/pos/quat round-trip + re-compression identity),
+compression hardening (NaN → identity, hemisphere canonicalization), rest-pose restore contract
+(no cumulative application), OOB bone indices, malformed refs, NaN/inf guards (B12–B15 suites),
+B11–B16 regressions. All fixtures remain synthetic and labeled test-generated in-source.
+
+### 14.8 Performance (§10, measured; synthetic scale, not device)
+
+Bench methodology: 62-bone chain skeleton + 4 pieces × 3,000 vertices (12,000 total), 2,000 frames,
+`-O2`, host sandbox (x86_64) — **synthetic**, recorded as engineering ceiling, NOT device numbers:
+
+| Stage | Cost |
+|---|---|
+| Spawn (register clips + DEFAULTANI + first pose) | 0.055 ms |
+| `scene.Update` (FrameMove + EvaluatePose) avg | 0.671 ms/frame |
+| — `ResetToRestPose` | 0.0003 ms |
+| — control `UpdateTime` (SQT pose write) | < 0.0001 ms |
+| — control `UpdateMix` | < 0.0001 ms |
+| — `skeleton.UpdateBones` (62 bones) | 0.0013 ms |
+| — `BuildBonePalette` (62) | 0.0007 ms |
+| — `SkinVerticesCPU` (3,000 verts) | 0.160 ms (~53 ns/vertex) |
+| Scratch allocations across 2,000 frames | none (all capacities identical; output min=max=36,000 floats) |
+
+Skinning dominates (~99.8%); the pose/state-machine pipeline is negligible at authentic skeleton
+sizes. No optimization was applied (§10: correctness first); a typical EP7 character (4–8k vertices)
+sits well under 0.5 ms/frame on this reference path.
+
+### 14.9 Device status (§9)
+
+**NOT TESTED ON DEVICE.** No Android device or emulator execution exists for B17 (sandbox blockers
+B1). CI compile + unit/integration/sanitizer evidence is not device proof; the Android workflow's
+`android-arm64` job compiles the runtime (`libranmobile-arm64-v8a`) but does not execute it.
+
+### 14.10 Explicit non-claims / remaining work
+
+1. GPU skinning: the renderer draws the CPU-evaluated reference path; the vertex-shader palette
+   binding (B10 remainder) is still open.
+2. Textures/materials: not bound (names recorded); lighting is a hardcoded directional in the
+   character shader.
+3. `SQUAD` interpolation is approximated by the equivalent slerp (documented in-source); the
+   original's `D3DXQuaternionSquadSetup` tangents are not reproduced.
+4. Effect payloads (`DxEffAniSingle` etc.) and trace-point-driven effects are not rendered.
+5. Attachments (`Bip01_R/L_Hand matCombined`) are not exposed yet.
+6. 0x0200 EMBYTECRYPT `.bin` and `SkinObject.rcc` pack gaps (`3,550` entries) remain unsupported
+   (unchanged blockers; BLOCKERS.md updated).

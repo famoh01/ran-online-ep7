@@ -896,3 +896,33 @@ Implemented in commit `d123d931592057d19dfc3c0fa5df4a07741f3a55` on `arena/00fd1
    - **Unsupported `.bin` outer container version `0x0200` (`9` loose `.bin` files):** `EMBYTECRYPT_BIN`-encoded containers (`457` `0x0103` tracks; `8` pair with supported `.cfg` `0x0107`, `1` has no `.cfg`), plus the `0x0200` `EMBYTECRYPT_CFG` encrypted-`.cfg` path (none observed in the authentic set).
    - **Pre-existing `SkinObject.rcc` pack gaps (`3,550` failed pack entries):** `243` unsupported `.chf` versions, `3,097` unsupported `.cps` versions, and `210` `.abf` binary skeleton files (unchanged from B11–B15; the sole cause of the diagnostic verification job's expected exit `1`).
    - **Unchanged environment/runtime blockers:** B1 (no local Android SDK/NDK or physical device/emulator execution in sandbox), B3/B6 (no live server login/gameplay test), B8 (`GameServer` DirectX header conflict), and B10 (GPU skinning / 3D character draw pass integration).
+
+---
+
+## 2026-11-27 — Phase 3J B17: Authentic Animation Runtime Integration & Skeleton Evaluation
+
+**Status: the playback chain is implemented and suite-verified end-to-end (parse → state machine →
+pose → skin → draw submission); no new hard blockers were introduced, and the pre-existing blockers
+are unchanged. The runtime integration itself is COMPLETE at the engine level on this branch.**
+
+1. **Device execution (§9) — NOT TESTED ON DEVICE (unchanged blocker B1).** No Android device or
+   emulator execution exists for B17: the sandbox has no SDK/NDK/device access. Evidence level is
+   CI compile + unit/integration/sanitizer suites + a synthetic performance bench — explicitly NOT
+   device proof. The Android workflow builds `libranmobile-arm64-v8a` but never executes it.
+2. **GPU skinning (B10 remainder).** B17 added the 3D skinned draw pass, but it draws the
+   CPU-evaluated reference vertices (`DxSkinMesh9_CPU` parity). Binding the bone palette in the
+   vertex shader (and per-subset texture/material draws) remains open; recorded as future work,
+   not a blocker for the B17 milestone.
+3. **Textures/materials.** `.cps` texture names are parsed and recorded; `.dds/.tga` decode and GL
+   upload are not implemented, so characters render with the default gray material. Unchanged scope
+   decision (Phase 3I/3K territory).
+4. **Unsupported authentic data (unchanged from B11–B16, re-confirmed on the B17 code):**
+   `.bin` outer version `0x0200` (`EMBYTECRYPT_BIN`, 9 loose files) stays UNSUPPORTED and is never
+   falsely claimed; `.cfg` `0x0113` stays UNSUPPORTED; the `SkinObject.rcc` pack gaps (`3,550`
+   entries: 243 `.chf` + 3,097 `.cps` unsupported versions, 210 `.abf` skeletons) keep the
+   diagnostic verification job's expected exit `1`. Trailing bytes are counted/recorded, never
+   reinterpreted.
+5. **Documented approximations (not blockers, recorded for review):** `D3DXQuaternionSquadSetup`
+   tangents approximated by the equivalent slerp; `SetMix` raw-`fGlobalTime` latent bug reproduced
+   as-is; `wDivFrame` stop points recorded but gameplay continues (mobile gameplay layer has no
+   strike system yet).

@@ -695,3 +695,23 @@ head unchanged. This task does not authorize changing runtime/parser behavior.
   - `Android ARM64 build (lib + APK/AAB)` (job `140544798206`): **success** (`libranmobile-arm64-v8a` artifact `2,355,338` B; `ranmobile-android-packages` artifact `2,024,876` B)
   - `Authentic EP7 asset verification (diagnostic)` (job `140544797658`): expected diagnostic exit `1` (pre-existing `SkinObject.rcc` `.chf`/`.cps`/`.abf` pack gaps: `3,550` failed entries, unchanged from B11–B15).
 - [ ] Not claimed / still pending separate tasks: `0x0200` `EMBYTECRYPT_BIN` `.bin` outer containers (`9` files), `0x0200` `EMBYTECRYPT_CFG` encrypted-`.cfg` path, `0x0113` (authentic `UNSUPPORTED`, no `case` in `LoadFile`), `SkinObject.rcc` `.chf`/`.cps`/`.abf` gaps, physical Android device/emulator execution, and live server gameplay testing.
+
+---
+
+## 21. Phase 3J B17 — Authentic Animation Runtime Integration & Skeleton Evaluation
+
+- [x] Remote branch/HEAD/ancestry/PR state verified before work (stale local metadata repaired via plain `git reset origin/arena/00fd13f9-ran-online-ep7`; no main modification).
+- [x] Original-source investigation (SAnimation.cpp SetTime/SetMatrix/SetPosQuat/SetMix/ConvertMatToQuat, DxSkinAniControl.cpp SetAnimation/FrameMove/UpdateTime/SELECTANI/DEFAULTANI/SELECTSKILLANI, DxBoneCollector.cpp UpdateBones/ResetBone, DxAniBoneScale.cpp, DxSkinChar.cpp creation, DxSkinMesh9_CPU.cpp) mapped to mobile files with documented differences; recorded in `ANIMATION_CONTAINER_INVESTIGATION.md` §18 and `PHASE3J_CHARACTER_ANIMATION.md` §14.
+- [x] Open source question resolved: `SAnimation::ConvertMatToQuat` (SAnimation.cpp:1326–1356) converts matrix-only tracks to quatPos keys and **deletes the matrix keys**; tracks with quatPos keys keep matrix keys; every `Load_*` runs it (1459/1511/1568/1135).
+- [x] Skeleton: bind-pose SQT at bind time, `ResetToRestPose` = `DxBoneCollector::ResetBone` mirror (flags=0/scale=1/mix=id/CUR=PREV=ORIG), `UpdateBones` recursion (firstChild/nextSibling) with BLENDING lerp/slerp PREV→CUR by weight, ADD mix multiply, aniScale rows.
+- [x] Track evaluation: matrix-key direct write (SetMatrix memcpy parity), quatPos lower-bound snap + bFirst CUR/PREV, S/R/T fmod-window branch with rotate-w negation; track→bone binding with missing-bone skip; EMBODY routing (DEFAULT = upBody then main).
+- [x] Pose: local → propagate → global (row-vector `local · parent`); world root from instance pos/yaw/scale; reset-to-rest every evaluation (no cumulative/double application — suite asserts the rest-pose restore contract).
+- [x] Playback: start (SetAnimation: backup clock + `m_fTime = STime`), stop/end (`animationEnded` from `bEndAnim`), elapsed update (unit-anikey 4800/s), loop wrap vs non-loop end window (ETime − UNITTIME·2) + EMANI_ENDFREEZE pin, switching with `m_fWeight = 0` → +7/s blend-in, same-node re-select keeps playing, DoShockMix (mainType 11, deterministic, documented).
+- [x] Runtime matrix→quatPos conversion (`EP7AnimationReader::ConvertMatToQuat`) with re-compression identity test (decompress→compress reproduces stored words) + NaN→identity and hemisphere canonicalization hardening tests.
+- [x] Engine quality: dt clamp (non-finite/≤0 → 0, >0.25 → 0.25), no blocking loads in render, no per-frame allocations (scratch buffers; measured alloc-stability over 2,000 frames), stable orientation, extensible control API for touch/UI phases.
+- [x] Rendering: real assets only — per-piece submission advances the skinned base pointer by `pieceVertexOffsets[slot]` (piece-local indexing); pieces failing bounds are skipped, never substituted; no fabricated geometry.
+- [x] `test_phase3j`: **5,732 checks, 0 failures** (up from 5,686) — normal `-Wall -Wextra -Werror` + `ASan/UBSan/LSan` clean; CI-exact compile lines verified locally.
+- [x] Regression: verifier suite **3,757 / 0**, inspector suite **13,423 / 0 ×2**, all sanitizers clean (B11–B16 behavior unchanged).
+- [x] Performance measured on synthetic scale (62 bones, 4×3,000 verts, 2,000 frames, host sandbox, NOT device): spawn 0.055 ms; update avg 0.671 ms/frame; skinning dominates (~53 ns/vertex); pose pipeline < 3 µs. Numbers recorded in `PHASE3J_CHARACTER_ANIMATION.md` §14.8.
+- [x] Docs updated non-destructively: `ARCHITECTURE.md`, `PROGRESS_REVIEW.md`, `ANIMATION_CONTAINER_INVESTIGATION.md` (§18), `TESTING_CHECKLIST.md` (§21), `BLOCKERS.md`, dedicated B17 report `PHASE3J_CHARACTER_ANIMATION.md` §14.
+- [ ] **Device/emulator run: NOT TESTED ON DEVICE** — no Android device or emulator execution exists for B17 (sandbox blocker B1); CI compile ≠ device proof.

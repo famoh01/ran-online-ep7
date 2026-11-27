@@ -464,3 +464,44 @@ separate investigation; pre-existing pack .chf/.cps/.abf/.cfg coverage gaps; and
 PR #5 head belonging to another session branch. The verifier correction is done
 on `arena/1491d572-ran-online-ep7`; PR #5 remains OPEN/DRAFT, unmerged, with its
 head unchanged. This task does not authorize changing runtime/parser behavior.
+
+---
+
+## 2026-11-27 — Phase 3J B17: Authentic animation runtime integration
+
+The character layer now runs the authentic playback chain end-to-end:
+
+```
+.chf → pieces (.cps/.x) ─┐
+.skt → EP7Skeleton ──────┤→ EP7CharacterAsset (loader, byte readers unchanged)
+.cfg → EP7AnimInfo ──────┤
+.bin → EP7AnimClip ──→ ConvertMatToQuat (SAnimation::Load_* parity) → BindToSkeleton
+                          ↓
+            EP7CharacterScene::Spawn → EP7SkinAniControl (DxSkinAniControl parity:
+            registry, SELECTANI/DEFAULTANI/skill fallback, 4-clock core, weight
+            blend-in 0→1 @ +7/s, backup clock on switch)
+                          ↓ per frame
+            Update: FrameMove(dt·4800 anikeys, loop wrap / end-window freeze)
+            EvaluatePose: ResetToRestPose → UpdateTime (SetTime parity: matrix
+            direct write / quatPos snap CUR-PREV / S·R·T fmod) → UpdateMix →
+            EP7Skeleton::UpdateBones(worldRoot, weight) (DxSkeleton::UpdateBones
+            parity: BLENDING, ADD, aniScale) → CPU skinning (DxSkinMesh9_CPU parity)
+                          ↓
+            RANMobileEngine (CharacterPreview): MobileRenderer::BeginScene3D →
+            per-piece DrawSkinnedMesh (piece-local base pointer) → EndScene3D
+```
+
+Rules baked into the architecture (all source-verified, see
+`ANIMATION_CONTAINER_INVESTIGATION.md` §18 and `PHASE3J_CHARACTER_ANIMATION.md` §14):
+
+* **Creation auto-plays**: a character with loadable clips never rests in the bind pose
+  (`DxSkinChar::SetCharDataData` always selects; DEFAULTANI = nodes[0]); the bind pose is only
+  observable for characters with zero loadable clips.
+* **Every selection blends in** (`m_fWeight = 0` → +7/s); re-selecting the current clip keeps
+  playing (SetAnimation FALSE at the node level, TRUE at the SELECTANI level).
+* **No per-frame allocation**: instance-owned scratch buffers + geometric-growth VBO/EBO
+  (measured stable across 2,000 frames).
+* **dt is clamped** (non-finite/≤0 → 0, >0.25 s → 0.25 s) — a documented divergence from the
+  original's unconditional `fElapsedTime` trust, for pause/resume safety.
+* **Real assets only**: pieces failing parse/bounds are skipped, never substituted; textures are
+  recorded but not bound yet (default gray material); GPU palette binding (B10 remainder) still open.

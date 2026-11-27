@@ -617,3 +617,52 @@ Surveyed in GitHub Actions run [`46010599353`](https://github.com/famoh01/ran-on
 - **CI `Core C++17 tests (blocking)` (run `46010599353`, job `140544798259`):** **success**.
 - **CI `Android ARM64 build (lib + APK/AAB)` (run `46010599353`, job `140544798206`):** **success** — `libranmobile-arm64-v8a` artifact (`2,355,338` B) and `ranmobile-android-packages` (`assembleDebug` + `assembleRelease` + `bundleRelease`, artifact `2,024,876` B).
 - **CI `Authentic EP7 asset verification (diagnostic)` (run `46010599353`, job `140544797658`):** failure — the long-documented expected diagnostic exit `1` from the pre-existing `SkinObject.rcc` `.chf`/`.cps`/`.abf` pack gaps (`3,550` entries, unchanged; out of B16 scope).
+
+---
+
+## 18. Phase 3J B17 — Animation Runtime Integration: Playback Semantics Mapped to the Mobile Runtime
+
+B17 connects the containers investigated in §5–§17 to an actual playback runtime. Everything below
+was read from the authentic PC sources (`enginelib/Meshs/`, cp949) before implementation; no
+behavior was invented.
+
+### 18.1 `SAnimation` evaluation — the decisive facts
+
+| Original (file:line) | Behavior | Mobile mirror |
+|---|---|---|
+| `SAnimation::SetTime` (SAnimation.cpp:480) | dispatch order: matrix keys → quatPos keys → else S/R/T composition | `EP7AnimationPlayer::ApplyToSkeleton` same order |
+| `SAnimation::SetMatrix` (SAnimation.cpp:359) | `memcpy(pBoneToAnimate->matRot, key.mat, 64)` — direct write, **no weight involvement** | matrix branch writes `bone.local`, `localIsFromSqt=false` |
+| `SAnimation::SetPosQuat` (SAnimation.cpp:442) | `fmod` over last key time, lower-bound snap; `bFirst` → CUR else PREV + USE_ANI_BLENDING | same; `bone.scale/position/rotation` vs `prev*` + `useBlending` |
+| `SAnimation::SetMix` (SAnimation.cpp:387) | raw `fGlobalTime` lookup (latent bug — blend clock never offsets) | reproduced as-is, documented |
+| `SAnimation::ConvertMatToQuat` (SAnimation.cpp:1326) | matrix-only tracks → `SQuatPosKey` via `D3DXMatrixToSQT`+`CompressionQuaternion`, **matrix keys deleted**; tracks with quatPos keys untouched (guard `!m_pQuatPosKeys`); called by every `Load_*` (1459/1511/1568) and the qualified reader (1135) | `EP7AnimationReader::ConvertMatToQuat` — runtime load transform after `BindToSkeleton`; byte reader unchanged |
+| `CompressionQuaternion` (SAnimation.cpp:27) | hemisphere canonicalize (w<0 → negate), x/y/z = `(DWORD)((v+1)*0.5*0xffff)` packed hi/lo, w = `(DWORD)(w*0xffff)` | `ep7math::CompressionQuaternion` bit-exact for in-range inputs; NaN → identity + clamp hardening |
+| scale/rotate/position branch (SAnimation.cpp:508+) | `fmod(fGlobalTime, lastKeyTime)` window, neighbor lerp; rotate keys negate w after sampling; USE_SQUAD neighbor setup | same windows; squad approximated by slerp (documented) |
+
+### 18.2 `DxSkinAniControl` state machine — the decisive facts
+
+| Original (DxSkinAniControl.cpp:line) | Behavior | Mobile mirror (`EP7SkinAniControl`) |
+|---|---|---|
+| 155 `SetAnimation` | same node → FALSE; backup clock preserved; `m_fTime = m_dwSTime`; `StartAnim()` | same (backup control, weight untouched on FALSE) |
+| 516/562/598 `SELECTANI*` | every successful select sets `m_fWeight = 0` (blend-in) | same |
+| 742 `FrameMove` | `m_fWeight += fElapsedTime*7`, clamp 1; ENDFREEZE pins 1 | same ramp |
+| 753/771 `FrameMove`/`UpdateTime` | CORE: upBody+layer+downBody+layer clocks; UpdateTime per-pair bFirst | same 4-clock core |
+| 194 `UpdateTime` tail | `UpdateBoneScale` after the pose write (per DxAniControl::UpdateTime) | `UpdateTime` non-const, bone-scale tail |
+| 523 `DEFAULTANI` | empty registry → `CleanUp`; else nodes[0] | same |
+| 584 `SELECTSKILLANI` | missing/OOR target → `downBody.endAnim = TRUE` + fallback nodes[0] when nothing selected | same fallback |
+| 814–860 `Render` | pose pipeline `ResetBone → UpdateTime(weight) → UpdateMix → BIGHEAD/BIGHAND → g_fWeight → UpdateBones` | `EvaluatePose`: `ResetToRestPose → UpdateTime → UpdateMix → UpdateBones(worldRoot, weight)` |
+| DxSkinChar.cpp:242 creation | always selects an animation (type → AN_PLACID → DEFAULTANI) | `Spawn` auto-plays DEFAULTANI |
+
+### 18.3 Consequence for test/reference semantics
+
+Because creation auto-plays, an animated character never rests in the bind pose. The B17 suite's
+bind-pose reference resolves the same `.chf` **without** animation files (no clip → `DEFAULTANI`
+cleans up → plain bind pose), replacing the stale pre-B17 assumption that a spawned instance holds
+the bind pose until a clip is requested.
+
+### 18.4 Runtime matrix→quatPos conversion and data coverage
+
+The conversion is a runtime-load transform, not a parser change: authentic `.bin` bytes still parse
+verbatim (B12–B15 reader untouched, suite re-verified), and the conversion runs after skeleton
+binding for every loadable clip, so the playback runtime sees the same track state the original's
+`SAnimation` objects hold after `Load_*`. Tracks that already carry quatPos keys keep their matrix
+keys (both branches animate; matrix wins per `SetTime` dispatch order).

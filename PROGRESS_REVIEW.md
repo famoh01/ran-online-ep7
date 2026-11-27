@@ -1235,3 +1235,56 @@ Implemented the authentic companion-metadata reader for the B16 `.cfg` layout fa
 | CI `Authentic EP7 asset verification (diagnostic)` (`46010599353`, job `140544797658`) | expected exit `1` | **expected exit `1` (pre-existing `SkinObject.rcc` `.chf`/`.cps`/`.abf` gaps, `3,550` entries)** | **TRACKED** |
 
 *Explicit non-claims:* Parsing `3,903 / 3,903` authentic B16 `.cfg` metadata files proves metadata-compatibility for the `.bin`+`.cfg` pairing path (`EP7CharacterScene` reads per-clip metadata via `ParseInfo`), not on-device rendering or live gameplay. Outer `.bin` version `0x0200` (`9` `EMBYTECRYPT_BIN` files) and the `0x0200` `EMBYTECRYPT_CFG` encrypted-`.cfg` path remain unimplemented per B16 scope, `0x0113` remains `UNSUPPORTED` by authentic design (no `case 0x0113`), and no Android emulator/device or live server test was executed in this sandbox.
+
+---
+
+## 2026-11-27 — Phase 3J B17: Implement Authentic Animation Runtime Integration & Skeleton Evaluation (`arena/00fd13f9-ran-online-ep7`)
+
+**Scope:** connect the authentic EP7 animation pipeline end-to-end in the mobile runtime — `.cfg`
+(SANIMCONINFO) → `.bin` (SAnimContainer) → SAnimation tracks → skeleton (DxSkeleton equivalent) →
+EP7AnimationPlayer → bone/pose evaluation → character model → rendering — with every implemented
+behavior read from the PC sources first (no guessing, no invented blending).
+
+**Implemented (commit `8ff9b10` + docs, branch `arena/00fd13f9-ran-online-ep7`, Draft PR #7):**
+
+1. `EP7SkinAniControl.{h,cpp}` (new): the DxSkinAniControl/DxAniControl/DxAniControlCORE state
+   machine — animation registry with name-sorted buckets, SELECTANI/DEFAULTANI/SELECTSKILLANI
+   semantics (backup clock on switch, weight-0 blend-in ramped +7/s, missing skill target →
+   downBody.endAnim + fallback nodes[0]), 4-clock core (upBody/upBodyLayer/downBody/downBodyLayer),
+   UpdateTime with bone-scale tail, UpdateMix (raw-time latent bug reproduced and documented),
+   DoShockMix (mainType 11 first clip, deterministic, documented).
+2. `EP7AnimationPlayer::ApplyToSkeleton` reworked to `SANIMCONINFO::UpdateTime`/`SAnimation::SetTime`
+   semantics: matrix keys → `SetMatrix` direct write (no weight), quatPos → lower-bound snap with
+   bFirst CUR/PREV + USE_ANI_BLENDING, else S/R/T fmod windows with rotate-w negation; EMBODY
+   routing per `SAnimContainer::UpdateTime` (DEFAULT = upBody list first, then main); IsFinite guard.
+3. `EP7Skeleton`: `UpdateBones(matRoot, blendWeight)` = `DxSkeleton::UpdateBones` (BLENDING
+   lerp/slerp PREV→CUR, ADD normalize(mix)·normalize(cur), aniScale rows, firstChild/nextSibling
+   recursion); `ResetToRestPose` = `ResetBone` mirror.
+4. `EP7AnimationReader::ConvertMatToQuat` (new): the load-time `SAnimation::ConvertMatToQuat`
+   transform — matrix-only tracks become quatPos keys (MatrixToSQT + CompressionQuaternion) and
+   drop their matrix keys; tracks with quatPos keys keep both (SetTime dispatch order). Byte-level
+   reader untouched. `ep7math::CompressionQuaternion` added (bit-exact pack; NaN→identity hardening).
+5. `EP7CharacterScene`: `Spawn` registers every valid clip and auto-plays DEFAULTANI (authentic
+   creation semantics, DxSkinChar.cpp:242); `Update` = FrameMove + end reporting; `EvaluatePose` =
+   ResetToRestPose → UpdateTime → UpdateMix → UpdateBones(worldRoot, weight); instance-owned scratch
+   buffers (no per-frame allocation).
+6. `MobileRenderer`: 3D skinned pass — `BeginScene3D` (depth GL_LEQUAL, backface cull, blend off,
+   orbit camera from MobileCamera), `DrawSkinnedMesh` (interleaved pos+normal+uv, dynamic VBO/EBO
+   with geometric growth, one glDrawElements per piece), `EndScene3D` restores UI state. GLES2-
+   compatible shader pair.
+7. `RANMobileEngine`: CharacterPreview screen state drives the scene; dt clamp (non-finite/≤0 → 0,
+   >0.25 → 0.25 — documented divergence from the original's `fElapsedTime` trust); render submits
+   per visible/posed instance per loaded piece with the piece-local base-pointer advance
+   (`pieceVertexOffsets[slot]`).
+
+**Verification:** phase3j **5,732 checks / 0 failures** (up from 5,686; new B17 runtime-semantics
+section + reworked scene-integration section), verifier **3,757 / 0**, inspector **13,423 / 0 ×2**,
+all under `ASan+UBSan+LSan`; CI-exact `-Wall -Wextra -Werror` compiles clean. Performance measured
+(synthetic 62 bones / 12,000 verts): update 0.671 ms/frame avg, skinning dominates, zero per-frame
+reallocation across 2,000 frames.
+
+**Compatibility:** `.bin`/`.cfg` readers byte-identical to B16 (0x0113 UNSUPPORTED, 0x0200
+EMBYTECRYPT not implemented, trailing bytes recorded never reinterpreted); B11–B16 suites re-run
+green. **Device: NOT TESTED ON DEVICE** (sandbox blocker B1). Details:
+`PHASE3J_CHARACTER_ANIMATION.md` §14 (B17 report), `ANIMATION_CONTAINER_INVESTIGATION.md` §18
+(source mapping), `TESTING_CHECKLIST.md` §21, `BLOCKERS.md` B17 update.
