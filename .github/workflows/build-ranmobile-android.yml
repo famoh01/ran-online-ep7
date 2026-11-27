@@ -537,7 +537,16 @@ jobs:
               fi
               sleep 5
             done'
-          [ -f gpu_selftest.json ] || { echo "::error::selftest did not produce gpu_selftest.json in time"; tail -n 60 emulator.log; exit 1; }
+          if [ ! -f gpu_selftest.json ]; then
+            echo "::error::selftest did not produce gpu_selftest.json in time"
+            # Emit the app's logcat (crashes, harness logs, EGL/GLES errors) as
+            # annotations — they are the only log channel readable from outside.
+            "$ADB" logcat -d 2>/dev/null | grep -E "RANMobile|GpuSelfTest|AndroidRuntime|FATAL|DEBUG|crash" | tail -n 40 > applog.txt || true
+            while IFS= read -r line; do echo "::error::$line"; done < applog.txt || true
+            "$ADB" shell "run-as com.famhawaii.ranmobile ls -la files/" || echo "::error::run-as files listing failed"
+            tail -n 20 emulator.log || true
+            exit 1
+          fi
           # Pull the screenshot through run-as (app-internal files dir).
           "$ADB" exec-out run-as com.famhawaii.ranmobile cat files/gpu_selftest.ppm > gpu_selftest.ppm || true
           "$ADB" logcat -d > emulator-logcat.txt || true
