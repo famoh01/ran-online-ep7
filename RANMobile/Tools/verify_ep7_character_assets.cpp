@@ -642,6 +642,27 @@ int main(int argc, char** argv) {
                         }
                     }
                 }
+                // B19: the SkinObject.rcc .chf population is of parser-unsupported
+                // versions (documented B11 gap), so a loadable character normally does
+                // not exist and the loader records no material texture names.  Bundle
+                // the three smallest shipped textures anyway so the emulator harness
+                // can render ORIGINAL client texture bytes through the GPU pipeline.
+                {
+                    std::vector<std::pair<size_t, std::string>> texSizes;
+                    for (const auto& kv : g_b18.entries) {
+                        if (!EndsWithNoCase(kv.first, ".mtf") && !EndsWithNoCase(kv.first, ".dds")) continue;
+                        texSizes.emplace_back(kv.second.size(), kv.first);
+                    }
+                    std::sort(texSizes.begin(), texSizes.end());
+                    for (size_t k = 0; k < texSizes.size() && k < 3; ++k) {
+                        if (written.find(texSizes[k].second) != written.end()) continue;
+                        std::vector<uint8_t> bytes;
+                        if (B18Resolve(texSizes[k].second, bytes)) {
+                            written[texSizes[k].second] = bytes;
+                            requestedOrder.push_back(texSizes[k].second);
+                        }
+                    }
+                }
                 std::sort(requestedOrder.begin(), requestedOrder.end());
                 requestedOrder.erase(std::unique(requestedOrder.begin(), requestedOrder.end()),
                                      requestedOrder.end());
