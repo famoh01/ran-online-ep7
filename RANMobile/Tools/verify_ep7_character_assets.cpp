@@ -424,12 +424,14 @@ int main(int argc, char** argv) {
     size_t maxFiles = 20000;
     std::string bundleDir;
     std::string bundleChf;
+    bool bundleQuick = false;
     for (int i = 2; i < argc; ++i) {
         if (std::strcmp(argv[i], "--max-files") == 0 && i + 1 < argc) {
             maxFiles = static_cast<size_t>(std::strtoul(argv[++i], nullptr, 10));
         } else if (std::strcmp(argv[i], "--bundle-plan") == 0 && i + 2 < argc) {
             bundleDir = argv[++i];
             bundleChf = argv[++i];
+            bundleQuick = true;
         }
     }
 
@@ -510,6 +512,28 @@ int main(int argc, char** argv) {
             // after the filter, so texture evidence and the texture cache stayed empty.
             const bool isTexture = EndsWithNoCase(entry.name, ".mtf") || EndsWithNoCase(entry.name, ".dds");
             if (!isTexture && !IsCharacterAssetName(entry.name)) continue;
+            if (bundleQuick) {
+                // Bundle mode walks metadata only: extract what the bundle can use
+                // (textures + chf, which drive the selection) and skip full
+                // classification — the diagnostic job runs it separately.
+                if (!isTexture && !EndsWithNoCase(entry.name, ".chf")) continue;
+                std::vector<uint8_t> bytes;
+                if (!archive.Extract(entry, bytes)) continue;
+                if (isTexture) {
+                    ++g_b18.mtfTotal;
+                    std::vector<uint8_t> raw;
+                    int fileType = -1;
+                    if (RANMobile::EP7TextureDecoder::DecryptMTF(bytes, raw, fileType)) {
+                        ++g_b18.mtfDecryptOk;
+                        uint32_t tw = 0;
+                        uint32_t th = 0;
+                        std::string fmt;
+                        if (B18DecodeTexture(entry.name, bytes, tw, th, fmt)) ++g_b18.mtfDecodeOk;
+                    }
+                }
+                B18RememberEntry(entry.name, bytes);
+                continue;
+            }
             if (checked >= maxFiles) break;
             ++checked;
 

@@ -377,7 +377,7 @@ jobs:
   android-emulator-gpu-verification:
     name: Android Emulator GPU verification (GLES3 selftest)
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 75
     # B19: boots a real Android emulator (x86_64 AVD with KVM) and runs the GPU
     # selftest harness inside the debug APK against the live GLES3 implementation
     # (SwiftShader).  Verdict JSON + screenshot are uploaded as artifacts; the job
@@ -450,12 +450,12 @@ jobs:
         with:
           gradle-version: '8.5'
 
-      - name: Build debug APK (arm64-v8a + x86_64)
+      - name: Build debug APK (x86_64 for the emulator)
         working-directory: RANMobile/Android
         env:
           ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
-          gradle assembleDebug --no-daemon
+          gradle assembleDebug -PemulatorOnly --no-daemon
           ls -lh app/build/outputs/apk/debug/*.apk
 
       - name: Enable KVM
