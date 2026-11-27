@@ -505,3 +505,36 @@ Rules baked into the architecture (all source-verified, see
   original's unconditional `fElapsedTime` trust, for pause/resume safety.
 * **Real assets only**: pieces failing parse/bounds are skipped, never substituted; textures are
   recorded but not bound yet (default gray material); GPU palette binding (B10 remainder) still open.
+
+---
+
+## 2026-11-27 — Phase 3J B18: GPU skinning & texture pipeline (mobile runtime)
+
+Render path per visible character instance (engine loop, per frame):
+
+```
+EP7CharacterScene::EvaluatePose            (B17: Reset→UpdateTime→UpdateMix→UpdateBones→per-piece palette+CPU skin)
+  └─ per instance: piecePalettes[slot] snapshot written per frame (no alloc after warm-up)
+RANMobileEngine render loop
+  └─ per visible instance, per piece:
+       EnsurePieceGpuHandle(asset, slot)   lazy upload-once (64-B-stride VBO/EBO; scene-owned)
+       GetPiecePalette(instance, slot)     row-major floats (offset×combined, HLSL parity)
+       GetPieceTextureId(asset, slot, s)   .cps name → .x subset name → ladder (.mtf → DecryptMTF
+                                           → DecodeDDS / DecodeTGA → RGBA8 → GL texture, cached)
+       renderer->DrawGpuSkinnedMesh(...)   palette → shared 16 KB std140 UBO (256 mat4);
+                                           glDrawElements at faceStart*3*4 byte offset; alphaBlend
+                                           from FLAG_ALPHATEXTURE; textureId 0 → flat colour
+       fallback: B17 CPU path (DrawSkinnedMesh with bounds-checked pieceVertexOffsets[slot])
+```
+
+Invariants:
+* **GPU/CPU agree by construction** — both consume the same evaluated `matCombined` and the same
+  offset×combined palette formula; the shader reproduces `SkinVerticesCPU` semantics exactly
+  (w-divide, translation-dropped normals, `|sum−1|>1e-4` renormalize, zero-sum passthrough).
+* **Validation before any GL work**: invalid handle / palette null or >256 / face range OOB →
+  logged error + counter + `false`; missing texture is NOT a failure (flat colour).
+* **No per-frame geometry allocation**: static per-piece buffers, palette-only per-frame upload;
+  GPU resources are scene-owned and released in `Clear()` (idempotent).
+* **Authentic conventions, no invented approximations**: `D3DINDEXEDHLSLVS` (DxSkinMesh9.cpp:18),
+  HLSL vertex declaration (DxSkinMesh9_HLSL.cpp:95-106), `lhtDir = normalize(0,1,-1)`,
+  `SMATERIAL_PIECE::LoadTexture` name order, `MemoryTexture` `.mtf` transform.

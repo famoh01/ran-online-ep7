@@ -666,3 +666,28 @@ verbatim (B12–B15 reader untouched, suite re-verified), and the conversion run
 binding for every loadable clip, so the playback runtime sees the same track state the original's
 `SAnimation` objects hold after `Load_*`. Tracks that already carry quatPos keys keep their matrix
 keys (both branches animate; matrix wins per `SetTime` dispatch order).
+
+---
+
+## 19. Phase 3J B18 — GPU Skinning & Texture Binding: Container-Level Findings
+
+B18 did not change any parser (`.bin`/`.cfg`/`.chf`/`.cps`/`.x` readers are byte-identical to B17);
+the container-level work is on the texture side, recorded here because it completes the
+`.mtf` container story started with `MemoryTexture.cpp` in B11:
+
+* **`.mtf` container**: 12-byte header (`fileType` `TEXTURE_DDS=0` / `TEXTURE_TGA=1`), body
+  per-byte `+0x03` then `^0x47` (`EP7TextureDecoder::DecryptMTF`, verified against
+  `MemoryTexture.cpp:97-98`). B18 adds the **TGA branch** (`DecodeTGA`: types 1/2/3/10, 24/32 bpp,
+  origin bit honoured, ≤4096², else invalid). The DDS branch (`DecodeDDS`: DXT1/DXT3/DXT5 +
+  uncompressed RGBA8/BGRA8) is unchanged.
+* **Verifier evidence extension** (`verify_ep7_character_assets.cpp`, additive): the
+  `authentic-verification` CI job now also classifies shipped textures (`.mtf` decrypt/decode
+  rates, `.dds` decode rates) and resolves the first valid character's material texture names
+  through the real ladder, reporting decoded dimensions — the same numbers the runtime needs
+  (§9 evidence), produced only from authentic pack entries.
+* **`.chf`→`.cps`→`.x`→texture chain**: the character loader now builds GPU skin streams at load
+  (influence rules identical to `SkinVerticesCPU`) and the scene resolves each piece's texture
+  names (`SMATERIAL_PIECE::LoadTexture` parity: `.cps` material names primary, `.x`
+  `MeshMaterialList` subset names fallback) against the pack cache.
+* **No parser behavior changed**: B11–B16 suites re-run green (verifier 3,757/0, inspector
+  13,423/0 ×2); 0x0113 and 0x0200 EMBYTECRYPT remain UNSUPPORTED exactly as before.

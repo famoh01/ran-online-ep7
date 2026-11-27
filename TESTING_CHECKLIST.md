@@ -715,3 +715,46 @@ head unchanged. This task does not authorize changing runtime/parser behavior.
 - [x] Performance measured on synthetic scale (62 bones, 4×3,000 verts, 2,000 frames, host sandbox, NOT device): spawn 0.055 ms; update avg 0.671 ms/frame; skinning dominates (~53 ns/vertex); pose pipeline < 3 µs. Numbers recorded in `PHASE3J_CHARACTER_ANIMATION.md` §14.8.
 - [x] Docs updated non-destructively: `ARCHITECTURE.md`, `PROGRESS_REVIEW.md`, `ANIMATION_CONTAINER_INVESTIGATION.md` (§18), `TESTING_CHECKLIST.md` (§21), `BLOCKERS.md`, dedicated B17 report `PHASE3J_CHARACTER_ANIMATION.md` §14.
 - [ ] **Device/emulator run: NOT TESTED ON DEVICE** — no Android device or emulator execution exists for B17 (sandbox blocker B1); CI compile ≠ device proof.
+
+---
+
+## 22. Phase 3J B18 — Authentic GPU Skinning, Bone Palette & Texture Binding
+
+How to run (host, headless — the GPU path validates without a GL context; a GLES3 stub header is
+only needed for the `-D__ANDROID__` compile check):
+
+```bash
+# phase3j suite (includes B18): expect 5,821 checks, 0 failures
+g++ -std=c++17 -Wall -Wextra -Werror \
+  RANMobile/Engine/Core/Logger.cpp RANMobile/Engine/Renderer/MobileRenderer.cpp \
+  RANMobile/Engine/Camera/MobileCamera.cpp RANMobile/Engine/Scene/EP7CharacterScene.cpp \
+  RANMobile/Engine/Animation/EP7SkinAniControl.cpp RANMobile/Data/Importer/EP7Animation.cpp \
+  RANMobile/Data/Importer/EP7CharacterFile.cpp RANMobile/Data/Importer/EP7RccArchive.cpp \
+  RANMobile/Data/Importer/EP7Skeleton.cpp RANMobile/Data/Importer/EP7SkinPiece.cpp \
+  RANMobile/Data/Importer/EP7SkinnedMesh.cpp RANMobile/Data/Importer/EP7TextureDecoder.cpp \
+  RANMobile/Data/Importer/EP7XFile.cpp RANMobile/Tests/test_phase3j.cpp \
+  -lpthread -o phase3j && ./phase3j
+# ASan+UBSan+LSan: same line with -fsanitize=address,undefined -g -O1; ASAN_OPTIONS=detect_leaks=1
+# Android-path compile check (stub GLES3/gl3.h): -D__ANDROID__ -I<stub> over MobileRenderer.cpp +
+#   RANMobileEngine.cpp
+```
+
+- [x] GPU skin streams: influence equivalence vs `SkinVerticesCPU` (per-bone scan order, cap 4,
+      OOB vertex refs skipped, zero-weight passthrough) on the character fixture.
+- [x] Palette semantics: manual 90° Head pose through `BuildBonePalette` + the exact shader
+      formula (per-influence row-vector transform, w-divide, renormalize windows) — posed vertex
+      verified to move; offset×combined parity asserted.
+- [x] Overflow/capacity: palette > 256 entries rejected (logged, never approximated); 6 influences
+      on 1 vertex → cap-4, stream is exactly 4 slots/vertex (ASan-verified no OOB reads).
+- [x] Headless renderer API: counters, unknown handle, face-range OOB, release/double-release.
+- [x] TGA decode: type 2/10 24/32 bpp (BGR order), colour-mapped type 1, greyscale type 3, origin
+      bit, invalid type rejected; `.mtf` DecryptMTF round-trip (in-test encrypted container).
+- [x] Scene texture binding: ladder (`face.dds` → `face.mtf`), lowercase cache, unknown subset →
+      id 0 (flat colour, not a failure), `Clear` releases + second `Clear` safe.
+- [x] Regression: verifier 3,757/0 + sanitizers; inspector 13,423/0 ×2 + sanitizers; phase3j
+      5,821/0 + sanitizers; full-engine compile (44 TUs) clean; Android-path compile clean.
+- [ ] **GPU render on a live GL context / device: NOT TESTED ON DEVICE** — headless validation +
+      GLES3-stub compile only (sandbox blocker B1). CI compile ≠ device proof.
+- [ ] Authentic-texture CI evidence: the `authentic-verification` job now reports shipped-texture
+      decode rates and per-piece texture resolution for the first valid `.chf`; review its log on
+      the B18 CI run (adds evidence, does not change the exit-code model).

@@ -644,3 +644,147 @@ A workflow fix rode along (`97926ac`): the a4dba2e LFS list named `DxSkinMesh9_C
 the upstream backup repo does not contain (the CPU path lives in `DxSkinMesh9_NORMAL.*` there; the
 `_CPU` split exists only in the GDrive engine drop) — substituted and re-verified all 24 paths via
 the contents API.
+
+---
+
+## 15. Phase 3J B18 — Authentic GPU Skinning, Bone Palette & Character Rendering Integration (`arena/00fd13f9-ran-online-ep7`)
+
+**Status: the verified B17 CPU skinning pipeline now has a complete GPU (GLES3) twin built to the
+original's `D3DINDEXEDHLSLVS` convention, plus an authentic texture decode/bind path
+(`.mtf` → DDS/TGA → GL). The engine render loop prefers the GPU path per piece with the B17 CPU
+path as fallback. Every number in this section comes from authentic-source verification or from
+explicitly labeled synthetic fixtures. NOT TESTED ON DEVICE.**
+
+### 15.1 Sources inspected (original engine, verified before implementation)
+
+| Question | Source file | Finding reproduced in B18 |
+|---|---|---|
+| GPU skinning method | `DxSkinMesh9.cpp:18` | `m_SkinningMethod = D3DINDEXEDHLSLVS` — the HLSL indexed-palette path is the shipped method, not the CPU path |
+| Vertex declaration (HLSL) | `DxSkinMesh9_HLSL.cpp:95-106` | position + normal + uv + `FLOAT4` blend weights + `FLOAT4` blend indices; `CurNumBones = NumInfl − 1` |
+| Palette composition | `DxSkinMesh9_HLSL.cpp:220-229` | `mWorldMatrixArray` = `offsetMatrix × bone.matCombined` per attribute group, uploaded via `SetMatrixArray` — same formula the CPU path uses (`DxSkinMesh9_CPU.cpp` / `BuildBonePalette`, B17) |
+| Palette count semantics | `DxSkinMesh9_HLSL.cpp` | palette entries = skin-bone count per piece (attributes grouped per bone), not skeleton-total |
+| Light direction | `DxSkinMesh9_HLSL.cpp` (`lhtDir`) | `normalize(0,1,-1)` — B18 changes BOTH mobile fragment shaders from the invented `(0.4,0.8,0.45)` to this authentic constant |
+| Height bias | `DxSkinMesh9_HLSL.cpp` (`_42 += m_fHeight`) | documented; the mobile world pass already composes its own model matrix, so the bias is applied via the model matrix where a piece height exists (no separate shader constant added in B18) |
+| Texture container split | `MemoryTexture.cpp:115-123` | `IsEncrypt` `.mtf` → `EncryptTexture` writes a 12-byte header (`TEXTURE_DDS`/`TEXTURE_TGA` type + per-byte `+0x03` then `^0x47` body transform) |
+| Texture load call | `TextureManager.cpp:1148` (`LoadTexture`) | name-resolution order: exact file → stem-variant; mirrored by the B18 resolver ladder |
+| Material → piece texture names | `DxSkinPieceContainer.cpp` `SMATERIAL_PIECE::LoadTexture` | `.cps` material texture name is the primary lookup key; `.x` `MeshMaterialList` subset names are the fallback (both implemented) |
+| Piece indexing | `DxPiece.cpp:478`, `DxCharPart.cpp` `SetPart` | per-piece draw with piece-local vertex ranges (mobile parity: `pieceVertexOffsets[slot]`, B17) — B18 keeps per-subset `faceStart` draw ranges instead of re-uploading |
+
+### 15.2 What was built
+
+1. **GPU skin streams** (`EP7SkinnedMesh::BuildGpuSkinStreams`): influence construction is
+   **identical to `SkinVerticesCPU`** (per-bone vertex-list scan order, cap = `MaxInfluencesPerVertex`
+   = 4, out-of-range vertex references skipped, no-influence vertices keep zero weights → shader
+   bind-passthrough). Output: `boneIndices` + `boneWeights` (4 floats/vertex).
+2. **TGA decoder** (`EP7TextureDecoder::DecodeTGA`): uncompressed type 2 + RLE type 10 (24-bit BGR /
+   32-bit BGRA), colour-mapped type 1 (24/32-bit map), greyscale type 3; origin bit `0x20` honoured;
+   ≤4096×4096; anything else returns `invalid` — never guessed. `DecryptMTF` (B18 pre-existing)
+   unchanged: 12-B header, per-byte `+0x03` then `^0x47`, `TEXTURE_DDS`/`TEXTURE_TGA` types only
+   (per `MemoryTexture EncryptTexture`).
+3. **GLES3 GPU skinning** (`MobileRenderer`): one 64-byte-stride interleaved buffer per piece
+   (pos3+normal3+uv2+boneIdx4+boneWt4 — the authentic HLSL declaration), static VBO/EBO uploaded
+   once per piece; per-frame data is ONLY the palette (offset×combined, row-major floats) written
+   into a shared 16 KB UBO (`std140`, 256 mat4 = the ES 3.0 guaranteed minimum). The vertex shader
+   reproduces `SkinVerticesCPU` semantics exactly: per-influence row-vector transform with w-divide,
+   translation-dropped normals, zero-sum → bind passthrough, `|sum−1|>1e-4` → renormalize.
+   `DrawGpuSkinnedMesh(handle, palette, count, textureId, color, alphaBlend, faceStart, faceCount)`
+   draws a subset range by byte offset — no re-upload per subset. Invalid handle / palette null /
+   palette > 256 / face range OOB → logged error + failure counter + `false`; a missing texture
+   (`textureId == 0`) draws the flat material colour and is NOT a failure.
+4. **Authentic texture binding** (`EP7CharacterScene`): resolver ladder exact name → `stem+".mtf"`
+   → `name+".mtf"` (TextureManager order), lowercase cache, `.mtf` → `DecryptMTF` (undecryptable
+   skipped, never fabricated), `DDS ` magic → `DecodeDDS`, `.mtf` fileType 1 → `DecodeTGA`, plain
+   file → TGA-then-DDS. `.cps` material texture names are the primary keys, `.x`
+   `MeshMaterialList` subset names the fallback; synthetic `material_` prefixed names are rejected.
+   `FLAG_ALPHATEXTURE (0x0001)` drives alpha blending on the draw.
+5. **Scene/engine integration**: `SetRenderer` wiring, lazy per-piece GPU upload
+   (`EnsurePieceGpuHandle`, upload-once, scene-owned, released in `Clear`), per-instance
+   `piecePalettes` snapshot written by `EvaluatePose` each frame, per-subset GPU draw in the
+   engine render loop with the B17 CPU fallback kept per piece, `Clear()` releases GPU resources
+   (safe to call twice).
+
+### 15.3 Palette semantics (source-verified)
+
+`palette[b] = offsetMatrix(b) × matCombined(b)` where `matCombined` comes from the B17 skeleton
+evaluation (`UpdateBones`, world-root composed) — the same values the CPU path (`SkinVerticesCPU`)
+consumes, so GPU and CPU results agree by construction. Row-major float storage fed into
+column-major GLSL `mat4` preserves the original's row-vector (`v·M`) semantics for the shader's
+`M·v`. Palette count = per-piece skin-bone count; pieces whose palette exceeds 256 are skipped
+with a logged error — never approximated.
+
+### 15.4 Tests (§11)
+
+`test_phase3j`: **5,821 checks, 0 failures** (B17: 5,732; +89 B18 checks), `-Wall -Wextra -Werror`
+plus **ASan+UBSan+LSan clean**. B18 coverage:
+- TGA decode: origins (top-left/bottom-left), RLE, greyscale, invalid type → rejected; BGR order verified.
+- GPU streams vs `SkinVerticesCPU` influence equivalence on the character fixture, including a
+  manual 90° Head-bone pose through `BuildBonePalette` + the exact shader formula (posed vertex moves).
+- Influence rules: 6 bones on 1 vertex → cap-4 order preserved, influences 5-6 dropped (stream is
+  exactly 4 slots/vertex); OOB vertex refs skipped; invalid mesh → invalid streams.
+- Headless renderer API: counters, unknown handle rejected, palette 257 rejected, face-range OOB
+  rejected, release/double-release safe.
+- Scene texture binding: in-test `.mtf` container (fileType 1 + encrypted TGA body), `DecryptMTF`
+  round-trip, ladder resolution `face.dds` → `face.mtf`, lowercase cache, unknown subset → id 0,
+  `Clear` releases + second `Clear` safe.
+- Regression: verifier suite **3,757/0** + sanitizers; inspector suite **13,423/0 ×2** + sanitizers;
+  full-engine compile (44 TUs) `-Wall -Wextra -Werror` clean; Android-path renderer/engine compile
+  clean against a GLES3 stub (`-D__ANDROID__`).
+
+### 15.5 Performance (§12 — synthetic fixture, host sandbox, NOT device)
+
+62 bones / 3,000 vertices × 4 pieces, `-O2`, headless (no GL):
+- `BuildGpuSkinStreams` (load-time, once per piece): 0.675 ms total ≈ **56 ns/vertex**.
+- `BuildBonePalette` (per frame): 0.0008 ms (62 bones); UBO payload **3,968 B/frame** of the
+  16 KB block.
+- `DrawGpuSkinnedMesh` CPU-side validation (headless; on device replaced by the real GL draw):
+  0.006 µs/draw, 20,000/20,000 accepted.
+- Per-frame uploads: palette only (one `glBufferSubData` per draw ≤ 3,968 B) — no per-frame
+  geometry allocation (B17 alloc-stability result carries over).
+
+### 15.6 Authentic-data evidence path (§9)
+
+`verify_ep7_character_assets` gained an additive B18 evidence block (the B11–B16 outcome model and
+exit codes are untouched): shipped textures (`.mtf`/`.dds`) are classified (decrypt/decode rates),
+pack entries are cached (160 MB cap), and the first valid `.chf` is loaded through the full
+character loader to report, per piece: vertex/tri/skin-bone counts, `gpuStreams` validity, influenced
+vertex counts, max influences, rest-pose palette size, and every material texture name resolved
+through the real ladder with decoded dimensions. This runs in the `authentic-verification` CI job
+against `external/ep7_release` when present.
+
+### 15.7 Device status (§10)
+
+**NOT TESTED ON DEVICE.** No Android device or emulator execution exists for B18 (sandbox blocker
+B1). APK compile ≠ device proof. The GPU path requires an ES 3.0 context
+(`MAX_UNIFORM_BLOCK_SIZE ≥ 16 KB` is the ES 3.0 guarantee the design relies on); GLES2-only devices
+fall back to the B17 CPU path.
+
+### 15.8 Explicit non-claims / documented divergences
+
+- **NOT TESTED ON DEVICE** (§15.7). The GPU path is verified by unit tests + headless validation +
+  Android-path compile against a GLES3 stub — not by a live GL context or device render.
+- **TGA decode is a native implementation.** The original decodes inside `LoadImageData` with
+  D3DX assistance; no D3DX exists here, so B18 implements the TGA spec surface the engine's
+  textures use (types 1/2/3/10, 24/32 bpp). Unsupported TGA variants return invalid, never guessed.
+- **DDS support is the pre-existing subset** (DXT1/DXT3/DXT5 + uncompressed RGBA8/BGRA8); other
+  fourCCs return invalid and are reported, never approximated.
+- **`subsetIndex ↔ EP7MaterialPiece` 1:1** is assumed from identical iteration order (source
+  verified for both sides); a runtime count check remains TODO and is listed, not silently assumed.
+- **`glGetUniformLocation` is queried per draw** (no program-uniform cache yet) — a known,
+  documented inefficiency on the GPU path, not a correctness issue.
+- The light-direction change `(0.4,0.8,0.45) → normalize(0,1,-1)` in both fragment shaders is
+  intentional (authentic `lhtDir`); previously rendered screenshots from B17 are not comparable.
+- **0x0113 `.cfg` remains UNSUPPORTED; `.bin` 0x0200 EMBYTECRYPT remains NOT implemented** — no
+  parser was touched in B18; all B11–B16 suites re-run green (§15.4).
+- **No fabricated assets**: every texture/vertex/bone number shown in evidence comes from
+  authentic pack entries or from fixtures explicitly labeled synthetic.
+
+### 15.9 Files changed (B18)
+
+`RANMobile/Data/Importer/EP7SkinnedMesh.{h,cpp}` (GPU streams), `EP7TextureDecoder.{h,cpp}`
+(DecodeTGA), `Engine/Renderer/MobileRenderer.{h,cpp}` (GPU path + authentic light), 
+`Engine/Scene/EP7CharacterScene.{h,cpp}` (renderer/texture/palette glue + GPU release),
+`Engine/Core/RANMobileEngine.cpp` (GPU-preferred render loop), `Tests/test_phase3j.cpp`
+(+89 checks), `Tests/run_ep7_verifier_tests.sh` (source list for the tool's new includes),
+`Tools/verify_ep7_character_assets.cpp` (B18 evidence block), `.github/workflows/
+build-ranmobile-android.yml` (phase3j compile list + verifier tool compile list gained
+`EP7TextureDecoder.cpp` and the scene/renderer sources).

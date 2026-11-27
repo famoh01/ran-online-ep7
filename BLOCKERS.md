@@ -926,3 +926,32 @@ are unchanged. The runtime integration itself is COMPLETE at the engine level on
    tangents approximated by the equivalent slerp; `SetMix` raw-`fGlobalTime` latent bug reproduced
    as-is; `wDivFrame` stop points recorded but gameplay continues (mobile gameplay layer has no
    strike system yet).
+
+---
+
+## 2026-11-27 — Phase 3J B18: Authentic GPU Skinning, Bone Palette & Texture Binding
+
+**Resolved in code (pending device verification):**
+1. **GPU bone palette binding** — GLES3 std140 UBO (256 mat4 = 16 KB, ES 3.0 guaranteed
+   `MAX_UNIFORM_BLOCK_SIZE`), palette = offset×combined (`DxSkinMesh9_HLSL.cpp:220-229` parity),
+   row-major floats × column-major mat4 preserves the original v·M semantics; per-frame upload is
+   palette-only. Pieces above 256 bones are skipped+logged, never approximated.
+2. **GPU texture binding** — authentic `.mtf`/DDS/TGA decode (`DecodeTGA` new; TGA implemented
+   natively because the original's path is D3DX-assisted — documented divergence, unsupported
+   variants return invalid) + TextureManager ladder + `.cps`/`.x` name resolution; missing
+   texture → flat colour, never fabricated.
+3. **GPU vertex streams** — authentic HLSL declaration (pos3+normal3+uv2+`FLOAT4` weights+indices,
+   64-byte stride), influence rules identical to `SkinVerticesCPU` (verified by unit tests).
+
+**Still open (unchanged or new):**
+4. **Device rendering verification** — **NOT TESTED ON DEVICE** (B1 sandbox). The GPU path needs an
+   ES 3.0 context; GLES2-only devices fall back to the B17 CPU path. CI compile ≠ device proof.
+5. **0x0113 `.cfg`** UNSUPPORTED; **`.bin` 0x0200 EMBYTECRYPT** NOT implemented — untouched in B18.
+6. **`SkinObject.rcc` 3,550 pack gaps** (243 `.chf` + 3,097 `.cps` unsupported versions, 210
+   `.abf`) — unchanged; the diagnostic job's expected exit 1 stands.
+7. **Known GPU-path inefficiencies (documented, non-blocking):** `glGetUniformLocation` queried
+   per draw (no cache); `subsetIndex ↔ EP7MaterialPiece` 1:1 relies on verified identical
+   iteration order — runtime count check TODO.
+8. **Live-GL verification gap:** unit tests validate the GPU path headlessly (same validation
+   logic runs before the early-return stub); shader compile/link and actual rasterization have
+   only the GLES3-stub compile as evidence until a device/emulator run happens.

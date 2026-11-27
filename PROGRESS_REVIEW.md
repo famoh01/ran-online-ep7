@@ -1288,3 +1288,27 @@ EMBYTECRYPT not implemented, trailing bytes recorded never reinterpreted); B11�
 green. **Device: NOT TESTED ON DEVICE** (sandbox blocker B1). Details:
 `PHASE3J_CHARACTER_ANIMATION.md` §14 (B17 report), `ANIMATION_CONTAINER_INVESTIGATION.md` §18
 (source mapping), `TESTING_CHECKLIST.md` §21, `BLOCKERS.md` B17 update.
+
+---
+
+## 2026-11-27 — Phase 3J B18: Implement Authentic GPU Skinning, Bone Palette & Texture Binding (`arena/00fd13f9-ran-online-ep7`)
+
+**Shipped (branch tip, unmerged Draft PR #7):** the verified B17 CPU skinning pipeline gained its
+GLES3 twin built to the original's `D3DINDEXEDHLSLVS` convention (`DxSkinMesh9.cpp:18`):
+authentic 64-byte-stride vertex streams (`BuildGpuSkinStreams`, influence rules identical to
+`SkinVerticesCPU`), palette = offset×combined uploaded as row-major floats into a 16 KB std140 UBO
+(256 mat4, ES 3.0 guaranteed minimum), a vertex shader reproducing `SkinVerticesCPU` semantics
+(w-divide, translation-dropped normals, renormalize windows, zero-sum passthrough), per-subset
+draws via `faceStart` byte ranges without re-upload, and an authentic texture path
+(`.mtf` → DecryptMTF → DDS/TGA (`DecodeTGA` new) → RGBA8 → GL, TextureManager ladder, `.cps`
+material names primary). Engine loop prefers GPU per piece; B17 CPU fallback retained. Both
+fragment shaders now use the authentic `lhtDir = normalize(0,1,-1)`.
+
+**Tests:** phase3j **5,821/0** (+89 B18 checks) incl. ASan+UBSan+LSan; verifier **3,757/0**;
+inspector **13,423/0 ×2**; full-engine compile (44 TUs) + Android-path GLES3-stub compile clean.
+**Perf (synthetic 62 bones / 4×3,000 verts, host, NOT device):** streams build 56 ns/vertex
+(load-time), palette 0.0008 ms/frame (3,968 B/frame UBO payload), headless draw validation
+0.006 µs/draw. **Compatibility:** no parser touched; 0x0113 / 0x0200 EMBYTECRYPT unchanged.
+**Device: NOT TESTED ON DEVICE** (sandbox blocker B1). Details:
+`PHASE3J_CHARACTER_ANIMATION.md` §15 (B18 report), `ANIMATION_CONTAINER_INVESTIGATION.md` §19,
+`TESTING_CHECKLIST.md` §22, `BLOCKERS.md` B18 update, `ARCHITECTURE.md` B18 section.
