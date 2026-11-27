@@ -601,3 +601,26 @@ head unchanged. This task does not authorize changing runtime/parser behavior.
   - `Android ARM64 build (lib + APK/AAB)`: **success**
   - `Authentic EP7 asset verification`: **expected non-blocking diagnostic failure (exit 1)** unchanged from B11 (`982` loose `.bin` parsed / `4,037` unsupported / `1,209` parser-rejected).
 
+---
+
+## 17. Phase 3J B13 — Authentic Animation Track `0x0100` & 80-Byte `SMatrixKey` Fix
+
+- [x] Strict C++17 host build (`g++ -std=c++17 -O2 -Wall -Wextra -Werror`) of `RANMobile/Tests/test_phase3j.cpp`: **952 checks, 0 failures** (swept 7 ABI fixtures across truncations and 4x single-byte corruptions, including `AnimationBin0100()`).
+- [x] Sanitizer build (`-fsanitize=address,undefined -fno-omit-frame-pointer`, `ASAN_OPTIONS=detect_leaks=1:halt_on_error=1`, `UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1`) of `RANMobile/Tests/test_phase3j.cpp`: **952 checks, 0 failures**.
+- [x] B11/B13 verifier regression & sanitizer suite (`bash RANMobile/Tests/run_ep7_verifier_tests.sh`): **1,571 checks, 0 failures** in both normal `-O2` and `ASan + UBSan + integrated LSan` builds (covers `0x0100` `pos`/`rot`/`scale`/`80B matrix` keys with non-zero 12B `align(16)` padding, empty bone names, byte-by-byte truncations `0..size-1`, and `0x0103`/`0x0104`/`0x0200` unsupported classification).
+- [x] B12/B13 animation container inspector unit & sanitizer suite (`bash RANMobile/Tests/run_ep7_animation_inspector_tests.sh`): **7,035 checks, 0 failures** in both normal `-O2` and `ASan + UBSan + integrated LSan` builds.
+- [x] Local verification on 36 authentic `ran-ep7-full-v1` `.bin` samples (`verify_ep7_character_assets` + `inspect_ep7_animation_containers`): **20 parsed (`12` `0x0100` + `4` `0x0101` + `4` `0x0102`, `trailing_bytes=0 : 20 files`), 16 unsupported-version (`8` `0x0103` + `7` `0x0104` + `1` `0x0200`), 0 parser-rejected**.
+- [x] Remote CI `Phase 3J B12 Authentic Animation Container Investigation` on commit `1e11d2ec7f77bf938cdefa0bda6668a5f2a85b48` ([run `45990886385`](https://github.com/famoh01/ran-online-ep7/actions/runs/45990886385), check run `140478981523`, report blob `a7710f879d895aa37c221ef49e217de851852464`): **success** — `6,228` `data/animation/*.bin` files surveyed:
+  - `1,210 x 0x0100:parsed` (`63,226` `0x0100` tracks, `1,205` files with `m_cMatrixKeys > 0`, `22` files with empty `m_strBone`)
+  - `907 x 0x0101:parsed` (`71,783` `0x0101` tracks)
+  - `74 x 0x0102:parsed` (`5,284` `0x0102` tracks)
+  - **`trailing_bytes=0 : 2,191 files` (`100.00%` `EXACT_EOF` across all `2,191` parsed files)**
+  - **`parser-rejected = 0`** (down from `1,209`)
+  - `unsupported-version = 4,037` (`1,533` `0x0103` + `2,495` `0x0104` + `9` `0x0200`)
+- [x] Remote CI `Build RANMobile Android (ARM64) & Verify EP7 Release` on commit `1e11d2ec7f77bf938cdefa0bda6668a5f2a85b48` ([run `45990886364`](https://github.com/famoh01/ran-online-ep7/actions/runs/45990886364)):
+  - `Core C++17 tests (blocking)` (job `140478134000`): **success**
+  - `Android ARM64 build (lib + APK/AAB)` (job `140478133579`): **success** (`libranmobile-arm64-v8a` `2,302,838` B; `ranmobile-android-packages` `1,988,407` B)
+  - `Authentic EP7 asset verification (diagnostic)` (job `140478133913`): **`2,191 parsed, 4,037 unsupported-version, 0 invalid-header, 0 unrecognized-type, 0 parser-rejected; total=6,228`** (overall job remains expected diagnostic exit `1` due to pre-existing `SkinObject.rcc` `.chf`/`.cps`/`.abf` gaps: `6,479 parsed, 3,550 failed, 1,631 unsupported`).
+- [ ] Not claimed / still pending separate tasks: `0x0103`/`0x0104`/`0x0200` `.bin` containers (`4,037` files), `.cfg` `0x0108`–`0x0115`/`0x0200` metadata, `SkinObject.rcc` `.chf`/`.cps`/`.abf` gaps, physical Android device/emulator execution, and live server gameplay testing.
+
+

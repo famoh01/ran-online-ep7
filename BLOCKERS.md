@@ -817,3 +817,24 @@ Using verified EP7 engine animation sources from `matheomedrana/Ran-Online-EP7-C
 
 See `ANIMATION_CONTAINER_INVESTIGATION.md` Section 13 for the staged follow-up implementation plan.
 
+
+## 2026-11-27 — Phase 3J B13: Authentic `0x0100` Track Implementation & `SMatrixKey` 80-Byte Alignment Fix
+
+**Status: RESOLVED for `0x0100` animation tracks and `SMatrixKey` 80-byte binary alignment (`1,210 / 1,210` authentic `0x0100` `.bin` files parsed with `0` trailing bytes; `0 / 6,228` `parser-rejected` loose `.bin` files remaining).**
+
+Implemented in commit `1e11d2ec7f77bf938cdefa0bda6668a5f2a85b48` on `arena/00fd13f9-ran-online-ep7` (Draft PR #7) and verified in GitHub Actions runs [`45990886364`](https://github.com/famoh01/ran-online-ep7/actions/runs/45990886364) and [`45990886385`](https://github.com/famoh01/ran-online-ep7/actions/runs/45990886385):
+
+1. **Resolved in B13:**
+   - **80-byte `SMatrixKey` binary consumption (`EP7Animation.{h,cpp}`):** `ReadMatrixKeys` now skips the verified 12-byte Win32 `D3DXMATRIXA16` `__declspec(align(16))` padding (`kMatrixKeyAlignPadSize = 12`) between `uint32_t time` (`[0..3]`) and `float mat[16]` (`[16..79]`) across `0x0100`, `0x0101`, and `0x0102` tracks (`4 + 12 + 64 = 80 == kMatrixKeySize`), without reading uninitialized padding bytes into `mat` or misaligning subsequent tracks.
+   - **Authentic `SAnimation::Load_0100` (`EP7Animation.cpp`):** Implemented `version == 0x0100` in `ReadBoneTrack` (`positionKeys`, `rotateKeys`, `scaleKeys`, `matrixKeys`, `m_strBone`), preserving valid empty bone names (`""` -> `boneIndex == -1` on skeleton bind).
+   - **Authentic EP7 Release (`ran-ep7-full-v1`) proof:**
+     - `verify_ep7_character_assets` (`45990886364`, job `140478133913`): `2,191 parsed, 4,037 unsupported-version, 0 invalid-header, 0 unrecognized-type, 0 parser-rejected; total=6,228`.
+     - `inspect_ep7_animation_containers` (`45990886385`, check run `140478981523`, report blob `a7710f879d895aa37c221ef49e217de851852464`): **`1,210 / 1,210` (`100.00%`)** `0x0100` files (`63,226` tracks), **`907 / 907`** `0x0101` files (`71,783` tracks), and **`74 / 74`** `0x0102` files (`5,284` tracks) parse with **`trailing_bytes=0` (`2,191 / 2,191` `EXACT_EOF`)**.
+   - **Regression & Android ARM64 builds:** `test_phase3j` (`952` checks, normal + ASan/UBSan/LSan), verifier suite (`1,571` checks, normal + ASan/UBSan/LSan), inspector suite (`7,035` checks, normal + ASan/UBSan/LSan), CI `Core C++17 tests` (`140478134000`), and CI `Android ARM64 build (lib + APK/AAB)` (`140478133579`: `libranmobile-arm64-v8a` `2,302,838` B, `ranmobile-android-packages` `1,988,407` B) all **PASSED**.
+2. **Remaining animation & character asset blockers (deferred to separate tasks per scope):**
+   - **Unsupported `.bin` outer container / inner track versions (`4,037` loose `.bin` files):** `0x0103` (`1,533` files), `0x0104` (`2,495` files), and `0x0200` (`9` `EMBYTECRYPT_BIN`-encoded files), all carrying `SAnimation` track version `0x0103` (`244,046` tracks; specified in `ANIMATION_CONTAINER_INVESTIGATION.md` Sections 4–6 and 13 Stages 2–3).
+   - **Unsupported companion `.cfg` (`SANIMCONINFO`) versions in `Animation.rcc` (`1,631` pack entries):** versions `0x0108`–`0x0115` (+ `0x0200` `EMBYTECRYPT_CFG`), pairing primarily with `.bin` `0x0103`/`0x0104` (`3,813` stems; `1,208 / 1,210` `0x0100` `.bin` files already pair with supported `.cfg` `0x0103`–`0x0107`, with `1` `0x0110` and `1` without `.cfg`).
+   - **Pre-existing `SkinObject.rcc` pack gaps (`3,550` failed pack entries):** `243` unsupported `.chf` versions, `3,097` unsupported `.cps` versions, and `210` `.abf` binary skeleton files (unchanged from B11/B12).
+   - **Unchanged environment/runtime blockers:** B1 (no local Android SDK/NDK or physical device/emulator execution in sandbox), B3/B6 (no live server login/gameplay test), B8 (`GameServer` DirectX header conflict), and B10 (GPU skinning / 3D character draw pass integration).
+
+

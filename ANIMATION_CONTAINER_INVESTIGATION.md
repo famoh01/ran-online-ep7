@@ -413,3 +413,42 @@ g++ -std=c++17 -Wall -Wextra -Werror -O2 \
 
 ### Companion Stage 4 (Recommended Alongside Stages 2–3) — `SANIMCONINFO` `.cfg` `0x0108`–`0x0115` (+ `0x0200` `EMBYTECRYPT_CFG`)
 - Because `3,813` of the `4,028` `0x0103`/`0x0104` `.bin` files pair with `.cfg` versions `0x0108`–`0x0115` in `animation.rcc`, implementing `SANIMCONINFO::Load_0108`–`Load_0115` from the already-verified `Lib_Engine/Meshs/SAnimationInfoSaveLoad.cpp` (`sha256 = 279a5070...62e2`) will simultaneously eliminate the `.cfg` `UNSUPPORTED` entries inside `animation.rcc` and supply full `startTime`/`endTime`/`unitTime`/`ACF_LOOP` metadata for all `6,228` animations.
+
+---
+
+## 14. Phase 3J B13 Implementation & Authentic Validation Update (`0x0100` Track + 80-Byte `SMatrixKey` Fix)
+
+Implemented in commit `1e11d2ec7f77bf938cdefa0bda6668a5f2a85b48` on branch `arena/00fd13f9-ran-online-ep7` (Draft PR #7):
+
+### 14.1 Production Parser Changes (`RANMobile/Data/Importer/EP7Animation.{h,cpp}`)
+1. **Fixed `SMatrixKey` 80-byte on-disk stride across `0x0100`, `0x0101`, and `0x0102`:**
+   - Added `EP7AnimationReader::kMatrixKeyAlignPadSize = 12` with `static_assert(sizeof(uint32_t) + kMatrixKeyAlignPadSize + 16 * sizeof(float) == kMatrixKeySize)` (`80` bytes total, matching `enginelib/Meshs/DxAniKeys.h:70-88` + `LegacyDX_Include/d3dx9math.h:411,416` `D3DXMATRIXA16` `__declspec(align(16))`).
+   - Consolidated key-channel readers (`ReadPositionKeys`, `ReadRotateKeys`, `ReadScaleKeys`, `ReadQuatPosKeys`, `ReadMatrixKeys`) with `kMaxKeysPerTrack = 200000` and `CanReadElements` overflow/bounds guards. `ReadMatrixKeys` reads `u32 time` (`[0..3]`), skips `12` bytes of Win32 `align(16)` struct padding (`[4..15]`) via `s.Skip(12)` without reading uninitialized padding bytes into `mat`, and reads `16` little-endian `float`s (`[16..79]`).
+2. **Implemented authentic `SAnimation::Load_0100` (`version == 0x0100` in `ReadBoneTrack`):**
+   - Exact source field order (`enginelib/Meshs/SAnimation.cpp:1419-1462`, `Lib_Engine/Meshs/SAnimationSaveLoad.cpp:15-50`): `positionKeys` (`16` B/key), `rotateKeys` (`20` B/key), `scaleKeys` (`16` B/key), `matrixKeys` (`80` B/key), `m_strBone` (`s.ReadString(out.boneName, kMaxNameLen)`), with `quatPosKeys` empty and empty bone names (`""`) preserved cleanly (`BindToSkeleton` resolves `""` to `boneIndex == -1`, matching `DxSkeleton::FindBone("") == NULL`).
+   - Outer container versions `0x0103`, `0x0104`, and `0x0200` and inner track version `0x0103` remain intentionally unimplemented in B13 and explicitly rejected.
+3. **Synchronized B12 inspector trace (`RANMobile/Tools/inspect_ep7_animation_containers.cpp`):**
+   - Updated the reader-cursor trace to match B13 `EP7AnimationReader` (`0x0100`, `0x0101`, `0x0102` tracks + `80`-byte `SMatrixKey`) so `acceptedTrailingBytes` directly audits exact-EOF consumption of the production parser across all parsed authentic files.
+
+### 14.2 Authentic `ran-ep7-full-v1` Validation Results (CI Runs `45990886364` & `45990886385`)
+Verified against all `6,228` authentic `data/animation/*.bin` files in `ran-ep7-full-v1` via both `verify_ep7_character_assets` (run [`45990886364`](https://github.com/famoh01/ran-online-ep7/actions/runs/45990886364), job `140478133913`) and `inspect_ep7_animation_containers` (run [`45990886385`](https://github.com/famoh01/ran-online-ep7/actions/runs/45990886385), check run `140478981523`, report blob `a7710f879d895aa37c221ef49e217de851852464`):
+
+| Metric (`data/animation/*.bin`, `total = 6,228`) | Pre-B13 (B11/B12 Baseline) | Post-B13 (Actual Verified) | Delta |
+|---|---:|---:|---:|
+| **`0x0100` parsed (`63,226` tracks, `1,205` w/ matrix keys, `22` w/ empty bone)** | `1` | **`1,210 / 1,210` (`100.00%`)** | **`+1,209`** |
+| **`0x0101` parsed (`71,783` tracks)** | `907` | **`907 / 907` (`100.00%`)** | `0` |
+| **`0x0102` parsed (`5,284` tracks)** | `74` | **`74 / 74` (`100.00%`)** | `0` |
+| **Total loose `.bin` parsed** | `982` | **`2,191`** | **`+1,209`** |
+| **Parsed files reaching `EXACT_EOF` (`trailing_bytes == 0`)** | `982 / 982` | **`2,191 / 2,191` (`100.00%`)** | **`+1,209`** |
+| **Loose `.bin` `parser-rejected` (FAIL)** | `1,209` | **`0`** | **`-1,209`** |
+| **Loose `.bin` `unsupported-version` (`0x0103`: `1,533`, `0x0104`: `2,495`, `0x0200`: `9`)** | `4,037` | **`4,037`** | `0` |
+| **Loose `.bin` `invalid-header` / `unrecognized-type`** | `0` / `0` | **`0` / `0`** | `0` |
+| **Pack entries (`SkinObject.rcc` + `Animation.rcc`)** | `6,479` ok / `3,550` fail / `1,631` unsup | **`6,479` ok / `3,550` fail / `1,631` unsup** | `0` |
+
+### 14.3 Regression Suites & Android ARM64 Build Verification
+- **Phase 3J character/animation suite (`test_phase3j.cpp`):** **`952` checks, `0` failures** (up from `398`) under both `-O2 -Wall -Wextra -Werror` and `-fsanitize=address,undefined` (`detect_leaks=1`).
+- **B11 verifier regression suite (`run_ep7_verifier_tests.sh`):** **`1,571` checks, `0` failures** (up from `590`) under normal and `ASan + UBSan + LSan`.
+- **B12/B13 inspector regression suite (`run_ep7_animation_inspector_tests.sh`):** **`7,035` checks, `0` failures** (up from `5,574`) under normal and `ASan + UBSan + LSan`.
+- **CI `Core C++17 tests (blocking)` (run `45990886364`, job `140478134000`):** **success** (including data-dependent `ranmobile_tests`, `ranmobile_phase3j_tests`, and verifier sanitizer suite).
+- **CI `Android ARM64 build (lib + APK/AAB)` (run `45990886364`, job `140478133579`):** **success** — `libranmobile-arm64-v8a` (`2,302,838` B, artifact `15193164290`) and `ranmobile-android-packages` (`assembleDebug` + `assembleRelease` + `bundleRelease`, `1,988,407` B, artifact `15194155403`).
+

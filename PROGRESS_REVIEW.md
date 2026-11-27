@@ -1103,3 +1103,37 @@ Completed read-only source + authentic-asset forensic investigation of all `6,22
 - **Exact cause of `1,209` parser rejections:** `1,209 / 1,209` fail at `list=main, idx=0, offset=136` with `trackVer=0x0100` because `ParseContainer` accepts outer `0x0100` while `ReadBoneTrack` omits `SAnimation::Load_0100`.
 - **Critical `SMatrixKey` padding defect uncovered:** `EP7Animation.cpp:94-104` and `168-178` check `kMatrixKeySize = 80` (`u32 time` + `12`B Win32 `D3DXMATRIXA16` `align(16)` padding + `64`B matrix) but read `68` bytes without `s.Skip(12)`. Masked in `test_phase3j.cpp:429` (`12` unread bytes, `mat[0]` silently read as `0.0f`) and unhit in the `982` accepted files (`0` have `m_cMatrixKeys > 0`), but affects **`1,205 / 1,210`** authentic `0x0100` files.
 
+
+## 2026-11-27 — Phase 3J B13: Implement Authentic Animation Track Version `0x0100` & Fix 80-Byte `SMatrixKey` Alignment (`arena/00fd13f9-ran-online-ep7`)
+
+Implemented Stage 1 of the B12 animation parser plan on `arena/00fd13f9-ran-online-ep7` (commit `1e11d2ec7f77bf938cdefa0bda6668a5f2a85b48`, stacked Draft PR #7 -> `arena/42c5ac0c-ran-online-ep7`; Draft PR #5 untouched).
+
+### What Changed in B13
+
+- **`RANMobile/Data/Importer/EP7Animation.{h,cpp}`:**
+  - Added `EP7AnimationReader::kMatrixKeyAlignPadSize = 12` (with compile-time `static_assert` proving `4 + 12 + 64 == 80 == kMatrixKeySize`) and fixed `ReadMatrixKeys` to skip the 12-byte Win32 `D3DXMATRIXA16` `align(16)` padding via `s.Skip(12)` across all verified track versions (`0x0100`, `0x0101`, `0x0102`) without reading uninitialized padding or misaligning the stream.
+  - Implemented authentic `SAnimation::Load_0100` (`version == 0x0100` in `ReadBoneTrack` per `enginelib/Meshs/SAnimation.cpp:1419-1462` and `Lib_Engine/Meshs/SAnimationSaveLoad.cpp:15-50`): `positionKeys` (`16`B), `rotateKeys` (`20`B), `scaleKeys` (`16`B), `matrixKeys` (`80`B), and `m_strBone` (preserving valid empty bone names `""`, which resolve to `boneIndex == -1` in `BindToSkeleton`).
+  - Preserved explicit rejection of unimplemented outer container versions (`0x0103`, `0x0104`, `0x0200`) and inner track version `0x0103`.
+- **`RANMobile/Tools/inspect_ep7_animation_containers.cpp`:**
+  - Updated the inspector's production-reader cursor trace to match B13 `EP7AnimationReader` (`0x0100`–`0x0102` tracks + 80-byte `SMatrixKey`) so `acceptedTrailingBytes` directly verifies zero-trailing-byte consumption on every parsed file.
+- **Regression tests (`test_phase3j.cpp`, `test_ep7_character_verifier.cpp`, `test_ep7_animation_inspector.cpp`):**
+  - Added regression coverage for `0x0100` `pos`/`rot`/`scale`/`matrix` keys, non-zero 12-byte `SMatrixKey` padding sentinels, multi-track stream alignment, empty bone names (`""` and `len=0`), skeleton binding + `EP7AnimationPlayer::ApplyToSkeleton` matrix-key evaluation, invalid key/string count rejection, byte-by-byte truncation (`0 .. size-1`), `0x0101`/`0x0102` regression, and explicit `0x0103`/`0x0104`/`0x0200` rejection.
+
+### Authentic Validation, Test & Android Build Results ([CI run 45990886364](https://github.com/famoh01/ran-online-ep7/actions/runs/45990886364), [CI run 45990886385](https://github.com/famoh01/ran-online-ep7/actions/runs/45990886385))
+
+| Verification Target | Pre-B13 | Post-B13 | Status |
+|---|---:|---:|---|
+| Authentic `0x0100` `data/animation/*.bin` parsed | `1 / 1,210` | **`1,210 / 1,210` (`100.00%`, `63,226` tracks)** | **VERIFIED (`EXACT_EOF`)** |
+| Authentic `0x0101` + `0x0102` `data/animation/*.bin` parsed | `981 / 981` | **`981 / 981` (`907` + `74`, `77,067` tracks)** | **VERIFIED (`EXACT_EOF`)** |
+| Total `data/animation/*.bin` parsed (`EXACT_EOF`, `0` trailing bytes) | `982 / 6,228` | **`2,191 / 6,228` (`+1,209`)** | **VERIFIED** |
+| `data/animation/*.bin` `parser-rejected` (FAIL) | `1,209` | **`0` (`-1,209`)** | **RESOLVED** |
+| `data/animation/*.bin` `unsupported-version` (`0x0103`, `0x0104`, `0x0200`) | `4,037` | **`4,037` (unchanged, out of B13 scope)** | **TRACKED** |
+| Phase 3J host tests (`test_phase3j.cpp`, `-O2` & `ASan+UBSan+LSan`) | `398 / 0` | **`952 checks, 0 failures`** | **PASS** |
+| Verifier regression (`run_ep7_verifier_tests.sh`, `-O2` & `ASan+UBSan+LSan`) | `590 / 0` | **`1,571 checks, 0 failures`** | **PASS** |
+| Inspector regression (`run_ep7_animation_inspector_tests.sh`, `-O2` & `ASan+UBSan+LSan`) | `5,574 / 0` | **`7,035 checks, 0 failures`** | **PASS** |
+| CI `Core C++17 tests (blocking)` (`45990886364`, job `140478134000`) | pass | **pass** | **PASS** |
+| CI `Android ARM64 build (lib + APK/AAB)` (`45990886364`, job `140478133579`) | pass | **`libranmobile-arm64-v8a` (`2,302,838` B), `ranmobile-android-packages` (`1,988,407` B)** | **PASS** |
+
+*Explicit non-claims:* Parsing `2,191` authentic `.bin` containers (`1,208` of the `1,210` `0x0100` files also pair with supported `.cfg` `0x0103`–`0x0107`) proves binary container/track compatibility, not on-device rendering or live gameplay. No Android emulator/device or live server test was executed in this sandbox.
+
+
