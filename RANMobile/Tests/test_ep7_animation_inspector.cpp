@@ -153,12 +153,10 @@ void TestParsed0102WithQuatPosExactEof() {
     CHECK(rec.sourceSpec.tracksQuatPos == 1);
 }
 
-void TestMatrixKey80ByteBugDetection() {
-    // 1 track with 1 true 80-byte SMatrixKey and 0 scaleKeys:
-    // Unmodified EP7AnimationReader reads 68 bytes of the 80-byte SMatrixKey, then reads
-    // the last 12 matrix floats (0.0f, 0.0f, 1.0f -> 0, 0, 0x3f800000)! Here row 3 is
-    // (0, 0, 0, 1.0f), so the first of those 3 trailing floats is 0.0f -> nScale=0, leaving
-    // 12 unread trailing bytes while VerifyAgainstBackupEngineSourceSpec hits exact EOF!
+void TestMatrixKey80ByteExactEofInB13Reader() {
+    // 1 track with 1 true 80-byte SMatrixKey (4B time + 12B align16 pad + 64B mat) and 0 scaleKeys:
+    // Both production EP7AnimationReader and VerifyAgainstBackupEngineSourceSpec now consume
+    // all 80 bytes per SMatrixKey and hit exact EOF with 0 trailing bytes.
     std::vector<uint8_t> b = MakeHeader("AnimContainer", 0x0102u);
     AppendU32(b, 0u);
     AppendU32(b, 1u);
@@ -166,26 +164,45 @@ void TestMatrixKey80ByteBugDetection() {
 
     const auto rec = EP7AnimInspect::InspectSingleBin("data/animation/mat80.bin", b, false, true);
     CHECK(rec.bucket == EP7AnimInspect::BinBucket::Parsed);
-    CHECK(rec.trailingBytes == 12u);
+    CHECK(rec.readerValid);
+    CHECK(rec.trailingBytes == 0u);
     CHECK(rec.sourceSpec.ok && rec.sourceSpec.exactEof);
     CHECK(rec.sourceSpec.trailingBytes == 0u);
     CHECK(rec.sourceSpec.tracksMatrix == 1u);
 }
 
-void TestParserRejected0100PinpointsTrack0100AndShadowPasses() {
-    std::vector<uint8_t> b = MakeHeader("AnimContainer", 0x0100u);
-    AppendU32(b, 1u);
-    AppendTrack0100(b, "");  // also verifies empty bone name handling
+void TestParsed0100WithEmptyBoneAndParserRejectedInner0103() {
+    // B13: authentic 0x0100 container + 0x0100 track with empty bone name now parses to exact EOF.
+    {
+        std::vector<uint8_t> b = MakeHeader("AnimContainer", 0x0100u);
+        AppendU32(b, 1u);
+        AppendTrack0100(b, "");  // empty bone name valid in SAnimation::Load_0100
 
-    const auto rec = EP7AnimInspect::InspectSingleBin("data/animation/old0100.bin", b, false, true);
-    CHECK(rec.bucket == EP7AnimInspect::BinBucket::ParserRejected);
-    CHECK(!rec.readerValid);
-    CHECK(rec.failList == "main");
-    CHECK(rec.failTrackIndex == 0);
-    CHECK(rec.failOffset == 136u);
-    CHECK(rec.failTrackVersion == 0x0100u);
-    CHECK(rec.sourceSpec.ok && rec.sourceSpec.exactEof);
-    CHECK(rec.sourceSpec.emptyBoneNames == 1u);
+        const auto rec = EP7AnimInspect::InspectSingleBin("data/animation/old0100.bin", b, false, true);
+        CHECK(rec.bucket == EP7AnimInspect::BinBucket::Parsed);
+        CHECK(rec.readerValid);
+        CHECK(rec.trailingBytes == 0u);
+        CHECK(rec.trackVersionsSeen.count(0x0100u) == 1u);
+        CHECK(rec.sourceSpec.ok && rec.sourceSpec.exactEof);
+        CHECK(rec.sourceSpec.emptyBoneNames == 1u);
+    }
+
+    // Supported outer version (0x0102) carrying an unimplemented 0x0103 inner track is still
+    // classified ParserRejected and pinpointed by the inspector trace.
+    {
+        std::vector<uint8_t> b = MakeHeader("AnimContainer", 0x0102u);
+        AppendU32(b, 0u);  // upBody = 0
+        AppendU32(b, 1u);  // main = 1
+        AppendTrack0103(b, "Bip01");
+
+        const auto rec = EP7AnimInspect::InspectSingleBin("data/animation/mixed0103.bin", b, false, true);
+        CHECK(rec.bucket == EP7AnimInspect::BinBucket::ParserRejected);
+        CHECK(!rec.readerValid);
+        CHECK(rec.failList == "main");
+        CHECK(rec.failTrackIndex == 0u);
+        CHECK(rec.failOffset == 140u);
+        CHECK(rec.failTrackVersion == 0x0103u);
+    }
 }
 
 void TestContainer0103And0104And0200SourceSpecExactEof() {
@@ -256,9 +273,14 @@ void TestDirectorySurveySeparatesAnimDirAndPreservesHashes() {
     AppendU32(okBin, 0u);
     AppendU32(okBin, 0u);
 
-    std::vector<uint8_t> rejBin = MakeHeader("AnimContainer", 0x0100u);
+    std::vector<uint8_t> ok0100Bin = MakeHeader("AnimContainer", 0x0100u);
+    AppendU32(ok0100Bin, 1u);
+    AppendTrack0100(ok0100Bin, "Bip01");
+
+    std::vector<uint8_t> rejBin = MakeHeader("AnimContainer", 0x0102u);
+    AppendU32(rejBin, 0u);
     AppendU32(rejBin, 1u);
-    AppendTrack0100(rejBin, "Bip01");
+    AppendTrack0103(rejBin, "Bip01");
 
     std::vector<uint8_t> unsupBin = MakeHeader("AnimContainer", 0x0104u);
     AppendU32(unsupBin, 0u);
@@ -272,6 +294,7 @@ void TestDirectorySurveySeparatesAnimDirAndPreservesHashes() {
         f.write(reinterpret_cast<const char*>(d.data()), static_cast<std::streamsize>(d.size()));
     };
     writeBytes(tmp / "data" / "animation" / "a_ok.bin", okBin);
+    writeBytes(tmp / "data" / "animation" / "a_ok0100.bin", ok0100Bin);
     writeBytes(tmp / "data" / "animation" / "a_rej.bin", rejBin);
     writeBytes(tmp / "data" / "animation" / "a_unsup.bin", unsupBin);
     writeBytes(tmp / "data" / "glogic" / "quest.bin", glogicBin);
@@ -279,10 +302,10 @@ void TestDirectorySurveySeparatesAnimDirAndPreservesHashes() {
     const std::string beforeHash = EP7AnimInspect::Sha256::DigestHex(rejBin);
     const auto sum = EP7AnimInspect::RunDirectorySurvey(tmp, 2);
 
-    CHECK(sum.totalLooseBin == 4);
-    CHECK(sum.totalAnimDirBin == 3);
+    CHECK(sum.totalLooseBin == 5);
+    CHECK(sum.totalAnimDirBin == 4);
     CHECK(sum.totalNonAnimDirBin == 1);
-    CHECK(sum.animDirParsed == 1);
+    CHECK(sum.animDirParsed == 2);
     CHECK(sum.animDirParserRejected == 1);
     CHECK(sum.animDirUnsupportedOuter == 1);
     CHECK(sum.animDirInvalidHeader == 0);
@@ -294,7 +317,7 @@ void TestDirectorySurveySeparatesAnimDirAndPreservesHashes() {
     CHECK(EP7AnimInspect::Sha256::DigestHex(afterBytes) == beforeHash);
 
     const std::string json = EP7AnimInspect::FormatJsonReport(sum);
-    CHECK(json.find("\"total_data_animation_bin\": 3") != std::string::npos);
+    CHECK(json.find("\"total_data_animation_bin\": 4") != std::string::npos);
     CHECK(json.find("EXACT_EOF") != std::string::npos);
     for (unsigned char c : json) {
         CHECK(c == '\n' || c == '\r' || c == '\t' || (c >= 0x20 && c <= 0x7E));
@@ -309,8 +332,8 @@ int main() {
     TestSha256Vectors();
     TestJsonEscapeStrictAscii();
     TestParsed0102WithQuatPosExactEof();
-    TestMatrixKey80ByteBugDetection();
-    TestParserRejected0100PinpointsTrack0100AndShadowPasses();
+    TestMatrixKey80ByteExactEofInB13Reader();
+    TestParsed0100WithEmptyBoneAndParserRejectedInner0103();
     TestContainer0103And0104And0200SourceSpecExactEof();
     TestDirectorySurveySeparatesAnimDirAndPreservesHashes();
 

@@ -426,11 +426,61 @@ std::vector<uint8_t> AnimationBin() {
     // SMatrixKey = { DWORD dwTime; D3DXMATRIXA16 mat; } and D3DXMATRIXA16 is
     // __declspec(align(16)) — sizeof(SMatrixKey) is 80 on the 32-bit client, so 12 bytes
     // of padding sit between dwTime and the matrix.
-    for (int i = 0; i < 3; ++i) w.U32(0); // padding
+    for (int i = 0; i < 3; ++i) w.U32(0xDEADBEEFu); // non-zero uninitialized Win32 padding
     for (int i = 0; i < 16; ++i) w.F32((i % 5 == 0) ? 1.0f : 0.0f);
     w.U32(0);                             // scale key count
     // ---- main track count 0 ----
     w.U32(0);
+    return w.Data();
+}
+
+// SAnimContainer 0x0100 + SAnimation::Load_0100 tracks:
+//   outer: 128-byte "AnimContainer" header + u32(0x0100) + main list only (no upBody list).
+//   inner track 0x0100: posKeys, rotKeys, scaleKeys, matrixKeys (80B each), m_strBone.
+std::vector<uint8_t> AnimationBin0100() {
+    ByteWriter w;
+    std::vector<uint8_t> hdr(128, 0);
+    std::memcpy(hdr.data(), "AnimContainer", 14);
+    w.Raw(hdr);
+    w.U32(0x0100);                        // container version
+    w.U32(2);                             // main track count (2 tracks)
+
+    // ---- main track 0: Bip01_Spine1 (pos + rot + scale + 2x 80B matrix keys) ----
+    w.U32(0x0100);                        // track version
+    w.U32(1);                             // pos key count
+    w.U32(160); w.F32(1.25f); w.F32(-2.5f); w.F32(3.75f);
+    w.U32(1);                             // rot key count
+    w.U32(320); w.F32(0.0f); w.F32(0.70710678f); w.F32(0.0f); w.F32(0.70710678f);
+    w.U32(1);                             // scale key count
+    w.U32(480); w.F32(1.5f); w.F32(2.0f); w.F32(0.5f);
+    w.U32(2);                             // matrix key count (80 bytes each)
+    // matrix key 0 @ t=0: translation (0, 6, 0)
+    w.U32(0);
+    w.U32(0xDEADBEEFu); w.U32(0xCAFEBABEu); w.U32(0x13579BDFu);  // 12B align16 pad
+    w.F32(1.0f); w.F32(0.0f); w.F32(0.0f); w.F32(0.0f);
+    w.F32(0.0f); w.F32(1.0f); w.F32(0.0f); w.F32(0.0f);
+    w.F32(0.0f); w.F32(0.0f); w.F32(1.0f); w.F32(0.0f);
+    w.F32(0.0f); w.F32(6.0f); w.F32(0.0f); w.F32(1.0f);
+    // matrix key 1 @ t=4800: translation (1, 9, -2)
+    w.U32(4800);
+    w.U32(0x68801503u); w.U32(0x33322D33u); w.U32(0x343A3331u);  // authentic-style heap residue
+    w.F32(1.0f); w.F32(0.0f); w.F32(0.0f); w.F32(0.0f);
+    w.F32(0.0f); w.F32(1.0f); w.F32(0.0f); w.F32(0.0f);
+    w.F32(0.0f); w.F32(0.0f); w.F32(1.0f); w.F32(0.0f);
+    w.F32(1.0f); w.F32(9.0f); w.F32(-2.0f); w.F32(1.0f);
+    w.Str("Bip01_Spine1");
+
+    // ---- main track 1: empty bone name "" (valid in authentic 0x0100 assets) ----
+    w.U32(0x0100);
+    w.U32(0);                             // pos keys
+    w.U32(0);                             // rot keys
+    w.U32(0);                             // scale keys
+    w.U32(1);                             // 1 matrix key
+    w.U32(2400);
+    w.U32(0xAAAAAAAAu); w.U32(0xBBBBBBBBu); w.U32(0xCCCCCCCCu);
+    for (int i = 0; i < 16; ++i) w.F32((i % 5 == 0) ? 1.0f : 0.0f);
+    w.Str("");                            // len=1, "\0" -> boneName == ""
+
     return w.Data();
 }
 
@@ -1037,6 +1087,13 @@ void TestAnimation() {
     J_CHECK(clip.version == 0x0102);
     J_CHECK(clip.mainTracks.empty());
     J_CHECK(clip.upBodyTracks.size() == 1);
+    J_CHECK(clip.upBodyTracks[0].matrixKeys.size() == 1);
+    if (!clip.upBodyTracks[0].matrixKeys.empty()) {
+        for (int k = 0; k < 16; ++k) {
+            const float expected = (k % 5 == 0) ? 1.0f : 0.0f;
+            J_CHECK(FloatNear(clip.upBodyTracks[0].matrixKeys[0].mat[k], expected, 1e-6f));
+        }
+    }
 
     RANMobile::EP7Skeleton skeleton;
     const std::string skelText = SkeletonX();
@@ -1153,6 +1210,193 @@ void TestAnimation() {
     std::vector<uint8_t> wrong = bin;
     wrong[128] = 0x77;  // container version lives in the header fileId
     J_CHECK(!RANMobile::EP7AnimationReader::ParseContainer(wrong, true, false).valid);
+
+    // ---- Phase 3J B13: Authentic 0x0100 tracks + 80-byte SMatrixKey alignment regression ----
+    {
+        const std::vector<uint8_t> bin0100 = AnimationBin0100();
+        RANMobile::EP7AnimClip c100 = RANMobile::EP7AnimationReader::ParseContainer(bin0100, true, false);
+        J_CHECK_MSG(c100.valid, c100.error);
+        J_CHECK(c100.version == 0x0100);
+        J_CHECK(c100.upBodyTracks.empty());
+        J_CHECK(c100.mainTracks.size() == 2);
+        J_CHECK(c100.MaxKeyTime() == 4800);
+
+        if (c100.mainTracks.size() == 2) {
+            const auto& t0 = c100.mainTracks[0];
+            J_CHECK(t0.boneName == "Bip01_Spine1");
+            J_CHECK(t0.quatPosKeys.empty());
+            J_CHECK(t0.positionKeys.size() == 1 && t0.positionKeys[0].time == 160);
+            J_CHECK(FloatNear(t0.positionKeys[0].p[0], 1.25f) &&
+                    FloatNear(t0.positionKeys[0].p[1], -2.5f) &&
+                    FloatNear(t0.positionKeys[0].p[2], 3.75f));
+            J_CHECK(t0.rotateKeys.size() == 1 && t0.rotateKeys[0].time == 320);
+            J_CHECK(FloatNear(t0.rotateKeys[0].q[1], 0.70710678f, 1e-5f) &&
+                    FloatNear(t0.rotateKeys[0].q[3], 0.70710678f, 1e-5f));
+            J_CHECK(t0.scaleKeys.size() == 1 && t0.scaleKeys[0].time == 480);
+            J_CHECK(FloatNear(t0.scaleKeys[0].s[0], 1.5f) &&
+                    FloatNear(t0.scaleKeys[0].s[1], 2.0f) &&
+                    FloatNear(t0.scaleKeys[0].s[2], 0.5f));
+            J_CHECK(t0.matrixKeys.size() == 2);
+            if (t0.matrixKeys.size() == 2) {
+                J_CHECK(t0.matrixKeys[0].time == 0);
+                J_CHECK(FloatNear(t0.matrixKeys[0].mat[0], 1.0f) &&
+                        FloatNear(t0.matrixKeys[0].mat[1], 0.0f) &&
+                        FloatNear(t0.matrixKeys[0].mat[13], 6.0f) &&
+                        FloatNear(t0.matrixKeys[0].mat[15], 1.0f));
+                J_CHECK(t0.matrixKeys[1].time == 4800);
+                J_CHECK(FloatNear(t0.matrixKeys[1].mat[0], 1.0f) &&
+                        FloatNear(t0.matrixKeys[1].mat[12], 1.0f) &&
+                        FloatNear(t0.matrixKeys[1].mat[13], 9.0f) &&
+                        FloatNear(t0.matrixKeys[1].mat[14], -2.0f) &&
+                        FloatNear(t0.matrixKeys[1].mat[15], 1.0f));
+            }
+
+            // Track 1: empty bone name preserved cleanly and unbound (-1) on skeleton bind.
+            const auto& t1 = c100.mainTracks[1];
+            J_CHECK(t1.boneName.empty());
+            J_CHECK(t1.matrixKeys.size() == 1 && t1.matrixKeys[0].time == 2400);
+
+            RANMobile::EP7AnimationReader::BindToSkeleton(c100, skeleton);
+            J_CHECK(c100.mainTracks[0].boneIndex == skeleton.FindBoneIndex("Bip01_Spine1"));
+            J_CHECK(c100.mainTracks[1].boneIndex == -1);
+
+            // Evaluate 0x0100 matrix keys on skeleton via EP7AnimationPlayer.
+            RANMobile::EP7AnimationPlayer p100;
+            p100.Play(&c100, nullptr);
+            skeleton.ResetToRestPose();
+            p100.ApplyToSkeleton(skeleton);
+            skeleton.UpdateBones(RANMobile::ep7math::Mat4::Identity());
+            const int32_t headIdx = skeleton.FindBoneIndex("Bip01_Head");
+            J_CHECK(headIdx >= 0);
+            if (headIdx >= 0) {
+                // Spine1 matrix key 0 y=+6.0 + Head rest y=+1.5 => +7.5.
+                J_CHECK(FloatNear(skeleton.GetBone(static_cast<size_t>(headIdx)).combined.m[3][1], 7.5f, 1e-4f));
+            }
+            p100.Advance(0.5f);  // t = 2400 -> lower_bound picks key 1 @ t=4800 (y=+9.0)
+            skeleton.ResetToRestPose();
+            p100.ApplyToSkeleton(skeleton);
+            skeleton.UpdateBones(RANMobile::ep7math::Mat4::Identity());
+            if (headIdx >= 0) {
+                J_CHECK(FloatNear(skeleton.GetBone(static_cast<size_t>(headIdx)).combined.m[3][1], 10.5f, 1e-4f));
+            }
+        }
+
+        // Strict prefix truncation at every byte offset of bin0100 (including mid-80B matrix pad/body)
+        // must fail safely without out-of-bounds reads.
+        for (size_t cutLen = 0; cutLen < bin0100.size(); ++cutLen) {
+            const std::vector<uint8_t> prefix(bin0100.begin(), bin0100.begin() + static_cast<long>(cutLen));
+            const RANMobile::EP7AnimClip truncated =
+                RANMobile::EP7AnimationReader::ParseContainer(prefix, true, false);
+            J_CHECK(!truncated.valid);
+        }
+
+        // Boundary: 0-track 0x0100 container (136B, matching authentic a_mob_wdm_stay01.bin),
+        // zero-key 0x0100 track with zero-length bone string, and headerless 0x0100 container.
+        {
+            ByteWriter w0;
+            w0.Raw(std::vector<uint8_t>(128, 0));
+            w0.U32(0x0100);
+            w0.U32(0);
+            const RANMobile::EP7AnimClip empty0100 =
+                RANMobile::EP7AnimationReader::ParseContainer(w0.Data(), true, false);
+            J_CHECK(empty0100.valid && empty0100.version == 0x0100 && empty0100.mainTracks.empty());
+
+            ByteWriter wZeroLenBone;
+            wZeroLenBone.U32(0x0100);  // headerless container version
+            wZeroLenBone.U32(1);       // 1 main track
+            wZeroLenBone.U32(0x0100);  // track version
+            wZeroLenBone.U32(0);       // pos
+            wZeroLenBone.U32(0);       // rot
+            wZeroLenBone.U32(0);       // scale
+            wZeroLenBone.U32(0);       // matrix
+            wZeroLenBone.U32(0);       // bone string len == 0
+            const RANMobile::EP7AnimClip zeroBone =
+                RANMobile::EP7AnimationReader::ParseContainer(wZeroLenBone.Data(), false, false);
+            J_CHECK(zeroBone.valid && zeroBone.mainTracks.size() == 1 &&
+                    zeroBone.mainTracks[0].boneName.empty());
+        }
+
+        // Invalid counts / string lengths in 0x0100 tracks must fail cleanly.
+        for (int badChannel = 0; badChannel < 5; ++badChannel) {
+            ByteWriter wb;
+            wb.Raw(std::vector<uint8_t>(128, 0));
+            wb.U32(0x0100);
+            wb.U32(1);
+            wb.U32(0x0100);
+            wb.U32(badChannel == 0 ? 200001u : 0u);  // pos count
+            wb.U32(badChannel == 1 ? 200001u : 0u);  // rot count
+            wb.U32(badChannel == 2 ? 200001u : 0u);  // scale count
+            wb.U32(badChannel == 3 ? 200001u : 0u);  // matrix count
+            wb.U32(badChannel == 4 ? 5000u : 0u);    // bone string len (> kMaxNameLen)
+            const RANMobile::EP7AnimClip rej =
+                RANMobile::EP7AnimationReader::ParseContainer(wb.Data(), true, false);
+            J_CHECK(!rej.valid && !rej.error.empty());
+        }
+
+        // Regression: 0x0101 track with 80-byte SMatrixKey + SQuatPosKey + boneName + upBody list.
+        {
+            ByteWriter w101;
+            w101.Raw(std::vector<uint8_t>(128, 0));
+            w101.U32(0x0101);
+            w101.U32(1);  // main count
+            w101.U32(0x0101);
+            w101.U32(0);  // pos
+            w101.U32(0);  // rot
+            w101.U32(0);  // scale
+            w101.U32(1);  // 1 matrix key (80B)
+            w101.U32(800);
+            w101.U32(0x11111111u); w101.U32(0x22222222u); w101.U32(0x33333333u);
+            for (int k = 0; k < 16; ++k) w101.F32(static_cast<float>(k + 1));
+            w101.U32(1);  // 1 quatpos key (36B)
+            w101.U32(1600);
+            w101.F32(1.0f); w101.F32(1.0f); w101.F32(1.0f);
+            w101.F32(2.0f); w101.F32(3.0f); w101.F32(4.0f);
+            w101.U32(0u); w101.U32(0x80000000u);
+            w101.Str("Bip01");
+            w101.U32(1);  // upBody count
+            w101.U32(0x0101);
+            w101.U32(0); w101.U32(0); w101.U32(0); w101.U32(0); w101.U32(0);
+            w101.Str("Bip01_Head");
+
+            const RANMobile::EP7AnimClip c101 =
+                RANMobile::EP7AnimationReader::ParseContainer(w101.Data(), true, false);
+            J_CHECK_MSG(c101.valid, c101.error);
+            J_CHECK(c101.mainTracks.size() == 1 && c101.upBodyTracks.size() == 1);
+            if (c101.mainTracks.size() == 1 && c101.upBodyTracks.size() == 1) {
+                J_CHECK(c101.mainTracks[0].boneName == "Bip01");
+                J_CHECK(c101.upBodyTracks[0].boneName == "Bip01_Head");
+                J_CHECK(c101.mainTracks[0].matrixKeys.size() == 1);
+                J_CHECK(FloatNear(c101.mainTracks[0].matrixKeys[0].mat[0], 1.0f) &&
+                        FloatNear(c101.mainTracks[0].matrixKeys[0].mat[15], 16.0f));
+                J_CHECK(c101.mainTracks[0].quatPosKeys.size() == 1 &&
+                        c101.mainTracks[0].quatPosKeys[0].time == 1600);
+            }
+        }
+
+        // Unimplemented container versions (0x0103, 0x0104, 0x0200) and inner 0x0103 tracks
+        // remain explicitly rejected in B13.
+        for (uint32_t unsupOuter : {0x0103u, 0x0104u, 0x0200u}) {
+            ByteWriter wu;
+            wu.Raw(std::vector<uint8_t>(128, 0));
+            wu.U32(unsupOuter);
+            wu.U32(0); wu.U32(0); wu.U32(0);
+            const RANMobile::EP7AnimClip cu =
+                RANMobile::EP7AnimationReader::ParseContainer(wu.Data(), true, false);
+            J_CHECK(!cu.valid);
+            J_CHECK(cu.error.rfind("unsupported animation container version ", 0) == 0);
+        }
+        {
+            ByteWriter wi;
+            wi.Raw(std::vector<uint8_t>(128, 0));
+            wi.U32(0x0100);
+            wi.U32(1);
+            wi.U32(0x0103);  // unimplemented inner track version
+            const RANMobile::EP7AnimClip ci =
+                RANMobile::EP7AnimationReader::ParseContainer(wi.Data(), true, false);
+            J_CHECK(!ci.valid);
+            J_CHECK(ci.error.find("0x00000103") != std::string::npos);
+        }
+    }
 }
 
 void TestCharacterScene() {
@@ -1322,6 +1566,7 @@ void TestRobustness() {
     fixtures.push_back(CharacterChf());
     fixtures.push_back(PieceCps(0));
     fixtures.push_back(AnimationBin());
+    fixtures.push_back(AnimationBin0100());
     fixtures.push_back(AnimationCfg(true));
 
     RANMobile::EP7Skeleton skeleton;

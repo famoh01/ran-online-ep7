@@ -12,195 +12,182 @@ constexpr uint32_t kMaxBoneTracks = 4096;
 constexpr uint32_t kMaxKeysPerTrack = 200000;
 constexpr uint32_t kMaxNameLen = 4096;
 
+bool ReadPositionKeys(ep7byte::Stream& s, std::vector<EP7PositionKey>& out) {
+    uint32_t count = 0;
+    if (!s.ReadU32(count)) return false;
+    if (count > kMaxKeysPerTrack) {
+        s.Fail("animation position key count exceeds sanity limit");
+        return false;
+    }
+    if (!s.CanReadElements(count, EP7AnimationReader::kPositionKeySize)) {
+        s.Fail("animation position key block runs past end of buffer");
+        return false;
+    }
+    out.resize(count);
+    for (uint32_t i = 0; i < count; ++i) {
+        if (!s.ReadU32(out[i].time)) return false;
+        for (int k = 0; k < 3; ++k) {
+            if (!s.ReadF32(out[i].p[k])) return false;
+        }
+    }
+    return true;
+}
+
+bool ReadRotateKeys(ep7byte::Stream& s, std::vector<EP7RotateKey>& out) {
+    uint32_t count = 0;
+    if (!s.ReadU32(count)) return false;
+    if (count > kMaxKeysPerTrack) {
+        s.Fail("animation rotate key count exceeds sanity limit");
+        return false;
+    }
+    if (!s.CanReadElements(count, EP7AnimationReader::kRotateKeySize)) {
+        s.Fail("animation rotate key block runs past end of buffer");
+        return false;
+    }
+    out.resize(count);
+    for (uint32_t i = 0; i < count; ++i) {
+        if (!s.ReadU32(out[i].time)) return false;
+        for (int k = 0; k < 4; ++k) {
+            if (!s.ReadF32(out[i].q[k])) return false;
+        }
+    }
+    return true;
+}
+
+bool ReadScaleKeys(ep7byte::Stream& s, std::vector<EP7ScaleKey>& out) {
+    uint32_t count = 0;
+    if (!s.ReadU32(count)) return false;
+    if (count > kMaxKeysPerTrack) {
+        s.Fail("animation scale key count exceeds sanity limit");
+        return false;
+    }
+    if (!s.CanReadElements(count, EP7AnimationReader::kScaleKeySize)) {
+        s.Fail("animation scale key block runs past end of buffer");
+        return false;
+    }
+    out.resize(count);
+    for (uint32_t i = 0; i < count; ++i) {
+        if (!s.ReadU32(out[i].time)) return false;
+        for (int k = 0; k < 3; ++k) {
+            if (!s.ReadF32(out[i].s[k])) return false;
+        }
+    }
+    return true;
+}
+
+bool ReadQuatPosKeys(ep7byte::Stream& s, std::vector<EP7QuatPosKey>& out) {
+    uint32_t count = 0;
+    if (!s.ReadU32(count)) return false;
+    if (count > kMaxKeysPerTrack) {
+        s.Fail("animation quatpos key count exceeds sanity limit");
+        return false;
+    }
+    if (!s.CanReadElements(count, EP7AnimationReader::kQuatPosKeySize)) {
+        s.Fail("animation quatpos key block runs past end of buffer");
+        return false;
+    }
+    out.resize(count);
+    for (uint32_t i = 0; i < count; ++i) {
+        EP7QuatPosKey& key = out[i];
+        if (!s.ReadU32(key.time)) return false;
+        for (int k = 0; k < 3; ++k) {
+            if (!s.ReadF32(key.scale[k])) return false;
+        }
+        for (int k = 0; k < 3; ++k) {
+            if (!s.ReadF32(key.pos[k])) return false;
+        }
+        if (!s.ReadU32(key.quatComp0) || !s.ReadU32(key.quatComp1)) return false;
+    }
+    return true;
+}
+
+// DxAniKeys.h:70-88 + LegacyDX_Include/d3dx9math.h:411,416:
+//   struct SMatrixKey { DWORD dwTime; D3DXMATRIXA16 mat; };
+// D3DXMATRIXA16 carries __declspec(align(16)) on 32-bit MSVC, placing 12 bytes of
+// uninitialized struct padding at [4..15] before the 64-byte 4x4 float matrix at
+// [16..79] (sizeof(SMatrixKey) == 80). SAnimation::Load_0100, Load_0101, and Load
+// (0x0102) all serialize raw sizeof(SMatrixKey) * m_cMatrixKeys bytes via ReadBuffer.
+bool ReadMatrixKeys(ep7byte::Stream& s, std::vector<EP7MatrixKey>& out) {
+    uint32_t count = 0;
+    if (!s.ReadU32(count)) return false;
+    if (count > kMaxKeysPerTrack) {
+        s.Fail("animation matrix key count exceeds sanity limit");
+        return false;
+    }
+    if (!s.CanReadElements(count, EP7AnimationReader::kMatrixKeySize)) {
+        s.Fail("animation matrix key block runs past end of buffer");
+        return false;
+    }
+    out.resize(count);
+    for (uint32_t i = 0; i < count; ++i) {
+        if (!s.ReadU32(out[i].time)) return false;
+        if (!s.Skip(EP7AnimationReader::kMatrixKeyAlignPadSize)) return false;
+        for (int k = 0; k < 16; ++k) {
+            if (!s.ReadF32(out[i].mat[k])) return false;
+        }
+    }
+    return true;
+}
+
 // Reads a SAnimation record.  Returns false on malformed input.
 // Every SAnimation begins with its own DWORD version (SAnimation::SaveToFile writes
 // `SFile << VERSION` first; SAnimation::LoadFromFile reads dwVER and dispatches), so the
 // version is read per track and is independent of the container header version.
 bool ReadBoneTrack(ep7byte::Stream& s, EP7BoneTrack& out) {
+    out = EP7BoneTrack{};
+
     uint32_t version = 0;
     if (!s.ReadU32(version)) return false;
 
     if (version == 0x0102) {
-        // SAnimation::Load — verified field order (SAnimation.cpp:1515).
+        // SAnimation::Load (0x0102) — verified field order (enginelib/Meshs/SAnimation.cpp:1515,
+        // Lib_Engine/Meshs/SAnimationSaveLoad.cpp:102):
+        //   m_strBone, rotateKeys, positionKeys, dwGarbage1, quatPosKeys, dwGarbage2,
+        //   matrixKeys, scaleKeys.
         if (!s.ReadString(out.boneName, kMaxNameLen)) return false;
-
-        uint32_t count = 0;
-        if (!s.ReadU32(count)) return false;
-        if (count > kMaxKeysPerTrack) {
-            s.Fail("animation rotate key count exceeds sanity limit");
-            return false;
-        }
-        if (!s.CanReadElements(count, EP7AnimationReader::kRotateKeySize)) {
-            s.Fail("animation rotate key block runs past end of buffer");
-            return false;
-        }
-        out.rotateKeys.resize(count);
-        for (uint32_t i = 0; i < count; ++i) {
-            if (!s.ReadU32(out.rotateKeys[i].time)) return false;
-            for (int k = 0; k < 4; ++k) {
-                if (!s.ReadF32(out.rotateKeys[i].q[k])) return false;
-            }
-        }
-
-        if (!s.ReadU32(count)) return false;
-        if (count > kMaxKeysPerTrack) {
-            s.Fail("animation position key count exceeds sanity limit");
-            return false;
-        }
-        if (!s.CanReadElements(count, EP7AnimationReader::kPositionKeySize)) {
-            s.Fail("animation position key block runs past end of buffer");
-            return false;
-        }
-        out.positionKeys.resize(count);
-        for (uint32_t i = 0; i < count; ++i) {
-            if (!s.ReadU32(out.positionKeys[i].time)) return false;
-            for (int k = 0; k < 3; ++k) {
-                if (!s.ReadF32(out.positionKeys[i].p[k])) return false;
-            }
-        }
-
+        if (!ReadRotateKeys(s, out.rotateKeys)) return false;
+        if (!ReadPositionKeys(s, out.positionKeys)) return false;
         uint32_t garbage = 0;
         if (!s.ReadU32(garbage)) return false;  // written as m_strBone.length()
-
-        if (!s.ReadU32(count)) return false;
-        if (count > kMaxKeysPerTrack) {
-            s.Fail("animation quatpos key count exceeds sanity limit");
-            return false;
-        }
-        if (!s.CanReadElements(count, EP7AnimationReader::kQuatPosKeySize)) {
-            s.Fail("animation quatpos key block runs past end of buffer");
-            return false;
-        }
-        out.quatPosKeys.resize(count);
-        for (uint32_t i = 0; i < count; ++i) {
-            EP7QuatPosKey& key = out.quatPosKeys[i];
-            if (!s.ReadU32(key.time)) return false;
-            for (int k = 0; k < 3; ++k) {
-                if (!s.ReadF32(key.scale[k])) return false;
-            }
-            for (int k = 0; k < 3; ++k) {
-                if (!s.ReadF32(key.pos[k])) return false;
-            }
-            if (!s.ReadU32(key.quatComp0) || !s.ReadU32(key.quatComp1)) return false;
-        }
-
-        if (!s.ReadU32(garbage)) return false;
-
-        if (!s.ReadU32(count)) return false;
-        if (count > kMaxKeysPerTrack) {
-            s.Fail("animation matrix key count exceeds sanity limit");
-            return false;
-        }
-        if (!s.CanReadElements(count, EP7AnimationReader::kMatrixKeySize)) {
-            s.Fail("animation matrix key block runs past end of buffer");
-            return false;
-        }
-        out.matrixKeys.resize(count);
-        for (uint32_t i = 0; i < count; ++i) {
-            if (!s.ReadU32(out.matrixKeys[i].time)) return false;
-            for (int k = 0; k < 16; ++k) {
-                if (!s.ReadF32(out.matrixKeys[i].mat[k])) return false;
-            }
-        }
-
-        if (!s.ReadU32(count)) return false;
-        if (count > kMaxKeysPerTrack) {
-            s.Fail("animation scale key count exceeds sanity limit");
-            return false;
-        }
-        if (!s.CanReadElements(count, EP7AnimationReader::kScaleKeySize)) {
-            s.Fail("animation scale key block runs past end of buffer");
-            return false;
-        }
-        out.scaleKeys.resize(count);
-        for (uint32_t i = 0; i < count; ++i) {
-            if (!s.ReadU32(out.scaleKeys[i].time)) return false;
-            for (int k = 0; k < 3; ++k) {
-                if (!s.ReadF32(out.scaleKeys[i].s[k])) return false;
-            }
-        }
+        if (!ReadQuatPosKeys(s, out.quatPosKeys)) return false;
+        if (!s.ReadU32(garbage)) return false;  // written as m_strBone.length() + VERSION
+        if (!ReadMatrixKeys(s, out.matrixKeys)) return false;
+        if (!ReadScaleKeys(s, out.scaleKeys)) return false;
         return true;
     }
 
     if (version == 0x0101) {
-        // SAnimation::Load_0101 — position, rotate, scale, matrix, quatpos, bone name LAST.
-        uint32_t count = 0;
-
-        if (!s.ReadU32(count)) return false;
-        if (count > kMaxKeysPerTrack || !s.CanReadElements(count, EP7AnimationReader::kPositionKeySize)) {
-            s.Fail("animation position key block invalid");
-            return false;
-        }
-        out.positionKeys.resize(count);
-        for (uint32_t i = 0; i < count; ++i) {
-            if (!s.ReadU32(out.positionKeys[i].time)) return false;
-            for (int k = 0; k < 3; ++k) {
-                if (!s.ReadF32(out.positionKeys[i].p[k])) return false;
-            }
-        }
-
-        if (!s.ReadU32(count)) return false;
-        if (count > kMaxKeysPerTrack || !s.CanReadElements(count, EP7AnimationReader::kRotateKeySize)) {
-            s.Fail("animation rotate key block invalid");
-            return false;
-        }
-        out.rotateKeys.resize(count);
-        for (uint32_t i = 0; i < count; ++i) {
-            if (!s.ReadU32(out.rotateKeys[i].time)) return false;
-            for (int k = 0; k < 4; ++k) {
-                if (!s.ReadF32(out.rotateKeys[i].q[k])) return false;
-            }
-        }
-
-        if (!s.ReadU32(count)) return false;
-        if (count > kMaxKeysPerTrack || !s.CanReadElements(count, EP7AnimationReader::kScaleKeySize)) {
-            s.Fail("animation scale key block invalid");
-            return false;
-        }
-        out.scaleKeys.resize(count);
-        for (uint32_t i = 0; i < count; ++i) {
-            if (!s.ReadU32(out.scaleKeys[i].time)) return false;
-            for (int k = 0; k < 3; ++k) {
-                if (!s.ReadF32(out.scaleKeys[i].s[k])) return false;
-            }
-        }
-
-        if (!s.ReadU32(count)) return false;
-        if (count > kMaxKeysPerTrack || !s.CanReadElements(count, EP7AnimationReader::kMatrixKeySize)) {
-            s.Fail("animation matrix key block invalid");
-            return false;
-        }
-        out.matrixKeys.resize(count);
-        for (uint32_t i = 0; i < count; ++i) {
-            if (!s.ReadU32(out.matrixKeys[i].time)) return false;
-            for (int k = 0; k < 16; ++k) {
-                if (!s.ReadF32(out.matrixKeys[i].mat[k])) return false;
-            }
-        }
-
-        if (!s.ReadU32(count)) return false;
-        if (count > kMaxKeysPerTrack || !s.CanReadElements(count, EP7AnimationReader::kQuatPosKeySize)) {
-            s.Fail("animation quatpos key block invalid");
-            return false;
-        }
-        out.quatPosKeys.resize(count);
-        for (uint32_t i = 0; i < count; ++i) {
-            EP7QuatPosKey& key = out.quatPosKeys[i];
-            if (!s.ReadU32(key.time)) return false;
-            for (int k = 0; k < 3; ++k) {
-                if (!s.ReadF32(key.scale[k])) return false;
-            }
-            for (int k = 0; k < 3; ++k) {
-                if (!s.ReadF32(key.pos[k])) return false;
-            }
-            if (!s.ReadU32(key.quatComp0) || !s.ReadU32(key.quatComp1)) return false;
-        }
-
+        // SAnimation::Load_0101 — verified field order (enginelib/Meshs/SAnimation.cpp:1464,
+        // Lib_Engine/Meshs/SAnimationSaveLoad.cpp:52):
+        //   positionKeys, rotateKeys, scaleKeys, matrixKeys, quatPosKeys, m_strBone.
+        if (!ReadPositionKeys(s, out.positionKeys)) return false;
+        if (!ReadRotateKeys(s, out.rotateKeys)) return false;
+        if (!ReadScaleKeys(s, out.scaleKeys)) return false;
+        if (!ReadMatrixKeys(s, out.matrixKeys)) return false;
+        if (!ReadQuatPosKeys(s, out.quatPosKeys)) return false;
         if (!s.ReadString(out.boneName, kMaxNameLen)) return false;
         return true;
     }
 
-    s.Fail("unsupported animation version");
+    if (version == 0x0100) {
+        // SAnimation::Load_0100 — verified field order (enginelib/Meshs/SAnimation.cpp:1419,
+        // Lib_Engine/Meshs/SAnimationSaveLoad.cpp:15):
+        //   positionKeys, rotateKeys, scaleKeys, matrixKeys, m_strBone (no quatPosKeys).
+        // Empty bone names (m_strBone == "") occur in authentic 0x0100 assets and are
+        // valid in SAnimation::Load_0100 (FindBone("") -> NULL / boneIndex == -1).
+        if (!ReadPositionKeys(s, out.positionKeys)) return false;
+        if (!ReadRotateKeys(s, out.rotateKeys)) return false;
+        if (!ReadScaleKeys(s, out.scaleKeys)) return false;
+        if (!ReadMatrixKeys(s, out.matrixKeys)) return false;
+        if (!s.ReadString(out.boneName, kMaxNameLen)) return false;
+        return true;
+    }
+
+    char message[96];
+    std::snprintf(message, sizeof(message),
+                  "unsupported animation track version 0x%08X (implemented: 0x0100, 0x0101, 0x0102)",
+                  version);
+    s.Fail(message);
     return false;
 }
 

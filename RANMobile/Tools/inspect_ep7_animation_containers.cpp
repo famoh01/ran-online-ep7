@@ -559,10 +559,8 @@ inline bool TraceUnmodifiedReaderBoneTrack(RANMobile::ep7byte::Stream& s,
         return false;
     }
 
-    // Note: EP7AnimationReader checks CanReadElements(count, 80) for matrixKeys,
-    // then reads 4 + 16*4 = 68 bytes per matrixKey in its loop! We mirror both
-    // the exact 80-byte true stride in VerifyAgainstBackupEngineSourceSpec below
-    // and EP7AnimationReader's exact cursor advancement here.
+    // Mirror current production EP7AnimationReader (0x0100, 0x0101, 0x0102 tracks with
+    // verified 80-byte SMatrixKey stride: 4B time + 12B align16 pad + 64B mat).
     if (version == 0x0102u) {
         std::string bone;
         uint32_t nRot = 0, nPos = 0, g1 = 0, nQuat = 0, g2 = 0, nMat = 0, nScale = 0;
@@ -580,7 +578,7 @@ inline bool TraceUnmodifiedReaderBoneTrack(RANMobile::ep7byte::Stream& s,
         if (!s.ReadU32(g2)) return false;
         if (!s.ReadU32(nMat) || nMat > kMaxKeys ||
             !s.CanReadElements(nMat, RANMobile::EP7AnimationReader::kMatrixKeySize) ||
-            !s.Skip(static_cast<size_t>(nMat) * 68u))
+            !s.Skip(static_cast<size_t>(nMat) * RANMobile::EP7AnimationReader::kMatrixKeySize))
             return false;
         if (!s.ReadU32(nScale) || nScale > kMaxKeys ||
             !s.Skip(static_cast<size_t>(nScale) * RANMobile::EP7AnimationReader::kScaleKeySize))
@@ -603,10 +601,31 @@ inline bool TraceUnmodifiedReaderBoneTrack(RANMobile::ep7byte::Stream& s,
             return false;
         if (!s.ReadU32(nMat) || nMat > kMaxKeys ||
             !s.CanReadElements(nMat, RANMobile::EP7AnimationReader::kMatrixKeySize) ||
-            !s.Skip(static_cast<size_t>(nMat) * 68u))
+            !s.Skip(static_cast<size_t>(nMat) * RANMobile::EP7AnimationReader::kMatrixKeySize))
             return false;
         if (!s.ReadU32(nQuat) || nQuat > kMaxKeys ||
             !s.Skip(static_cast<size_t>(nQuat) * RANMobile::EP7AnimationReader::kQuatPosKeySize))
+            return false;
+        if (!s.ReadString(bone)) return false;
+        if (rec) rec->trackVersionsSeen[version]++;
+        return true;
+    }
+
+    if (version == 0x0100u) {
+        std::string bone;
+        uint32_t nPos = 0, nRot = 0, nScale = 0, nMat = 0;
+        if (!s.ReadU32(nPos) || nPos > kMaxKeys ||
+            !s.Skip(static_cast<size_t>(nPos) * RANMobile::EP7AnimationReader::kPositionKeySize))
+            return false;
+        if (!s.ReadU32(nRot) || nRot > kMaxKeys ||
+            !s.Skip(static_cast<size_t>(nRot) * RANMobile::EP7AnimationReader::kRotateKeySize))
+            return false;
+        if (!s.ReadU32(nScale) || nScale > kMaxKeys ||
+            !s.Skip(static_cast<size_t>(nScale) * RANMobile::EP7AnimationReader::kScaleKeySize))
+            return false;
+        if (!s.ReadU32(nMat) || nMat > kMaxKeys ||
+            !s.CanReadElements(nMat, RANMobile::EP7AnimationReader::kMatrixKeySize) ||
+            !s.Skip(static_cast<size_t>(nMat) * RANMobile::EP7AnimationReader::kMatrixKeySize))
             return false;
         if (!s.ReadString(bone)) return false;
         if (rec) rec->trackVersionsSeen[version]++;
@@ -1235,7 +1254,8 @@ inline SurveySummary RunDirectorySurvey(const fs::path& rootDir, size_t maxSampl
             if (rec.sourceSpec.emptyBoneNames > 0) {
                 sum.filesWithEmptyBoneNames++;
             }
-            if (rec.bucket == BinBucket::Parsed && rec.sourceSpec.tracksMatrix > 0) {
+            if (rec.bucket == BinBucket::Parsed && rec.sourceSpec.tracksMatrix > 0 &&
+                rec.trailingBytes > 0) {
                 sum.acceptedFilesWithMatrixKeysAffectedBy68ByteBug++;
             }
             if (rec.outerVersion == 0x0103u && rec.sourceSpec.ok) {

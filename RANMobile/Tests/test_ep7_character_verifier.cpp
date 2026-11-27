@@ -132,6 +132,54 @@ int main() {
     CHECK(IsCharacterAssetName("a.BIN") && !IsCharacterAssetName("a.txt"));
     CHECK(IsInCharacterDataPath("root/data/animation/a.bin"));
     CHECK(!IsInCharacterDataPath("root/data/terrain/a.bin"));
+
+    // Phase 3J B13: 0x0100 container with 0x0100 tracks (pos, rot, scale, 80B SMatrixKey
+    // with 12B align16 padding, empty bone name + named bone) must pass and reject every
+    // strict byte prefix safely.
+    {
+        auto b100 = Header("AnimContainer", 0x0100u);
+        U32(b100, 2u);  // 2 main tracks
+        // Track 0: named bone with pos + rot + scale + 1x 80B SMatrixKey
+        U32(b100, 0x0100u);
+        U32(b100, 1u); U32(b100, 160u); U32(b100, 0x3F800000u); U32(b100, 0u); U32(b100, 0u);
+        U32(b100, 1u); U32(b100, 320u); U32(b100, 0u); U32(b100, 0u); U32(b100, 0u); U32(b100, 0x3F800000u);
+        U32(b100, 1u); U32(b100, 480u); U32(b100, 0x3F800000u); U32(b100, 0x3F800000u); U32(b100, 0x3F800000u);
+        U32(b100, 1u); U32(b100, 640u);
+        U32(b100, 0xDEADBEEFu); U32(b100, 0xCAFEBABEu); U32(b100, 0x13579BDFu);  // 12B align16 pad
+        for (int k = 0; k < 16; ++k) U32(b100, (k % 5 == 0) ? 0x3F800000u : 0u);
+        const char bone0[] = "Bip01";
+        U32(b100, sizeof(bone0));
+        b100.insert(b100.end(), bone0, bone0 + sizeof(bone0));
+        // Track 1: empty bone name ("")
+        U32(b100, 0x0100u);
+        U32(b100, 0u); U32(b100, 0u); U32(b100, 0u); U32(b100, 0u);
+        U32(b100, 1u); b100.push_back(0);  // empty NUL-terminated string
+
+        Counters c100;
+        CHECK(Verify(b100, c100, "a_gum_stay.bin") == Outcome::Pass);
+        CHECK(c100.binOk == 1 && c100.binParserRejected == 0 && c100.binUnsupported == 0);
+        const auto parsed100 = RANMobile::EP7AnimationReader::ParseContainer(b100, true, false);
+        CHECK(parsed100.valid && parsed100.mainTracks.size() == 2);
+        CHECK(parsed100.mainTracks[0].boneName == "Bip01");
+        CHECK(parsed100.mainTracks[0].matrixKeys.size() == 1 &&
+              parsed100.mainTracks[0].matrixKeys[0].mat[0] == 1.0f &&
+              parsed100.mainTracks[0].matrixKeys[0].mat[15] == 1.0f);
+        CHECK(parsed100.mainTracks[1].boneName.empty());
+
+        for (size_t n = 0; n < b100.size(); ++n) {
+            Counters cut;
+            CHECK(Verify(std::vector<uint8_t>(b100.begin(), b100.begin() + n), cut) == Outcome::Fail);
+            CHECK(cut.binOk == 0 && cut.binUnsupported == 0);
+            CHECK(cut.binInvalidHeader + cut.binParserRejected == 1);
+        }
+    }
+
+    for (uint32_t unsupVer : {0x0103u, 0x0104u, 0x0200u}) {
+        Counters cu;
+        CHECK(Verify(Header("AnimContainer", unsupVer), cu) == Outcome::Unsupported);
+        CHECK(cu.binUnsupported == 1 && cu.binOk == 0 && cu.binParserRejected == 0);
+    }
+
     std::printf("Verifier regression: %d checks, %d failures\n", checks, failures);
     return failures ? EXIT_FAILURE : EXIT_SUCCESS;
 }

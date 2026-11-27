@@ -221,7 +221,11 @@ public:
     static constexpr size_t kPositionKeySize = 16;
     static constexpr size_t kQuatPosKeySize = 36;
     static constexpr size_t kMatrixKeySize = 80;
+    static constexpr size_t kMatrixKeyAlignPadSize = 12;
     static constexpr size_t kScaleKeySize = 16;
+
+    static_assert(sizeof(uint32_t) + kMatrixKeyAlignPadSize + 16 * sizeof(float) == kMatrixKeySize,
+                  "SMatrixKey on-disk layout must sum to 80 bytes (4B time + 12B align16 pad + 64B mat)");
 };
 
 // Playback state for one clip instance (ANIMCONTNODE + fCurTime).
