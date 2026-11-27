@@ -594,3 +594,53 @@ B1). CI compile + unit/integration/sanitizer evidence is not device proof; the A
 5. Attachments (`Bip01_R/L_Hand matCombined`) are not exposed yet.
 6. 0x0200 EMBYTECRYPT `.bin` and `SkinObject.rcc` pack gaps (`3,550` entries) remain unsupported
    (unchanged blockers; BLOCKERS.md updated).
+
+### 14.11 Final report — the 14 B17 items
+
+1. **Branch/PR state verified first** (stale local metadata repaired via plain `git reset origin/…`;
+   main untouched; PR #7 kept OPEN+Draft; PR #5 untouched).
+2. **Original-source investigation mapped before implementation** (`SAnimation.cpp`
+   SetTime/SetMatrix/SetPosQuat/SetMix/ConvertMatToQuat, `DxSkinAniControl.cpp`,
+   `DxBoneCollector.cpp`, `DxAniBoneScale.cpp`, `DxSkinChar.cpp`, `DxSkinMesh9_NORMAL/_CPU.cpp`) —
+   table in §14.1 and ACI §18; no format or behavior guessed.
+3. **Skeleton evaluation** — bind SQT, `ResetToRestPose` = `ResetBone` mirror (CUR=PREV=ORIG),
+   `UpdateBones` recursion with BLENDING/ADD/aniScale; CI evidence check-run confirms
+   `resetbone_cur_prev_to_orig: True`, `updatebones_blending_lerp/mix_add/scale_rows: True/True/True`.
+4. **Track evaluation** — matrix-key direct write (SetMatrix memcpy parity, no weight), quatPos
+   lower-bound snap with bFirst CUR/PREV, S/R/T fmod windows, EMBODY routing; CI evidence:
+   `settime_matrix_first: True`, `settime_writes_matrot_only_for_matrix: True`.
+5. **Pose evaluation** — local → propagate → global with world root; reset-to-rest before every
+   evaluation (no cumulative application; suite asserts the contract).
+6. **Playback/control** — SetAnimation backup clock, weight-0 blend-in (+7/s), loop wrap /
+   end-window freeze / ENDFREEZE, same-node re-select semantics, skill-miss fallback, DoShockMix
+   documented; creation auto-plays (DxSkinChar parity).
+7. **Runtime matrix→quatPos conversion** — `ConvertMatToQuat` mirror with re-compression identity
+   test; `CompressionQuaternion` bit-exact pack with NaN hardening.
+8. **Rendering integration** — per-piece skinned submission with piece-local base pointer
+   (bug from the first wiring found and fixed), no fabricated geometry, textures recorded not bound.
+9. **Engine quality** — dt clamp, no blocking loads, zero per-frame reallocation (measured),
+   stable orientation, extensible control API.
+10. **Performance (§10)** — measured on synthetic scale (62 bones / 12,000 verts / 2,000 frames):
+    update 0.671 ms/frame avg; skinning dominates (~53 ns/vertex); pose pipeline < 3 µs; no
+    optimization applied (correctness first).
+11. **Tests (§8)** — phase3j 5,732 / 0 (up from 5,686) incl. new B17 runtime-semantics section;
+    verifier 3,757 / 0; inspector 13,423 / 0 ×2; all ASan+UBSan+LSan clean.
+12. **B11–B16 compatibility** — byte readers untouched; 0x0113 UNSUPPORTED; 0x0200 not claimed;
+    trailing bytes recorded; suites re-run green on the final code.
+13. **Device status — NOT TESTED ON DEVICE** (no device/emulator; CI compile + suites ≠ device
+    proof). Runtime evidence = suite-verified pose/skin/benchmark execution on host.
+14. **CI evidence** — run [`46029586709`](https://github.com/famoh01/ran-online-ep7/actions/runs/46029586709):
+    `Core C++17 tests` success, `Android ARM64 build` success, `b12-engine-anim-sources` success
+    (24 verified LFS files), **`b17-runtime-semantics-evidence` success** (USE_ANI_QUATERNION=True;
+    SetTime matrix branch writes matRot, SQT untouched=True; UpdateBones blending/mix/scale
+    True/True/True; ResetBone CUR/PREV=ORIG True; CPU palette offset×bone True), `b12-authentic-anim-survey`
+    success; `Authentic EP7 asset verification (diagnostic)` failure = the long-documented expected
+    exit-1 (3,550 SkinObject.rcc pack gaps, unchanged). Investigation run
+    [`46029586756`](https://github.com/famoh01/ran-online-ep7/actions/runs/46029586756) success.
+    Completion claim basis: source verification (CI check-run facts) + integration tests + runtime
+    execution — explicitly not device proof.
+
+A workflow fix rode along (`97926ac`): the a4dba2e LFS list named `DxSkinMesh9_CPU.{h,cpp}`, which
+the upstream backup repo does not contain (the CPU path lives in `DxSkinMesh9_NORMAL.*` there; the
+`_CPU` split exists only in the GDrive engine drop) — substituted and re-verified all 24 paths via
+the contents API.
