@@ -117,6 +117,8 @@ static void InitEGL(AndroidAppContext* ctx, ANativeWindow* window) {
     }
     ctx->engine.Resize(w, h);
     ctx->hasWindow = true;
+    __android_log_print(ANDROID_LOG_INFO, "RANMobile", "EGL+engine ready %dx%d, selftest=%s",
+                        w, h, g_selfTestMode.empty() ? "<none>" : g_selfTestMode.c_str());
 
     // B19 GPU verification mode: run the harness once, persist the verdict, exit.
     if (g_selfTestMode == "gpu" && !g_selfTestDone) {
@@ -167,8 +169,10 @@ static void HandleAppCmd(struct android_app* app, int32_t cmd) {
     auto* ctx = static_cast<AndroidAppContext*>(app->userData);
     if (!ctx) return;
     if (cmd == APP_CMD_INIT_WINDOW && app->window != nullptr) {
+        __android_log_print(ANDROID_LOG_INFO, "RANMobile", "APP_CMD_INIT_WINDOW -> InitEGL");
         InitEGL(ctx, app->window);
     } else if (cmd == APP_CMD_TERM_WINDOW) {
+        __android_log_print(ANDROID_LOG_INFO, "RANMobile", "APP_CMD_TERM_WINDOW -> TermEGL");
         TermEGL(ctx);
     } else if (cmd == APP_CMD_PAUSE) {
         ctx->engine.Pause();
@@ -283,10 +287,10 @@ extern "C" void android_main(struct android_app* state) {
     state->onInputEvent = HandleInputEvent;
     ctx_activity = state->activity;
     g_selfTestMode = GetSelfTestMode(state->activity);
-    if (!g_selfTestMode.empty()) {
-        __android_log_print(ANDROID_LOG_INFO, "RANMobile", "selftest mode: %s",
-                            g_selfTestMode.c_str());
-    }
+    // Unconditional entry log: if this line is absent from logcat, the native
+    // library never ran (activity start / library load failure upstream).
+    __android_log_print(ANDROID_LOG_INFO, "RANMobile", "android_main entered, selftest=%s",
+                        g_selfTestMode.empty() ? "<none>" : g_selfTestMode.c_str());
 
     auto lastTime = std::chrono::steady_clock::now();
     int events;
