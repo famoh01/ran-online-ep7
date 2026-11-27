@@ -354,6 +354,54 @@ std::vector<uint8_t> CpsFixedSlots(uint32_t ver, uint32_t slots) {
 
 }  // namespace legacy
 
+
+// ---------------------------------------------------------------------------
+// B14: SVERTEXINFLU::SaveFile dwSize accounting.
+//
+// DxSkinMeshContainer9.cpp:61-74 (identical in SMeshContainer.cpp:54-67) sums the bone and
+// weight arrays TWICE: once in the initial `dwSize` expression and again in the
+// `if ( m_dwNumBone > 0 && m_dwNumBone != COL_ERR )` block.  The bytes actually written after
+// the dwSize field are only 32 + 8*numBone.  So:
+//     numBone == 0            -> dwSize 0x20, body 0x20  (agrees)
+//     1 <= numBone <= 6       -> dwSize 0x20 + 16*n, body 0x20 + 8*n  (over-states by 8*n)
+//     numBone == COL_ERR      -> the DWORD arithmetic WRAPS: dwSize 0x18 for a 0x20 body
+//                                (under-states by 8)
+// A reader must therefore never trust dwSize as a body length when the tag matches.
+// ---------------------------------------------------------------------------
+std::vector<uint8_t> PieceCpsWithInfluence(uint32_t numBone, uint32_t index) {
+    ByteWriter w;
+    w.Raw(std::vector<uint8_t>(128, 0));
+    w.U32(0);
+    w.U32(0x00000107);
+    w.U32(1);                 // m_dwRef
+    w.Str("body.x");
+    w.Str("m_bone.skt");
+    w.U32(0);                 // m_emType -> Head
+    w.U32(0);                 // m_emWeaponWhereBack
+    w.Str("BodyMesh");
+    w.U32(0);                 // material count
+    w.U32(1);                 // trace count
+    w.Str("Bip01 Spine");
+    w.U32(0x0101);            // SVERTEXINFLU::VERSION
+
+    // dwSize exactly as SaveFile computes it, including the COL_ERR wraparound.
+    const uint32_t dwSize = 4u + 12u + 12u + 4u + 4u * numBone + 4u * numBone
+                          + ((numBone > 0 && numBone != 0xFFFFFFFFu)
+                                 ? (4u * numBone + 4u * numBone) : 0u);
+    w.U32(dwSize);
+    w.U32(index);                              // m_dwIndex
+    w.F32(1.0f); w.F32(2.0f); w.F32(3.0f);     // m_vVector
+    w.F32(0.0f); w.F32(1.0f); w.F32(0.0f);     // m_vNormal
+    w.U32(numBone);
+    if (numBone > 0 && numBone != 0xFFFFFFFFu) {
+        for (uint32_t i = 0; i < numBone; ++i) w.U32(i + 1);
+        for (uint32_t i = 0; i < numBone; ++i) w.F32(1.0f / (numBone + 1));
+    }
+    w.U32(0);                 // effect count
+    w.Bool(false);            // m_dwFlag
+    return w.Data();
+}
+
 // SAnimation track 0x0102: rotate keys, position keys, quatpos keys, matrix keys, scale.
 std::vector<uint8_t> AnimationBin() {
     ByteWriter w;
@@ -863,6 +911,80 @@ void TestSkinPieceLegacyVersions() {
             RANMobile::EP7SkinPieceReader::ParseFromBytes(withFlag, false);
         J_CHECK_MSG(info.valid, info.error);
         J_CHECK(info.flag == 0u);   // 0x0104 never reads a file flag
+    }
+}
+
+
+// B14: the dwSize a writer emits is NOT the body length.  These cases pin down the reader's
+// behaviour across the whole numBone range, including the two ends the old 2-bone fixture
+// could not reach.
+void TestSkinPieceInfluenceSizeAccounting() {
+    Section(".cps SVERTEXINFLU dwSize accounting (B14)");
+
+    // numBone == 0: SaveFile's two terms coincide, dwSize == body == 0x20.  The record must
+    // still parse and the following effect count must be reached.
+    {
+        const RANMobile::EP7SkinPieceInfo info =
+            RANMobile::EP7SkinPieceReader::ParseFromBytes(PieceCpsWithInfluence(0, 5), false);
+        J_CHECK_MSG(info.valid, info.error);
+        J_CHECK(info.traces.size() == 1);
+        if (info.traces.size() == 1) {
+            J_CHECK(info.traces[0].name == "Bip01 Spine");
+            J_CHECK(info.traces[0].influence.valid);
+            J_CHECK(info.traces[0].influence.index == 5u);
+            J_CHECK(info.traces[0].influence.boneCount == 0u);
+        }
+        J_CHECK(info.effectCount == 0u);
+        J_CHECK(info.error.empty());
+    }
+
+    // numBone == COL_ERR: dwSize wraps to a value SMALLER than the body actually written.
+    // This is the case the earlier 8/16/48 analysis missed.  Trusting dwSize here would
+    // under-read and leave the cursor mid-record, so the effect count would be garbage.
+    {
+        const RANMobile::EP7SkinPieceInfo info =
+            RANMobile::EP7SkinPieceReader::ParseFromBytes(
+                PieceCpsWithInfluence(0xFFFFFFFFu, 7), false);
+        J_CHECK_MSG(info.valid, info.error);
+        J_CHECK(info.traces.size() == 1);
+        if (info.traces.size() == 1) {
+            J_CHECK(info.traces[0].influence.valid);
+            J_CHECK(info.traces[0].influence.index == 7u);
+            J_CHECK(info.traces[0].influence.boneCount == RANMobile::EP7VertexInfluence::kColErr);
+        }
+        J_CHECK(info.effectCount == 0u);
+        J_CHECK(info.error.empty());
+    }
+
+    // Every legal bone count must round-trip: the parse must land exactly on the effect
+    // count for all of them, never on the over-stated skip.
+    for (uint32_t n = 0; n <= 6; ++n) {
+        const RANMobile::EP7SkinPieceInfo info =
+            RANMobile::EP7SkinPieceReader::ParseFromBytes(PieceCpsWithInfluence(n, n), false);
+        J_CHECK_MSG(info.valid, info.error);
+        J_CHECK(info.traces.size() == 1);
+        if (info.traces.size() == 1) {
+            J_CHECK(info.traces[0].influence.boneCount == n);
+            J_CHECK(info.traces[0].influence.index == n);
+        }
+        J_CHECK(info.effectCount == 0u);
+        J_CHECK(info.flag == 0u);
+    }
+
+    // A mismatch tag must still skip by dwSize, exactly like LoadFile's else branch -- that
+    // is the ONLY place dwSize is authoritative.  numBone = 1 writes dwSize 0x30 for a 0x28
+    // body, so the skip over-runs by 8; the reader must follow the engine and skip 0x30.
+    {
+        std::vector<uint8_t> bytes = PieceCpsWithInfluence(1, 3);
+        const std::vector<uint8_t> tag = {0x01, 0x01, 0x00, 0x00};
+        auto it = std::search(bytes.begin(), bytes.end(), tag.begin(), tag.end());
+        J_CHECK(it != bytes.end());
+        if (it != bytes.end()) *it = 0x00;  // 0x0101 -> 0x0100 (unknown version)
+        const RANMobile::EP7SkinPieceInfo info =
+            RANMobile::EP7SkinPieceReader::ParseFromBytes(bytes, false);
+        // The engine would skip 0x30 and read a bogus effect count; the reader must not
+        // claim the influence was understood.
+        if (!info.traces.empty()) J_CHECK(!info.traces[0].influence.valid);
     }
 }
 
@@ -1486,6 +1608,7 @@ int main() {
     TestSkinPiece();
     TestSkinPieceTraceInfluence();
     TestSkinPieceLegacyVersions();
+    TestSkinPieceInfluenceSizeAccounting();
     TestCharacterFile();
     TestAnimation();
     TestCharacterScene();
