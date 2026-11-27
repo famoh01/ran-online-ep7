@@ -10,15 +10,18 @@
 //      and re-verifies loose sample SHA-256s at completion to prove zero mutation.
 //   2. Invokes unmodified RANMobile::EP7AnimationReader::ParseContainer() and
 //      reproduces the B11 classification buckets (parsed, unsupported-outer,
-//      invalid-header, unrecognized-type, parser-rejected).
+//      invalid-header, unrecognized-type, parser-rejected), reporting both
+//      data/animation/-scoped counts (matching verify_ep7_character_assets) and
+//      tree-wide .bin counts.
 //   3. Traces 0x0100..0x0102 track streams step-by-step to pinpoint exact rejection
 //      sites (list, track index, byte offset, 32-bit track version word, surrounding
-//      bytes, trailing bytes on accepted files, and read-only SAnimation::Load_0100
-//      compatibility check from enginelib/Meshs/SAnimation.cpp:1418-1462).
-//   4. Evaluates read-only payload-decoding probes (raw, compbyte, and verified
-//      backup-repo ByteCrypt substitution tables) on unsupported outer versions
-//      (0x0103, 0x0104, 0x0200, ...) and correlates .bin versions against companion
-//      .cfg versions from loose files and Animation.rcc.
+//      bytes, and trailing bytes on accepted files).
+//   4. Runs a read-only shadow verification pass implementing the exact container
+//      (0x0100..0x0104, 0x0200 + EMBYTECRYPT_BIN) and track (0x0100..0x0103) rules
+//      verified in backup-repo Lib_Engine/Meshs/SAnimationSaveLoad.cpp
+//      (sha256 e07686104ca1bbbfb431c63c8e79a954b4fb366ef36b048205e2a776d5da644b),
+//      measuring exact EOF convergence across all authentic .bin assets without
+//      claiming unsupported files as parsed by the production reader.
 //
 
 #include "../Data/Importer/EP7Animation.h"
@@ -183,7 +186,6 @@ private:
 //   Lib_Engine/Common/ByteCryptDef.h     sha256 c647aee9...fbda
 //   Lib_Engine/Common/ByteCryptDefVer1.h sha256 fe42183b...9120
 //   Lib_Engine/Common/ByteCryptDefVer2.h sha256 2a3c6d8c...ef01
-// Used strictly as read-only diagnostic probes to identify payload encodings.
 // ---------------------------------------------------------------------------
 enum class ProbeCipher {
     None = 0,
@@ -389,6 +391,7 @@ inline std::string HexU32(uint32_t v) {
     return buf;
 }
 
+// Strict RFC 8259 ASCII-safe JSON string escape (escapes control bytes and >= 0x80 CP949 bytes).
 inline std::string JsonEscape(const std::string& s) {
     std::string out;
     out.reserve(s.size() + 8);
@@ -400,7 +403,7 @@ inline std::string JsonEscape(const std::string& s) {
             case '\r': out += "\\r"; break;
             case '\t': out += "\\t"; break;
             default:
-                if (c < 0x20) {
+                if (c < 0x20 || c >= 0x80) {
                     char b[8];
                     std::snprintf(b, sizeof(b), "\\u%04x", c);
                     out += b;
@@ -452,17 +455,42 @@ struct CompanionCfgMeta {
 
 struct CipherProbeMatch {
     ProbeCipher cipher = ProbeCipher::None;
-    uint32_t d0 = 0;  // payload[0..3]
-    uint32_t d1 = 0;  // payload[4..7]
-    uint32_t d2 = 0;  // payload[8..11]
-    uint32_t d3 = 0;  // payload[12..15]
+    uint32_t d0 = 0;
+    uint32_t d1 = 0;
+    uint32_t d2 = 0;
+    uint32_t d3 = 0;
     bool looksLikeTrackList = false;
     std::string decodedPrefixHex;
     std::string decodedAscii;
 };
 
+// Read-only result of validating a container against the full backup-engine
+// Lib_Engine/Meshs/SAnimationSaveLoad.cpp specification (0x0100..0x0104, 0x0200 +
+// EMBYTECRYPT_BIN, and track versions 0x0100..0x0103).
+struct SourceSpecShadowResult {
+    bool attempted = false;
+    bool ok = false;
+    bool exactEof = false;
+    size_t bytesConsumed = 0;
+    size_t trailingBytes = 0;
+    uint32_t list0Count = 0;
+    uint32_t list1Count = 0;
+    uint32_t list2Count = 0;
+    uint32_t container0103Garbage = 0;
+    bool container0103GarbageMatchesFormula = false;
+    std::map<uint32_t, uint32_t> trackVersions;
+    uint32_t tracksPos = 0;
+    uint32_t tracksRot = 0;
+    uint32_t tracksScale = 0;
+    uint32_t tracksQuatPos = 0;
+    uint32_t tracksMatrix = 0;
+    uint32_t emptyBoneNames = 0;
+    std::string note;
+};
+
 struct BinInspectionRecord {
     std::string relPath;
+    bool inDataAnimationDir = false;
     bool fromRcc = false;
     size_t byteSize = 0;
     std::string sha256;
@@ -478,7 +506,7 @@ struct BinInspectionRecord {
     bool readerValid = false;
     std::string readerError;
 
-    // Step-by-step trace on 0x0100..0x0102
+    // Step-by-step trace of unmodified 0x0100..0x0102 reader
     uint32_t upBodyDeclared = 0;
     uint32_t mainDeclared = 0;
     uint32_t upBodyParsed = 0;
@@ -486,14 +514,9 @@ struct BinInspectionRecord {
     size_t bytesConsumed = 0;
     size_t trailingBytes = 0;
     std::map<uint32_t, uint32_t> trackVersionsSeen;
-    uint32_t tracksWithPos = 0;
-    uint32_t tracksWithRot = 0;
-    uint32_t tracksWithScale = 0;
-    uint32_t tracksWithQuatPos = 0;
-    uint32_t tracksWithMatrix = 0;
 
     // Rejection pinpoint (when bucket == ParserRejected)
-    std::string failList;        // "upBody" or "main"
+    std::string failList;
     uint32_t failTrackIndex = 0;
     size_t failOffset = 0;
     uint32_t failTrackVersion = 0;
@@ -501,17 +524,15 @@ struct BinInspectionRecord {
     std::string failWindowHex;
     std::string failAsciiPreview;
 
-    // Read-only SAnimation::Load_0100 shadow test (enginelib/Meshs/SAnimation.cpp:1418-1462)
-    bool load0100ShadowTested = false;
-    bool load0100ShadowValidToEof = false;
-    std::string load0100ShadowNote;
+    // Full SAnimationSaveLoad.cpp source-derived read-only shadow verification
+    SourceSpecShadowResult sourceSpec;
 
     // Hex slices for reproducible format analysis
     std::string headerPrefix16Hex;
-    std::string headerTail16Hex;     // [116..132)
-    std::string payloadPrefix64Hex;  // [132..196)
+    std::string headerTail16Hex;
+    std::string payloadPrefix64Hex;
 
-    // Read-only payload probes (populated for samples & unsupported versions)
+    // Read-only payload probes
     std::string matchingCipherName;
     std::vector<CipherProbeMatch> cipherProbes;
 
@@ -519,18 +540,18 @@ struct BinInspectionRecord {
 };
 
 // ---------------------------------------------------------------------------
-// Step-by-step read-only shadow walker for 0x0100..0x0102 containers.
-// Mirrors EP7AnimationReader::ReadBoneTrack + optionally tests SAnimation::Load_0100
-// (enginelib/Meshs/SAnimation.cpp:1418-1462) when allowTrack0100Shadow == true.
+// 1. Step-by-step trace mirroring UNMODIFIED EP7AnimationReader (0x0100..0x0102
+//    outer, 0x0101..0x0102 track, including EP7AnimationReader's exact key sizes).
 // ---------------------------------------------------------------------------
-inline bool ShadowSkipBoneTrack(RANMobile::ep7byte::Stream& s, bool allowTrack0100Shadow,
-                                BinInspectionRecord* rec, const char* listName,
-                                uint32_t trackIndex) {
-    static constexpr uint32_t kMaxKeys = 262144;
+inline bool TraceUnmodifiedReaderBoneTrack(RANMobile::ep7byte::Stream& s,
+                                           BinInspectionRecord* rec,
+                                           const char* listName,
+                                           uint32_t trackIndex) {
+    static constexpr uint32_t kMaxKeys = 200000;
     const size_t trackStart = s.Position();
     uint32_t version = 0;
     if (!s.ReadU32(version)) {
-        if (rec && !allowTrack0100Shadow) {
+        if (rec) {
             rec->failList = listName;
             rec->failTrackIndex = trackIndex;
             rec->failOffset = trackStart;
@@ -538,60 +559,61 @@ inline bool ShadowSkipBoneTrack(RANMobile::ep7byte::Stream& s, bool allowTrack01
         return false;
     }
 
-    auto recordKeyUsage = [&](uint32_t nPos, uint32_t nRot, uint32_t nScale,
-                              uint32_t nQuat, uint32_t nMat) {
-        if (!rec || allowTrack0100Shadow) return;
-        rec->trackVersionsSeen[version]++;
-        if (nPos > 0) rec->tracksWithPos++;
-        if (nRot > 0) rec->tracksWithRot++;
-        if (nScale > 0) rec->tracksWithScale++;
-        if (nQuat > 0) rec->tracksWithQuatPos++;
-        if (nMat > 0) rec->tracksWithMatrix++;
-    };
-
+    // Note: EP7AnimationReader checks CanReadElements(count, 80) for matrixKeys,
+    // then reads 4 + 16*4 = 68 bytes per matrixKey in its loop! We mirror both
+    // the exact 80-byte true stride in VerifyAgainstBackupEngineSourceSpec below
+    // and EP7AnimationReader's exact cursor advancement here.
     if (version == 0x0102u) {
         std::string bone;
         uint32_t nRot = 0, nPos = 0, g1 = 0, nQuat = 0, g2 = 0, nMat = 0, nScale = 0;
         if (!s.ReadString(bone)) return false;
-        if (!s.ReadU32(nRot) || nRot > kMaxKeys || !s.Skip(static_cast<size_t>(nRot) * 20u)) return false;
-        if (!s.ReadU32(nPos) || nPos > kMaxKeys || !s.Skip(static_cast<size_t>(nPos) * 16u)) return false;
+        if (!s.ReadU32(nRot) || nRot > kMaxKeys ||
+            !s.Skip(static_cast<size_t>(nRot) * RANMobile::EP7AnimationReader::kRotateKeySize))
+            return false;
+        if (!s.ReadU32(nPos) || nPos > kMaxKeys ||
+            !s.Skip(static_cast<size_t>(nPos) * RANMobile::EP7AnimationReader::kPositionKeySize))
+            return false;
         if (!s.ReadU32(g1)) return false;
-        if (!s.ReadU32(nQuat) || nQuat > kMaxKeys || !s.Skip(static_cast<size_t>(nQuat) * 24u)) return false;
+        if (!s.ReadU32(nQuat) || nQuat > kMaxKeys ||
+            !s.Skip(static_cast<size_t>(nQuat) * RANMobile::EP7AnimationReader::kQuatPosKeySize))
+            return false;
         if (!s.ReadU32(g2)) return false;
-        if (!s.ReadU32(nMat) || nMat > kMaxKeys || !s.Skip(static_cast<size_t>(nMat) * 80u)) return false;
-        if (!s.ReadU32(nScale) || nScale > kMaxKeys || !s.Skip(static_cast<size_t>(nScale) * 16u)) return false;
-        recordKeyUsage(nPos, nRot, nScale, nQuat, nMat);
+        if (!s.ReadU32(nMat) || nMat > kMaxKeys ||
+            !s.CanReadElements(nMat, RANMobile::EP7AnimationReader::kMatrixKeySize) ||
+            !s.Skip(static_cast<size_t>(nMat) * 68u))
+            return false;
+        if (!s.ReadU32(nScale) || nScale > kMaxKeys ||
+            !s.Skip(static_cast<size_t>(nScale) * RANMobile::EP7AnimationReader::kScaleKeySize))
+            return false;
+        if (rec) rec->trackVersionsSeen[version]++;
         return true;
     }
 
     if (version == 0x0101u) {
         std::string bone;
-        uint32_t nPos = 0, nRot = 0, nScale = 0, nQuat = 0, nMat = 0;
-        if (!s.ReadU32(nPos) || nPos > kMaxKeys || !s.Skip(static_cast<size_t>(nPos) * 16u)) return false;
-        if (!s.ReadU32(nRot) || nRot > kMaxKeys || !s.Skip(static_cast<size_t>(nRot) * 20u)) return false;
-        if (!s.ReadU32(nScale) || nScale > kMaxKeys || !s.Skip(static_cast<size_t>(nScale) * 16u)) return false;
-        if (!s.ReadU32(nQuat) || nQuat > kMaxKeys || !s.Skip(static_cast<size_t>(nQuat) * 24u)) return false;
-        if (!s.ReadU32(nMat) || nMat > kMaxKeys || !s.Skip(static_cast<size_t>(nMat) * 80u)) return false;
+        uint32_t nPos = 0, nRot = 0, nScale = 0, nMat = 0, nQuat = 0;
+        if (!s.ReadU32(nPos) || nPos > kMaxKeys ||
+            !s.Skip(static_cast<size_t>(nPos) * RANMobile::EP7AnimationReader::kPositionKeySize))
+            return false;
+        if (!s.ReadU32(nRot) || nRot > kMaxKeys ||
+            !s.Skip(static_cast<size_t>(nRot) * RANMobile::EP7AnimationReader::kRotateKeySize))
+            return false;
+        if (!s.ReadU32(nScale) || nScale > kMaxKeys ||
+            !s.Skip(static_cast<size_t>(nScale) * RANMobile::EP7AnimationReader::kScaleKeySize))
+            return false;
+        if (!s.ReadU32(nMat) || nMat > kMaxKeys ||
+            !s.CanReadElements(nMat, RANMobile::EP7AnimationReader::kMatrixKeySize) ||
+            !s.Skip(static_cast<size_t>(nMat) * 68u))
+            return false;
+        if (!s.ReadU32(nQuat) || nQuat > kMaxKeys ||
+            !s.Skip(static_cast<size_t>(nQuat) * RANMobile::EP7AnimationReader::kQuatPosKeySize))
+            return false;
         if (!s.ReadString(bone)) return false;
-        recordKeyUsage(nPos, nRot, nScale, nQuat, nMat);
+        if (rec) rec->trackVersionsSeen[version]++;
         return true;
     }
 
-    if (allowTrack0100Shadow && version == 0x0100u) {
-        // SAnimation::Load_0100 (enginelib/Meshs/SAnimation.cpp:1418-1462):
-        // PositionKeys (16B), RotateKeys (20B), ScaleKeys (16B), MatrixKeys (80B), m_strBone.
-        // No QuatPosKeys and no garbage DWORDs.
-        std::string bone;
-        uint32_t nPos = 0, nRot = 0, nScale = 0, nMat = 0;
-        if (!s.ReadU32(nPos) || nPos > kMaxKeys || !s.Skip(static_cast<size_t>(nPos) * 16u)) return false;
-        if (!s.ReadU32(nRot) || nRot > kMaxKeys || !s.Skip(static_cast<size_t>(nRot) * 20u)) return false;
-        if (!s.ReadU32(nScale) || nScale > kMaxKeys || !s.Skip(static_cast<size_t>(nScale) * 16u)) return false;
-        if (!s.ReadU32(nMat) || nMat > kMaxKeys || !s.Skip(static_cast<size_t>(nMat) * 80u)) return false;
-        if (!s.ReadString(bone)) return false;
-        return !bone.empty();
-    }
-
-    if (rec && !allowTrack0100Shadow) {
+    if (rec) {
         rec->failList = listName;
         rec->failTrackIndex = trackIndex;
         rec->failOffset = trackStart;
@@ -605,10 +627,10 @@ inline bool ShadowSkipBoneTrack(RANMobile::ep7byte::Stream& s, bool allowTrack01
     return false;
 }
 
-inline bool ShadowWalkContainer(const std::vector<uint8_t>& bytes, uint32_t outerVersion,
-                                bool allowTrack0100Shadow, BinInspectionRecord* rec,
-                                size_t* outConsumed) {
-    static constexpr uint32_t kMaxTracks = 512;
+inline bool TraceUnmodifiedReaderContainer(const std::vector<uint8_t>& bytes,
+                                           uint32_t outerVersion,
+                                           BinInspectionRecord* rec) {
+    static constexpr uint32_t kMaxTracks = 4096;
     RANMobile::ep7byte::Stream s;
     s.Attach(bytes, false);
     std::string hdrType;
@@ -619,17 +641,17 @@ inline bool ShadowWalkContainer(const std::vector<uint8_t>& bytes, uint32_t oute
         const size_t cntPos = s.Position();
         uint32_t count = 0;
         if (!s.ReadU32(count) || count > kMaxTracks) {
-            if (rec && !allowTrack0100Shadow) {
+            if (rec) {
                 rec->failList = name;
                 rec->failOffset = cntPos;
                 rec->failTrackVersion = count;
             }
             return false;
         }
-        if (declaredOut && !allowTrack0100Shadow) *declaredOut = count;
+        if (declaredOut) *declaredOut = count;
         for (uint32_t i = 0; i < count; ++i) {
-            if (!ShadowSkipBoneTrack(s, allowTrack0100Shadow, rec, name, i)) return false;
-            if (parsedOut && !allowTrack0100Shadow) *parsedOut = i + 1;
+            if (!TraceUnmodifiedReaderBoneTrack(s, rec, name, i)) return false;
+            if (parsedOut) *parsedOut = i + 1;
         }
         return true;
     };
@@ -649,12 +671,185 @@ inline bool ShadowWalkContainer(const std::vector<uint8_t>& bytes, uint32_t oute
         ok = walkList("main", rec ? &rec->mainDeclared : nullptr,
                       rec ? &rec->mainParsed : nullptr);
     }
-    if (ok && outConsumed) *outConsumed = s.Position();
+    if (ok && rec) {
+        rec->bytesConsumed = s.Position();
+        rec->trailingBytes = bytes.size() - s.Position();
+    }
     return ok;
 }
 
-// Evaluates whether a decoded post-header payload starts with a plausible track list or
-// block-sized header without modifying anything.
+// ---------------------------------------------------------------------------
+// 2. Read-only shadow verifier implementing the verified backup-engine source
+//    Lib_Engine/Meshs/SAnimationSaveLoad.cpp:
+//      - SAnimation::LoadFromFile: 0x0100, 0x0101, 0x0102, 0x0103
+//        (SPositionKey=16B, SRotateKey=20B, SScaleKey=16B, SQuatPosKey=36B,
+//         SMatrixKey=80B with 12-byte align16 padding)
+//      - SAnimContainer::LoadAnimFromFile:
+//        0x0100, 0x0101, 0x0102, 0x0103, 0x0104, 0x0200 (EMBYTECRYPT_BIN)
+// ---------------------------------------------------------------------------
+inline SourceSpecShadowResult VerifyAgainstBackupEngineSourceSpec(
+    const std::vector<uint8_t>& rawFileBytes, uint32_t outerVersion) {
+    SourceSpecShadowResult res;
+    if (outerVersion != 0x0100u && outerVersion != 0x0101u && outerVersion != 0x0102u &&
+        outerVersion != 0x0103u && outerVersion != 0x0104u && outerVersion != 0x0200u) {
+        return res;
+    }
+    res.attempted = true;
+    if (rawFileBytes.size() < RANMobile::ep7byte::Stream::kHeaderSize) {
+        res.note = "truncated header";
+        return res;
+    }
+
+    std::vector<uint8_t> decoded = rawFileBytes;
+    if (outerVersion >= 0x0200u) {
+        // SAnimationSaveLoad.cpp:311-312:
+        //   if ( dwVersion >= VERSION_ENCODE ) SFile.SetEncodeType( EMBYTECRYPT_BIN );
+        std::vector<uint8_t> decPayload;
+        DecodePayloadCopy(rawFileBytes.data() + 132, rawFileBytes.size() - 132,
+                          ProbeCipher::ByteCryptBin1, decPayload);
+        std::memcpy(decoded.data() + 132, decPayload.data(), decPayload.size());
+    }
+
+    static constexpr uint32_t kMaxTracks = 4096;
+    static constexpr uint32_t kMaxKeys = 262144;
+
+    RANMobile::ep7byte::Stream s;
+    s.Attach(std::move(decoded), false);
+    std::string hdrType;
+    uint32_t hdrVer = 0;
+    if (!s.ReadFileType(hdrType, hdrVer)) {
+        res.note = "ReadFileType failed";
+        return res;
+    }
+
+    auto readTrackSpec = [&](const char* listTag, uint32_t idx) -> bool {
+        const size_t tStart = s.Position();
+        uint32_t tVer = 0;
+        if (!s.ReadU32(tVer)) {
+            res.note = std::string(listTag) + "[" + std::to_string(idx) +
+                       "] truncated track version at " + std::to_string(tStart);
+            return false;
+        }
+        res.trackVersions[tVer]++;
+
+        std::string bone;
+        uint32_t nPos = 0, nRot = 0, nScale = 0, nQuat = 0, nMat = 0, g1 = 0, g2 = 0;
+
+        auto failAt = [&](const char* msg) {
+            res.note = std::string(listTag) + "[" + std::to_string(idx) + "] v" + HexU32(tVer) +
+                       " at " + std::to_string(tStart) + ": " + msg;
+            return false;
+        };
+
+        if (tVer == 0x0100u) {
+            if (!s.ReadU32(nPos) || nPos > kMaxKeys || !s.Skip(static_cast<size_t>(nPos) * 16u))
+                return failAt("posKeys");
+            if (!s.ReadU32(nRot) || nRot > kMaxKeys || !s.Skip(static_cast<size_t>(nRot) * 20u))
+                return failAt("rotKeys");
+            if (!s.ReadU32(nScale) || nScale > kMaxKeys || !s.Skip(static_cast<size_t>(nScale) * 16u))
+                return failAt("scaleKeys");
+            if (!s.ReadU32(nMat) || nMat > kMaxKeys || !s.Skip(static_cast<size_t>(nMat) * 80u))
+                return failAt("matrixKeys");
+            if (!s.ReadString(bone)) return failAt("boneName");
+        } else if (tVer == 0x0101u) {
+            if (!s.ReadU32(nPos) || nPos > kMaxKeys || !s.Skip(static_cast<size_t>(nPos) * 16u))
+                return failAt("posKeys");
+            if (!s.ReadU32(nRot) || nRot > kMaxKeys || !s.Skip(static_cast<size_t>(nRot) * 20u))
+                return failAt("rotKeys");
+            if (!s.ReadU32(nScale) || nScale > kMaxKeys || !s.Skip(static_cast<size_t>(nScale) * 16u))
+                return failAt("scaleKeys");
+            if (!s.ReadU32(nMat) || nMat > kMaxKeys || !s.Skip(static_cast<size_t>(nMat) * 80u))
+                return failAt("matrixKeys");
+            if (!s.ReadU32(nQuat) || nQuat > kMaxKeys || !s.Skip(static_cast<size_t>(nQuat) * 36u))
+                return failAt("quatPosKeys");
+            if (!s.ReadString(bone)) return failAt("boneName");
+        } else if (tVer == 0x0102u) {
+            if (!s.ReadString(bone)) return failAt("boneName");
+            if (!s.ReadU32(nRot) || nRot > kMaxKeys || !s.Skip(static_cast<size_t>(nRot) * 20u))
+                return failAt("rotKeys");
+            if (!s.ReadU32(nPos) || nPos > kMaxKeys || !s.Skip(static_cast<size_t>(nPos) * 16u))
+                return failAt("posKeys");
+            if (!s.ReadU32(g1)) return failAt("garbage1");
+            if (!s.ReadU32(nQuat) || nQuat > kMaxKeys || !s.Skip(static_cast<size_t>(nQuat) * 36u))
+                return failAt("quatPosKeys");
+            if (!s.ReadU32(g2)) return failAt("garbage2");
+            if (!s.ReadU32(nMat) || nMat > kMaxKeys || !s.Skip(static_cast<size_t>(nMat) * 80u))
+                return failAt("matrixKeys");
+            if (!s.ReadU32(nScale) || nScale > kMaxKeys || !s.Skip(static_cast<size_t>(nScale) * 16u))
+                return failAt("scaleKeys");
+        } else if (tVer == 0x0103u) {
+            // SAnimation::Load_0103 (SAnimationSaveLoad.cpp:192-248):
+            // boneName, rotKeys, dwGarbage1, posKeys, quatPosKeys, matrixKeys, dwGarbage2, scaleKeys
+            if (!s.ReadString(bone)) return failAt("boneName");
+            if (!s.ReadU32(nRot) || nRot > kMaxKeys || !s.Skip(static_cast<size_t>(nRot) * 20u))
+                return failAt("rotKeys");
+            if (!s.ReadU32(g1)) return failAt("garbage1");
+            if (!s.ReadU32(nPos) || nPos > kMaxKeys || !s.Skip(static_cast<size_t>(nPos) * 16u))
+                return failAt("posKeys");
+            if (!s.ReadU32(nQuat) || nQuat > kMaxKeys || !s.Skip(static_cast<size_t>(nQuat) * 36u))
+                return failAt("quatPosKeys");
+            if (!s.ReadU32(nMat) || nMat > kMaxKeys || !s.Skip(static_cast<size_t>(nMat) * 80u))
+                return failAt("matrixKeys");
+            if (!s.ReadU32(g2)) return failAt("garbage2");
+            if (!s.ReadU32(nScale) || nScale > kMaxKeys || !s.Skip(static_cast<size_t>(nScale) * 16u))
+                return failAt("scaleKeys");
+        } else {
+            return failAt("unknown track version");
+        }
+
+        if (bone.empty()) res.emptyBoneNames++;
+        if (nPos > 0) res.tracksPos++;
+        if (nRot > 0) res.tracksRot++;
+        if (nScale > 0) res.tracksScale++;
+        if (nQuat > 0) res.tracksQuatPos++;
+        if (nMat > 0) res.tracksMatrix++;
+        return true;
+    };
+
+    auto readListSpec = [&](const char* listTag, uint32_t& outCount) -> bool {
+        uint32_t cnt = 0;
+        if (!s.ReadU32(cnt) || cnt > kMaxTracks) {
+            res.note = std::string(listTag) + ": invalid track count";
+            return false;
+        }
+        outCount = cnt;
+        for (uint32_t i = 0; i < cnt; ++i) {
+            if (!readTrackSpec(listTag, i)) return false;
+        }
+        return true;
+    };
+
+    bool ok = false;
+    if (outerVersion == 0x0100u) {
+        ok = readListSpec("main", res.list0Count);
+    } else if (outerVersion == 0x0101u) {
+        ok = readListSpec("main", res.list0Count) && readListSpec("upBody", res.list1Count);
+    } else if (outerVersion == 0x0102u || outerVersion == 0x0200u) {
+        ok = readListSpec("upBody", res.list0Count) && readListSpec("main", res.list1Count);
+    } else if (outerVersion == 0x0103u) {
+        if (readListSpec("upBody", res.list0Count) && s.ReadU32(res.container0103Garbage) &&
+            readListSpec("main", res.list1Count)) {
+            ok = true;
+            res.container0103GarbageMatchesFormula =
+                (res.container0103Garbage == (0x0103u + res.list0Count + res.list1Count));
+        }
+    } else if (outerVersion == 0x0104u) {
+        ok = readListSpec("main", res.list0Count) && readListSpec("upBody1", res.list1Count) &&
+             readListSpec("upBody2", res.list2Count);
+    }
+
+    res.ok = ok;
+    if (ok) {
+        res.bytesConsumed = s.Position();
+        res.trailingBytes = rawFileBytes.size() - s.Position();
+        res.exactEof = (res.trailingBytes == 0);
+        res.note = res.exactEof
+                       ? "exact EOF"
+                       : ("parsed with " + std::to_string(res.trailingBytes) + " trailing bytes");
+    }
+    return res;
+}
+
 inline CipherProbeMatch EvaluateCipherProbe(const uint8_t* payload, size_t payloadLen,
                                             ProbeCipher cipher) {
     CipherProbeMatch m;
@@ -669,9 +864,6 @@ inline CipherProbeMatch EvaluateCipherProbe(const uint8_t* payload, size_t paylo
         m.d1 = ReadLE32(dec.data() + 4);
         m.d2 = ReadLE32(dec.data() + 8);
         m.d3 = ReadLE32(dec.data() + 12);
-        // Heuristic indicator ONLY for diagnostic reporting:
-        // Case A: d0 == 0 (empty first list) and d1 <= 256 (second list count)
-        // Case B: 1 <= d0 <= 256 (list count) and 0x0100 <= d1 <= 0x0205 (track version)
         const bool caseEmptyFirst =
             (m.d0 == 0 && m.d1 <= 256u &&
              (m.d1 == 0 || (m.d2 >= 0x0100u && m.d2 <= 0x0205u)));
@@ -682,12 +874,19 @@ inline CipherProbeMatch EvaluateCipherProbe(const uint8_t* payload, size_t paylo
     return m;
 }
 
+inline bool IsUnderDataAnimation(const std::string& relPath) {
+    const std::string low = LowerAscii(relPath);
+    return low.rfind("data/animation/", 0) == 0 ||
+           low.find("/data/animation/") != std::string::npos;
+}
+
 inline BinInspectionRecord InspectSingleBin(const std::string& relPath,
                                             const std::vector<uint8_t>& bytes,
                                             bool fromRcc,
                                             bool populateDetailedProbes) {
     BinInspectionRecord r;
     r.relPath = relPath;
+    r.inDataAnimationDir = IsUnderDataAnimation(relPath);
     r.fromRcc = fromRcc;
     r.byteSize = bytes.size();
     r.sha256 = Sha256::DigestHex(bytes);
@@ -726,7 +925,7 @@ inline BinInspectionRecord InspectSingleBin(const std::string& relPath,
         return r;
     }
 
-    // Invoke UNMODIFIED production EP7AnimationReader::ParseContainer.
+    // 1. Invoke UNMODIFIED production EP7AnimationReader::ParseContainer.
     const RANMobile::EP7AnimClip clip =
         RANMobile::EP7AnimationReader::ParseContainer(bytes, true, false);
     r.readerValid = clip.valid;
@@ -744,35 +943,21 @@ inline BinInspectionRecord InspectSingleBin(const std::string& relPath,
     }
 
     if (outerSupported) {
-        size_t consumed = 0;
-        const bool shadowOk = ShadowWalkContainer(bytes, r.outerVersion, false, &r, &consumed);
-        if (shadowOk) {
-            r.bytesConsumed = consumed;
-            r.trailingBytes = bytes.size() - consumed;
-        } else if (r.bucket == BinBucket::ParserRejected) {
+        const bool traceOk = TraceUnmodifiedReaderContainer(bytes, r.outerVersion, &r);
+        if (!traceOk && r.bucket == BinBucket::ParserRejected) {
             const size_t winStart = (r.failOffset >= 16) ? (r.failOffset - 16) : 0;
             r.failWindowHex = HexSlice(bytes, winStart, 80);
             if (r.failOffset < bytes.size()) {
                 const size_t avail = std::min<size_t>(48u, bytes.size() - r.failOffset);
                 r.failAsciiPreview = AsciiPreview(bytes.data() + r.failOffset, avail);
             }
-            if (r.failTrackVersion == 0x0100u) {
-                r.load0100ShadowTested = true;
-                size_t end0100 = 0;
-                if (ShadowWalkContainer(bytes, r.outerVersion, true, nullptr, &end0100)) {
-                    r.load0100ShadowValidToEof = (end0100 == bytes.size());
-                    r.load0100ShadowNote =
-                        (end0100 == bytes.size())
-                            ? "SAnimation::Load_0100 parses cleanly to exact EOF"
-                            : "SAnimation::Load_0100 parses tracks with trailing bytes";
-                } else {
-                    r.load0100ShadowNote = "SAnimation::Load_0100 failed mid-stream";
-                }
-            }
         }
     }
 
-    // Evaluate payload cipher probes on unsupported outer versions (or when requested).
+    // 2. Run read-only backup-engine SAnimationSaveLoad.cpp specification verifier.
+    r.sourceSpec = VerifyAgainstBackupEngineSourceSpec(bytes, r.outerVersion);
+
+    // 3. Evaluate payload cipher probes on unsupported outer versions (or when requested).
     if (!outerSupported || populateDetailedProbes) {
         static constexpr ProbeCipher kAllCiphers[] = {
             ProbeCipher::None,
@@ -837,35 +1022,50 @@ inline CompanionCfgMeta ParseCompanionCfg(const std::string& sourceLabel,
 
 struct SurveySummary {
     size_t totalLooseBin = 0;
+    size_t totalAnimDirBin = 0;
+    size_t totalNonAnimDirBin = 0;
     size_t totalRccBin = 0;
     size_t totalCfgIndexed = 0;
 
+    // Tree-wide B11 buckets
     size_t countParsed = 0;
     size_t countUnsupportedOuter = 0;
     size_t countInvalidHeader = 0;
     size_t countUnrecognizedType = 0;
     size_t countParserRejected = 0;
 
-    size_t zeroPaddedHeaders = 0;
-    size_t dirtyPaddedHeaders = 0;
+    // data/animation/ scoped B11 buckets (reconciles directly with verify_ep7_character_assets)
+    size_t animDirParsed = 0;
+    size_t animDirUnsupportedOuter = 0;
+    size_t animDirInvalidHeader = 0;
+    size_t animDirUnrecognizedType = 0;
+    size_t animDirParserRejected = 0;
 
-    std::map<uint32_t, size_t> outerVersionCounts;
+    size_t animContainerZeroPadded = 0;
+    size_t animContainerDirtyPadded = 0;
+
+    std::map<uint32_t, size_t> animOuterVersionCounts;
     std::map<std::string, size_t> outerVersionByBucket;
     std::map<std::string, size_t> binVsCfgVersion;
 
-    // Accepted container metrics
+    // Unmodified reader metrics on accepted files
     std::map<size_t, size_t> acceptedTrailingBytes;
     std::map<uint32_t, size_t> acceptedTrackVersions;
-    size_t acceptedTracksPos = 0;
-    size_t acceptedTracksRot = 0;
-    size_t acceptedTracksScale = 0;
-    size_t acceptedTracksQuatPos = 0;
-    size_t acceptedTracksMatrix = 0;
 
     // 1,209 parser-rejected breakdown
     std::map<std::string, size_t> rejectedReasonBreakdown;
-    size_t rejectedLoad0100Tested = 0;
-    size_t rejectedLoad0100ExactEof = 0;
+
+    // Source-derived shadow verification across all AnimContainer files
+    std::map<std::string, size_t> sourceSpecOutcomeByOuter;
+    std::map<std::string, size_t> sourceSpecTrackVerByOuter;
+    std::map<std::string, size_t> sourceSpecKeyChannelsByOuter;
+    size_t container0103Total = 0;
+    size_t container0103GarbageFormulaExact = 0;
+    size_t container0104List0NonEmpty = 0;
+    size_t container0104List1NonEmpty = 0;
+    size_t container0104List2NonEmpty = 0;
+    size_t filesWithEmptyBoneNames = 0;
+    size_t acceptedFilesWithMatrixKeysAffectedBy68ByteBug = 0;
 
     // Cipher probe match counts per unsupported outer version
     std::map<std::string, size_t> unsupportedCipherHits;
@@ -903,7 +1103,6 @@ inline SurveySummary RunDirectorySurvey(const fs::path& rootDir, size_t maxSampl
     std::sort(binFiles.begin(), binFiles.end());
     std::sort(looseCfgFiles.begin(), looseCfgFiles.end());
 
-    // Index companion .cfg files from .rcc packs first, then loose .cfg files.
     std::map<std::string, CompanionCfgMeta> cfgByStem;
     struct RccBinEntry {
         std::string relLabel;
@@ -963,30 +1162,94 @@ inline SurveySummary RunDirectorySurvey(const fs::path& rootDir, size_t maxSampl
                           const std::vector<uint8_t>& bytes, bool fromRcc) {
         BinInspectionRecord rec = InspectSingleBin(relPath, bytes, fromRcc, false);
 
+        if (rec.inDataAnimationDir) sum.totalAnimDirBin++;
+        else sum.totalNonAnimDirBin++;
+
         const auto cfgIt = cfgByStem.find(StemLower(relPath));
         if (cfgIt != cfgByStem.end()) rec.cfg = cfgIt->second;
 
-        if (rec.hasFullHeader) {
-            if (rec.zeroPaddedHeader) sum.zeroPaddedHeaders++;
-            else sum.dirtyPaddedHeaders++;
-            sum.outerVersionCounts[rec.outerVersion]++;
-        }
-
         switch (rec.bucket) {
-            case BinBucket::Parsed: sum.countParsed++; break;
-            case BinBucket::UnsupportedOuterVersion: sum.countUnsupportedOuter++; break;
-            case BinBucket::InvalidHeader: sum.countInvalidHeader++; break;
-            case BinBucket::UnrecognizedType: sum.countUnrecognizedType++; break;
-            case BinBucket::ParserRejected: sum.countParserRejected++; break;
+            case BinBucket::Parsed:
+                sum.countParsed++;
+                if (rec.inDataAnimationDir) sum.animDirParsed++;
+                break;
+            case BinBucket::UnsupportedOuterVersion:
+                sum.countUnsupportedOuter++;
+                if (rec.inDataAnimationDir) sum.animDirUnsupportedOuter++;
+                break;
+            case BinBucket::InvalidHeader:
+                sum.countInvalidHeader++;
+                if (rec.inDataAnimationDir) sum.animDirInvalidHeader++;
+                break;
+            case BinBucket::UnrecognizedType:
+                sum.countUnrecognizedType++;
+                if (rec.inDataAnimationDir) sum.animDirUnrecognizedType++;
+                break;
+            case BinBucket::ParserRejected:
+                sum.countParserRejected++;
+                if (rec.inDataAnimationDir) sum.animDirParserRejected++;
+                break;
         }
 
         const std::string verStr = HexU32(rec.outerVersion);
         const std::string bucketKey = verStr + ":" + BinBucketName(rec.bucket);
-        sum.outerVersionByBucket[bucketKey]++;
+        if (rec.fileType == "AnimContainer") {
+            if (rec.zeroPaddedHeader) sum.animContainerZeroPadded++;
+            else sum.animContainerDirtyPadded++;
+            sum.animOuterVersionCounts[rec.outerVersion]++;
+            sum.outerVersionByBucket[bucketKey]++;
 
-        const std::string cfgVerStr =
-            rec.cfg.found ? HexU32(rec.cfg.rawVersion) : std::string("no-cfg");
-        sum.binVsCfgVersion[verStr + " -> cfg " + cfgVerStr]++;
+            const std::string cfgVerStr =
+                rec.cfg.found ? HexU32(rec.cfg.rawVersion) : std::string("no-cfg");
+            sum.binVsCfgVersion[verStr + " -> cfg " + cfgVerStr]++;
+        }
+
+        // Source-spec shadow verification aggregation
+        bool forceAnomalySample = false;
+        if (rec.sourceSpec.attempted) {
+            std::string specOutcome;
+            if (!rec.sourceSpec.ok) {
+                specOutcome = "FAIL (" + rec.sourceSpec.note + ")";
+                forceAnomalySample = true;
+            } else if (!rec.sourceSpec.exactEof) {
+                specOutcome = "OK_WITH_TRAILING (" + std::to_string(rec.sourceSpec.trailingBytes) + "B)";
+                forceAnomalySample = true;
+            } else {
+                specOutcome = "EXACT_EOF";
+            }
+            sum.sourceSpecOutcomeByOuter[verStr + " : " + specOutcome]++;
+            for (const auto& tkv : rec.sourceSpec.trackVersions) {
+                sum.sourceSpecTrackVerByOuter[verStr + " -> track " + HexU32(tkv.first)] +=
+                    tkv.second;
+            }
+            if (rec.sourceSpec.tracksPos > 0)
+                sum.sourceSpecKeyChannelsByOuter[verStr + " : pos_files"]++;
+            if (rec.sourceSpec.tracksRot > 0)
+                sum.sourceSpecKeyChannelsByOuter[verStr + " : rot_files"]++;
+            if (rec.sourceSpec.tracksScale > 0)
+                sum.sourceSpecKeyChannelsByOuter[verStr + " : scale_files"]++;
+            if (rec.sourceSpec.tracksQuatPos > 0)
+                sum.sourceSpecKeyChannelsByOuter[verStr + " : quatpos_files"]++;
+            if (rec.sourceSpec.tracksMatrix > 0)
+                sum.sourceSpecKeyChannelsByOuter[verStr + " : matrix_files"]++;
+            if (rec.sourceSpec.emptyBoneNames > 0) {
+                sum.filesWithEmptyBoneNames++;
+            }
+            if (rec.bucket == BinBucket::Parsed && rec.sourceSpec.tracksMatrix > 0) {
+                sum.acceptedFilesWithMatrixKeysAffectedBy68ByteBug++;
+            }
+            if (rec.outerVersion == 0x0103u && rec.sourceSpec.ok) {
+                sum.container0103Total++;
+                if (rec.sourceSpec.container0103GarbageMatchesFormula) {
+                    sum.container0103GarbageFormulaExact++;
+                }
+            }
+            if (rec.outerVersion == 0x0104u && rec.sourceSpec.ok) {
+                if (rec.sourceSpec.list0Count > 0) sum.container0104List0NonEmpty++;
+                if (rec.sourceSpec.list1Count > 0) sum.container0104List1NonEmpty++;
+                if (rec.sourceSpec.list2Count > 0) sum.container0104List2NonEmpty++;
+            }
+        }
 
         std::string sampleSubKey = bucketKey;
         if (rec.bucket == BinBucket::Parsed) {
@@ -994,11 +1257,6 @@ inline SurveySummary RunDirectorySurvey(const fs::path& rootDir, size_t maxSampl
             for (const auto& kv : rec.trackVersionsSeen) {
                 sum.acceptedTrackVersions[kv.first] += kv.second;
             }
-            sum.acceptedTracksPos += rec.tracksWithPos;
-            sum.acceptedTracksRot += rec.tracksWithRot;
-            sum.acceptedTracksScale += rec.tracksWithScale;
-            sum.acceptedTracksQuatPos += rec.tracksWithQuatPos;
-            sum.acceptedTracksMatrix += rec.tracksWithMatrix;
         } else if (rec.bucket == BinBucket::ParserRejected) {
             const std::string idxTag = (rec.failTrackIndex == 0) ? "idx=0" : "idx>0";
             const std::string reasonKey = verStr + " | list=" + rec.failList + " | " + idxTag +
@@ -1006,10 +1264,6 @@ inline SurveySummary RunDirectorySurvey(const fs::path& rootDir, size_t maxSampl
                                           " | err=" + rec.readerError;
             sum.rejectedReasonBreakdown[reasonKey]++;
             sampleSubKey = reasonKey;
-            if (rec.load0100ShadowTested) {
-                sum.rejectedLoad0100Tested++;
-                if (rec.load0100ShadowValidToEof) sum.rejectedLoad0100ExactEof++;
-            }
         } else if (rec.bucket == BinBucket::UnsupportedOuterVersion) {
             const std::string hit =
                 rec.matchingCipherName.empty() ? "none" : rec.matchingCipherName;
@@ -1017,20 +1271,24 @@ inline SurveySummary RunDirectorySurvey(const fs::path& rootDir, size_t maxSampl
             sampleSubKey = verStr + "|probe=" + hit;
         }
 
-        // Track smallest file per sub-bucket so CI can inspect compact authentic samples too.
-        auto& sm = smallestPerBucket[sampleSubKey];
-        if (bytes.size() < sm.byteSize) {
-            sm.byteSize = bytes.size();
-            sm.relPath = relPath;
-            sm.fromRcc = fromRcc;
-            if (diskPath) sm.fullPath = *diskPath;
-            else sm.rccBytes = bytes;
+        if (rec.fileType == "AnimContainer") {
+            auto& sm = smallestPerBucket[sampleSubKey];
+            if (bytes.size() < sm.byteSize) {
+                sm.byteSize = bytes.size();
+                sm.relPath = relPath;
+                sm.fromRcc = fromRcc;
+                if (diskPath) sm.fullPath = *diskPath;
+                else sm.rccBytes = bytes;
+            }
         }
 
         const std::string baseLower = LowerAscii(fs::path(relPath).filename().string());
         const bool isNamedB11 = (kB11NamedSamples.count(baseLower) > 0);
-        if (isNamedB11 || bucketSampleCounts[sampleSubKey] < maxSamplesPerBucket) {
-            if (!isNamedB11) bucketSampleCounts[sampleSubKey]++;
+        const bool shouldSample =
+            rec.fileType == "AnimContainer" &&
+            (isNamedB11 || forceAnomalySample || bucketSampleCounts[sampleSubKey] < maxSamplesPerBucket);
+        if (shouldSample) {
+            if (!isNamedB11 && !forceAnomalySample) bucketSampleCounts[sampleSubKey]++;
             if (selectedSampleRelPaths.insert(relPath).second) {
                 BinInspectionRecord fullRec = InspectSingleBin(relPath, bytes, fromRcc, true);
                 if (cfgIt != cfgByStem.end()) fullRec.cfg = cfgIt->second;
@@ -1050,7 +1308,6 @@ inline SurveySummary RunDirectorySurvey(const fs::path& rootDir, size_t maxSampl
         processOne(rb.relLabel, nullptr, rb.bytes, true);
     }
 
-    // Also include the smallest authentic file in each sub-bucket if not already sampled.
     for (const auto& kv : smallestPerBucket) {
         const auto& sm = kv.second;
         if (sm.relPath.empty() || !selectedSampleRelPaths.insert(sm.relPath).second) continue;
@@ -1072,7 +1329,6 @@ inline SurveySummary RunDirectorySurvey(const fs::path& rootDir, size_t maxSampl
                   return a.relPath < b.relPath;
               });
 
-    // Prove zero mutation of sampled loose files on disk.
     for (const auto& pair : verifyUnchangedLooseSamples) {
         std::vector<uint8_t> afterBytes;
         if (!ReadFileBytes(pair.first, afterBytes) ||
@@ -1088,18 +1344,27 @@ inline std::string FormatJsonReport(const SurveySummary& s) {
     std::ostringstream o;
     o << "{\n";
     o << "  \"total_loose_bin\": " << s.totalLooseBin << ",\n";
+    o << "  \"total_data_animation_bin\": " << s.totalAnimDirBin << ",\n";
+    o << "  \"total_non_animation_bin\": " << s.totalNonAnimDirBin << ",\n";
     o << "  \"total_rcc_bin\": " << s.totalRccBin << ",\n";
     o << "  \"total_cfg_indexed\": " << s.totalCfgIndexed << ",\n";
-    o << "  \"b11_buckets\": {\n";
+    o << "  \"data_animation_b11_buckets\": {\n";
+    o << "    \"parsed\": " << s.animDirParsed << ",\n";
+    o << "    \"unsupported_version\": " << s.animDirUnsupportedOuter << ",\n";
+    o << "    \"invalid_header\": " << s.animDirInvalidHeader << ",\n";
+    o << "    \"unrecognized_type\": " << s.animDirUnrecognizedType << ",\n";
+    o << "    \"parser_rejected\": " << s.animDirParserRejected << "\n";
+    o << "  },\n";
+    o << "  \"tree_wide_b11_buckets\": {\n";
     o << "    \"parsed\": " << s.countParsed << ",\n";
     o << "    \"unsupported_version\": " << s.countUnsupportedOuter << ",\n";
     o << "    \"invalid_header\": " << s.countInvalidHeader << ",\n";
     o << "    \"unrecognized_type\": " << s.countUnrecognizedType << ",\n";
     o << "    \"parser_rejected\": " << s.countParserRejected << "\n";
     o << "  },\n";
-    o << "  \"header_padding\": {\n";
-    o << "    \"zero_padded\": " << s.zeroPaddedHeaders << ",\n";
-    o << "    \"nonzero_trailing_bytes\": " << s.dirtyPaddedHeaders << "\n";
+    o << "  \"anim_container_header_padding\": {\n";
+    o << "    \"zero_padded\": " << s.animContainerZeroPadded << ",\n";
+    o << "    \"nonzero_trailing_bytes\": " << s.animContainerDirtyPadded << "\n";
     o << "  },\n";
     o << "  \"sample_hashes_unchanged_after_run\": "
       << (s.sampleHashesUnchangedAfterRun ? "true" : "false") << ",\n";
@@ -1115,8 +1380,8 @@ inline std::string FormatJsonReport(const SurveySummary& s) {
     };
 
     std::map<std::string, size_t> verStrMap;
-    for (const auto& kv : s.outerVersionCounts) verStrMap[HexU32(kv.first)] = kv.second;
-    emitMapStr("outer_version_counts", verStrMap, true);
+    for (const auto& kv : s.animOuterVersionCounts) verStrMap[HexU32(kv.first)] = kv.second;
+    emitMapStr("anim_outer_version_counts", verStrMap, true);
     emitMapStr("outer_version_by_bucket", s.outerVersionByBucket, true);
     emitMapStr("bin_vs_cfg_version", s.binVsCfgVersion, true);
 
@@ -1128,19 +1393,23 @@ inline std::string FormatJsonReport(const SurveySummary& s) {
     for (const auto& kv : s.acceptedTrackVersions) accTrkVer[HexU32(kv.first)] = kv.second;
     emitMapStr("accepted_track_versions", accTrkVer, true);
 
-    o << "  \"accepted_key_channels\": {\n";
-    o << "    \"tracks_with_pos\": " << s.acceptedTracksPos << ",\n";
-    o << "    \"tracks_with_rot\": " << s.acceptedTracksRot << ",\n";
-    o << "    \"tracks_with_scale\": " << s.acceptedTracksScale << ",\n";
-    o << "    \"tracks_with_quatpos\": " << s.acceptedTracksQuatPos << ",\n";
-    o << "    \"tracks_with_matrix\": " << s.acceptedTracksMatrix << "\n";
+    emitMapStr("rejected_reason_breakdown", s.rejectedReasonBreakdown, true);
+    emitMapStr("source_spec_shadow_outcomes", s.sourceSpecOutcomeByOuter, true);
+    emitMapStr("source_spec_track_versions_by_outer", s.sourceSpecTrackVerByOuter, true);
+    emitMapStr("source_spec_key_channels_by_outer", s.sourceSpecKeyChannelsByOuter, true);
+
+    o << "  \"source_spec_invariants\": {\n";
+    o << "    \"container_0103_total\": " << s.container0103Total << ",\n";
+    o << "    \"container_0103_garbage_formula_exact\": "
+      << s.container0103GarbageFormulaExact << ",\n";
+    o << "    \"container_0104_list0_main_nonempty\": " << s.container0104List0NonEmpty << ",\n";
+    o << "    \"container_0104_list1_upbody1_nonempty\": " << s.container0104List1NonEmpty << ",\n";
+    o << "    \"container_0104_list2_upbody2_nonempty\": " << s.container0104List2NonEmpty << ",\n";
+    o << "    \"files_with_empty_bone_names\": " << s.filesWithEmptyBoneNames << ",\n";
+    o << "    \"accepted_files_with_matrix_keys_affected_by_68byte_bug\": "
+      << s.acceptedFilesWithMatrixKeysAffectedBy68ByteBug << "\n";
     o << "  },\n";
 
-    emitMapStr("rejected_reason_breakdown", s.rejectedReasonBreakdown, true);
-    o << "  \"rejected_load0100_shadow\": {\n";
-    o << "    \"tested\": " << s.rejectedLoad0100Tested << ",\n";
-    o << "    \"valid_to_exact_eof\": " << s.rejectedLoad0100ExactEof << "\n";
-    o << "  },\n";
     emitMapStr("unsupported_cipher_probe_hits", s.unsupportedCipherHits, true);
 
     o << "  \"samples\": [\n";
@@ -1156,24 +1425,18 @@ inline std::string FormatJsonReport(const SurveySummary& s) {
         o << "      \"bucket\": \"" << BinBucketName(r.bucket) << "\",\n";
         o << "      \"reader_valid\": " << (r.readerValid ? "true" : "false") << ",\n";
         o << "      \"reader_error\": \"" << JsonEscape(r.readerError) << "\",\n";
-        o << "      \"upbody_declared\": " << r.upBodyDeclared << ",\n";
-        o << "      \"main_declared\": " << r.mainDeclared << ",\n";
-        o << "      \"bytes_consumed\": " << r.bytesConsumed << ",\n";
-        o << "      \"trailing_bytes\": " << r.trailingBytes << ",\n";
         o << "      \"fail_list\": \"" << JsonEscape(r.failList) << "\",\n";
         o << "      \"fail_track_index\": " << r.failTrackIndex << ",\n";
         o << "      \"fail_offset\": " << r.failOffset << ",\n";
         o << "      \"fail_track_version\": \"" << HexU32(r.failTrackVersion) << "\",\n";
-        o << "      \"fail_next_dword\": \"" << HexU32(r.failNextDword) << "\",\n";
         o << "      \"fail_window_hex\": \"" << r.failWindowHex << "\",\n";
-        o << "      \"fail_ascii_preview\": \"" << JsonEscape(r.failAsciiPreview) << "\",\n";
-        o << "      \"load0100_shadow_tested\": "
-          << (r.load0100ShadowTested ? "true" : "false") << ",\n";
-        o << "      \"load0100_shadow_valid_to_eof\": "
-          << (r.load0100ShadowValidToEof ? "true" : "false") << ",\n";
-        o << "      \"load0100_shadow_note\": \"" << JsonEscape(r.load0100ShadowNote) << "\",\n";
+        o << "      \"source_spec_ok\": " << (r.sourceSpec.ok ? "true" : "false") << ",\n";
+        o << "      \"source_spec_exact_eof\": " << (r.sourceSpec.exactEof ? "true" : "false") << ",\n";
+        o << "      \"source_spec_lists\": [" << r.sourceSpec.list0Count << ", "
+          << r.sourceSpec.list1Count << ", " << r.sourceSpec.list2Count << "],\n";
+        o << "      \"source_spec_empty_bones\": " << r.sourceSpec.emptyBoneNames << ",\n";
+        o << "      \"source_spec_note\": \"" << JsonEscape(r.sourceSpec.note) << "\",\n";
         o << "      \"header_prefix16_hex\": \"" << r.headerPrefix16Hex << "\",\n";
-        o << "      \"header_tail16_hex\": \"" << r.headerTail16Hex << "\",\n";
         o << "      \"payload_prefix64_hex\": \"" << r.payloadPrefix64Hex << "\",\n";
         o << "      \"matching_cipher_probe\": \"" << JsonEscape(r.matchingCipherName) << "\",\n";
         o << "      \"cfg\": {\n";
@@ -1187,21 +1450,7 @@ inline std::string FormatJsonReport(const SurveySummary& s) {
         o << "        \"start_time\": " << r.cfg.startTime << ",\n";
         o << "        \"end_time\": " << r.cfg.endTime << ",\n";
         o << "        \"unit_time\": " << r.cfg.unitTime << "\n";
-        o << "      },\n";
-        o << "      \"cipher_probes\": [\n";
-        for (size_t j = 0; j < r.cipherProbes.size(); ++j) {
-            const auto& cp = r.cipherProbes[j];
-            o << "        {\"cipher\": \"" << ProbeCipherName(cp.cipher)
-              << "\", \"d0\": \"" << HexU32(cp.d0)
-              << "\", \"d1\": \"" << HexU32(cp.d1)
-              << "\", \"d2\": \"" << HexU32(cp.d2)
-              << "\", \"d3\": \"" << HexU32(cp.d3)
-              << "\", \"track_like\": " << (cp.looksLikeTrackList ? "true" : "false")
-              << ", \"hex32\": \"" << cp.decodedPrefixHex
-              << "\", \"ascii\": \"" << JsonEscape(cp.decodedAscii) << "\"}"
-              << (j + 1 < r.cipherProbes.size() ? "," : "") << "\n";
-        }
-        o << "      ]\n";
+        o << "      }\n";
         o << "    }" << (i + 1 < s.samples.size() ? "," : "") << "\n";
     }
     o << "  ]\n";
@@ -1211,70 +1460,58 @@ inline std::string FormatJsonReport(const SurveySummary& s) {
 
 inline void PrintTextSummary(const SurveySummary& s) {
     std::printf("=== Phase 3J B12 Authentic Animation Container Survey ===\n");
-    std::printf("loose .bin=%zu  rcc .bin=%zu  indexed .cfg=%zu\n",
-                s.totalLooseBin, s.totalRccBin, s.totalCfgIndexed);
-    std::printf("B11 buckets: parsed=%zu unsupported-version=%zu invalid-header=%zu "
-                "unrecognized-type=%zu parser-rejected=%zu\n",
-                s.countParsed, s.countUnsupportedOuter, s.countInvalidHeader,
-                s.countUnrecognizedType, s.countParserRejected);
-    std::printf("header 128B padding: zero-padded=%zu nonzero-trailing=%zu\n",
-                s.zeroPaddedHeaders, s.dirtyPaddedHeaders);
+    std::printf("data/animation .bin=%zu  non-animation .bin=%zu  rcc .bin=%zu  indexed .cfg=%zu\n",
+                s.totalAnimDirBin, s.totalNonAnimDirBin, s.totalRccBin, s.totalCfgIndexed);
+    std::printf("data/animation B11 buckets: parsed=%zu unsupported-version=%zu "
+                "invalid-header=%zu unrecognized-type=%zu parser-rejected=%zu\n",
+                s.animDirParsed, s.animDirUnsupportedOuter, s.animDirInvalidHeader,
+                s.animDirUnrecognizedType, s.animDirParserRejected);
+    std::printf("AnimContainer 128B header padding: zero-padded=%zu nonzero-trailing=%zu\n",
+                s.animContainerZeroPadded, s.animContainerDirtyPadded);
     std::printf("asset SHA-256 unchanged after inspection: %s\n",
                 s.sampleHashesUnchangedAfterRun ? "YES" : "NO");
 
-    std::printf("\n--- Outer version x bucket ---\n");
+    std::printf("\n--- AnimContainer outer version x B11 bucket ---\n");
     for (const auto& kv : s.outerVersionByBucket) {
         std::printf("  %6zu x %s\n", kv.second, kv.first.c_str());
     }
 
-    std::printf("\n--- Outer .bin version -> companion .cfg version ---\n");
-    for (const auto& kv : s.binVsCfgVersion) {
-        std::printf("  %6zu x %s\n", kv.second, kv.first.c_str());
-    }
-
-    std::printf("\n--- Accepted (.bin parsed=%zu) metrics ---\n", s.countParsed);
+    std::printf("\n--- Unmodified reader accepted (%zu) metrics ---\n", s.animDirParsed);
     for (const auto& kv : s.acceptedTrailingBytes) {
         std::printf("  trailing_bytes=%zu : %zu files\n", kv.first, kv.second);
     }
     for (const auto& kv : s.acceptedTrackVersions) {
         std::printf("  track_version=%s : %zu tracks\n", HexU32(kv.first).c_str(), kv.second);
     }
-    std::printf("  channels: pos=%zu rot=%zu scale=%zu quatpos=%zu matrix=%zu\n",
-                s.acceptedTracksPos, s.acceptedTracksRot, s.acceptedTracksScale,
-                s.acceptedTracksQuatPos, s.acceptedTracksMatrix);
+    std::printf("  accepted files with m_cMatrixKeys>0 affected by 68B-vs-80B bug: %zu\n",
+                s.acceptedFilesWithMatrixKeysAffectedBy68ByteBug);
 
-    std::printf("\n--- Parser-rejected (%zu) root-cause breakdown ---\n", s.countParserRejected);
+    std::printf("\n--- Unmodified reader parser-rejected (%zu) root-cause breakdown ---\n",
+                s.animDirParserRejected);
     for (const auto& kv : s.rejectedReasonBreakdown) {
         std::printf("  %6zu x %s\n", kv.second, kv.first.c_str());
     }
-    std::printf("  SAnimation::Load_0100 shadow test: tested=%zu valid_to_exact_eof=%zu\n",
-                s.rejectedLoad0100Tested, s.rejectedLoad0100ExactEof);
 
-    std::printf("\n--- Unsupported outer version (%zu) cipher probe hits ---\n",
-                s.countUnsupportedOuter);
-    for (const auto& kv : s.unsupportedCipherHits) {
+    std::printf("\n--- Backup-engine SAnimationSaveLoad.cpp shadow verification ---\n");
+    for (const auto& kv : s.sourceSpecOutcomeByOuter) {
         std::printf("  %6zu x %s\n", kv.second, kv.first.c_str());
     }
+    std::printf("  0x0103 inter-list DWORD == (0x0103 + upBody + main): %zu / %zu\n",
+                s.container0103GarbageFormulaExact, s.container0103Total);
+    std::printf("  0x0104 non-empty list counts: list0(main)=%zu list1(upBody1)=%zu list2(upBody2)=%zu\n",
+                s.container0104List0NonEmpty, s.container0104List1NonEmpty,
+                s.container0104List2NonEmpty);
+    std::printf("  files containing >=1 track with empty m_strBone: %zu\n",
+                s.filesWithEmptyBoneNames);
 
-    std::printf("\n--- Representative authentic samples (%zu) ---\n", s.samples.size());
-    for (const auto& r : s.samples) {
-        std::printf("  [%s] %s (%zu B, sha256=%s, outer=%s, cfg=%s)\n",
-                    BinBucketName(r.bucket), r.relPath.c_str(), r.byteSize,
-                    r.sha256.c_str(), HexU32(r.outerVersion).c_str(),
-                    r.cfg.found ? HexU32(r.cfg.rawVersion).c_str() : "none");
-        if (r.bucket == BinBucket::ParserRejected) {
-            std::printf("      fail: list=%s idx=%u/%u off=%zu trackVer=%s next=%s load0100Eof=%s\n",
-                        r.failList.c_str(), r.failTrackIndex,
-                        (r.failList == "upBody" ? r.upBodyDeclared : r.mainDeclared),
-                        r.failOffset, HexU32(r.failTrackVersion).c_str(),
-                        HexU32(r.failNextDword).c_str(),
-                        r.load0100ShadowValidToEof ? "YES" : "NO");
-            std::printf("      winHex=%s\n", r.failWindowHex.c_str());
-        } else if (r.bucket == BinBucket::UnsupportedOuterVersion) {
-            std::printf("      payload64=%s probeMatch=%s\n",
-                        r.payloadPrefix64Hex.c_str(),
-                        r.matchingCipherName.empty() ? "none" : r.matchingCipherName.c_str());
-        }
+    std::printf("\n--- Source-spec track versions by outer container version ---\n");
+    for (const auto& kv : s.sourceSpecTrackVerByOuter) {
+        std::printf("  %6zu tracks : %s\n", kv.second, kv.first.c_str());
+    }
+
+    std::printf("\n--- Source-spec keyframe channel presence (files) by outer version ---\n");
+    for (const auto& kv : s.sourceSpecKeyChannelsByOuter) {
+        std::printf("  %6zu files  : %s\n", kv.second, kv.first.c_str());
     }
 }
 

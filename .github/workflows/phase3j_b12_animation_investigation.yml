@@ -196,7 +196,7 @@ jobs:
           while IFS=$'\t' read -r rel sha sz ver bucket; do
             [ -n "$rel" ] || continue
             full="external/ep7_release/client_original/$rel"
-            if [ -f "$full" ] && [ "$sz" -le 300000 ] && [ "$count" -lt 24 ]; then
+            if [ -f "$full" ] && [ "$sz" -le 300000 ] && [ "$count" -lt 40 ]; then
               disk_sha=$(sha256sum "$full" | cut -d' ' -f1)
               if [ "$disk_sha" != "$sha" ]; then
                 echo "ERROR: sample SHA mismatch for $rel" >&2
