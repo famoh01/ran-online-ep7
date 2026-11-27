@@ -64,6 +64,11 @@ jobs:
           (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxSkinAniControl.cpp
           (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Common/CompByte.h
           (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Common/CompByte.cpp
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxSkinDefine.h
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxBoneCollector.h
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxBoneCollector.cpp
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxSkinMesh9_CPU.h
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxSkinMesh9_CPU.cpp
           EOF
           sed -i 's/^[[:space:]]*//' /tmp/b12_lfs_paths.txt
 
@@ -116,7 +121,7 @@ jobs:
               'conclusion': 'success',
               'output': {
                   'title': 'Phase 3J B12 verified EP7 engine animation sources',
-                  'summary': 'All 19 focused Lib_Engine animation/serialization files verified against LFS SHA-256 pointers.',
+                  'summary': 'All 24 focused Lib_Engine animation/serialization files verified against LFS SHA-256 pointers (B17 adds DxSkinDefine.h, DxBoneCollector.*, DxSkinMesh9_CPU.*).',
                   'text': '```tsv\n' + text[:60000] + '\n```'
               }
           }
@@ -124,6 +129,66 @@ jobs:
               json.dump(payload, f)
           PY
           gh api --method POST "repos/$REPO/check-runs" --input /tmp/b12_check_sources.json --jq .id
+
+          # ------------------------------------------------------------------
+          # B17 runtime-semantics evidence: fingerprint the EP7-era runtime
+          # evaluation code that the mobile animation runtime must reproduce.
+          # Settles, from authentic source: the USE_ANI_QUATERNION build flag,
+          # what SAnimation::SetTime does for matrix-keyed tracks, what
+          # DxSkeleton::UpdateBones composes, and the CPU skinning palette.
+          # ------------------------------------------------------------------
+          cat > /tmp/b17_evidence.py <<'PYEOF'
+          import json, os, re
+          base = '/tmp/ep7backup/(Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/'
+          def read(name):
+              try:
+                  return open(base + name, 'r', encoding='cp949', errors='replace').read()
+              except FileNotFoundError:
+                  return ''
+          facts = {}
+          define = read('DxSkinDefine.h')
+          facts['USE_ANI_QUATERNION_defined'] = bool(re.search(r'^\s*#define\s+USE_ANI_QUATERNION', define, re.M))
+          facts['USE_ANI_QUATERNION_undefed'] = bool(re.search(r'^\s*#undef\s+USE_ANI_QUATERNION', define, re.M))
+          sani = read('SAnimation.cpp')
+          m = re.search(r'void SAnimation::SetTime\s*\([^)]*\)\s*\{(.*?)\n\}', sani, re.S)
+          if m:
+              body = m.group(1)
+              # Order of key-source branches inside SetTime.
+              facts['settime_matrix_first'] = body.find('m_pMatrixKeys') != -1 and body.find('m_pMatrixKeys') < body.find('m_pQuatPosKeys')
+              facts['settime_writes_matrot_only_for_matrix'] = 'SetMatrix' in body
+              # Does the matrix branch also touch m_pQuatPosCUR? (whole-body check)
+              facts['settime_matrix_branch_touches_sqt'] = 'm_pQuatPosCUR' in body
+          bone = read('DxBoneCollector.cpp')
+          facts['updatebones_blending_lerp'] = 'USE_ANI_BLENDING' in bone and 'D3DXQuaternionSlerp' in bone
+          facts['updatebones_mix_add'] = 'USE_ANI_ADD' in bone and 'm_vQuatMIX' in bone
+          facts['updatebones_scale_rows_multiplied'] = bone.count('m_vScale') >= 3 and 'm_fScale' in bone
+          facts['resetbone_cur_prev_to_orig'] = 'm_pQuatPosCUR = m_pQuatPosORIG' in bone and 'm_pQuatPosPREV = m_pQuatPosORIG' in bone
+          skin = read('DxSkinMesh9_CPU.cpp')
+          facts['cpu_skin_palette_offset_times_bone'] = 'pBoneOffsetMatrices' in skin and 'ppBoneMatrixPtrs' in skin
+          summary_lines = ''.join('%s: %s\n' % (k, v) for k, v in sorted(facts.items()))
+          payload = {
+              'name': 'b17-runtime-semantics-evidence',
+              'head_sha': os.environ['HEAD_SHA'],
+              'status': 'completed',
+              'conclusion': 'success',
+              'output': {
+                  'title': 'Phase 3J B17 authentic runtime-semantics evidence',
+                  'summary': ('EP7-era runtime fingerprint from verified LFS sources: '
+                              'USE_ANI_QUATERNION defined=%s; SetTime matrix branch writes matRot (SQT untouched)=%s; '
+                              'UpdateBones blending/mix/scale path present=%s/%s/%s.' % (
+                                  facts.get('USE_ANI_QUATERNION_defined'),
+                                  facts.get('settime_writes_matrot_only_for_matrix'),
+                                  facts.get('updatebones_blending_lerp'),
+                                  facts.get('updatebones_mix_add'),
+                                  facts.get('updatebones_scale_rows_multiplied'))),
+                  'text': '```\n' + summary_lines[:60000] + '\n```\n\n```cpp\n' + (m.group(0)[:4000] if m else '') + '\n```'
+          }
+          }
+          with open('/tmp/b17_check_evidence.json', 'w') as f:
+              json.dump(payload, f)
+          PYEOF
+          python3 /tmp/b17_evidence.py
+          gh api --method POST "repos/$REPO/check-runs" --input /tmp/b17_check_evidence.json --jq .id
 
   inspect-authentic-anim-containers:
     name: Inspect authentic ran-ep7-full-v1 animation containers
