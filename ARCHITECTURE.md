@@ -197,3 +197,76 @@ structural consume on a `0x0101` match, `Skip(blockSize)` otherwise. The nested 
 followed by the effect list (`DWORD count`, each `DWORD TypeID` + effect payload) and
 `m_dwFlag`, which is what makes a mis-consumed influence visible as a desync on the *next*
 trace's name rather than at the influence itself.
+
+---
+
+## Appendix — `.cps` version branches and the legacy trace layouts
+
+The `.cps` container is not one layout with a version tag; `DxSkinPiece::LoadPiece`
+(`enginelib/Meshs/DxSkinPieceContainer.cpp`) is seven separate branches plus a terminal `else`
+that raises *"Can't Load Skin object"* and returns `E_FAIL` (`:934-943`). A reader must
+dispatch on the version **and** change its field set accordingly.
+
+### Branch map
+
+| Version | Branch | `m_dwMaterialNum` + materials | Trace section | `m_dwFlag` |
+|---|---|---|---|---|
+| 0x0107 | `:374` | yes | count + name + `SVERTEXINFLU` | read |
+| 0x0106 | `:459` | yes | count + name + `SVERTEXINFLU` | read |
+| 0x0105 | `:544` | yes | count + name + `SVERTEXINFLU` | read |
+| 0x0104 | `:629` | yes | count + name + `SVERTEXINFLU` | **not read** |
+| 0x0103 | `:712` | **no** | count + name + `SVERTEXINFLU` | **not read** |
+| 0x0102 | `:783` | **no** | **10 fixed slots**, no names, no count | **not read** |
+| 0x0101 | `:859` | **no** | **8 fixed slots**, no names, no count | **not read** |
+
+`m_emWeaponWhereBack` is stored on disk only for 0x0106/0x0107 (`:398-399`, `:483-484`). Every
+other branch assigns it `EMPEACE_WEAPON_RSLOT` without reading (`:626`, `:709`, `:780`, `:857`,
+`:931`).
+
+### The fixed-slot trace layout (0x0101 / 0x0102)
+
+No count, no name strings — just N consecutive `SVERTEXINFLU` records:
+
+```
+0x0101:  8 x SVERTEXINFLU      // for ( int i=0; i<8;  i++ ) ...  :891
+0x0102: 10 x SVERTEXINFLU      // for ( int i=0; i<10; i++ ) ...  :815
+DWORD  effectCount
+```
+
+Only the first four slots can produce a trace point. The branches test
+`sTraceArray[k].m_dwIndex != COL_ERR` for k = 0..3 and name the survivors from the compile-time
+table in `DxSkinPieceContainer.h:22-25`:
+
+```c
+#define STRACE_IMAGE01 ("IMAGE01")   // slot 0
+#define STRACE_IMAGE02 ("IMAGE02")   // slot 1
+#define STRACE_IMAGE11 ("IMAGE11")   // slot 2
+#define STRACE_IMAGE12 ("IMAGE12")   // slot 3
+```
+
+`STRACOR::STRACOR` copies that name with `StringCchCopy ( m_szName, STRACE_NSIZE = 32, ... )`,
+so it is truncated to 31 characters — harmless for these eight-character literals. Slots 4..7
+(0x0101) and 4..9 (0x0102) are read for alignment and discarded.
+
+Consequence for a reader: those names are **not file data**. The mobile reader exposes them
+but marks the trace `syntheticName = true`, so no caller can mistake `IMAGE01` for a
+dependency name recovered from the asset.
+
+### Why `m_dwFlag` is absent below 0x0105
+
+The constructor initialises `m_dwFlag(0L)` (`:192`). Branches before 0x0105 never read it from
+the file; they only accumulate `m_dwFlag |= pEffChar->GetFlag()` per successfully loaded effect
+(`:703`, `:774`, `:850`, `:925`). A reader that insists on a trailing DWORD for 0x0104 or older
+consumes the next record's bytes — or, at end of file, reports a complete file as
+`truncated piece flag`. That was the B15 defect: 88 authentic 0x0104 files were being rejected
+for a field their version does not store.
+
+## Appendix — competing `DxSkinPiece::VERSION` definition
+
+`enginelib/Meshs/ReplaceContainer.cpp:19` defines `DxSkinPiece::VERSION = 0x00000100` and a
+`LoadPiece` that only accepts that one version. It is **not** the `.cps` loader: the file
+defines the `DxReplaceContainer` family used by `DxLandMan`/`DxPieceContainer` (via
+`DxReplaceContainer.h`), and `enginelib.vcxproj:1526` compiles `Meshs\DxSkinPieceContainer.cpp`
+into the character path. The authoritative `.cps` loader is `DxSkinPieceContainer.cpp`, with
+`VERSION = 0x00000107` (`:158`) and the seven branches above. Do not take a version bound from
+`ReplaceContainer.cpp`.

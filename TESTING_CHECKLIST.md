@@ -318,3 +318,71 @@ The asset job still fails, and must continue to: 3,679 genuine FAILs remain (B13
 Read the probe's **aggregated reason table** for comparisons, not the raw annotation list — the
 ~10-annotation cap moves which reasons are visible between runs (UNSUPPORTED reasons now appear
 that were previously crowded out).
+
+---
+
+## 14. Phase 3J follow-up — `.cps` legacy versions 0x0101–0x0104 (B13 / B15)
+
+Source basis: `DxSkinPiece::LoadPiece` has seven branches and a terminal error path
+(`DxSkinPieceContainer.cpp:374/459/544/629/712/783/859`, `else` at `:934-943`).
+
+### Regression coverage added (`TestSkinPieceLegacyVersions`)
+
+| Item | Requirement | Result |
+|---|---|---|
+| 0x0104 | parses; materials present; trace name from file; ends at effect count | PASS |
+| 0x0104 trailing flag | a flag DWORD appended to the file is **not** consumed (`flag == 0`) | PASS |
+| 0x0103 | parses; **no** material list; traced names; no trailing flag | PASS |
+| 0x0102 | parses; **10** fixed slots; names `IMAGE01`/`IMAGE11`; `syntheticName` set | PASS |
+| 0x0101 | parses; **8** fixed slots; same name table | PASS |
+| COL_ERR slots | slots with `m_dwIndex == COL_ERR` produce no trace point (2 of 4 kept) | PASS |
+| slot count is load-bearing | 10-slot body read as 0x0101 fails; 8-slot body read as 0x0102 fails | PASS |
+| version gate | `0x0100` / `0x0108` / `0x0200` still rejected | PASS |
+| control: `hasTrailingFlag >= 0x0104` | 3 failures reproduce the old defect | PASS (reproduced) |
+| control: 10 slots for both legacy versions | 4 failures | PASS (reproduced) |
+| control: pre-fix reader | 8+ failures across the legacy section | PASS (reproduced) |
+
+### Executed local results
+
+| Stage | Checks | Failures |
+|---|---|---|
+| before this change | 294 | 0 |
+| after | **339** | **0** |
+
+ASan + UBSan + LSan: clean, exit 0. Core suite compile (`-Werror`): exit 0; run stops at the
+pre-existing `test_main.cpp:186` external-data assertion (exit 134), unchanged. Probe compiles
+clean under `-Werror`.
+
+### Executed CI results (run `45923517031`, commit `a591320`)
+
+| Job | Result |
+|---|---|
+| `Core C++17 tests (blocking)` | **success** |
+| `Android ARM64 build (lib + APK/AAB)` | **success** |
+| `Authentic EP7 asset verification` | failure — correct; genuine FAILs remain |
+
+Pack entries (the only measure that counts, from the probe's summary line):
+
+| | before `1e36e89` | after `a591320` | Δ |
+|---|---|---|---|
+| parsed | 6,350 | **6,479** | **+129** |
+| failed | 3,679 | **3,550** | **−129** |
+| unsupported | 1,631 | 1,631 | 0 |
+| total | 11,660 | 11,660 | 0 |
+
+Reason-level change, all `.cps`:
+
+| Reason | before | after |
+|---|---|---|
+| `cps: unsupported .cps version` | 3,138 | 3,097 (**−41**) |
+| `cps: truncated piece flag` | 88 | **0** (**−88**) |
+| `.chf` / skeleton / `.bin` / `.cfg` / `.x` | unchanged | unchanged |
+
+41 + 88 = 129 = Δparsed = Δfailed. **Authentic improvement is confirmed by CI**, not inferred.
+
+### What is deliberately not claimed
+
+The residual 3,097 `.cps` failures are files whose version DWORD is outside `0x0101..0x0107`.
+The engine rejects those too (same terminal `else`), so this is correct behaviour, not a
+remaining bug in the branch logic. No speculative version branch was added. Confirming whether
+any are legitimate would need the files themselves, which are unobtainable in this sandbox.

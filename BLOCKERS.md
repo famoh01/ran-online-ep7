@@ -488,3 +488,76 @@ parsed, which is exactly the failure mode B11 warns about.
 
 See this document's B13 (`.cps` 0x0101–0x0103 version gate, 3,138 entries) and B14
 (`SVERTEXINFLU::SaveFile` over-states `dwSize`). Both remain open and unchanged by the fix.
+
+## B13 — RESOLVED (partially): `.cps` versions 0x0101–0x0103 now load
+
+**Status: code defect fixed and verified on authentic data. The blocker is now much smaller but
+not closed — see "what remains" below.**
+
+### What was wrong
+
+`DxSkinPiece::LoadPiece` (`DxSkinPieceContainer.cpp`) implements seven version branches —
+`0x0107` `:374`, `0x0106` `:459`, `0x0105` `:544`, `0x0104` `:629`, `0x0103` `:712`, `0x0102`
+`:783`, `0x0101` `:859` — and sends every other version to a terminal `else` that raises
+*"Can't Load Skin object"* and returns `E_FAIL` (`:934-943`). The mobile reader accepted only
+`0x0104..0x0107`, so it rejected files the engine loads.
+
+The legacy branches are not the modern layout with an older tag. Per branch:
+
+| Version | Materials | Traces | Trailing `m_dwFlag` |
+|---|---|---|---|
+| 0x0104 | count + `SMATERIAL_PIECE` | count + name + `SVERTEXINFLU` | **absent** |
+| 0x0103 | **absent** | count + name + `SVERTEXINFLU` | **absent** |
+| 0x0102 | **absent** | **10 fixed `SVERTEXINFLU` slots, no names** | **absent** |
+| 0x0101 | **absent** | **8 fixed `SVERTEXINFLU` slots, no names** | **absent** |
+
+For 0x0101/0x0102 the slot loops are `for (int i=0; i<8; i++)` (`:891`) and `<10` (`:815`) with
+no count field, and only slots 0..3 are ever emitted — guarded by
+`if (sTraceArray[k].m_dwIndex != COL_ERR)` and named from the hard-coded `STRACE_IMAGE01`,
+`IMAGE02`, `IMAGE11`, `IMAGE12` macros (`DxSkinPieceContainer.h:22-25`), which `STRACOR`
+truncates to 31 characters via `StringCchCopy`. Slots 4..7/4..9 are read and discarded.
+
+`m_dwFlag` is read by 0x0105 and newer only. For every legacy version it stays at the
+constructor's `0L` (`:192`) and is only ever `|=`-ed with effect flags (`:703`/`:774`/`:850`/`:925`).
+
+### The second defect found here
+
+Because the reader required a trailing flag for **all** accepted versions, a complete **0x0104**
+file — which ends at the effect count — was reported as `truncated piece flag`. That is the
+reason B15's 88 entries existed; they were valid 0x0104 files, not truncated ones.
+
+### Verified effect on authentic data (CI run `45923517031`, commit `a591320`)
+
+| | before | after | Δ |
+|---|---|---|---|
+| pack entries parsed | 6,350 | 6,479 | **+129** |
+| pack entries failed | 3,679 | 3,550 | **−129** |
+| `cps: unsupported .cps version` | 3,138 | 3,097 | **−41** |
+| `cps: truncated piece flag` | 88 | **0 (reason gone)** | **−88** |
+| total CPS failures | 3,226 | 3,097 | **−129** |
+
+41 + 88 = 129 = Δparsed = Δfailed. Every change is `.cps`; `.chf` (243), skeleton (210), `.bin`
+(6,228 unsupported), `.cfg` and `.x` are byte-for-byte identical to the previous run.
+
+### What remains — and why it is correct to stop here
+
+The residual **3,097** are `.cps` files whose **version DWORD is outside `0x0101..0x0107`**.
+The engine does not implement those either: they hit the same terminal `else`. The reader is
+therefore behaving exactly like the original, and the reason string is now the accurate signal
+rather than a masked one.
+
+Establishing whether any of those 3,097 are legitimately loadable would require reading their
+version DWORDs and, for any surprising value, a byte dump of the file. Neither is obtainable in
+this sandbox (`external/` absent; `gh release download` fails with `EOF`). Inventing a version
+branch to absorb them would be fabrication, so none was added.
+
+**Do not "fix" the remaining 3,097 by widening the version gate further without evidence.**
+
+## B15 — RESOLVED (superseded)
+
+The 88 `cps: truncated piece flag` entries were valid **0x0104** files. `LoadPiece` ends 0x0104
+after the effect list (`DxSkinPieceContainer.cpp:629-711`) and never reads `m_dwFlag`; the
+reader required it anyway. Gating the flag read to `>= 0x0105` makes all 88 parse, and the
+reason no longer occurs in run `45923517031`.
+
+See B13 above. B14 remains open and unchanged.

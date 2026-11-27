@@ -452,3 +452,161 @@ lines that the old run did not surface. Those are **UNSUPPORTED** (informational
 FAIL, and their appearance is an artefact of the annotation cap: with ~10 annotations per run,
 4 of the old run's FAIL reason lines consumed the budget that the new run has spare. The
 aggregated FAIL table above is the authoritative comparison; annotation presence alone is not.
+
+---
+
+## Phase 3J follow-up — B13: `.cps` legacy versions 0x0101–0x0103 resolved
+
+**Date:** 2026-11-26 · **Branch:** `arena/42c5ac0c-ran-online-ep7` · **Commit:** `a591320`
+
+### Verdict
+
+B13 was a **real parser gate defect**, proven entirely from engine source. Three of the four
+conclusions listed in the task's Step 3 apply:
+
+| Hypothesis | Finding |
+|---|---|
+| parser rejects valid versions unnecessarily | **TRUE** — 0x0101–0x0103 are fully implemented by `LoadPiece` |
+| a version-specific field is missing | **TRUE** — 0x0101/0x0102 have no material count and no trace names |
+| original source uses a different read sequence | **TRUE** — fixed 8/10-slot arrays instead of count+names |
+| original source uses a different structure | partially — the difference is a *layout* switch, not a new struct |
+| the rejection is legitimate | **FALSE** |
+
+A **fourth, previously unreported defect** was found while auditing the same code: the reader
+required a trailing `m_dwFlag` for **0x0104**, which the engine does not write.
+
+### Source evidence — the complete branch map
+
+`DxSkinPiece::LoadPiece` (`enginelib/Meshs/DxSkinPieceContainer.cpp`) has seven branches and a
+terminal `else` that raises *"Can't Load Skin object"* and returns `E_FAIL` (`:934-943`):
+
+| Version | Branch | Header through mesh name | Materials | Traces | Trailing flag |
+|---|---|---|---|---|---|
+| 0x0107 | `:374` | ref, x, skel, type, **weapon**, mesh | count + `SMATERIAL_PIECE` | count + name + `SVERTEXINFLU` | yes |
+| 0x0106 | `:459` | ref, x, skel, type, **weapon**, mesh | count + `SMATERIAL_PIECE` | count + name + `SVERTEXINFLU` | yes |
+| 0x0105 | `:544` | ref, x, skel, type, mesh | count + `SMATERIAL_PIECE` | count + name + `SVERTEXINFLU` | yes |
+| 0x0104 | `:629` | ref, x, skel, type, mesh | count + `SMATERIAL_PIECE` | count + name + `SVERTEXINFLU` | **no** |
+| 0x0103 | `:712` | ref, x, skel, type, mesh | **none** | count + name + `SVERTEXINFLU` | **no** |
+| 0x0102 | `:783` | ref, x, skel, type, mesh | **none** | **10 fixed slots**, no names | **no** |
+| 0x0101 | `:859` | ref, x, skel, type, mesh | **none** | **8 fixed slots**, no names | **no** |
+
+Two details worth stating explicitly, because both are easy to get wrong:
+
+1. **The slot arrays are not a count + list.** 0x0101 reads `for (int i=0; i<8; i++)
+   sTraceArray[i].LoadFile ( SFile );` (`:891`) and 0x0102 reads the same loop with `<10`
+   (`:815`). No count, no name strings, no version tag to skip — exactly N `SVERTEXINFLU`
+   records back to back.
+2. **Only four slots can ever become trace points.** After the loop, the two branches write
+   `if ( sTraceArray[k].m_dwIndex != COL_ERR )` guards for k = 0..3 only (`:896-904`,
+   `:820-829`), naming them from the hard-coded `STRACE_IMAGE01`/`02`/`11`/`12` macros
+   (`DxSkinPieceContainer.h:22-25`), which `STRACOR` copies through `StringCchCopy(…, 32, …)`
+   i.e. truncated to 31 characters. Slots 4..7 (or 4..9) are read and discarded.
+
+`m_dwFlag` is *not* read by any of 0x0101–0x0104. It is initialised to `0L` in the constructor
+(`:192`) and only ever `|=`-ed with effect flags (`:703`, `:774`, `:850`, `:925`).
+
+The competing definition in `enginelib/Meshs/ReplaceContainer.cpp:19`
+(`DxSkinPiece::VERSION = 0x0100`) is a **different class** — `DxReplaceContainer`, used by
+`DxLandMan`/`DxPieceContainer`, included via `DxReplaceContainer.h` — and is not built from
+that file into the character path. `enginelib.vcxproj:1526` compiles
+`Meshs\DxSkinPieceContainer.cpp`, which is the authoritative `.cps` loader.
+
+### Changes
+
+Four switches, each derived one-to-one from the branches above — no offsets, no guesses:
+
+```cpp
+hasMaterials     = version >= 0x0104   // 0x0103 has no material count
+hasTraceNames    = version >= 0x0103   // 0x0101/0x0102 use fixed slot arrays
+hasTrailingFlag  = version >= 0x0105   // 0x0104 and older end after the effect list
+legacySlots      = (version == 0x0102) ? 10 : (version == 0x0101) ? 8 : 0
+```
+
+`RANMobile/Data/Importer/EP7SkinPiece.cpp` / `.h`. The 0x0104–0x0107 read order, the
+length-prefixed string convention, `ReadVertexInfluence`'s unknown-version skip and every
+sanity limit are untouched. `EP7TracePoint` gained `syntheticName`, so a caller can tell an
+engine-table name (`IMAGE01`) from one stored in the file.
+
+`EP7WorldCharParser` needed no change: it only bounds `version <= CPS_VERSION (0x0107)`.
+
+### Regression tests
+
+`TestSkinPieceLegacyVersions()` in `RANMobile/Tests/test_phase3j.cpp`, with per-version fixtures
+under `namespace legacy`. Coverage:
+
+- 0x0104, 0x0103, 0x0102, 0x0101 each parse, with the field set each branch actually stores.
+- the material list is empty for 0x0101–0x0103 and populated for 0x0104.
+- slot names are `IMAGE01` / `IMAGE11` and flagged `syntheticName`.
+- slots whose `m_dwIndex == COL_ERR` are filtered out (2 of 4 populated slots survive).
+- **the 8-vs-10 slot constants are load-bearing**: exercised in both directions (a 10-slot body
+  read as 0x0101 and an 8-slot body read as 0x0102 both fail).
+- 0x0104 with a flag DWORD appended must *not* consume it (`info.flag == 0`).
+
+The pre-existing gate test asserted that **0x0103 is rejected** — that assertion encoded the
+bug. It now tests versions the engine genuinely does not implement (`0x0100`, `0x0108`,
+`0x0200`), all of which reach `LoadPiece`'s terminal `else`.
+
+**Control builds** (temporary copies, reverted afterwards):
+
+| Injected fault | Result |
+|---|---|
+| `hasTrailingFlag >= 0x0104` (restore the old behaviour) | 3 failures — `truncated piece flag`, `error.empty()`, `flag == 0` |
+| `legacySlots` = 10 for both 0x0101 and 0x0102 | 4 failures — `truncated trace vertex influence`, `traces.size() == 2`, `error.empty()`, and the cross-version check |
+| pre-fix reader (gate 0x0104..0x0107 only) | 8+ failures across the legacy section |
+
+So the new tests fail when the behaviour is wrong and pass when it is right; they are not
+vacuous.
+
+### Local test results (executed)
+
+| Stage | Checks | Failures |
+|---|---|---|
+| before this change | 294 | 0 |
+| after | **339** | **0** |
+
+ASan + UBSan + LSan clean (exit 0). Core suite (`test_main.cpp`) compiles clean under
+`-Werror`; its run still stops at the pre-existing `test_main.cpp:186` external-data assertion
+(exit 134), unchanged. The verification probe compiles clean under `-Werror`.
+
+### Authentic-asset results — executed in CI (run `45923517031`, commit `a591320`)
+
+Jobs: `Core C++17 tests (blocking)` **success**, `Android ARM64 build (lib + APK/AAB)`
+**success**, `Authentic EP7 asset verification` **failure** (correct — genuine FAILs remain).
+
+Probe summary line, pack entries (what the engine actually loads):
+
+| | before (`1e36e89`) | after (`a591320`) | Δ |
+|---|---|---|---|
+| parsed | 6,350 | **6,479** | **+129** |
+| failed | 3,679 | **3,550** | **−129** |
+| unsupported | 1,631 | 1,631 | 0 |
+| total | 11,660 | 11,660 | 0 |
+
+The **+129 reconciles exactly**, and by file type it is 100% `.cps`:
+
+- **−41**: `cps: unsupported .cps version` fell **3,138 → 3,097**. Those 41 entries are
+  versions 0x0101–0x0103 that are now accepted, and not one of them reappeared under a
+  different failure reason — all 41 parsed completely.
+- **−88**: `cps: truncated piece flag` **no longer appears at all**. That reason accounted for
+  exactly 88 entries in the previous run. These were genuine 0x0104 files being wrongly
+  required to carry a trailing `m_dwFlag`; with the flag read gated to 0x0105+, they now parse.
+- 41 + 88 = **129** = the observed Δparsed, and Δfailed is the same 129.
+
+Cross-check by category: total CPS failures went 3,226 → 3,097 (= −129), while `.chf` (243)
+and skeleton (210) were unchanged, so every single change is attributable to `.cps`.
+
+No other file type changed — `.bin` 6,228 unsupported, `.cfg` unsupported 2,058/1,303/328/34
+and `.x`/`.skt` categories are identical to the previous run.
+
+### Remaining blockers
+
+- **B13 now stands at 3,097**, not 0. Those are `.cps` files whose **version DWORD itself** is
+  outside `0x0101..0x0107`. The engine would reject them too (terminal `else`, `:942`), so the
+  reader is behaving correctly; the reason string is the useful signal. Settling whether any of
+  them are legitimate would need a byte dump, which is unobtainable here.
+- **B15 is resolved as a side effect** (the 88 entries parse now), but a *new* small population
+  may be hiding behind it and is **not investigated here** per Step 6.
+- **B14 unchanged** (the `SVERTEXINFLU::SaveFile` `dwSize` over-statement is documented, not
+  fixed; the reader is immune because it consumes the body structurally on a version match).
+- The "why 0x0104 files exist without a flag" question is answered by source and needs no
+  further work.
