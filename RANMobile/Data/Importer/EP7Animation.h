@@ -79,7 +79,17 @@ enum EP7AnimFlag : uint32_t {
     kAnimFlagDownBody = 0x0200,
 };
 
-// EMANI_MAINTYPE (enginelib/Meshs/DxAniKeys.h) — values are file data, never renumber.
+// EMANI_MAINTYPE — values are file data, never renumber.
+//
+// SOURCE (authentic EP7, verified for B16):
+//   * backup repo matheomedrana/Ran-Online-EP7-Complete-Files @ tf661fbf,
+//     "(Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxAniKeys.h"
+//     (LFS SHA-256 9e4fbffdaf5746cf5cec81b5a43a0d42a0681569c7fdf77ecbc0db0a086c7559):
+//     AN_GUARD_N=0..AN_GATHERING=20, AN_BIKE_A=21..AN_REARCAR_A=33, AN_NONE=34,
+//     AN_TYPE_SIZE=34 (the old "//AN_TYPE_SIZE = 21" line is commented out there).
+//   * The older local enginelib tree and [Lib]__Engine/DxMeshs/DxAniKeys.h
+//     (Google-Drive EP7 drop) still carry AN_TYPE_SIZE=21 — the extended values 21..33
+//     first appear in .cfg files of versions 0x0108..0x0115.
 enum class EP7AnimMainType : int32_t {
     GuardN = 0,
     Placid = 1,
@@ -102,8 +112,22 @@ enum class EP7AnimMainType : int32_t {
     SkillD = 18,
     SkillE = 19,
     Gathering = 20,
-    None = 21,
-    TypeSize = 21,
+    // Extended EP7 range (AN_BIKE_A .. AN_REARCAR_A) present in 0x0108..0x0115 .cfg files.
+    BikeA = 21,
+    BikeB = 22,
+    BikeC = 23,
+    BikeEv1 = 24,
+    Flight = 25,
+    SkillF = 26,
+    SkillG = 27,
+    SkillH = 28,
+    CarA = 29,
+    CarB = 30,
+    CarC = 31,
+    CarD = 32,
+    RearcarA = 33,
+    None = 34,      // AN_NONE (the older engine tree had AN_NONE = 21)
+    TypeSize = 34,  // AN_TYPE_SIZE
 };
 
 struct EP7RotateKey {
@@ -154,7 +178,7 @@ struct EP7BoneTrack {
 // block after the effect list (SANIMCONINFO::SaveFile). See DxSkinAniManSaveLoad.cpp.
 struct EP7AnimInfo {
     static constexpr uint32_t kVersion = 0x0107;
-    static constexpr uint32_t kVersion106 = 0x0106;
+    static constexpr uint32_t kVersionCfgLast = 0x0115;  // newest SANIMCONINFO the authentic loader implements
     static constexpr uint32_t kFirstLayout = 0x0101;  // SANIMCONINFO_101
     static constexpr uint32_t kNameSize = 128;   // ACF_SZNAME
     static constexpr uint32_t kDiv = 8;          // ACF_DIV
@@ -162,7 +186,7 @@ struct EP7AnimInfo {
 
     uint32_t version = 0;   // header fileId — set even when the layout is unsupported
     bool unsupported = false;  // a real SANIMCONINFO file, but of a version this build
-                               // has no definition for (see BLOCKERS.md B11). This is a
+                               // has no definition for (see BLOCKERS.md B11/B16). This is a
                                // deferred gap in coverage, NOT a defect in the reader.
     std::string fileType;   // 128-byte basestream type string, e.g. "SANIMCONINFO"
     std::string name;       // m_szName
@@ -184,6 +208,52 @@ struct EP7AnimInfo {
         uint32_t frame = 0;
     } strikeEff[kStrike];
     uint32_t effectCount = 0;
+
+    // -----------------------------------------------------------------
+    // B16: versions 0x0108..0x0115 (Lib_Engine/Meshs/SAnimationInfoSaveLoad.cpp,
+    // backup repo matheomedrana/Ran-Online-EP7-Complete-Files @ tf661fbf). The two
+    // authentic loaders are marked "//official version partial read only" in
+    // SAnimationInfo.h: the official client wrote trailing fields this loader never
+    // reads, so files may legitimately carry bytes after the last authentic read.
+    // -----------------------------------------------------------------
+
+    // Length-prefixed companion names from the 0x0111..0x0115 layout. The authentic
+    // loader reads szCfgFile and szBinFile and discards them (only szXFile ->
+    // m_szName and szSkeleton -> m_szSkeletion are kept); they are recorded here
+    // for forensics and .bin/.cfg pairing, and are empty for older versions.
+    std::string cfgFileName;  // szCfgFile (0x0111+ only)
+    std::string binFileName;  // szBinFile (0x0111+ only)
+
+    // One m_listEffAni entry (DxEffAniData subclass), parsed per the authentic
+    // DxEffAniSingle/Ghosting/Trace/FaceOff LoadFile layouts.
+    struct CfgEffectAni {
+        uint32_t typeId = 0;        // EMEFFANI_SINGLE/GHOSTING/TRACE/FACEOFF
+        uint32_t effectVersion = 0; // inner property version (Single 0x0101, others 0x0100)
+        uint32_t sizeBytes = 0;     // declared sizeof(property)
+        uint32_t flags = 0;         // Single/Ghosting m_dwFlags; others 0
+        uint32_t frame = 0;         // Single m_dwFrame; Ghosting m_dwFrame_1
+        uint32_t frame2 = 0;        // Ghosting m_dwFrame_2
+        float fact = 0.0f;          // Single m_fFact
+        float scale = 0.0f;         // Single m_fScale (Trace m_fScale is not decoded)
+        std::string name;           // Single m_szEff / FaceOff m_szTexture; empty otherwise
+    };
+    std::vector<CfgEffectAni> effects;  // populated for 0x0108+; 0x0105..0x0107 stop at the count
+
+    // DxAniScale block (DxAniBoneScale.cpp): map of anim name -> scale-key list.
+    // Key values are consumed for stream alignment but not retained; the entry names
+    // and key counts are recorded.
+    struct CfgAniScaleEntry {
+        std::string animName;
+        uint32_t keyCount = 0;
+    };
+    std::vector<CfgAniScaleEntry> aniScaleEntries;  // populated for 0x0108+
+
+    // Bytes remaining after the last authentic read. The 0x0108..0x0115 loaders are
+    // "//official version partial read only": trailing bytes are authentic client data
+    // the loader never consumes. Trailing bytes are counted, never silently dropped,
+    // and do NOT invalidate the file (the authentic LoadFile returns TRUE).
+    size_t trailingBytes = 0;
+    bool exactEof = false;  // true when the stream ends exactly at the last authentic field
 
     bool valid = false;
     bool effectsSkipped = false;
@@ -211,7 +281,10 @@ public:
     // `hasHeader` must be true.
     static EP7AnimClip ParseContainer(const std::vector<uint8_t>& bytes, bool hasHeader, bool compByteEncoded);
 
-    // Parses SANIMCONINFO (.cfg version 0x0107). Stops at the effect list.
+    // Parses SANIMCONINFO (.cfg versions 0x0101..0x0107, and since B16 0x0108..0x0115
+    // except the unused 0x0113). 0x0101..0x0104 end at the header block, 0x0105..0x0107
+    // stop after the effect count; 0x0108..0x0115 are parsed to the end of the authentic
+    // field sequence including the effect list and the DxAniScale block (see B16).
     static EP7AnimInfo ParseInfo(const std::vector<uint8_t>& bytes, bool hasHeader, bool compByteEncoded);
 
     // Resolve track bone names against a skeleton (original: pSkeleton->FindBone).

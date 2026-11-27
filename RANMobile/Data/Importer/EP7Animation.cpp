@@ -11,6 +11,26 @@ namespace {
 constexpr uint32_t kMaxBoneTracks = 4096;
 constexpr uint32_t kMaxKeysPerTrack = 200000;
 constexpr uint32_t kMaxNameLen = 4096;
+// B16 (SANIMCONINFO 0x0108..0x0115) sanity caps, in the same spirit as the caps above:
+// they bound declared element counts so a corrupt count can never multiply into an
+// oversized allocation or a runaway loop. A 4 KiB-bounded effect list / AniScale map is
+// far above anything the authentic writers emit (the engine builds these from small
+// fixed editor structures).
+constexpr uint32_t kMaxCfgEffects = 4096;       // SANIMCONINFO::m_listEffAni entries
+constexpr uint32_t kMaxAniScaleEntries = 4096;  // DxAniScale::m_mapAniScaleMain entries
+// sizeof(SChaSoundData) on the MSVC x86 build: int(4) + char[10][32](320) + BOOL[10](40)
+// + WORD[11](22) = 386 rounded up to the 4-byte struct alignment = 388.
+// SOURCE: EngineSoundLib/DxSound/CharacterSound.h (== [Lib]__EngineSound/.../CharacterSound.h).
+constexpr uint32_t kChaSoundDataSize = 388;
+// sizeof(EFFANI_PROPERTY_SINGLE) (DxEffAniSingle.h): 4+4+4+4 + sizeof(D3DXMATRIX)(64)
+// + 3 * char[128] = 464 for the current property (version 0x0101); the 0x0100 property
+// (EFFANI_PROPERTY_SINGLE_100) has no m_matBase: 400.
+constexpr uint32_t kEffSinglePropSize101 = 464;
+constexpr uint32_t kEffSinglePropSize100 = 400;
+// sizeof(EFFANI_PROPERTY_GHOSTING) (DxEffAniGhosting.h): 7 * DWORD = 28.
+constexpr uint32_t kEffGhostingPropSize = 28;
+// sizeof(EFFANI_PROPERTY_FACEOFF) (DxEffAniFaceOff.h): TCHAR m_szTexture[32] = 32.
+constexpr uint32_t kEffFaceOffPropSize = 32;
 
 bool ReadPositionKeys(ep7byte::Stream& s, std::vector<EP7PositionKey>& out) {
     uint32_t count = 0;
@@ -229,6 +249,334 @@ bool ReadTrackList(ep7byte::Stream& s, std::vector<EP7BoneTrack>& out, bool appe
 
 inline bool IsFinite(float v) { return std::isfinite(v); }
 
+// ---------------------------------------------------------------------------
+// B16: SANIMCONINFO 0x0108..0x0115 sub-parsers.
+//
+// SOURCE: backup repo matheomedrana/Ran-Online-EP7-Complete-Files @ tf661fbf,
+// "(Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/
+// SAnimationInfoSaveLoad.cpp" (LFS SHA-256 80de6adeb3bd1ec2892740bbdb93dc10209d6a38f0b5b73bb4ad923187703837)
+// and the headers it includes (SAnimationInfo.h, DxAniBoneScale.cpp/h,
+// ../DxEffect/EffAni/DxEffAni*.h/cpp, EngineSoundLib/DxSound/CharacterSound.h).
+// The GDrive EP7 drop ([Lib]__Engine) agrees field-for-field on 0x0101..0x0107 and on
+// every effect/AniScale layout; it simply predates the 0x0108+ loaders.
+// ---------------------------------------------------------------------------
+
+// Reads one fixed-size char field (m_szEff[128], m_szTexture[32], ...) and stops at the
+// first NUL the way StringCchCopyA consumes the buffer the engine copies it into.
+bool ReadFixedCharField(ep7byte::Stream& s, size_t fieldBytes, std::string& out) {
+    if (fieldBytes > s.Remaining()) {
+        s.Fail("truncated cfg fixed char field");
+        return false;
+    }
+    std::vector<uint8_t> buf(fieldBytes);
+    if (!s.ReadRaw(buf.data(), fieldBytes)) return false;
+    size_t n = 0;
+    while (n < fieldBytes && buf[n] != 0) ++n;
+    out.assign(reinterpret_cast<const char*>(buf.data()), n);
+    return true;
+}
+
+// m_wStrikeCount + SANIMSTRIKE m_sStrikeEff[ACF_STRIKE=9].
+// sizeof(SANIMSTRIKE) = EMPIECECHAR(4) + EMSTRIKE_EFF(4) + DWORD(4) = 12.
+// SOURCE: SAnimationInfo.h (SANIMSTRIKE, EMANICONINFO::ACF_STRIKE=9), DxPieceDefine.h.
+bool ParseCfgStrikeTable(ep7byte::Stream& s, EP7AnimInfo& info) {
+    if (!s.ReadU16(info.strikeCount)) {
+        s.Fail("truncated cfg strike count");
+        return false;
+    }
+    if (!s.CanReadElements(EP7AnimInfo::kStrike, 12)) {
+        s.Fail("truncated cfg strike table");
+        return false;
+    }
+    for (uint32_t i = 0; i < EP7AnimInfo::kStrike; ++i) {
+        uint32_t piece = 0;
+        uint32_t effect = 0;
+        uint32_t frame = 0;
+        if (!s.ReadU32(piece) || !s.ReadU32(effect) || !s.ReadU32(frame)) {
+            s.Fail("truncated cfg strike entry");
+            return false;
+        }
+        info.strikeEff[i].piece = static_cast<int32_t>(piece);
+        info.strikeEff[i].effect = static_cast<int32_t>(effect);
+        info.strikeEff[i].frame = frame;
+    }
+    return true;
+}
+
+// m_wDivCount + WORD m_wDivFrame[ACF_DIV=8].
+bool ParseCfgDivFrames(ep7byte::Stream& s, EP7AnimInfo& info) {
+    if (!s.ReadU16(info.divCount)) {
+        s.Fail("truncated cfg div count");
+        return false;
+    }
+    for (uint32_t i = 0; i < EP7AnimInfo::kDiv; ++i) {
+        if (!s.ReadU16(info.divFrame[i])) {
+            s.Fail("truncated cfg div frames");
+            return false;
+        }
+    }
+    return true;
+}
+
+// DWORD m_MainType + DWORD m_SubType (written as DWORDs in every 0x0105+ layout).
+bool ParseCfgTypes(ep7byte::Stream& s, EP7AnimInfo& info) {
+    uint32_t mainType = 0;
+    uint32_t subType = 0;
+    if (!s.ReadU32(mainType) || !s.ReadU32(subType)) {
+        s.Fail("truncated cfg animation type");
+        return false;
+    }
+    // AN_NONE (34) is the "no type" sentinel, never a valid file value; the authentic
+    // GetAnimation lookups index [0, AN_TYPE_SIZE) = [0, 34).
+    if (mainType >= static_cast<uint32_t>(EP7AnimMainType::None)) {
+        s.Fail("cfg main type out of range");
+        return false;
+    }
+    info.mainType = static_cast<int32_t>(mainType);
+    info.subType = static_cast<int32_t>(subType);
+    return true;
+}
+
+// One m_listEffAni entry: DWORD dwType, then DxEffAniData_<T>::LoadFile, which reads
+// DWORD dwTypeID, DWORD dwVer, DWORD dwSize, then the property.
+//
+// Per-type layouts (MSVC x86, default alignment):
+//   Single  (EMEFFANI_SINGLE=0), property 0x0101: DWORD flags, DWORD frame, float fact,
+//           float scale, D3DXMATRIX matBase(64), char szEff[128], char szBipFirst[128],
+//           char szBipSecond[128]  -> 464 bytes.
+//           property 0x0100 (EFFANI_PROPERTY_SINGLE_100): same without matBase -> 400.
+//           Any other version returns E_FAIL WITHOUT consuming dwSize bytes, which
+//           desynchronises the stream for everything after it -- reject.
+//   Ghosting(EMEFFANI_GHOSTING=1), property 0x0100: 7 * DWORD -> 28 bytes. Other
+//           versions skip dwSize bytes (authentic SetOffSet) and continue.
+//   Trace   (EMEFFANI_TRACE=2), property 0x0100: float + std::string member, so the
+//           property size is build-dependent; the declared dwSize is authoritative and
+//           the property blob is consumed, not decoded. Other versions skip dwSize.
+//   FaceOff (EMEFFANI_FACEOFF=3), property 0x0100: char m_szTexture[32] -> 32 bytes.
+//           Other versions skip dwSize.
+//
+// SOURCE: DxEffAniSingle.cpp / DxEffAniGhosting.cpp / DxEffAniTrace.cpp /
+// DxEffAniFaceOff.cpp (LoadFile + SaveFile + TYPEID/VERSION statics); identical in the
+// local enginelib tree and the EP7 GDrive drop.
+bool ParseCfgEffectEntry(ep7byte::Stream& s, EP7AnimInfo::CfgEffectAni& out) {
+    uint32_t outerType = 0;
+    if (!s.ReadU32(outerType)) {
+        s.Fail("truncated cfg effect type");
+        return false;
+    }
+    // DxEffAniMan::CreateEffInstance (DxEffAni.cpp) knows exactly EMEFFANI_SINGLE=0,
+    // EMEFFANI_GHOSTING=1, EMEFFANI_TRACE=2, EMEFFANI_FACEOFF=3 and returns NULL for
+    // anything else. The authentic loop then reads nothing for that entry, which
+    // desynchronises the stream; a mobile parser cannot stay aligned there, so reject.
+    if (outerType > 3u) {
+        s.Fail("cfg effect type unknown (EMEFFANI_SINGLE..FACEOFF = 0..3)");
+        return false;
+    }
+    out.typeId = outerType;
+
+    uint32_t innerType = 0;
+    if (!s.ReadU32(innerType)) {
+        s.Fail("truncated cfg effect inner type");
+        return false;
+    }
+    // The writer emits the type id twice: once in the SANIMCONINFO loop and once inside
+    // DxEffAniData::SaveFile. A mismatch means the stream is not where the authentic
+    // reader expects it.
+    if (innerType != outerType) {
+        s.Fail("cfg effect inner type does not match its list type");
+        return false;
+    }
+    if (!s.ReadU32(out.effectVersion) || !s.ReadU32(out.sizeBytes)) {
+        s.Fail("truncated cfg effect property header");
+        return false;
+    }
+
+    switch (outerType) {
+        case 0: {  // DxEffAniData_Single
+            if (out.effectVersion == 0x0101u) {
+                if (out.sizeBytes != kEffSinglePropSize101) {
+                    s.Fail("cfg Single effect property size mismatch (0x0101)");
+                    return false;
+                }
+            } else if (out.effectVersion == 0x0100u) {
+                if (out.sizeBytes != kEffSinglePropSize100) {
+                    s.Fail("cfg Single effect property size mismatch (0x0100)");
+                    return false;
+                }
+            } else {
+                s.Fail("cfg Single effect version unsupported (authentic loader fails without skipping)");
+                return false;
+            }
+            if (!s.ReadU32(out.flags) || !s.ReadU32(out.frame) ||
+                !s.ReadF32(out.fact) || !s.ReadF32(out.scale)) {
+                s.Fail("truncated cfg Single effect property");
+                return false;
+            }
+            if (out.effectVersion == 0x0101u && !s.Skip(64)) {  // D3DXMATRIX m_matBase
+                s.Fail("truncated cfg Single effect matrix");
+                return false;
+            }
+            std::string eff;
+            std::string bipFirst;
+            std::string bipSecond;
+            if (!ReadFixedCharField(s, 128, eff) ||
+                !ReadFixedCharField(s, 128, bipFirst) ||
+                !ReadFixedCharField(s, 128, bipSecond)) {
+                s.Fail("truncated cfg Single effect names");
+                return false;
+            }
+            out.name = eff;  // m_szEff; m_szBipFirst / m_szBipSecond consumed above
+            break;
+        }
+        case 1: {  // DxEffAniData_Ghosting
+            if (out.effectVersion != 0x0100u) {
+                // Authentic behaviour: skip the declared property block and continue.
+                if (out.sizeBytes == 0 || out.sizeBytes > s.Remaining()) {
+                    s.Fail("cfg Ghosting effect property size runs past end of buffer");
+                    return false;
+                }
+                if (!s.Skip(out.sizeBytes)) return false;
+                break;
+            }
+            if (out.sizeBytes != kEffGhostingPropSize) {
+                s.Fail("cfg Ghosting effect property size mismatch");
+                return false;
+            }
+            if (!s.ReadU32(out.flags) || !s.ReadU32(out.frame) || !s.ReadU32(out.frame2)) {
+                s.Fail("truncated cfg Ghosting effect property");
+                return false;
+            }
+            // m_dwGhostingNum, m_dwAlphaMax, m_dwUnit, D3DCOLOR m_dwColor: consumed.
+            if (!s.Skip(16)) {
+                s.Fail("truncated cfg Ghosting effect property");
+                return false;
+            }
+            break;
+        }
+        case 2: {  // DxEffAniData_Trace
+            if (out.effectVersion != 0x0100u) {
+                if (out.sizeBytes == 0 || out.sizeBytes > s.Remaining()) {
+                    s.Fail("cfg Trace effect property size runs past end of buffer");
+                    return false;
+                }
+                if (!s.Skip(out.sizeBytes)) return false;
+                break;
+            }
+            // float m_fScale must at least fit; the rest is the std::string member blob
+            // whose layout belongs to the client build that wrote the file.
+            if (out.sizeBytes < 4 || out.sizeBytes > s.Remaining()) {
+                s.Fail("cfg Trace effect property size invalid");
+                return false;
+            }
+            if (!s.Skip(out.sizeBytes)) return false;
+            break;
+        }
+        case 3: {  // DxEffAniData_FaceOff
+            if (out.effectVersion != 0x0100u) {
+                if (out.sizeBytes == 0 || out.sizeBytes > s.Remaining()) {
+                    s.Fail("cfg FaceOff effect property size runs past end of buffer");
+                    return false;
+                }
+                if (!s.Skip(out.sizeBytes)) return false;
+                break;
+            }
+            if (out.sizeBytes != kEffFaceOffPropSize) {
+                s.Fail("cfg FaceOff effect property size mismatch");
+                return false;
+            }
+            std::string texture;
+            if (!ReadFixedCharField(s, 32, texture)) {
+                s.Fail("truncated cfg FaceOff effect texture");
+                return false;
+            }
+            out.name = texture;
+            break;
+        }
+        default:
+            s.Fail("cfg effect type unknown (EMEFFANI_SINGLE..FACEOFF = 0..3)");
+            return false;
+    }
+    return true;
+}
+
+// SANIMCONINFO::LoadFile_0108_0109_0110 / LoadFile_0111_0112_0114_0115 m_listEffAni loop:
+// DWORD dwSize, then dwSize * (DWORD dwType + DxEffAniData::LoadFile).
+bool ParseCfgEffects(ep7byte::Stream& s, EP7AnimInfo& info) {
+    uint32_t effectCount = 0;
+    if (!s.ReadU32(effectCount)) {
+        s.Fail("truncated cfg effect count");
+        return false;
+    }
+    info.effectCount = effectCount;
+    if (effectCount > kMaxCfgEffects) {
+        s.Fail("cfg effect count exceeds sanity limit");
+        return false;
+    }
+    // Minimum entry: outer type + inner type + version + size = 16 bytes.
+    if (!s.CanReadElements(effectCount, 16)) {
+        s.Fail("cfg effect list runs past end of buffer");
+        return false;
+    }
+    info.effects.reserve(effectCount);
+    for (uint32_t i = 0; i < effectCount; ++i) {
+        EP7AnimInfo::CfgEffectAni entry;
+        if (!ParseCfgEffectEntry(s, entry)) return false;
+        info.effects.push_back(std::move(entry));
+    }
+    info.effectsSkipped = false;
+    return true;
+}
+
+// DxAniScale::Load (DxAniBoneScale.cpp): DWORD mapSize, then per entry a length-prefixed
+// TSTRING anim name plus a DxAniScaleMAIN block (DWORD count + count * (DWORD key +
+// float scale)). Scale key values are consumed for stream alignment and bounds-checked,
+// but not retained; the entry names and key counts are recorded on EP7AnimInfo.
+bool ParseCfgAniScale(ep7byte::Stream& s, EP7AnimInfo& info) {
+    uint32_t mapSize = 0;
+    if (!s.ReadU32(mapSize)) {
+        s.Fail("truncated cfg ani scale map size");
+        return false;
+    }
+    if (mapSize > kMaxAniScaleEntries) {
+        s.Fail("cfg ani scale entry count exceeds sanity limit");
+        return false;
+    }
+    // Minimum entry: 4-byte name length + 1 byte of name + 4-byte key count = 9 bytes.
+    if (!s.CanReadElements(mapSize, 9)) {
+        s.Fail("cfg ani scale map runs past end of buffer");
+        return false;
+    }
+    info.aniScaleEntries.reserve(mapSize);
+    for (uint32_t i = 0; i < mapSize; ++i) {
+        EP7AnimInfo::CfgAniScaleEntry entry;
+        if (!s.ReadString(entry.animName, kMaxNameLen)) {
+            s.Fail("truncated cfg ani scale anim name");
+            return false;
+        }
+        uint32_t keyCount = 0;
+        if (!s.ReadU32(keyCount)) {
+            s.Fail("truncated cfg ani scale key count");
+            return false;
+        }
+        // Each key: DWORD dwKey + float fScale = 8 bytes.
+        if (!s.CanReadElements(keyCount, 8)) {
+            s.Fail("cfg ani scale keys run past end of buffer");
+            return false;
+        }
+        for (uint32_t k = 0; k < keyCount; ++k) {
+            uint32_t keyTime = 0;
+            float scale = 0.0f;
+            if (!s.ReadU32(keyTime) || !s.ReadF32(scale)) {
+                s.Fail("truncated cfg ani scale key");
+                return false;
+            }
+        }
+        entry.keyCount = keyCount;
+        info.aniScaleEntries.push_back(std::move(entry));
+    }
+    return true;
+}
+
 }  // namespace
 
 // ---------------------------------------------------------------------------
@@ -434,7 +782,10 @@ EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, boo
         }
     }
 
-    // Supported layouts, all taken from enginelib/Meshs/DxSkinAniManSaveLoad.cpp:
+    // Supported layouts, all taken from authentic engine sources:
+    //
+    // 0x0101..0x0107 -- enginelib/Meshs/DxSkinAniManSaveLoad.cpp (older engine tree,
+    // identical field-for-field in the EP7 backup and GDrive trees):
     //
     //   0x0101  SANIMCONINFO_101  no strike table, no sound block
     //   0x0102  SANIMCONINFO_102  + SChaSoundData_102 (6 slots)
@@ -465,8 +816,16 @@ EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, boo
     // CONFIRMED against authentic data: 0x0104 files carry exactly 538 bytes after the
     // 302-byte prefix (110 + 428) and 0x0106/0x0107 files exactly 498 (110 + 388).
     //
+    // 0x0108..0x0115 -- Lib_Engine/Meshs/SAnimationInfoSaveLoad.cpp (backup repo
+    // matheomedrana/Ran-Online-EP7-Complete-Files @ tf661fbf): LoadFile_0108_0109_0110 and
+    // LoadFile_0111_0112_0114_0115, both marked "//official version partial read only" in
+    // SAnimationInfo.h. They are parsed field-by-field below; 0x0113 has no case in the
+    // authentic LoadFile switch and stays unsupported.
+    //
     // SOURCE: enginelib/Meshs/DxSkinAniManSaveLoad.cpp, enginelib/Meshs/SAnimation.h,
-    //         EngineSoundLib/DxSound/CharacterSound.h.
+    //         EngineSoundLib/DxSound/CharacterSound.h (0x0101..0x0107); backup repo
+    //         Lib_Engine/Meshs/SAnimationInfo{,.h,SaveLoad.cpp}, DxAniKeys.h,
+    //         DxAniBoneScale.cpp, DxEffect/EffAni/DxEffAni*.cpp (0x0108..0x0115).
     static constexpr uint32_t kInfoSize0101 = 302;
     static constexpr uint32_t kInfoSize0102 = 564;
     static constexpr uint32_t kInfoSize0103 = 732;
@@ -475,24 +834,25 @@ EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, boo
     static constexpr uint32_t kInfoSize0106 = 800;
     static constexpr uint32_t kInfoSize0107 = 800;
 
-    if (version < 0x0101 || version > EP7AnimInfo::kVersion) {
-        // The shipped client uses 0x0108..0x0115 as well. None of those appear in the engine
-        // source, so their layout is unknown and guessing would silently misread every field
-        // after the version DWORD. Report it as UNSUPPORTED -- a known, tracked coverage gap
-        // (BLOCKERS.md B11), not a defect in this reader. `unsupported` is claimed only for
-        // files whose basestream type really is SANIMCONINFO; a different type is a genuine
-        // mismatch and must not be excused.
+    if (version < 0x0101 || version > EP7AnimInfo::kVersionCfgLast || version == 0x0113) {
+        // 0x0113 is absent from the authentic LoadFile switch (0x0115, 0x0114, 0x0112,
+        // 0x0111, 0x0110, 0x0109, 0x0108, 0x0107, ... and reaches ErrorVersion);
+        // everything below 0x0101 or above 0x0115 has no authentic definition either.
+        // Report those as UNSUPPORTED -- a known, tracked coverage gap (BLOCKERS.md
+        // B11/B16), not a defect in this reader. `unsupported` is claimed only for
+        // files whose basestream type really is SANIMCONINFO; a different type is a
+        // genuine mismatch and must not be excused.
         char message[240];
         if (IsSanimconinfoType(info.fileType)) {
             info.unsupported = true;
             std::snprintf(message, sizeof(message),
                           "UNSUPPORTED animation cfg version 0x%08X (basestream type \"%s\"; this "
-                          "build implements 0x0101-0x0107 -- see B11)",
+                          "build implements 0x0101-0x0112 and 0x0114-0x0115 -- see B11/B16)",
                           version, info.fileType.c_str());
         } else {
             std::snprintf(message, sizeof(message),
                           "not a SANIMCONINFO file: basestream type is \"%s\" but layout 0x%08X was "
-                          "expected (implemented 0x0101-0x0107)",
+                          "expected (implemented 0x0101-0x0115 except 0x0113)",
                           info.fileType.c_str(), version);
         }
         info.error = message;
@@ -512,6 +872,110 @@ EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, boo
         out.assign(reinterpret_cast<const char*>(buf.data()), n);
         return true;
     };
+
+    // -----------------------------------------------------------------
+    // B16: 0x0108..0x0110 and 0x0111/0x0112/0x0114/0x0115.
+    //
+    // SOURCE: backup repo matheomedrana/Ran-Online-EP7-Complete-Files @ tf661fbf,
+    // Lib_Engine/Meshs/SAnimationInfoSaveLoad.cpp, LoadFile_0108_0109_0110 and
+    // LoadFile_0111_0112_0114_0115. Both are marked "//official version partial read
+    // only" in SAnimationInfo.h:268-270 -- the official client wrote fields beyond the
+    // last one these loaders read. Anything left after the final authentic read is
+    // counted in trailingBytes and never reinterpreted; the file stays valid because
+    // the authentic LoadFile returns TRUE regardless (only GetFileType failures or an
+    // unknown version return FALSE).
+    // -----------------------------------------------------------------
+    if (version >= 0x0108) {
+        if (version <= 0x0110) {
+            // LoadFile_0108_0109_0110: header names, then m_dwFlag + m_UNITTIME +
+            // m_dwSTime + m_dwETime + m_dwETimeOrig -- NOTE the order: m_UNITTIME is
+            // written BEFORE m_dwSTime, unlike 0x0101..0x0107 -- then the strike table
+            // BEFORE the div frames, then the effect list, the DxAniScale block and
+            // finally the SChaSoundData block.
+            if (!readFixedName(info.name)) {
+                info.error = "invalid cfg name";
+                return info;
+            }
+            if (!readFixedName(info.skeleton)) {
+                info.error = "invalid cfg skeleton name";
+                return info;
+            }
+            if (!stream.ReadU32(info.flag)) {
+                info.error = "truncated cfg flag";
+                return info;
+            }
+            if (!stream.ReadU32(info.unitTime) || !stream.ReadU32(info.startTime) ||
+                !stream.ReadU32(info.endTime) || !stream.ReadU32(info.endTimeOrig)) {
+                info.error = "truncated cfg time window";
+                return info;
+            }
+            if (!ParseCfgTypes(stream, info) || !ParseCfgStrikeTable(stream, info) ||
+                !ParseCfgDivFrames(stream, info)) {
+                info.error = stream.Error().empty() ? "invalid cfg header tail" : stream.Error();
+                return info;
+            }
+            if (!ParseCfgEffects(stream, info)) {
+                info.error = stream.Error().empty() ? "invalid cfg effect list" : stream.Error();
+                return info;
+            }
+            if (!ParseCfgAniScale(stream, info)) {
+                info.error = stream.Error().empty() ? "invalid cfg ani scale block" : stream.Error();
+                return info;
+            }
+            // The loader ends with SChaSoundData (388 bytes), consumed verbatim like the
+            // 0x0106/0x0107 sound block (this port uses none of the sound fields).
+            if (!stream.Skip(kChaSoundDataSize)) {
+                info.error = "truncated cfg sound block";
+                return info;
+            }
+        } else {
+            // LoadFile_0111_0112_0114_0115: four length-prefixed strings -- szCfgFile
+            // (read and discarded), szXFile -> m_szName, szBinFile (read and discarded),
+            // szSkeleton -> m_szSkeletion -- then m_dwFlag + m_dwSTime + m_dwETime +
+            // m_dwETimeOrig + m_UNITTIME, div frames BEFORE the strike table, the
+            // SChaSoundData block, the effect list and the DxAniScale block.
+            if (!stream.ReadString(info.cfgFileName, kMaxNameLen) ||
+                !stream.ReadString(info.name, kMaxNameLen) ||
+                !stream.ReadString(info.binFileName, kMaxNameLen) ||
+                !stream.ReadString(info.skeleton, kMaxNameLen)) {
+                info.error = "truncated cfg companion-name strings";
+                return info;
+            }
+            if (!stream.ReadU32(info.flag)) {
+                info.error = "truncated cfg flag";
+                return info;
+            }
+            if (!stream.ReadU32(info.startTime) || !stream.ReadU32(info.endTime) ||
+                !stream.ReadU32(info.endTimeOrig) || !stream.ReadU32(info.unitTime)) {
+                info.error = "truncated cfg time window";
+                return info;
+            }
+            if (!ParseCfgTypes(stream, info) || !ParseCfgDivFrames(stream, info) ||
+                !ParseCfgStrikeTable(stream, info)) {
+                info.error = stream.Error().empty() ? "invalid cfg header tail" : stream.Error();
+                return info;
+            }
+            if (!stream.Skip(kChaSoundDataSize)) {
+                info.error = "truncated cfg sound block";
+                return info;
+            }
+            if (!ParseCfgEffects(stream, info)) {
+                info.error = stream.Error().empty() ? "invalid cfg effect list" : stream.Error();
+                return info;
+            }
+            if (!ParseCfgAniScale(stream, info)) {
+                info.error = stream.Error().empty() ? "invalid cfg ani scale block" : stream.Error();
+                return info;
+            }
+        }
+
+        // End of the authentic read sequence: record what the official writer left
+        // behind instead of dropping it silently.
+        info.trailingBytes = stream.Remaining();
+        info.exactEof = info.trailingBytes == 0;
+        info.valid = true;
+        return info;
+    }
 
     if (!readFixedName(info.name)) {
         info.error = "invalid cfg name";
@@ -538,8 +1002,9 @@ EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, boo
         info.error = "truncated cfg animation type";
         return info;
     }
-    // EMANI_MAINTYPE has AN_TYPE_SIZE == 21 valid values.
-    if (mainType > static_cast<uint32_t>(EP7AnimMainType::None)) {
+    // EMANI_MAINTYPE: AN_NONE is the "no type" sentinel and never a valid file value;
+    // B16 widened the valid range 0..20 to 0..33 (EP7 AN_TYPE_SIZE = 34, DxAniKeys.h).
+    if (mainType >= static_cast<uint32_t>(EP7AnimMainType::None)) {
         info.error = "cfg main type out of range";
         return info;
     }

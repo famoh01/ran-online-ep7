@@ -451,6 +451,21 @@ struct CompanionCfgMeta {
     uint32_t startTime = 0;
     uint32_t endTime = 0;
     uint32_t unitTime = 0;
+
+    // B16: outcome of the unmodified EP7AnimationReader::ParseInfo on the
+    // 0x0108..0x0115 SANIMCONINFO layouts (SAnimationInfoSaveLoad.cpp,
+    // LoadFile_0108_0109_0110 / LoadFile_0111_0112_0114_0115). These are exactly the
+    // fields the Mobile Animation Pipeline consumes, so this doubles as the
+    // "does the pipeline eat it" check.
+    bool b16Attempted = false;       // version is one of 0x0108..0x0115
+    bool b16Ok = false;              // parsed to the end of the authentic field sequence
+    bool b16ExactEof = false;        // no official trailing bytes after the last field
+    size_t b16Trailing = 0;          // counted trailing bytes (never reinterpreted)
+    uint32_t b16EffectCount = 0;     // m_listEffAni size
+    uint32_t b16EffectTypeMask = 0;  // bitmask of EMEFFANI_* ids seen (bit 0..3)
+    uint32_t b16AniScaleEntries = 0; // DxAniScale map entries
+    uint32_t b16AniScaleKeys = 0;    // total scale keys across entries
+    std::string b16Error;            // parse rejection reason (empty when ok)
 };
 
 struct CipherProbeMatch {
@@ -1080,6 +1095,21 @@ inline CompanionCfgMeta ParseCompanionCfg(const std::string& sourceLabel,
     m.startTime = info.startTime;
     m.endTime = info.endTime;
     m.unitTime = info.unitTime;
+    if (info.version >= 0x0108u && info.version <= 0x0115u && info.version != 0x0113u) {
+        m.b16Attempted = true;
+        m.b16Ok = info.valid;
+        m.b16ExactEof = info.exactEof;
+        m.b16Trailing = info.trailingBytes;
+        m.b16EffectCount = info.effectCount;
+        for (const auto& eff : info.effects) {
+            if (eff.typeId <= 3) m.b16EffectTypeMask |= (1u << eff.typeId);
+        }
+        m.b16AniScaleEntries = static_cast<uint32_t>(info.aniScaleEntries.size());
+        for (const auto& entry : info.aniScaleEntries) m.b16AniScaleKeys += entry.keyCount;
+        m.b16Error = info.error;
+    } else if (!info.valid && !info.error.empty()) {
+        m.b16Error = info.error;
+    }
     return m;
 }
 
@@ -1132,6 +1162,17 @@ struct SurveySummary {
 
     // Cipher probe match counts per unsupported outer version
     std::map<std::string, size_t> unsupportedCipherHits;
+
+    // B16: SANIMCONINFO .cfg survey across all indexed .cfg files
+    std::map<uint32_t, size_t> cfgVersionCounts;            // every indexed .cfg version
+    std::map<std::string, size_t> cfgB16OutcomeByVersion;   // "0x0110:exact-eof" etc.
+    std::map<std::string, size_t> cfgB16RejectionReasons;   // version + normalized error
+    std::map<std::string, size_t> cfgB16EffectTypesByVersion;  // version + type bitmask
+    std::map<std::string, size_t> cfgB16TrailingSizes;      // version + trailing byte count
+    size_t cfgB16Attempted = 0;
+    size_t cfgB16Ok = 0;
+    size_t cfgB16ExactEof = 0;
+    size_t cfgB16WithTrailing = 0;
 
     // Selected representative authentic samples (populated with full probes)
     std::vector<BinInspectionRecord> samples;
@@ -1204,6 +1245,36 @@ inline SurveySummary RunDirectorySurvey(const fs::path& rootDir, size_t maxSampl
     sum.totalCfgIndexed = cfgByStem.size();
     sum.totalLooseBin = binFiles.size();
     sum.totalRccBin = rccBins.size();
+
+    // B16: aggregate the .cfg survey over every indexed companion file.
+    for (const auto& kv : cfgByStem) {
+        const CompanionCfgMeta& c = kv.second;
+        sum.cfgVersionCounts[c.rawVersion]++;
+        if (!c.b16Attempted) continue;
+        sum.cfgB16Attempted++;
+        const std::string ver = HexU32(c.rawVersion);
+        if (c.b16Ok) {
+            sum.cfgB16Ok++;
+            if (c.b16ExactEof) {
+                sum.cfgB16ExactEof++;
+                sum.cfgB16OutcomeByVersion[ver + ":exact-eof"]++;
+            } else {
+                sum.cfgB16WithTrailing++;
+                sum.cfgB16OutcomeByVersion[ver + ":trailing-bytes"]++;
+                sum.cfgB16TrailingSizes[ver + ":" + std::to_string(c.b16Trailing)]++;
+            }
+            if (c.b16EffectTypeMask != 0) {
+                sum.cfgB16EffectTypesByVersion[ver + ":mask-" + HexU32(c.b16EffectTypeMask)]++;
+            }
+        } else {
+            std::string reason = c.b16Error;
+            const size_t cut = reason.find(" -- ");
+            if (cut != std::string::npos) reason = reason.substr(0, cut);
+            if (reason.size() > 96) reason = reason.substr(0, 96);
+            sum.cfgB16OutcomeByVersion[ver + ":rejected"]++;
+            sum.cfgB16RejectionReasons[ver + " | " + reason]++;
+        }
+    }
 
     static const std::set<std::string> kB11NamedSamples = {
         "a_3boss_01_stay.bin", "a_gbox_stay.bin",    "a_gum_att01.bin", "a_gum_gumkyuck.bin",
@@ -1476,6 +1547,23 @@ inline std::string FormatJsonReport(const SurveySummary& s) {
 
     emitMapStr("unsupported_cipher_probe_hits", s.unsupportedCipherHits, true);
 
+    // B16: SANIMCONINFO .cfg survey
+    {
+        std::map<std::string, size_t> cfgVerStrMap;
+        for (const auto& kv : s.cfgVersionCounts) cfgVerStrMap[HexU32(kv.first)] = kv.second;
+        emitMapStr("cfg_version_counts", cfgVerStrMap, true);
+        emitMapStr("cfg_b16_outcomes", s.cfgB16OutcomeByVersion, true);
+        emitMapStr("cfg_b16_rejection_reasons", s.cfgB16RejectionReasons, true);
+        emitMapStr("cfg_b16_effect_type_masks", s.cfgB16EffectTypesByVersion, true);
+        emitMapStr("cfg_b16_trailing_byte_sizes", s.cfgB16TrailingSizes, false);
+        o << "  \"cfg_b16_totals\": {\n";
+        o << "    \"attempted\": " << s.cfgB16Attempted << ",\n";
+        o << "    \"parsed\": " << s.cfgB16Ok << ",\n";
+        o << "    \"exact_eof\": " << s.cfgB16ExactEof << ",\n";
+        o << "    \"with_trailing_bytes\": " << s.cfgB16WithTrailing << "\n";
+        o << "  },\n";
+    }
+
     o << "  \"samples\": [\n";
     for (size_t i = 0; i < s.samples.size(); ++i) {
         const auto& r = s.samples[i];
@@ -1513,7 +1601,15 @@ inline std::string FormatJsonReport(const SurveySummary& s) {
         o << "        \"flag\": \"" << HexU32(r.cfg.flag) << "\",\n";
         o << "        \"start_time\": " << r.cfg.startTime << ",\n";
         o << "        \"end_time\": " << r.cfg.endTime << ",\n";
-        o << "        \"unit_time\": " << r.cfg.unitTime << "\n";
+        o << "        \"unit_time\": " << r.cfg.unitTime << ",\n";
+        o << "        \"b16_attempted\": " << (r.cfg.b16Attempted ? "true" : "false") << ",\n";
+        o << "        \"b16_ok\": " << (r.cfg.b16Ok ? "true" : "false") << ",\n";
+        o << "        \"b16_exact_eof\": " << (r.cfg.b16ExactEof ? "true" : "false") << ",\n";
+        o << "        \"b16_trailing\": " << r.cfg.b16Trailing << ",\n";
+        o << "        \"b16_effect_count\": " << r.cfg.b16EffectCount << ",\n";
+        o << "        \"b16_effect_type_mask\": \"" << HexU32(r.cfg.b16EffectTypeMask) << "\",\n";
+        o << "        \"b16_ani_scale_entries\": " << r.cfg.b16AniScaleEntries << ",\n";
+        o << "        \"b16_error\": \"" << JsonEscape(r.cfg.b16Error) << "\"\n";
         o << "      }\n";
         o << "    }" << (i + 1 < s.samples.size() ? "," : "") << "\n";
     }
@@ -1576,6 +1672,29 @@ inline void PrintTextSummary(const SurveySummary& s) {
     std::printf("\n--- Source-spec keyframe channel presence (files) by outer version ---\n");
     for (const auto& kv : s.sourceSpecKeyChannelsByOuter) {
         std::printf("  %6zu files  : %s\n", kv.second, kv.first.c_str());
+    }
+
+    std::printf("\n--- B16 SANIMCONINFO .cfg survey (indexed=%zu) ---\n", s.totalCfgIndexed);
+    for (const auto& kv : s.cfgVersionCounts) {
+        std::printf("  cfg version %s : %zu files\n", HexU32(kv.first).c_str(), kv.second);
+    }
+    std::printf("  B16 layouts (0x0108..0x0115): attempted=%zu parsed=%zu exact-eof=%zu "
+                "with-trailing=%zu\n",
+                s.cfgB16Attempted, s.cfgB16Ok, s.cfgB16ExactEof, s.cfgB16WithTrailing);
+    for (const auto& kv : s.cfgB16OutcomeByVersion) {
+        std::printf("  %6zu x %s\n", kv.second, kv.first.c_str());
+    }
+    for (const auto& kv : s.cfgB16EffectTypesByVersion) {
+        std::printf("  %6zu x effect types %s\n", kv.second, kv.first.c_str());
+    }
+    for (const auto& kv : s.cfgB16TrailingSizes) {
+        std::printf("  %6zu x trailing %s bytes\n", kv.second, kv.first.c_str());
+    }
+    if (!s.cfgB16RejectionReasons.empty()) {
+        std::printf("  B16 .cfg rejection reasons:\n");
+        for (const auto& kv : s.cfgB16RejectionReasons) {
+            std::printf("  %6zu x %s\n", kv.second, kv.first.c_str());
+        }
     }
 }
 

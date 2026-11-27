@@ -661,17 +661,143 @@ std::vector<uint8_t> AnimationBin0104() {
     return w.Data();
 }
 
-// SANIMCONINFO 0x0107 (payload only, header present).
+// SANIMCONINFO fixtures (payload only, header present).
 // Emits the authentic SANIMCONINFO byte layout for each version, including the MSVC struct
 // padding the engine actually reads:
 //   0x0101..0x0104 are read with ReadBuffer(&OldAnimInfo, sizeof(SANIMCONINFO_10x)), i.e.
 //   whole padded structs (304 / 564 / 732 / 844 bytes); 0x0105..0x0107 are read field by
 //   field but with sizeof(SChaSoundData_103)=428 / sizeof(SChaSoundData)=388 in the tail.
-// SOURCE: enginelib/Meshs/DxSkinAniManSaveLoad.cpp, SAnimation.h, CharacterSound.h.
-std::vector<uint8_t> AnimationCfg(bool loop, uint32_t version = 0x0107) {
+//   0x0108..0x0110 (LoadFile_0108_0109_0110) and 0x0111..0x0115
+//   (LoadFile_0111_0112_0114_0115) follow the B16 field orders with the effect list and
+//   DxAniScale block parsed in full.
+// SOURCE: enginelib/Meshs/DxSkinAniManSaveLoad.cpp, backup repo
+//         matheomedrana/Ran-Online-EP7-Complete-Files @ tf661fbf
+//         Lib_Engine/Meshs/SAnimationInfo{.h,SaveLoad.cpp}, SAnimation.h,
+//         EngineSoundLib/DxSound/CharacterSound.h, DxEffect/EffAni/DxEffAni*.cpp.
+std::vector<uint8_t> AnimationCfg(bool loop, uint32_t version = 0x0107,
+                                  bool withEffects = false,
+                                  bool withAniScale = false,
+                                  bool withTrailing = false,
+                                  int32_t mainType = 1) {
     ByteWriter w;
     w.Raw(std::vector<uint8_t>(128, 0));
     w.U32(version);       // SANIMCONINFO version in the header fileId
+
+    // basestream::operator<<(std::string): DWORD length INCLUDING the terminator, then
+    // the bytes. (SerialFile.cpp CSerialFile::operator<<.)
+    auto writeLpString = [&w](const std::string& s) {
+        w.U32(static_cast<uint32_t>(s.size()) + 1);
+        for (char c : s) w.U8(static_cast<uint8_t>(c));
+        w.U8(0);
+    };
+    // One m_listEffAni entry as written by DxEffAniData_<T>::SaveFile: the SANIMCONINFO
+    // loop writes the type id, then the effect writes type id + version + sizeof +
+    // property.
+    auto effectSingle101 = [&w]() {
+        w.U32(0); w.U32(0); w.U32(0x0101); w.U32(464);  // EMEFFANI_SINGLE, inner id, ver, sizeof(prop)
+        w.U32(0x00001425u); w.U32(2400);                // m_dwFlags, m_dwFrame
+        w.F32(1.0f); w.F32(2.5f);                       // m_fFact, m_fScale
+        for (int i = 0; i < 16; ++i) w.F32((i == 0 || i == 5 || i == 10) ? 1.0f : 0.0f);  // m_matBase
+        w.FixedStr("fx_sword_hit", 128);                // m_szEff
+        w.FixedStr("Bip01 R Hand", 128);                // m_szBipFirst
+        w.FixedStr("Bip01 Head", 128);                  // m_szBipSecond
+    };
+    auto effectGhosting = [&w]() {
+        w.U32(1); w.U32(1); w.U32(0x0100); w.U32(28);   // EMEFFANI_GHOSTING
+        w.U32(0x00001403u); w.U32(300); w.U32(900);     // m_dwFlags, m_dwFrame_1, m_dwFrame_2
+        w.U32(4); w.U32(130); w.U32(3);                 // m_dwGhostingNum, m_dwAlphaMax, m_dwUnit
+        w.U32(0x00ffffffu);                             // D3DCOLOR m_dwColor
+    };
+    // EFFANI_PROPERTY_TRACE holds a std::string member, so its on-disk size is
+    // build-dependent; the fixture declares a size and fills it.
+    auto effectTrace = [&w](uint32_t declaredSize) {
+        w.U32(2); w.U32(2); w.U32(0x0100); w.U32(declaredSize);
+        w.Raw(std::vector<uint8_t>(declaredSize, 0xAB));
+    };
+    auto effectFaceOff = [&w]() {
+        w.U32(3); w.U32(3); w.U32(0x0100); w.U32(32);   // EMEFFANI_FACEOFF
+        w.FixedStr("face_normal.dds", 32);              // m_szTexture
+    };
+    auto effectsBlock = [&]() {
+        if (!withEffects) {
+            w.U32(0);
+            return;
+        }
+        w.U32(4);
+        effectSingle101();
+        effectGhosting();
+        effectTrace(28);   // float + a 24-byte std::string blob, as some MSVC build laid it out
+        effectFaceOff();
+    };
+    // DxAniScale::Load: map size, then per entry a length-prefixed name and a
+    // (count + count * (u32 key + f32 scale)) block.
+    auto aniScaleBlock = [&]() {
+        if (!withAniScale) {
+            w.U32(0);
+            return;
+        }
+        w.U32(2);
+        writeLpString("a_gum_att01");
+        w.U32(2);
+        w.U32(0);    w.F32(1.0f);
+        w.U32(1200); w.F32(1.5f);
+        writeLpString("a_gum_stay");
+        w.U32(1);
+        w.U32(600);  w.F32(0.5f);
+    };
+
+    if (version >= 0x0108) {
+        if (version <= 0x0110) {
+            // LoadFile_0108_0109_0110: NOTE m_UNITTIME is written BEFORE m_dwSTime, and
+            // the strike table comes BEFORE the div frames; the sound block is LAST.
+            w.FixedStr("st_walk", 128);
+            w.FixedStr("m_bone.skt", 128);
+            w.U32(loop ? 0x00000010u : 0u);
+            w.U32(4800);                       // m_UNITTIME
+            w.U32(0);                          // m_dwSTime
+            w.U32(4800);                       // m_dwETime
+            w.U32(4800);                       // m_dwETimeOrig
+            w.I32(mainType);
+            w.I32(0);
+            w.U16(0);                          // m_wStrikeCount
+            for (int i = 0; i < 9; ++i) { w.I32(0); w.I32(0); w.U32(0); }  // SANIMSTRIKE[9]
+            w.U16(1);                          // m_wDivCount
+            for (int i = 0; i < 8; ++i) w.U16(static_cast<uint16_t>(i));
+            effectsBlock();
+            aniScaleBlock();
+            w.I32(2);                          // SChaSoundData (388 bytes)
+            w.Raw(std::vector<uint8_t>(388 - 4, 0));
+        } else {
+            // LoadFile_0111_0112_0114_0115: four length-prefixed strings, then the
+            // 0x0101..0x0107 field order, sound block BEFORE the effect list.
+            writeLpString("st_walk.cfg");      // szCfgFile (read and discarded)
+            writeLpString("st_walk");          // szXFile -> m_szName
+            writeLpString("st_walk.bin");      // szBinFile (read and discarded)
+            writeLpString("m_bone.skt");       // szSkeleton -> m_szSkeletion
+            w.U32(loop ? 0x00000010u : 0u);
+            w.U32(0);                          // m_dwSTime
+            w.U32(4800);                       // m_dwETime
+            w.U32(4800);                       // m_dwETimeOrig
+            w.U32(4800);                       // m_UNITTIME
+            w.I32(mainType);
+            w.I32(0);
+            w.U16(1);                          // m_wDivCount
+            for (int i = 0; i < 8; ++i) w.U16(static_cast<uint16_t>(i));
+            w.U16(0);                          // m_wStrikeCount
+            for (int i = 0; i < 9; ++i) { w.I32(0); w.I32(0); w.U32(0); }
+            w.I32(2);                          // SChaSoundData (388 bytes)
+            w.Raw(std::vector<uint8_t>(388 - 4, 0));
+            effectsBlock();
+            aniScaleBlock();
+        }
+        if (withTrailing) {
+            // Official-writer trailing bytes ("//official version partial read only"):
+            // consumed by the reader as a counted remainder, never reinterpreted.
+            w.Raw({0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0x01, 0x02, 0x03});
+        }
+        return w.Data();
+    }
+
     w.FixedStr("st_walk", 128);
     w.FixedStr("m_bone.skt", 128);
     w.U32(loop ? 0x00000010u : 0u);  // m_dwFlag -> kAnimFlagLoop
@@ -679,7 +805,7 @@ std::vector<uint8_t> AnimationCfg(bool loop, uint32_t version = 0x0107) {
     w.U32(4800);
     w.U32(4800);
     w.U32(4800);   // m_UNITTIME
-    w.I32(1);      // mainType
+    w.I32(mainType);      // mainType
     w.I32(0);      // subType
     w.U16(1);      // divCount
     for (int i = 0; i < 8; ++i) w.U16(static_cast<uint16_t>(i));
@@ -1315,9 +1441,13 @@ void TestAnimation() {
         J_CHECK(infoV.IsLoop());
     }
 
-    // Versions the client ships but the engine source does not define must be rejected with
-    // the value named -- never guessed at.
-    for (uint32_t version : {0x0110u, 0x0114u, 0x0115u}) {
+    // Versions with no authentic definition must be rejected with the value named --
+    // never guessed at. 0x0113 has no case in the authentic SANIMCONINFO::LoadFile
+    // switch (SAnimationInfoSaveLoad.cpp: 0x0115, 0x0114, 0x0112, 0x0111, 0x0110,
+    // 0x0109, 0x0108, 0x0107, ...) and 0x0116 lies beyond the newest loader. Since B16
+    // the shipped 0x0108..0x0112/0x0114/0x0115 layouts are implemented, so the
+    // unsupported set shrinks to exactly these.
+    for (uint32_t version : {0x0113u, 0x0116u}) {
         std::vector<uint8_t> unknown = AnimationCfg(true, 0x0106);
         unknown[128] = static_cast<uint8_t>(version & 0xFF);
         unknown[129] = static_cast<uint8_t>((version >> 8) & 0xFF);
@@ -1327,7 +1457,7 @@ void TestAnimation() {
         std::snprintf(expected, sizeof(expected), "0x%08X", version);
         J_CHECK(rejected.error.find(expected) != std::string::npos);
         // A known-but-unimplemented version must be classified UNSUPPORTED (a tracked
-        // coverage gap, B11), never silently accepted and never reported as parsed.
+        // coverage gap, B11/B16), never silently accepted and never reported as parsed.
         J_CHECK(rejected.unsupported);
         J_CHECK(rejected.error.find("UNSUPPORTED") != std::string::npos);
     }
@@ -1340,7 +1470,7 @@ void TestAnimation() {
         const char* type = "SOMETHINGELSE";
         for (size_t i = 0; i < 128; ++i) foreign[i] = 0;
         for (size_t i = 0; type[i] != 0; ++i) foreign[i] = static_cast<uint8_t>(type[i]);
-        foreign[128] = 0x14;  // an unimplemented version, but the wrong file family
+        foreign[128] = 0x13;  // 0x0113: unimplemented (no authentic case), wrong file family
         foreign[129] = 0x01;
         const RANMobile::EP7AnimInfo wrongFamily =
             RANMobile::EP7AnimationReader::ParseInfo(foreign, true, false);
@@ -1356,6 +1486,277 @@ void TestAnimation() {
         J_CHECK(good.valid);
         J_CHECK(!good.unsupported);
         J_CHECK(good.version == 0x0107);
+    }
+
+    // -----------------------------------------------------------------
+    // B16: SANIMCONINFO 0x0108..0x0115 (SAnimationInfoSaveLoad.cpp,
+    // backup repo matheomedrana/Ran-Online-EP7-Complete-Files @ tf661fbf).
+    // -----------------------------------------------------------------
+    {
+        // Minimal files for every implemented version parse to the same playback
+        // metadata, including the 0x0108..0x0110 field order where m_UNITTIME is
+        // written BEFORE m_dwSTime and the strike table precedes the div frames.
+        // Exact payload sizes are locked so a wrong field order or size would shift
+        // every field after the version DWORD and fail loudly here.
+        static const std::map<uint32_t, size_t> kCfgPayloadSize = {
+            // 0x0108..0x0110: 256 names + 4 flag + 16 times + 8 types + 110 strike
+            //                 + 18 div + 4 effectCount + 4 aniscale + 388 sound = 808
+            {0x0108, 808}, {0x0109, 808}, {0x0110, 808},
+            // 0x0111..0x0115: 16+12+16+15 strings + 4 flag + 16 times + 8 types
+            //                 + 18 div + 110 strike + 388 sound + 4 effectCount
+            //                 + 4 aniscale = 611
+            {0x0111, 611}, {0x0112, 611}, {0x0114, 611}, {0x0115, 611},
+        };
+        for (const uint32_t version : {0x0108u, 0x0109u, 0x0110u, 0x0111u, 0x0112u, 0x0114u, 0x0115u}) {
+            const std::vector<uint8_t> cfgBytes = AnimationCfg(true, version);
+            J_CHECK(cfgBytes.size() - 132 == kCfgPayloadSize.at(version));
+            const RANMobile::EP7AnimInfo infoV =
+                RANMobile::EP7AnimationReader::ParseInfo(cfgBytes, true, false);
+            if (!infoV.valid) {
+                std::printf("  cfg 0x%04X -> %s\n", version, infoV.error.c_str());
+            }
+            J_CHECK_MSG(infoV.valid, infoV.error);
+            J_CHECK(infoV.version == version);
+            J_CHECK(!infoV.unsupported);
+            J_CHECK(infoV.name == "st_walk");
+            J_CHECK(infoV.skeleton == "m_bone.skt");
+            J_CHECK(infoV.IsLoop());
+            J_CHECK(infoV.startTime == 0);
+            J_CHECK(infoV.endTime == 4800);
+            J_CHECK(infoV.endTimeOrig == 4800);
+            J_CHECK(infoV.unitTime == 4800);
+            J_CHECK(infoV.mainType == 1);
+            J_CHECK(infoV.subType == 0);
+            J_CHECK(infoV.strikeCount == 0);
+            J_CHECK(infoV.divCount == 1);
+            J_CHECK(infoV.effectCount == 0);
+            J_CHECK(infoV.effects.empty());
+            J_CHECK(infoV.aniScaleEntries.empty());
+            J_CHECK(!infoV.effectsSkipped);  // B16 versions parse the effect list in full
+            J_CHECK(infoV.exactEof);
+            J_CHECK(infoV.trailingBytes == 0);
+            if (version >= 0x0111) {
+                // szXFile -> m_szName / szSkeleton -> m_szSkeletion; the discarded
+                // szCfgFile / szBinFile strings are recorded, not dropped silently.
+                J_CHECK(infoV.cfgFileName == "st_walk.cfg");
+                J_CHECK(infoV.binFileName == "st_walk.bin");
+            } else {
+                J_CHECK(infoV.cfgFileName.empty());
+                J_CHECK(infoV.binFileName.empty());
+            }
+        }
+
+        // Rich 0x0110 file: the full effect list (Single/Ghosting/Trace/FaceOff), the
+        // AniScale map, and official trailing bytes. The trailing bytes are counted and
+        // reported, never reinterpreted -- the authentic loader is marked
+        // "//official version partial read only" and returns TRUE all the same.
+        {
+            const std::vector<uint8_t> rich = AnimationCfg(true, 0x0110, true, true, true);
+            const RANMobile::EP7AnimInfo r =
+                RANMobile::EP7AnimationReader::ParseInfo(rich, true, false);
+            J_CHECK_MSG(r.valid, r.error);
+            J_CHECK(r.version == 0x0110);
+            J_CHECK(r.effectCount == 4);
+            J_CHECK(r.effects.size() == 4);
+            J_CHECK(!r.effectsSkipped);
+            J_CHECK(!r.exactEof);
+            J_CHECK(r.trailingBytes == 8);
+            // EMEFFANI_SINGLE=0, property version 0x0101, sizeof(property) = 464.
+            J_CHECK(r.effects[0].typeId == 0);
+            J_CHECK(r.effects[0].effectVersion == 0x0101);
+            J_CHECK(r.effects[0].sizeBytes == 464);
+            J_CHECK(r.effects[0].flags == 0x00001425u);
+            J_CHECK(r.effects[0].frame == 2400);
+            J_CHECK(FloatNear(r.effects[0].fact, 1.0f, 1e-6f));
+            J_CHECK(FloatNear(r.effects[0].scale, 2.5f, 1e-6f));
+            J_CHECK(r.effects[0].name == "fx_sword_hit");
+            // EMEFFANI_GHOSTING=1, property 0x0100, 28 bytes.
+            J_CHECK(r.effects[1].typeId == 1);
+            J_CHECK(r.effects[1].effectVersion == 0x0100);
+            J_CHECK(r.effects[1].sizeBytes == 28);
+            J_CHECK(r.effects[1].flags == 0x00001403u);
+            J_CHECK(r.effects[1].frame == 300);
+            J_CHECK(r.effects[1].frame2 == 900);
+            // EMEFFANI_TRACE=2: the property holds a std::string member whose size is
+            // build-dependent, so the declared block is consumed, not decoded.
+            J_CHECK(r.effects[2].typeId == 2);
+            J_CHECK(r.effects[2].sizeBytes == 28);
+            J_CHECK(r.effects[2].name.empty());
+            // EMEFFANI_FACEOFF=3, property 0x0100, 32 bytes.
+            J_CHECK(r.effects[3].typeId == 3);
+            J_CHECK(r.effects[3].sizeBytes == 32);
+            J_CHECK(r.effects[3].name == "face_normal.dds");
+            // DxAniScale map (DxAniBoneScale.cpp).
+            J_CHECK(r.aniScaleEntries.size() == 2);
+            J_CHECK(r.aniScaleEntries[0].animName == "a_gum_att01");
+            J_CHECK(r.aniScaleEntries[0].keyCount == 2);
+            J_CHECK(r.aniScaleEntries[1].animName == "a_gum_stay");
+            J_CHECK(r.aniScaleEntries[1].keyCount == 1);
+        }
+        // The same rich content on the 0x0111+ layout keeps the stream aligned with the
+        // sound block before the effect list, and ends exactly at the last field.
+        {
+            const std::vector<uint8_t> rich = AnimationCfg(true, 0x0115, true, true, false);
+            const RANMobile::EP7AnimInfo r =
+                RANMobile::EP7AnimationReader::ParseInfo(rich, true, false);
+            J_CHECK_MSG(r.valid, r.error);
+            J_CHECK(r.cfgFileName == "st_walk.cfg");
+            J_CHECK(r.binFileName == "st_walk.bin");
+            J_CHECK(r.effectCount == 4);
+            J_CHECK(r.effects.size() == 4);
+            J_CHECK(r.effects[0].sizeBytes == 464);
+            J_CHECK(r.effects[3].name == "face_normal.dds");
+            J_CHECK(r.aniScaleEntries.size() == 2);
+            J_CHECK(r.exactEof);
+            J_CHECK(r.trailingBytes == 0);
+        }
+
+        // Malformed effect lists and AniScale maps are rejected with the cause named --
+        // never guessed through. Field offsets below follow the rich 0x0110 layout
+        // locked by the assertions above (payload = file offset - 132).
+        auto putU32 = [](std::vector<uint8_t>& b, size_t off, uint32_t v) {
+            b[off] = static_cast<uint8_t>(v & 0xFF);
+            b[off + 1] = static_cast<uint8_t>((v >> 8) & 0xFF);
+            b[off + 2] = static_cast<uint8_t>((v >> 16) & 0xFF);
+            b[off + 3] = static_cast<uint8_t>((v >> 24) & 0xFF);
+        };
+        {
+            std::vector<uint8_t> bad = AnimationCfg(true, 0x0110, true, true, true);
+            putU32(bad, 132 + 412 + 4, 7);  // first effect outer type: beyond EMEFFANI_FACEOFF
+            const RANMobile::EP7AnimInfo r = RANMobile::EP7AnimationReader::ParseInfo(bad, true, false);
+            J_CHECK(!r.valid);
+            J_CHECK(!r.unsupported);
+            J_CHECK(r.error.find("effect type unknown") != std::string::npos);
+        }
+        {
+            std::vector<uint8_t> bad = AnimationCfg(true, 0x0110, true, true, true);
+            putU32(bad, 132 + 412 + 8, 1);  // inner type id no longer matches the list type
+            const RANMobile::EP7AnimInfo r = RANMobile::EP7AnimationReader::ParseInfo(bad, true, false);
+            J_CHECK(!r.valid);
+            J_CHECK(r.error.find("does not match") != std::string::npos);
+        }
+        {
+            std::vector<uint8_t> bad = AnimationCfg(true, 0x0110, true, true, true);
+            putU32(bad, 132 + 412 + 12, 0x0102);  // Single property version: not 0x0101/0x0100
+            const RANMobile::EP7AnimInfo r = RANMobile::EP7AnimationReader::ParseInfo(bad, true, false);
+            J_CHECK(!r.valid);
+            J_CHECK(r.error.find("Single effect version unsupported") != std::string::npos);
+        }
+        {
+            std::vector<uint8_t> bad = AnimationCfg(true, 0x0110, true, true, true);
+            // Ghosting entry starts after the 4-byte count + 16+464-byte Single entry:
+            // size field sits 12 bytes into it (outer + inner + version).
+            putU32(bad, 132 + 412 + 4 + 480 + 12, 27);  // sizeof(EFFANI_PROPERTY_GHOSTING) mismatch
+            const RANMobile::EP7AnimInfo r = RANMobile::EP7AnimationReader::ParseInfo(bad, true, false);
+            J_CHECK(!r.valid);
+            J_CHECK(r.error.find("Ghosting effect property size mismatch") != std::string::npos);
+        }
+        {
+            std::vector<uint8_t> bad = AnimationCfg(true, 0x0110, true, true, true);
+            // Trace entry starts after the Ghosting entry (16+28); a declared size below
+            // 4 cannot even hold m_fScale.
+            putU32(bad, 132 + 412 + 4 + 480 + 44 + 12, 3);
+            const RANMobile::EP7AnimInfo r = RANMobile::EP7AnimationReader::ParseInfo(bad, true, false);
+            J_CHECK(!r.valid);
+            J_CHECK(r.error.find("Trace effect property size invalid") != std::string::npos);
+        }
+        {
+            std::vector<uint8_t> bad = AnimationCfg(true, 0x0110, true, true, true);
+            // Effect count exceeds the sanity cap.
+            putU32(bad, 132 + 412, 0xFFFFFFFFu);
+            const RANMobile::EP7AnimInfo r = RANMobile::EP7AnimationReader::ParseInfo(bad, true, false);
+            J_CHECK(!r.valid);
+            J_CHECK(r.error.find("sanity limit") != std::string::npos);
+        }
+        {
+            std::vector<uint8_t> bad = AnimationCfg(true, 0x0110, true, true, true);
+            // AniScale map size exceeds the sanity cap (block starts after the effects:
+            // 412 + 4 + (16+464) + (16+28) + (16+28) + (16+32) = 1032).
+            putU32(bad, 132 + 1032, 0xFFFFFFFFu);
+            const RANMobile::EP7AnimInfo r = RANMobile::EP7AnimationReader::ParseInfo(bad, true, false);
+            J_CHECK(!r.valid);
+            J_CHECK(r.error.find("ani scale") != std::string::npos);
+        }
+        {
+            std::vector<uint8_t> bad = AnimationCfg(true, 0x0110, true, true, true);
+            // First AniScale entry: name length at +4, 12 bytes of name (incl. NUL),
+            // key count next (1032 + 4 + 4 + 12 = 1052).
+            putU32(bad, 132 + 1052, 0x7FFFFFFFu);  // key count absurd
+            const RANMobile::EP7AnimInfo r = RANMobile::EP7AnimationReader::ParseInfo(bad, true, false);
+            J_CHECK(!r.valid);
+            J_CHECK(r.error.find("ani scale keys run past end") != std::string::npos);
+        }
+        {
+            std::vector<uint8_t> bad = AnimationCfg(true, 0x0115, true, true, true);
+            // 0x0111+ companion-name string length runs past the end of the buffer.
+            putU32(bad, 132, 0x7FFFFFFFu);
+            const RANMobile::EP7AnimInfo r = RANMobile::EP7AnimationReader::ParseInfo(bad, true, false);
+            J_CHECK(!r.valid);
+            J_CHECK(r.error.find("companion-name strings") != std::string::npos);
+        }
+
+        // The 388-byte SChaSoundData block is mandatory in both layouts: one byte short
+        // must reject at exactly that field.
+        {
+            std::vector<uint8_t> cut = AnimationCfg(true, 0x0110);
+            cut.resize(132 + 420);  // everything up to but excluding the sound block
+            const RANMobile::EP7AnimInfo r = RANMobile::EP7AnimationReader::ParseInfo(cut, true, false);
+            J_CHECK(!r.valid);
+            J_CHECK(r.error.find("truncated cfg sound block") != std::string::npos);
+        }
+        {
+            std::vector<uint8_t> cut = AnimationCfg(true, 0x0115);
+            cut.resize(132 + 215);  // up to but excluding the sound block (div+strike done)
+            const RANMobile::EP7AnimInfo r = RANMobile::EP7AnimationReader::ParseInfo(cut, true, false);
+            J_CHECK(!r.valid);
+            J_CHECK(r.error.find("truncated cfg sound block") != std::string::npos);
+        }
+
+        // EP7 extended the main-type range from 21 to 34 (DxAniKeys.h AN_TYPE_SIZE=34):
+        // AN_BIKE_A..AN_REARCAR_A (21..33) are authentic file data in the 0x0108+ layouts
+        // and must parse; AN_NONE/AN_TYPE_SIZE (34) and beyond stay out of range.
+        {
+            const std::vector<uint8_t> vehicle =
+                AnimationCfg(true, 0x0110, false, false, false, 33 /*AN_REARCAR_A*/);
+            const RANMobile::EP7AnimInfo r =
+                RANMobile::EP7AnimationReader::ParseInfo(vehicle, true, false);
+            J_CHECK_MSG(r.valid, r.error);
+            J_CHECK(r.mainType == 33);
+        }
+        {
+            const std::vector<uint8_t> outOfRange =
+                AnimationCfg(true, 0x0115, false, false, false, 34 /*AN_NONE*/);
+            const RANMobile::EP7AnimInfo r =
+                RANMobile::EP7AnimationReader::ParseInfo(outOfRange, true, false);
+            J_CHECK(!r.valid);
+            J_CHECK(r.error.find("cfg main type out of range") != std::string::npos);
+        }
+        {
+            // The relaxed bound applies to the older layouts too (same enum); 0x0101
+            // still rejects everything >= AN_TYPE_SIZE.
+            const std::vector<uint8_t> oldVehicle =
+                AnimationCfg(true, 0x0101, false, false, false, 22);
+            const RANMobile::EP7AnimInfo r =
+                RANMobile::EP7AnimationReader::ParseInfo(oldVehicle, true, false);
+            J_CHECK_MSG(r.valid, r.error);
+            J_CHECK(r.mainType == 22);
+        }
+
+        // Exact-EOF strictness: the minimal fixtures carry no official trailing data, so
+        // EVERY truncation must be rejected -- no partial field may parse.
+        for (const uint32_t version : {0x0108u, 0x0110u, 0x0111u, 0x0115u}) {
+            const std::vector<uint8_t> full = AnimationCfg(true, version);
+            for (size_t len = 0; len < full.size(); ++len) {
+                std::vector<uint8_t> cut(full.begin(), full.begin() + static_cast<long>(len));
+                const RANMobile::EP7AnimInfo r =
+                    RANMobile::EP7AnimationReader::ParseInfo(cut, true, false);
+                if (r.valid) {
+                    std::printf("  cfg 0x%04X truncated to %zu bytes unexpectedly parsed\n",
+                                version, len);
+                }
+                J_CHECK(!r.valid);
+            }
+        }
     }
 
     // Player: looping wraps, non-looping ends.
@@ -1982,6 +2383,54 @@ void TestCharacterScene() {
     RANMobile::EP7CharacterScene scene2;
     J_CHECK(scene2.Spawn(std::make_shared<RANMobile::EP7CharacterAsset>(brokenAsset), 0, 0, 0, 0) == 0);
     J_CHECK(scene2.Instances().empty());
+
+    // -----------------------------------------------------------------
+    // B16 pipeline integration: the same character resolver fed a 0x0115 .cfg
+    // (LoadFile_0111_0112_0114_0115 layout, rich effect/AniScale content, official
+    // trailing bytes) must load, spawn and animate exactly like the 0x0107 one above.
+    // The .cfg is the animation metadata source for the Mobile pipeline; the loader
+    // resolves "st_walk.cfg" next to "st_walk.bin" by stem (DxSkinAniMan::
+    // LoadAnimContainer ChangeExt(".x" -> ".cfg")).
+    // -----------------------------------------------------------------
+    {
+        entries.clear();
+        entries.emplace_back("m_bone.skt", std::vector<uint8_t>(skelText.begin(), skelText.end()));
+        entries.emplace_back("body.x", std::vector<uint8_t>(meshText.begin(), meshText.end()));
+        entries.emplace_back("p_head.cps", PieceCps(0));
+        entries.emplace_back("p_upper.cps", PieceCps(1));
+        entries.emplace_back("st_walk.bin", AnimationBin());
+        entries.emplace_back("st_walk.cfg",
+                             AnimationCfg(true, 0x0115, /*withEffects=*/true,
+                                          /*withAniScale=*/true, /*withTrailing=*/true));
+        RANMobile::EP7CharacterLoader loaderB16;
+        loaderB16.SetResolver(&MapResolver, &map);
+        const RANMobile::EP7CharacterAsset assetB16 = loaderB16.LoadCharacter(CharacterChf(), false);
+        J_CHECK_MSG(assetB16.loaded, assetB16.error);
+        J_CHECK(assetB16.animationCount == 1);
+
+        RANMobile::EP7CharacterScene sceneB16;
+        const uint32_t idB16 = sceneB16.Spawn(std::make_shared<RANMobile::EP7CharacterAsset>(assetB16), 0.0f, 0.0f, 0.0f, 0.0f);
+        J_CHECK(idB16 != 0);
+        RANMobile::EP7CharacterInstance* instB16 = sceneB16.Find(idB16);
+        J_CHECK(instB16 != nullptr);
+        if (!instB16) return;
+        // Pose once in the bind pose so the baseline matches the first test (captured
+        // before its PlayAnimation call).
+        J_CHECK(RANMobile::EP7CharacterScene::EvaluatePose(*instB16, nullptr));
+        sceneB16.SetPreviewTarget(idB16);
+        std::vector<float> beforeB16 = instB16->skinnedPositions;
+        J_CHECK(sceneB16.PlayAnimation(idB16, "st_walk"));
+        for (int i = 0; i < 30; ++i) sceneB16.Update(1.0f / 60.0f);
+        bool movedB16 = false;
+        for (size_t i = 0; i < beforeB16.size() && i < instB16->skinnedPositions.size(); ++i) {
+            if (std::fabs(beforeB16[i] - instB16->skinnedPositions[i]) > 1e-4f) {
+                movedB16 = true;
+                break;
+            }
+        }
+        J_CHECK_MSG(movedB16, "a 0x0115 .cfg must drive the same clip playback as 0x0107");
+        J_CHECK(sceneB16.Destroy(idB16));
+    }
 }
 
 void TestMath() {
@@ -2051,6 +2500,9 @@ void TestRobustness() {
     fixtures.push_back(AnimationBin0103());
     fixtures.push_back(AnimationBin0104());
     fixtures.push_back(AnimationCfg(true));
+    fixtures.push_back(AnimationCfg(true, 0x0110));
+    fixtures.push_back(AnimationCfg(true, 0x0115, /*withEffects=*/true, /*withAniScale=*/true,
+                                    /*withTrailing=*/true));
 
     RANMobile::EP7Skeleton skeleton;
     skeleton.LoadFromXFile(reinterpret_cast<const uint8_t*>(skelText.data()), skelText.size());

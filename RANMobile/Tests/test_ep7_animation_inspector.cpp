@@ -383,6 +383,174 @@ void TestDirectorySurveySeparatesAnimDirAndPreservesHashes() {
     fs::remove_all(tmp, ec);
 }
 
+// ---------------------------------------------------------------------------
+// B16: SANIMCONINFO .cfg survey aggregation over the unmodified reader.
+// ---------------------------------------------------------------------------
+
+void AppendFixed(std::vector<uint8_t>& b, const std::string& s, size_t width) {
+    const size_t n = std::min(width, s.size());
+    b.insert(b.end(), s.begin(), s.begin() + static_cast<long>(n));
+    b.resize(b.size() + (width - n), 0);
+}
+
+void AppendCfgStrike(std::vector<uint8_t>& b) {
+    b.push_back(0x00); b.push_back(0x00);  // m_wStrikeCount = 0 (u16)
+    for (int i = 0; i < 9; ++i) {          // SANIMSTRIKE[9] x 12 B
+        AppendU32(b, 0u);
+        AppendU32(b, 0u);
+        AppendU32(b, 0u);
+    }
+}
+
+void AppendCfgDiv(std::vector<uint8_t>& b) {
+    b.push_back(0x01); b.push_back(0x00);  // m_wDivCount = 1 (u16)
+    for (int i = 0; i < 8; ++i) {          // m_wDivFrame[8] (u16 each)
+        b.push_back(static_cast<uint8_t>(i));
+        b.push_back(0x00);
+    }
+}
+
+void AppendCfgSound(std::vector<uint8_t>& b) {
+    AppendU32(b, 0u);                       // m_PlayFrameCount
+    b.resize(b.size() + 384, 0);            // rest of SChaSoundData (388 total)
+}
+
+// LoadFile_0108_0109_0110 layout: m_UNITTIME before m_dwSTime, strike before div,
+// effects -> AniScale -> sound.
+std::vector<uint8_t> MakeCfg0108Family(uint32_t version, bool trailing) {
+    std::vector<uint8_t> b = MakeHeader("SANIMCONINFO", version);
+    AppendFixed(b, "st_walk", 128);          // m_szName
+    AppendFixed(b, "m_bone.skt", 128);       // m_szSkeletion
+    AppendU32(b, 0x00000010u);               // m_dwFlag (ACF_LOOP)
+    AppendU32(b, 4800u);                     // m_UNITTIME (FIRST)
+    AppendU32(b, 0u);                        // m_dwSTime
+    AppendU32(b, 4800u);                     // m_dwETime
+    AppendU32(b, 4800u);                     // m_dwETimeOrig
+    AppendU32(b, 1u);                        // m_MainType
+    AppendU32(b, 0u);                        // m_SubType
+    AppendCfgStrike(b);
+    AppendCfgDiv(b);
+    AppendU32(b, 0u);                        // effect count = 0
+    AppendU32(b, 0u);                        // AniScale map size = 0
+    AppendCfgSound(b);
+    if (trailing) {                          // official trailing bytes
+        AppendU32(b, 0xDEADBEEFu);
+    }
+    return b;
+}
+
+// LoadFile_0111_0112_0114_0115 layout: four length-prefixed strings, fields in the
+// 0x0101..0x0107 order, sound before effects, AniScale last.
+std::vector<uint8_t> MakeCfg0115(bool withEffect, bool withAniScale, bool trailing) {
+    std::vector<uint8_t> b = MakeHeader("SANIMCONINFO", 0x0115u);
+    AppendString(b, "st_walk.cfg");          // szCfgFile (read and discarded)
+    AppendString(b, "st_walk");              // szXFile -> m_szName
+    AppendString(b, "st_walk.bin");          // szBinFile (read and discarded)
+    AppendString(b, "m_bone.skt");           // szSkeleton -> m_szSkeletion
+    AppendU32(b, 0x00000010u);               // m_dwFlag
+    AppendU32(b, 0u);                        // m_dwSTime
+    AppendU32(b, 4800u);                     // m_dwETime
+    AppendU32(b, 4800u);                     // m_dwETimeOrig
+    AppendU32(b, 4800u);                     // m_UNITTIME
+    AppendU32(b, 1u);                        // m_MainType
+    AppendU32(b, 0u);                        // m_SubType
+    AppendCfgDiv(b);                         // div BEFORE strike
+    AppendCfgStrike(b);
+    AppendCfgSound(b);                       // sound BEFORE effects
+    if (withEffect) {
+        AppendU32(b, 1u);                    // 1 effect
+        AppendU32(b, 0u);                    // EMEFFANI_SINGLE
+        AppendU32(b, 0u);                    // inner type id
+        AppendU32(b, 0x0101u);               // property version
+        AppendU32(b, 464u);                  // sizeof(EFFANI_PROPERTY_SINGLE)
+        AppendU32(b, 0x00001425u);           // m_dwFlags
+        AppendU32(b, 2400u);                 // m_dwFrame
+        AppendF32(b, 1.0f);                  // m_fFact
+        AppendF32(b, 2.5f);                  // m_fScale
+        for (int i = 0; i < 16; ++i) AppendF32(b, (i == 0) ? 1.0f : 0.0f);  // m_matBase
+        AppendFixed(b, "fx_hit", 128);       // m_szEff
+        AppendFixed(b, "", 128);             // m_szBipFirst
+        AppendFixed(b, "", 128);             // m_szBipSecond
+    } else {
+        AppendU32(b, 0u);
+    }
+    if (withAniScale) {
+        AppendU32(b, 1u);                    // 1 map entry
+        AppendString(b, "a_gum_att01");
+        AppendU32(b, 1u);                    // 1 scale key
+        AppendU32(b, 0u);
+        AppendF32(b, 1.0f);
+    } else {
+        AppendU32(b, 0u);
+    }
+    if (trailing) {
+        AppendU32(b, 0xDEADBEEFu);
+    }
+    return b;
+}
+
+template <typename M>
+size_t MapCount(const M& m, const typename M::key_type& k) {
+    const auto it = m.find(k);
+    return it == m.end() ? 0u : it->second;
+}
+
+void TestCfgB16SurveyAggregation() {
+    const fs::path tmp = fs::temp_directory_path() / "ep7_b16_inspector_cfg_test";
+    std::error_code ec;
+    fs::remove_all(tmp, ec);
+    fs::create_directories(tmp / "data" / "animation");
+
+    auto writeBytes = [](const fs::path& p, const std::vector<uint8_t>& d) {
+        std::ofstream f(p, std::ios::binary);
+        f.write(reinterpret_cast<const char*>(d.data()), static_cast<std::streamsize>(d.size()));
+    };
+    writeBytes(tmp / "data" / "animation" / "b16_a.cfg", MakeCfg0108Family(0x0110u, false));
+    writeBytes(tmp / "data" / "animation" / "b16_b.cfg",
+               MakeCfg0115(/*withEffect=*/true, /*withAniScale=*/true, /*trailing=*/true));
+    writeBytes(tmp / "data" / "animation" / "b16_c.cfg", MakeHeader("SANIMCONINFO", 0x0113u));
+    writeBytes(tmp / "data" / "animation" / "b16_d.cfg", MakeHeader("SANIMCONINFO", 0x0107u));
+    // A malformed 0x0110 (effect count absurd) must land in the rejection breakdown.
+    std::vector<uint8_t> badCfg = MakeCfg0108Family(0x0110u, false);
+    const size_t effectCountAt = 132 + 256 + 4 + 16 + 8 + 110 + 18;
+    badCfg[effectCountAt] = 0xFF; badCfg[effectCountAt + 1] = 0xFF;
+    badCfg[effectCountAt + 2] = 0xFF; badCfg[effectCountAt + 3] = 0xFF;
+    writeBytes(tmp / "data" / "animation" / "b16_e.cfg", badCfg);
+
+    const auto sum = EP7AnimInspect::RunDirectorySurvey(tmp, 2);
+
+    CHECK(sum.totalCfgIndexed == 5);
+    CHECK(sum.cfgVersionCounts.size() == 4);  // 0x0107, 0x0110, 0x0113, 0x0115
+    CHECK(MapCount(sum.cfgVersionCounts, 0x0110u) == 2);
+    CHECK(MapCount(sum.cfgVersionCounts, 0x0115u) == 1);
+    CHECK(MapCount(sum.cfgVersionCounts, 0x0113u) == 1);
+    CHECK(MapCount(sum.cfgVersionCounts, 0x0107u) == 1);
+    // B16 attempted = the three 0x0108..0x0115 files (0x0113 stays outside the
+    // authentic switch); two parse, the malformed one is rejected with its reason.
+    CHECK(sum.cfgB16Attempted == 3);
+    CHECK(sum.cfgB16Ok == 2);
+    CHECK(sum.cfgB16ExactEof == 1);
+    CHECK(sum.cfgB16WithTrailing == 1);
+    CHECK(MapCount(sum.cfgB16OutcomeByVersion, std::string("0x0110:exact-eof")) == 1);
+    CHECK(MapCount(sum.cfgB16OutcomeByVersion, std::string("0x0115:trailing-bytes")) == 1);
+    CHECK(MapCount(sum.cfgB16OutcomeByVersion, std::string("0x0110:rejected")) == 1);
+    CHECK(MapCount(sum.cfgB16TrailingSizes, std::string("0x0115:4")) == 1);
+    CHECK(MapCount(sum.cfgB16EffectTypesByVersion, std::string("0x0115:mask-0x0001")) == 1);
+    CHECK(sum.cfgB16RejectionReasons.size() == 1);
+    CHECK(sum.cfgB16RejectionReasons.begin()->first.find("0x0110") != std::string::npos);
+    CHECK(sum.cfgB16RejectionReasons.begin()->first.find("sanity limit") != std::string::npos);
+
+    const std::string json = EP7AnimInspect::FormatJsonReport(sum);
+    CHECK(json.find("\"cfg_b16_outcomes\"") != std::string::npos);
+    CHECK(json.find("\"cfg_b16_totals\"") != std::string::npos);
+    CHECK(json.find("0x0115:trailing-bytes\": 1") != std::string::npos);
+    for (unsigned char c : json) {
+        CHECK(c == '\n' || c == '\r' || c == '\t' || (c >= 0x20 && c <= 0x7E));
+    }
+
+    fs::remove_all(tmp, ec);
+}
+
 }  // namespace
 
 int main() {
@@ -393,6 +561,7 @@ int main() {
     TestParsed0100WithEmptyBoneAndParserRejectedInner0103();
     TestContainer0103And0104And0200SourceSpecExactEof();
     TestDirectorySurveySeparatesAnimDirAndPreservesHashes();
+    TestCfgB16SurveyAggregation();
 
     std::printf("test_ep7_animation_inspector: %d passed, %d failed\n", g_pass, g_fail);
     return g_fail == 0 ? 0 : 1;

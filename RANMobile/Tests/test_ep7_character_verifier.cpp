@@ -118,10 +118,32 @@ int main() {
     CHECK(Verify(headerless, h) == Outcome::Fail);
     CHECK(h.binInvalidHeader == 1);
 
-    // Existing unrelated-extension classifier behavior remains unchanged.
+    // Existing unrelated-extension classifier behavior remains unchanged. Since B16 the
+    // 0x0108..0x0112 / 0x0114 / 0x0115 SANIMCONINFO layouts parse (Pass); 0x0113 stays
+    // Unsupported because the authentic LoadFile switch has no case for it.
     Counters other;
-    CHECK(VerifySingleAsset("a.cfg", Header("SANIMCONINFO", 0x0108), other) == Outcome::Unsupported);
-    CHECK(other.cfgTotal == 1 && other.cfgUnsupported == 1);
+    {
+        const std::vector<uint8_t> cfg108 = Header("SANIMCONINFO", 0x0108);
+        // Minimal 0x0108 body: names, flag+times (m_UNITTIME first), types, strike,
+        // div, effect count, AniScale map size, 388-byte sound block.
+        auto body = cfg108;
+        auto put32 = [&body](size_t off, uint32_t v) {
+            body[off] = static_cast<uint8_t>(v & 0xFF);
+            body[off + 1] = static_cast<uint8_t>((v >> 8) & 0xFF);
+            body[off + 2] = static_cast<uint8_t>((v >> 16) & 0xFF);
+            body[off + 3] = static_cast<uint8_t>((v >> 24) & 0xFF);
+        };
+        body.resize(132 + 808, 0);
+        std::memcpy(body.data() + 132, "a", 1);              // m_szName
+        std::memcpy(body.data() + 132 + 128, "b", 1);        // m_szSkeletion
+        put32(132 + 256 + 4, 4800u);                          // m_UNITTIME
+        put32(132 + 412, 0u);                                 // effect count
+        put32(132 + 416, 0u);                                 // AniScale map size
+        CHECK(VerifySingleAsset("a.cfg", body, other) == Outcome::Pass);
+        CHECK(other.cfgTotal == 1 && other.cfgOk == 1 && other.cfgUnsupported == 0);
+    }
+    CHECK(VerifySingleAsset("a2.cfg", Header("SANIMCONINFO", 0x0113), other) == Outcome::Unsupported);
+    CHECK(other.cfgTotal == 2 && other.cfgUnsupported == 1);
     CHECK(VerifySingleAsset("a.chf", {}, other) == Outcome::Fail);
     CHECK(VerifySingleAsset("a.cps", {}, other) == Outcome::Fail);
     CHECK(VerifySingleAsset("a.skt", {}, other) == Outcome::Fail);
