@@ -529,17 +529,20 @@ jobs:
           timeout 180 "$ADB" install -r RANMobile/Android/app/build/outputs/apk/debug/app-debug.apk \
             || { echo "::error::adb install failed or timed out"; exit 1; }
           echo "::notice::install completed"
-          timeout 60 "$ADB" shell am start -n com.famhawaii.ranmobile/android.app.NativeActivity --es selftest gpu \
-            || { echo "::error::am start failed or timed out"; "$ADB" logcat -d 2>/dev/null | tail -n 30 | while IFS= read -r line; do echo "::error::$line"; done || true; exit 1; }
+          amout=$(timeout 60 "$ADB" shell am start -n com.famhawaii.ranmobile/android.app.NativeActivity --es selftest gpu 2>&1 | tr -d '\r') \
+            || { echo "::error::am start failed or timed out"; printf '%s\n' "$amout" | while IFS= read -r line; do echo "::error::$line"; done || true; exit 1; }
+          printf '%s\n' "$amout" | while IFS= read -r line; do echo "::notice::am: $line"; done || true
           echo "::notice::am start completed, polling for verdict"
           sleep 10
-          app_pid=$("$ADB" shell pidof com.famhawaii.ranmobile 2>/dev/null | tr -d '\r' || true)
+          app_pid=$("$ADB" shell "ps -A 2>/dev/null | grep -w com.famhawaii.ranmobile" 2>/dev/null | head -n 1 | tr -d '\r' || true)
           if [ -z "$app_pid" ]; then
             echo "::error::app process not alive 10s after am start"
-            "$ADB" logcat -d 2>/dev/null | grep -iE "ranmobile|nativeactivity|linker|AndroidRuntime|DEBUG|FATAL|ActivityManager" | tail -n 50 > applog2.txt || true
-            while IFS= read -r line; do echo "::error::$line"; done < applog2.txt || true
+            "$ADB" root >/dev/null 2>&1 || true
+            "$ADB" logcat -d -b crash 2>/dev/null | tail -n 25 | while IFS= read -r line; do echo "::error::crash|$line"; done || true
+            "$ADB" logcat -d 2>/dev/null | grep -vE "% user|faults:|^$|getprop|Dumping" | tail -n 45 | while IFS= read -r line; do echo "::error::log|$line"; done || true
+            "$ADB" shell "ls -n /data/tombstones/ 2>/dev/null | tail -n 4" || true
           else
-            echo "::notice::app process alive pid=$app_pid"
+            echo "::notice::app process alive: $app_pid"
           fi
           timeout 420 bash -c '
             while true; do
@@ -556,8 +559,9 @@ jobs:
             echo "::error::selftest did not produce gpu_selftest.json in time"
             # Emit the app's logcat (crashes, harness logs, EGL/GLES errors) as
             # annotations — they are the only log channel readable from outside.
-            "$ADB" logcat -d 2>/dev/null | grep -iE "ranmobile|nativeactivity|linker|AndroidRuntime|DEBUG|FATAL|ActivityManager|art " | tail -n 60 > applog.txt || true
-            while IFS= read -r line; do echo "::error::$line"; done < applog.txt || true
+            "$ADB" root >/dev/null 2>&1 || true
+            "$ADB" logcat -d -b crash 2>/dev/null | tail -n 25 | while IFS= read -r line; do echo "::error::crash|$line"; done || true
+            "$ADB" logcat -d 2>/dev/null | grep -vE "% user|faults:|^$|getprop|Dumping" | tail -n 45 | while IFS= read -r line; do echo "::error::log|$line"; done || true
             "$ADB" shell "dumpsys package com.famhawaii.ranmobile | grep -E 'primaryCpuAbi|versionName' | head -n 3" || true
             "$ADB" shell "run-as com.famhawaii.ranmobile ls -la files/" || echo "::error::run-as files listing failed"
             echo "::notice::poll budget exhausted (420s) — diagnostics above"
