@@ -104,10 +104,30 @@ EP7SkinPieceInfo EP7SkinPieceReader::Parse(ep7byte::Stream& s) {
     }
     info.fileVersion = version;
 
-    if (version != kVersion107 && version != kVersion106 && version != kVersion105 && version != kVersion104) {
-        info.error = "unsupported .cps version (expected 0x0104..0x0107)";
+    // Every branch DxSkinPiece::LoadPiece implements.  The source accepts 0x0101 up to the
+    // current VERSION (0x0107); anything else falls through to its "Can't Load Skin object"
+    // error path (DxSkinPieceContainer.cpp:934-943).
+    const bool known = (version == EP7SkinPieceReader::kVersion107 ||
+                        version == EP7SkinPieceReader::kVersion106 ||
+                        version == EP7SkinPieceReader::kVersion105 ||
+                        version == EP7SkinPieceReader::kVersion104 ||
+                        version == EP7SkinPieceReader::kVersion103 ||
+                        version == EP7SkinPieceReader::kVersion102 ||
+                        version == EP7SkinPieceReader::kVersion101);
+    if (!known) {
+        info.error = "unsupported .cps version (expected 0x0101..0x0107)";
         return info;
     }
+
+    // Layout switches, each taken directly from the version's branch in LoadPiece.
+    const bool hasMaterials = (version >= EP7SkinPieceReader::kVersion104);   // 0x0103 has none
+    const bool hasTraceNames = (version >= EP7SkinPieceReader::kVersion103);  // 0x0101/0x0102 use fixed slots
+    const bool hasTrailingFlag = (version >= EP7SkinPieceReader::kVersion105);  // 0x0104 ends after effects
+    const uint32_t legacySlots = (version == EP7SkinPieceReader::kVersion102)
+                                     ? EP7SkinPieceReader::kLegacyTraceSlots102
+                                 : (version == EP7SkinPieceReader::kVersion101)
+                                     ? EP7SkinPieceReader::kLegacyTraceSlots101
+                                     : 0;
 
     if (!s.ReadU32(info.refCount)) {
         info.error = "truncated .cps ref count";
@@ -158,9 +178,11 @@ EP7SkinPieceInfo EP7SkinPieceReader::Parse(ep7byte::Stream& s) {
     }
 
     uint32_t materialCount = 0;
-    if (!s.ReadU32(materialCount)) {
-        info.error = "truncated .cps material count";
-        return info;
+    if (hasMaterials) {
+        if (!s.ReadU32(materialCount)) {
+            info.error = "truncated .cps material count";
+            return info;
+        }
     }
     if (materialCount > kMaxMaterials) {
         info.error = ".cps material count exceeds sanity limit";
@@ -211,27 +233,54 @@ EP7SkinPieceInfo EP7SkinPieceReader::Parse(ep7byte::Stream& s) {
         info.materials.push_back(std::move(mat));
     }
 
-    uint32_t traceCount = 0;
-    if (!s.ReadU32(traceCount)) {
-        info.error = "truncated trace count";
-        return info;
-    }
-    if (traceCount > kMaxTraces) {
-        info.error = "trace count exceeds sanity limit";
-        return info;
-    }
-    info.traces.reserve(traceCount);
-    for (uint32_t i = 0; i < traceCount; ++i) {
-        EP7TracePoint trace;
-        if (!s.ReadString(trace.name, kMaxPathString)) {
-            info.error = "truncated trace name";
+    if (hasTraceNames) {
+        // 0x0103-0x0107: DWORD count, then `count` x (length-prefixed name, SVERTEXINFLU).
+        uint32_t traceCount = 0;
+        if (!s.ReadU32(traceCount)) {
+            info.error = "truncated trace count";
             return info;
         }
-        if (!ReadVertexInfluence(s, trace.influence)) {
-            info.error = "truncated trace vertex influence";
+        if (traceCount > kMaxTraces) {
+            info.error = "trace count exceeds sanity limit";
             return info;
         }
-        info.traces.push_back(std::move(trace));
+        info.traces.reserve(traceCount);
+        for (uint32_t i = 0; i < traceCount; ++i) {
+            EP7TracePoint trace;
+            if (!s.ReadString(trace.name, kMaxPathString)) {
+                info.error = "truncated trace name";
+                return info;
+            }
+            if (!ReadVertexInfluence(s, trace.influence)) {
+                info.error = "truncated trace vertex influence";
+                return info;
+            }
+            info.traces.push_back(std::move(trace));
+        }
+    } else {
+        // 0x0101/0x0102: LoadPiece reads a FIXED array -- 8 slots for 0x0101, 10 for 0x0102
+        // (DxSkinPieceContainer.cpp:891 / :815).  There is no count and no name on disk.
+        // Only slots 0..3 are ever turned into trace points, named from the hard-coded
+        // STRACE_IMAGE01/02/11/12 macros, and only when m_dwIndex != COL_ERR (:896-904).
+        // The remaining slots are still read so the stream stays aligned.
+        static const char* const kSlotNames[EP7SkinPieceReader::kLegacyTraceNames] = {
+            "IMAGE01", "IMAGE02", "IMAGE11", "IMAGE12"};
+        EP7VertexInfluence slots[EP7SkinPieceReader::kLegacyTraceSlots102];
+        for (uint32_t i = 0; i < legacySlots; ++i) {
+            if (!ReadVertexInfluence(s, slots[i])) {
+                info.error = "truncated trace vertex influence";
+                return info;
+            }
+        }
+        for (uint32_t i = 0; i < EP7SkinPieceReader::kLegacyTraceNames; ++i) {
+            if (i >= legacySlots) break;
+            if (slots[i].index == EP7VertexInfluence::kColErr) continue;  // unset slot
+            EP7TracePoint trace;
+            trace.name = kSlotNames[i];
+            trace.syntheticName = true;
+            trace.influence = slots[i];
+            info.traces.push_back(std::move(trace));
+        }
     }
 
     // Effect list: the original constructs a DxEffChar per TypeID and lets the effect
@@ -256,9 +305,14 @@ EP7SkinPieceInfo EP7SkinPieceReader::Parse(ep7byte::Stream& s) {
         return info;
     }
 
-    if (!s.ReadU32(info.flag)) {
-        info.error = "truncated piece flag";
-        return info;
+    // Only 0x0105 and newer store m_dwFlag.  0x0104 and every legacy version end right
+    // after the effect list; their m_dwFlag stays at the constructor's 0 and is only ever
+    // OR-ed with effect flags (DxSkinPieceContainer.cpp:703/774/850/925).
+    if (hasTrailingFlag) {
+        if (!s.ReadU32(info.flag)) {
+            info.error = "truncated piece flag";
+            return info;
+        }
     }
 
     info.valid = true;

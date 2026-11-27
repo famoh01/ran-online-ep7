@@ -261,6 +261,99 @@ std::vector<uint8_t> PieceCpsWithTrace() {
     return w.Data();
 }
 
+
+// ---------------------------------------------------------------------------
+// Legacy .cps layouts (0x0101-0x0104), each written from its own branch in
+// DxSkinPiece::LoadPiece.  Shared slice: bit-exact per version so a change in one
+// version's layout cannot silently satisfy another's test.
+// ---------------------------------------------------------------------------
+namespace legacy {
+
+// Writes header through szXFileName/skeleton/type[/weapon]/meshName.
+void Header(ByteWriter& w, uint32_t ver, bool weapon) {
+    w.U32(ver);
+    w.U32(1);                 // m_dwRef
+    w.Str("body.x");
+    w.Str("m_bone.skt");
+    w.U32(0);                 // m_emType -> Head
+    if (weapon) w.U32(0);     // m_emWeaponWhereBack
+    w.Str("BodyMesh");
+}
+
+// One SVERTEXINFLU exactly as SaveFile writes it (0x0101 tag + over-stated dwSize).
+void Influence(ByteWriter& w, uint32_t index, uint32_t numBone) {
+    w.U32(0x0101);            // SVERTEXINFLU::VERSION
+    w.U32(32 + 16 * numBone); // dwSize, over-counted by SaveFile
+    w.U32(index);             // m_dwIndex
+    w.F32(0.0f); w.F32(0.0f); w.F32(0.0f);
+    w.F32(1.0f); w.F32(0.0f); w.F32(0.0f);
+    w.U32(numBone);
+    for (uint32_t i = 0; i < numBone; ++i) w.U32(i);
+    for (uint32_t i = 0; i < numBone; ++i) w.F32(1.0f / (numBone + 1));
+}
+
+// A slot that the engine skips: m_dwIndex == COL_ERR (0xFFFFFFFF), numBone == COL_ERR.
+void EmptyInfluence(ByteWriter& w) {
+    w.U32(0x0101);
+    w.U32(32);
+    w.U32(0xFFFFFFFFu);       // m_dwIndex == COL_ERR
+    w.F32(0.0f); w.F32(0.0f); w.F32(0.0f);
+    w.F32(1.0f); w.F32(0.0f); w.F32(0.0f);
+    w.U32(0xFFFFFFFFu);       // m_dwNumBone == COL_ERR
+}
+
+std::vector<uint8_t> Cps0104() {
+    ByteWriter w;
+    w.Raw(std::vector<uint8_t>(128, 0));
+    w.U32(0);
+    Header(w, 0x00000104, false);
+    w.U32(1);                         // material count
+    w.U32(0x0100);                    // SMATERIAL_PIECE::VERSION
+    w.U32(4 + 10 + 4 + 4);            // block size
+    w.Str("face.dds");
+    w.U32(0); w.U32(0);               // flags, zBias
+    w.U32(1);                         // trace count
+    w.Str("Bip01 Spine");
+    Influence(w, 0, 2);
+    w.U32(0);                         // effect count  <-- file ENDS here for 0x0104
+    return w.Data();
+}
+
+std::vector<uint8_t> Cps0103() {
+    ByteWriter w;
+    w.Raw(std::vector<uint8_t>(128, 0));
+    w.U32(0);
+    Header(w, 0x00000103, false);
+    // no material count at all
+    w.U32(2);                         // trace count
+    w.Str("Bip01 Spine");
+    Influence(w, 0, 2);
+    w.Str("Bip01 Head");
+    Influence(w, 1, 1);
+    w.U32(0);                         // effect count  <-- file ENDS here
+    return w.Data();
+}
+
+// slots101=8 for 0x0101, 10 for 0x0102.  Slots 0..3 carry data; the rest must be present
+// on disk (so the stream stays aligned) but are not exposed because the engine only reads
+// sTraceArray[0..3].
+std::vector<uint8_t> CpsFixedSlots(uint32_t ver, uint32_t slots) {
+    ByteWriter w;
+    w.Raw(std::vector<uint8_t>(128, 0));
+    w.U32(0);
+    Header(w, ver, false);
+    // no material count
+    Influence(w, 0, 2);               // slot 0 -> IMAGE01, kept
+    EmptyInfluence(w);                // slot 1 -> IMAGE02, m_dwIndex == COL_ERR, skipped
+    Influence(w, 2, 1);               // slot 2 -> IMAGE11, kept
+    EmptyInfluence(w);                // slot 3 -> IMAGE12, skipped
+    for (uint32_t i = 4; i < slots; ++i) Influence(w, 100 + i, 0);  // never exposed
+    w.U32(0);                         // effect count  <-- file ENDS here
+    return w.Data();
+}
+
+}  // namespace legacy
+
 // SAnimation track 0x0102: rotate keys, position keys, quatpos keys, matrix keys, scale.
 std::vector<uint8_t> AnimationBin() {
     ByteWriter w;
@@ -585,14 +678,20 @@ void TestSkinPiece() {
     J_CHECK(info.materials.size() == 1);
     J_CHECK(info.materials[0].texture == "face.dds");
 
-    // Version gating: 0x0103 and below are rejected by the reader (original accepts
-    // only 0x0104..0x0107 in this code path). The version is the first payload DWORD,
-    // i.e. absolute offset 128.
-    std::vector<uint8_t> oldVersion = bytes;
-    oldVersion[132] = 0x03;
-    oldVersion[133] = 0x01;
-    const RANMobile::EP7SkinPieceInfo old = RANMobile::EP7SkinPieceReader::ParseFromBytes(oldVersion, false);
-    J_CHECK(!old.valid);
+    // Version gating: DxSkinPiece::LoadPiece implements 0x0101..0x0107 and sends everything
+    // else to its "Can't Load Skin object" error path (DxSkinPieceContainer.cpp:934-943).
+    // 0x0100 is below the oldest implemented branch, 0x0108 above the current VERSION, so
+    // both must be rejected. The version is the first payload DWORD (absolute offset 128).
+    for (uint32_t bad : {0x00000100u, 0x00000108u, 0x00000200u}) {
+        std::vector<uint8_t> other = bytes;
+        other[132] = static_cast<uint8_t>(bad & 0xFF);
+        other[133] = static_cast<uint8_t>((bad >> 8) & 0xFF);
+        other[134] = static_cast<uint8_t>((bad >> 16) & 0xFF);
+        other[135] = static_cast<uint8_t>((bad >> 24) & 0xFF);
+        const RANMobile::EP7SkinPieceInfo info2 =
+            RANMobile::EP7SkinPieceReader::ParseFromBytes(other, false);
+        J_CHECK(!info2.valid);
+    }
 
     // Truncated payload must fail, not zero-fill.
     std::vector<uint8_t> truncated(bytes.begin(), bytes.begin() + 40);
@@ -655,6 +754,115 @@ void TestSkinPieceTraceInfluence() {
         RANMobile::EP7SkinPieceReader::ParseFromBytes(oldTag, false);
     if (!oldInfluence.traces.empty()) {
         J_CHECK(!oldInfluence.traces[0].influence.valid);
+    }
+}
+
+
+// B13: versions 0x0101-0x0103 are implemented by DxSkinPiece::LoadPiece and must parse.
+// Each version's layout is different, so each gets its own fixture; a shared helper is only
+// used for the pieces that are genuinely identical across those branches.
+void TestSkinPieceLegacyVersions() {
+    Section(".cps legacy versions 0x0101-0x0104 (B13)");
+
+    // ---- 0x0104: 0x0105 layout minus the trailing m_dwFlag ------------------------------
+    {
+        const RANMobile::EP7SkinPieceInfo info =
+            RANMobile::EP7SkinPieceReader::ParseFromBytes(legacy::Cps0104(), false);
+        J_CHECK_MSG(info.valid, info.error);
+        J_CHECK(info.fileVersion == 0x00000104);
+        J_CHECK(info.meshName == "BodyMesh");
+        J_CHECK(!info.hasWeaponWhereBack);          // weapon slot is 0x0106+
+        J_CHECK(info.materials.size() == 1);
+        J_CHECK(info.traces.size() == 1);
+        if (info.traces.size() == 1) {
+            J_CHECK(info.traces[0].name == "Bip01 Spine");
+            J_CHECK(!info.traces[0].syntheticName);
+            J_CHECK(info.traces[0].influence.boneCount == 2u);
+        }
+        J_CHECK(info.effectCount == 0u);
+        // 0x0104 has no trailing flag: reading one would make this a "truncated piece flag".
+        J_CHECK(info.flag == 0u);
+        J_CHECK(info.error.empty());
+    }
+
+    // ---- 0x0103: no material count, traced names, no trailing flag ----------------------
+    {
+        const RANMobile::EP7SkinPieceInfo info =
+            RANMobile::EP7SkinPieceReader::ParseFromBytes(legacy::Cps0103(), false);
+        J_CHECK_MSG(info.valid, info.error);
+        J_CHECK(info.fileVersion == 0x00000103);
+        J_CHECK(info.materials.empty());            // 0x0103 stores no SMATERIAL_PIECE list
+        J_CHECK(info.traces.size() == 2);
+        if (info.traces.size() == 2) {
+            J_CHECK(info.traces[0].name == "Bip01 Spine");
+            J_CHECK(info.traces[1].name == "Bip01 Head");
+            J_CHECK(info.traces[0].influence.boneCount == 2u);
+            J_CHECK(info.traces[1].influence.boneCount == 1u);
+        }
+        J_CHECK(info.flag == 0u);
+        J_CHECK(info.error.empty());
+    }
+
+    // ---- 0x0102: fixed 10-slot influence array, names from STRACE_IMAGE macros ---------
+    {
+        const RANMobile::EP7SkinPieceInfo info =
+            RANMobile::EP7SkinPieceReader::ParseFromBytes(legacy::CpsFixedSlots(0x00000102, 10), false);
+        J_CHECK_MSG(info.valid, info.error);
+        J_CHECK(info.fileVersion == 0x00000102);
+        J_CHECK(info.materials.empty());
+        // 4 slots written, 2 with m_dwIndex == COL_ERR -> exactly 2 trace points.
+        J_CHECK(info.traces.size() == 2);
+        if (info.traces.size() == 2) {
+            J_CHECK(info.traces[0].name == "IMAGE01");
+            J_CHECK(info.traces[1].name == "IMAGE11");
+            J_CHECK(info.traces[0].syntheticName);
+            J_CHECK(info.traces[0].influence.boneCount == 2u);
+            J_CHECK(info.traces[1].influence.boneCount == 1u);
+        }
+        J_CHECK(info.flag == 0u);
+        J_CHECK(info.error.empty());
+    }
+
+    // ---- 0x0101: same shape, 8 slots ---------------------------------------------------
+    {
+        const RANMobile::EP7SkinPieceInfo info =
+            RANMobile::EP7SkinPieceReader::ParseFromBytes(legacy::CpsFixedSlots(0x00000101, 8), false);
+        J_CHECK_MSG(info.valid, info.error);
+        J_CHECK(info.fileVersion == 0x00000101);
+        J_CHECK(info.traces.size() == 2);
+        if (info.traces.size() == 2) {
+            J_CHECK(info.traces[0].name == "IMAGE01");
+            J_CHECK(info.traces[1].name == "IMAGE11");
+        }
+        J_CHECK(info.error.empty());
+    }
+
+    // ---- slot count really is version-dependent ----------------------------------------
+    // An 8-slot body must NOT satisfy 0x0102 (which reads 10) and vice versa.  This is what
+    // makes the two slots constants load-bearing rather than cosmetic.
+    {
+        const RANMobile::EP7SkinPieceInfo as102 =
+            RANMobile::EP7SkinPieceReader::ParseFromBytes(legacy::CpsFixedSlots(0x00000102, 8), false);
+        J_CHECK(!as102.valid);   // runs out of bytes reading slots 9 and 10
+        const RANMobile::EP7SkinPieceInfo as101 =
+            RANMobile::EP7SkinPieceReader::ParseFromBytes(legacy::CpsFixedSlots(0x00000101, 10), false);
+        // 0x0101 reads only 8 slots, so the two extra records are interpreted as the effect
+        // count/list — that must be caught, not silently accepted.
+        J_CHECK(!as101.valid || as101.effectCount != 0u);
+    }
+
+    // ---- trailing flag really is only read for 0x0105+ --------------------------------
+    // Appending a flag DWORD to a 0x0104 file must be treated as trailing data, not as a
+    // required field: the 0x0104 read must still complete at the effect count.
+    {
+        std::vector<uint8_t> withFlag = legacy::Cps0104();
+        ByteWriter extra;
+        extra.U32(0xDEADBEEF);
+        withFlag.insert(withFlag.end(), extra.Data().begin(), extra.Data().end());
+        const RANMobile::EP7SkinPieceInfo info =
+            RANMobile::EP7SkinPieceReader::ParseFromBytes(withFlag, false);
+        J_CHECK_MSG(info.valid, info.error);
+        J_CHECK(info.flag == 0u);   // 0x0104 never reads a file flag
     }
 }
 
@@ -1277,6 +1485,7 @@ int main() {
     TestSkinnedMesh();
     TestSkinPiece();
     TestSkinPieceTraceInfluence();
+    TestSkinPieceLegacyVersions();
     TestCharacterFile();
     TestAnimation();
     TestCharacterScene();

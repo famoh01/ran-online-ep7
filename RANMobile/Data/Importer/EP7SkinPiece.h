@@ -29,6 +29,20 @@
 //   DWORD  m_dwFlag
 //   // 0x0107 adds: m_emWeaponWhereBack immediately after m_emType (already above)
 //
+// LEGACY VERSIONS (the layout above is 0x0105-0x0107; the older branches differ):
+//
+//   0x0104  identical to 0x0105 but the file ENDS after the effect list -- there is no
+//           trailing m_dwFlag (DxSkinPieceContainer.cpp:629-711).
+//   0x0103  no material count at all; header is ref/x/skel/type/mesh, then the trace
+//           count and the effect count.  No trailing flag (:712-782).
+//   0x0102  no material count; after the mesh name come 10 SVERTEXINFLU records with no
+//           names and no count, then the effect count.  Names are the hard-coded
+//           STRACE_IMAGE01/02/11/12 macros for slots 0..3, and only slots whose
+//           m_dwIndex != COL_ERR are kept (:783-858).
+//   0x0101  as 0x0102 but with 8 slot records instead of 10 (:859-933).
+//   Every legacy branch ends after the effect list; none of them reads m_dwFlag, and the
+//   constructor initialises it to 0 (DxSkinPieceContainer.cpp:192).
+//
 // IMPORTANT: the vertex geometry, bone indices and per-vertex weights are NOT in the
 // .cps.  They live in the referenced `.x` skin mesh, loaded by
 // D3DXLoadSkinMeshFromXof inside DxSkinMesh::LoadMesh.  The .cps only records which
@@ -109,6 +123,12 @@ struct EP7MaterialPiece {
 struct EP7TracePoint {
     std::string name;
     EP7VertexInfluence influence;
+
+    // 0x0101/0x0102 store no dependency name: `LoadPiece` fills STRACOR's m_szName from the
+    // hard-coded STRACE_IMAGE0x/1x macros (DxSkinPieceContainer.h:22-25) and only keeps the
+    // four slots whose m_dwIndex != COL_ERR.  `syntheticName` records that the name came
+    // from the engine's table rather than from the file.
+    bool syntheticName = false;
 };
 
 struct EP7SkinPieceInfo {
@@ -138,6 +158,16 @@ public:
     static constexpr uint32_t kVersion106 = 0x00000106;
     static constexpr uint32_t kVersion105 = 0x00000105;
     static constexpr uint32_t kVersion104 = 0x00000104;
+    static constexpr uint32_t kVersion103 = 0x00000103;
+    static constexpr uint32_t kVersion102 = 0x00000102;
+    static constexpr uint32_t kVersion101 = 0x00000101;
+
+    // SVERTEXINFLU slots read by 0x0101 (8 slots) and 0x0102 (10 slots).  Both versions
+    // read a FIXED array with no count and no names; only the first four entries can ever
+    // reach m_vecTrace (DxSkinPieceContainer.cpp:815-830 / 891-904).
+    static constexpr uint32_t kLegacyTraceSlots101 = 8;
+    static constexpr uint32_t kLegacyTraceSlots102 = 10;
+    static constexpr uint32_t kLegacyTraceNames = 4;
 
     // `stream` must already be attached and positioned at payload offset 0 with
     // ReadFileType() consumed.  (The original reads the version through operator>>,
