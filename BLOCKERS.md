@@ -341,3 +341,59 @@ success. The verification tool therefore reports three outcomes with three exit 
 | NOT FOUND | 3 | no character entry in any pack | warning, not a failure |
 
 `UNSUPPORTED` is never counted as parsed and is never silent.
+
+---
+
+## Phase 3J CI run 45914698354 — first results with CI isolation in place
+
+The three-job split ran correctly on the first attempt:
+
+| Job | Result | Meaning |
+|---|---|---|
+| Core C++17 tests (blocking) | **success** | `test_main.cpp` suite + 276-check Phase 3J suite both green |
+| Android ARM64 build | **success** | NDK lib + `assembleDebug/Release`, `bundleRelease` all green |
+| Authentic EP7 asset verification | **failure** | exit 1 (FAIL) — see below |
+
+This is the behaviour the isolation was built for: a genuine asset-side defect is still
+reported as a failure, but it no longer suppresses the core tests, their summary, the log
+artifact, or the APK/AAB build.
+
+### New: three-way split of the 11,660 pack entries
+
+| Outcome | Count |
+|---|---|
+| parsed (PASS) | 3,217 |
+| **unsupported (UNSUPPORTED, B11)** | **1,631** |
+| **failed (FAIL)** | **6,812** |
+
+`8,443 → 1,631 unsupported + 6,812 failed`. The reclassification is not cosmetic: those
+1,631 entries were previously reported as failures even though nothing was wrong with the
+reader — their format simply has no definition here. The remaining 6,812 are a genuine and
+much larger defect surface than the previous two-state report could express.
+
+### B11 status remains OPEN — and the `.bin` question is now sharper
+
+`1,631` pack entries are `UNSUPPORTED`, all of them `.cfg` files whose basestream type really
+is `SANIMCONINFO` with a version outside `0x0101`–`0x0107`. No struct, offset or decoder has
+been written for them.
+
+The `"Anim"`-magic `.bin` files turn out to be **loose files only** (`11,762` loose
+`UNSUPPORTED`). **No `.bin` inside `SkinObject.rcc`/`Animation.rcc` has yet been observed to
+carry the `"Anim"` magic.** If the packs contain no such entries, the `"Anim"` container may
+not be part of the engine's runtime path at all — which would change B11 from "we cannot
+read 6,228 runtime assets" to "6,228 files exist in the client that the engine never loads".
+That distinction is worth resolving before investing in reverse engineering, and it cannot be
+answered from the current 10-annotation budget.
+
+### New evidence needed (added to the B11 list)
+
+`6,812` `.cps`/`.chf`/`.x` pack entries fail. The dominant single reason is
+`2,664 x cps: truncated trace name`, i.e. the trace count read just before it parses as
+`> 6`. The authoritative reader (`SMATERIAL_PIECE::LoadFile` /
+`DxSkinPieceContainer::LoadFile`) confirms the field order this build already implements
+(`VERSION`, `BLOCKSIZE`, `LENGTH`, `TEXTURE`, `FLAGS`, `ZBIAS`), so the likely cause is a
+misaligned stream at an earlier field — **not** a missing format definition.
+
+This must be established from a **byte dump of one failing `.cps`** (offsets + candidate
+field boundaries), not by adjusting offsets until something parses. That dump is the next
+required artefact and is **not** part of this change.

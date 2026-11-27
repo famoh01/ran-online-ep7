@@ -242,3 +242,33 @@ until reliable definitions exist.
 not client asset formats). `UI_LOGIN_REDESIGN.md` does not exist on this branch; it lives
 only on the PR #3 / PR #4 branches and is unrelated to CI isolation, so it was not copied
 here.
+
+### First CI run with the isolation in place — run 45914698354
+
+| Job | Result |
+|---|---|
+| Core C++17 tests (blocking) | **success** |
+| Android ARM64 build (lib + APK/AAB) | **success** |
+| Authentic EP7 asset verification | **failure** (probe exit 1) |
+
+The isolation did its job on the first run: the asset job's failure is visible and
+diagnosable on its own, while the core suite, its summary, its log artifact and the whole
+Android build completed normally. Before this change, all three of those would have been
+skipped.
+
+The three-way outcome model immediately paid off by splitting the old
+"8,443 failed" into **1,631 unsupported** (B11, no definition anywhere in this repo) and
+**6,812 failed** (a real defect surface). The previous two-state report could not express
+that difference at all.
+
+**Honest status: this CI run is RED, and it should be.** The remaining 6,812 pack failures
+are not a format-coverage question; the dominant reason (`2,664 x cps: truncated trace
+name`) points at a stream-alignment defect in this build's `.cps` reader. Getting a byte
+dump of one failing `.cps` is the next step — deliberately not attempted here, because the
+only way to "fix" it without evidence would be to move offsets until something parses, and
+that is exactly the fabrication this project has avoided.
+
+Also recorded: the `"Anim"`-magic `.bin` files are **loose files only**; no `.bin` inside the
+packs has been observed carrying that magic. If that holds, B11's `.bin` half may not affect
+the runtime path at all. Resolving it needs more annotation budget than GitHub's ~10-line cap
+allows, so the probe's aggregated summary is the right next tool.
