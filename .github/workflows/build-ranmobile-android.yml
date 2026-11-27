@@ -524,8 +524,14 @@ jobs:
           ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
           ADB="$ANDROID_HOME/platform-tools/adb"
-          "$ADB" install -r RANMobile/Android/app/build/outputs/apk/debug/app-debug.apk
-          "$ADB" shell am start -n com.famhawaii.ranmobile/android.app.NativeActivity --es selftest gpu
+          # NOTE: GH Actions runs steps under `bash -e` — a failing poll/timeout
+          # aborts the step BEFORE the diagnostics below unless we add `|| true`.
+          timeout 180 "$ADB" install -r RANMobile/Android/app/build/outputs/apk/debug/app-debug.apk \
+            || { echo "::error::adb install failed or timed out"; exit 1; }
+          echo "::notice::install completed"
+          timeout 60 "$ADB" shell am start -n com.famhawaii.ranmobile/android.app.NativeActivity --es selftest gpu \
+            || { echo "::error::am start failed or timed out"; "$ADB" logcat -d 2>/dev/null | tail -n 30 | while IFS= read -r line; do echo "::error::$line"; done || true; exit 1; }
+          echo "::notice::am start completed, polling for verdict"
           timeout 420 bash -c '
             while true; do
               out=$("$ADB" exec-out run-as com.famhawaii.ranmobile cat files/gpu_selftest.json 2>/dev/null)
@@ -536,7 +542,7 @@ jobs:
                 break
               fi
               sleep 5
-            done'
+            done' || true
           if [ ! -f gpu_selftest.json ]; then
             echo "::error::selftest did not produce gpu_selftest.json in time"
             # Emit the app's logcat (crashes, harness logs, EGL/GLES errors) as
@@ -544,6 +550,7 @@ jobs:
             "$ADB" logcat -d 2>/dev/null | grep -E "RANMobile|GpuSelfTest|AndroidRuntime|FATAL|DEBUG|crash" | tail -n 40 > applog.txt || true
             while IFS= read -r line; do echo "::error::$line"; done < applog.txt || true
             "$ADB" shell "run-as com.famhawaii.ranmobile ls -la files/" || echo "::error::run-as files listing failed"
+            echo "::notice::poll budget exhausted (420s) — diagnostics above"
             tail -n 20 emulator.log || true
             exit 1
           fi
