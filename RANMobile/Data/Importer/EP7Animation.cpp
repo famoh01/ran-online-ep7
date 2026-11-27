@@ -139,6 +139,23 @@ bool ReadBoneTrack(ep7byte::Stream& s, EP7BoneTrack& out) {
     uint32_t version = 0;
     if (!s.ReadU32(version)) return false;
 
+    if (version == 0x0103) {
+        // SAnimation::Load_0103 — verified field order (Lib_Engine/Meshs/SAnimationSaveLoad.cpp:192-248,
+        // SaveToFile :250-293):
+        //   m_strBone, rotateKeys, dwGarbage1 (= m_strBone.length()), positionKeys,
+        //   quatPosKeys, matrixKeys (80B), dwGarbage2 (= m_strBone.length() + 0x0103), scaleKeys.
+        if (!s.ReadString(out.boneName, kMaxNameLen)) return false;
+        if (!ReadRotateKeys(s, out.rotateKeys)) return false;
+        uint32_t garbage = 0;
+        if (!s.ReadU32(garbage)) return false;  // written as m_strBone.length()
+        if (!ReadPositionKeys(s, out.positionKeys)) return false;
+        if (!ReadQuatPosKeys(s, out.quatPosKeys)) return false;
+        if (!ReadMatrixKeys(s, out.matrixKeys)) return false;
+        if (!s.ReadU32(garbage)) return false;  // written as m_strBone.length() + 0x0103
+        if (!ReadScaleKeys(s, out.scaleKeys)) return false;
+        return true;
+    }
+
     if (version == 0x0102) {
         // SAnimation::Load (0x0102) — verified field order (enginelib/Meshs/SAnimation.cpp:1515,
         // Lib_Engine/Meshs/SAnimationSaveLoad.cpp:102):
@@ -183,9 +200,9 @@ bool ReadBoneTrack(ep7byte::Stream& s, EP7BoneTrack& out) {
         return true;
     }
 
-    char message[96];
+    char message[112];
     std::snprintf(message, sizeof(message),
-                  "unsupported animation track version 0x%08X (implemented: 0x0100, 0x0101, 0x0102)",
+                  "unsupported animation track version 0x%08X (implemented: 0x0100, 0x0101, 0x0102, 0x0103)",
                   version);
     s.Fail(message);
     return false;
@@ -293,7 +310,24 @@ EP7AnimClip EP7AnimationReader::ParseContainer(const std::vector<uint8_t>& bytes
     }
     clip.version = version;
 
-    if (version == 0x0102) {
+    if (version == 0x0103) {
+        // SAnimContainer::Load_0103 (Lib_Engine/Meshs/SAnimationSaveLoad.cpp:412-442):
+        // up-body list, DWORD dwGarbageValue (= 0x0103 + numUpBody + numMain), then main list.
+        if (!ReadTrackList(stream, clip.upBodyTracks)) {
+            clip.error = stream.Error().empty() ? "invalid up-body track list" : stream.Error();
+            return clip;
+        }
+        uint32_t garbageValue = 0;
+        if (!stream.ReadU32(garbageValue)) {
+            clip.error = stream.Error().empty() ? "truncated 0x0103 animation container inter-list word"
+                                                : stream.Error();
+            return clip;
+        }
+        if (!ReadTrackList(stream, clip.mainTracks)) {
+            clip.error = stream.Error().empty() ? "invalid main track list" : stream.Error();
+            return clip;
+        }
+    } else if (version == 0x0102) {
         // SAnimContainer::Load: up-body list first, then the main list.
         if (!ReadTrackList(stream, clip.upBodyTracks)) {
             clip.error = stream.Error().empty() ? "invalid up-body track list" : stream.Error();
@@ -324,7 +358,7 @@ EP7AnimClip EP7AnimationReader::ParseContainer(const std::vector<uint8_t>& bytes
         // not implement, and a bare "unsupported version" hides which ones are missing.
         char message[128];
         std::snprintf(message, sizeof(message),
-                      "unsupported animation container version 0x%08X (implemented: 0x0100, 0x0101, 0x0102)",
+                      "unsupported animation container version 0x%08X (implemented: 0x0100, 0x0101, 0x0102, 0x0103)",
                       version);
         clip.error = message;
         return clip;

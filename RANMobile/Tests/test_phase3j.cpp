@@ -484,6 +484,88 @@ std::vector<uint8_t> AnimationBin0100() {
     return w.Data();
 }
 
+// SAnimContainer 0x0103 + SAnimation::Load_0103 tracks:
+//   outer: 128-byte "AnimContainer" header + u32(0x0103) + upBody list +
+//          u32(dwGarbageValue == 0x0103 + numUpBody + numMain) + main list.
+//   inner track 0x0103: m_strBone, rotateKeys (20B), u32(dwGarbage1 == bone.len),
+//                       positionKeys (16B), quatPosKeys (36B), matrixKeys (80B),
+//                       u32(dwGarbage2 == bone.len + 0x0103), scaleKeys (16B).
+std::vector<uint8_t> AnimationBin0103() {
+    ByteWriter w;
+    std::vector<uint8_t> hdr(128, 0);
+    std::memcpy(hdr.data(), "AnimContainer", 14);
+    w.Raw(hdr);
+    w.U32(0x0103);                        // container version
+    w.U32(1);                             // upBody track count (1 track)
+
+    // ---- upBody track 0: Bip01_Spine1 (rot + pos + quatpos + 80B matrix + scale) ----
+    const std::string upBone = "Bip01_Spine1";
+    w.U32(0x0103);                        // track version
+    w.Str(upBone);
+    w.U32(1);                             // rotate key count (20B)
+    w.U32(160); w.F32(0.0f); w.F32(0.0f); w.F32(0.70710678f); w.F32(0.70710678f);
+    w.U32(static_cast<uint32_t>(upBone.size()));  // dwGarbage1 == m_strBone.length()
+    w.U32(1);                             // position key count (16B)
+    w.U32(320); w.F32(-1.5f); w.F32(4.25f); w.F32(0.75f);
+    w.U32(1);                             // quatpos key count (36B)
+    w.U32(640);
+    w.F32(1.0f); w.F32(2.0f); w.F32(3.0f);        // scale[3]
+    w.F32(0.5f); w.F32(5.5f); w.F32(-1.0f);       // pos[3]
+    w.U32((32767u << 16) | 32767u);               // quatComp0 -> x=0, y=0
+    w.U32((32767u << 16) | 65535u);               // quatComp1 -> z=0, w=1
+    w.U32(1);                             // matrix key count (80B)
+    w.U32(960);
+    w.U32(0xDEADBEEFu); w.U32(0xCAFEBABEu); w.U32(0x13579BDFu);  // 12B align16 pad
+    w.F32(1.0f); w.F32(0.0f); w.F32(0.0f); w.F32(0.0f);
+    w.F32(0.0f); w.F32(1.0f); w.F32(0.0f); w.F32(0.0f);
+    w.F32(0.0f); w.F32(0.0f); w.F32(1.0f); w.F32(0.0f);
+    w.F32(2.0f); w.F32(7.0f); w.F32(-3.0f); w.F32(1.0f);
+    w.U32(static_cast<uint32_t>(upBone.size()) + 0x0103u);  // dwGarbage2 == bone.len + 0x0103
+    w.U32(1);                             // scale key count (16B)
+    w.U32(1280); w.F32(2.5f); w.F32(0.75f); w.F32(1.25f);
+
+    // ---- inter-list dwGarbageValue == 0x0103 + numUpBody(1) + numMain(2) ----
+    w.U32(0x0103u + 1u + 2u);
+    w.U32(2);                             // main track count (2 tracks)
+
+    // ---- main track 0: Bip01 (quatPos-only track, typical of authentic 0x0103 clips) ----
+    const std::string mainBone0 = "Bip01";
+    w.U32(0x0103);
+    w.Str(mainBone0);
+    w.U32(0);                             // rotate
+    w.U32(static_cast<uint32_t>(mainBone0.size()));  // dwGarbage1
+    w.U32(0);                             // position
+    w.U32(2);                             // 2 quatPosKeys (36B each)
+    // key 0 @ t=0: pos=(0, 3, 0), identity quat
+    w.U32(0);
+    w.F32(1.0f); w.F32(1.0f); w.F32(1.0f);
+    w.F32(0.0f); w.F32(3.0f); w.F32(0.0f);
+    w.U32((32767u << 16) | 32767u);
+    w.U32((32767u << 16) | 65535u);
+    // key 1 @ t=4800: pos=(0, 8, 0), identity quat
+    w.U32(4800);
+    w.F32(1.0f); w.F32(1.0f); w.F32(1.0f);
+    w.F32(0.0f); w.F32(8.0f); w.F32(0.0f);
+    w.U32((32767u << 16) | 32767u);
+    w.U32((32767u << 16) | 65535u);
+    w.U32(0);                             // matrix
+    w.U32(static_cast<uint32_t>(mainBone0.size()) + 0x0103u);  // dwGarbage2
+    w.U32(0);                             // scale
+
+    // ---- main track 1: empty bone name "" ----
+    w.U32(0x0103);
+    w.Str("");
+    w.U32(0);                             // rotate
+    w.U32(0u);                            // dwGarbage1 == 0
+    w.U32(0);                             // position
+    w.U32(0);                             // quatpos
+    w.U32(0);                             // matrix
+    w.U32(0x0103u);                       // dwGarbage2 == 0 + 0x0103
+    w.U32(0);                             // scale
+
+    return w.Data();
+}
+
 // SANIMCONINFO 0x0107 (payload only, header present).
 // Emits the authentic SANIMCONINFO byte layout for each version, including the MSVC struct
 // padding the engine actually reads:
@@ -1373,9 +1455,149 @@ void TestAnimation() {
             }
         }
 
-        // Unimplemented container versions (0x0103, 0x0104, 0x0200) and inner 0x0103 tracks
-        // remain explicitly rejected in B13.
-        for (uint32_t unsupOuter : {0x0103u, 0x0104u, 0x0200u}) {
+        // ---- Phase 3J B14: Authentic outer container 0x0103 + track 0x0103 regression ----
+        {
+            const std::vector<uint8_t> bin0103 = AnimationBin0103();
+            RANMobile::EP7AnimClip c103 =
+                RANMobile::EP7AnimationReader::ParseContainer(bin0103, true, false);
+            J_CHECK_MSG(c103.valid, c103.error);
+            J_CHECK(c103.version == 0x0103);
+            J_CHECK(c103.upBodyTracks.size() == 1);
+            J_CHECK(c103.mainTracks.size() == 2);
+            J_CHECK(c103.MaxKeyTime() == 4800);
+
+            if (c103.upBodyTracks.size() == 1 && c103.mainTracks.size() == 2) {
+                const auto& up0 = c103.upBodyTracks[0];
+                J_CHECK(up0.boneName == "Bip01_Spine1");
+                J_CHECK(up0.rotateKeys.size() == 1 && up0.rotateKeys[0].time == 160);
+                J_CHECK(FloatNear(up0.rotateKeys[0].q[2], 0.70710678f, 1e-5f) &&
+                        FloatNear(up0.rotateKeys[0].q[3], 0.70710678f, 1e-5f));
+                J_CHECK(up0.positionKeys.size() == 1 && up0.positionKeys[0].time == 320);
+                J_CHECK(FloatNear(up0.positionKeys[0].p[0], -1.5f) &&
+                        FloatNear(up0.positionKeys[0].p[1], 4.25f) &&
+                        FloatNear(up0.positionKeys[0].p[2], 0.75f));
+                J_CHECK(up0.quatPosKeys.size() == 1 && up0.quatPosKeys[0].time == 640);
+                J_CHECK(FloatNear(up0.quatPosKeys[0].scale[1], 2.0f) &&
+                        FloatNear(up0.quatPosKeys[0].pos[1], 5.5f));
+                J_CHECK(up0.matrixKeys.size() == 1 && up0.matrixKeys[0].time == 960);
+                J_CHECK(FloatNear(up0.matrixKeys[0].mat[0], 1.0f) &&
+                        FloatNear(up0.matrixKeys[0].mat[12], 2.0f) &&
+                        FloatNear(up0.matrixKeys[0].mat[13], 7.0f) &&
+                        FloatNear(up0.matrixKeys[0].mat[14], -3.0f) &&
+                        FloatNear(up0.matrixKeys[0].mat[15], 1.0f));
+                J_CHECK(up0.scaleKeys.size() == 1 && up0.scaleKeys[0].time == 1280);
+                J_CHECK(FloatNear(up0.scaleKeys[0].s[0], 2.5f) &&
+                        FloatNear(up0.scaleKeys[0].s[1], 0.75f) &&
+                        FloatNear(up0.scaleKeys[0].s[2], 1.25f));
+
+                const auto& m0 = c103.mainTracks[0];
+                J_CHECK(m0.boneName == "Bip01");
+                J_CHECK(m0.quatPosKeys.size() == 2);
+                J_CHECK(m0.quatPosKeys[0].time == 0 && FloatNear(m0.quatPosKeys[0].pos[1], 3.0f));
+                J_CHECK(m0.quatPosKeys[1].time == 4800 && FloatNear(m0.quatPosKeys[1].pos[1], 8.0f));
+                J_CHECK(c103.mainTracks[1].boneName.empty());
+
+                // Bind & evaluate 0x0103 tracks (both matrix-keyed upBody Spine1 and quatPos-keyed main Bip01)
+                RANMobile::EP7AnimationReader::BindToSkeleton(c103, skeleton);
+                J_CHECK(c103.upBodyTracks[0].boneIndex == skeleton.FindBoneIndex("Bip01_Spine1"));
+                J_CHECK(c103.mainTracks[0].boneIndex == skeleton.FindBoneIndex("Bip01"));
+                J_CHECK(c103.mainTracks[1].boneIndex == -1);
+
+                RANMobile::EP7AnimationPlayer p103;
+                p103.Play(&c103, nullptr);
+                skeleton.ResetToRestPose();
+                p103.ApplyToSkeleton(skeleton);
+                skeleton.UpdateBones(RANMobile::ep7math::Mat4::Identity());
+                const int32_t headIdx = skeleton.FindBoneIndex("Bip01_Head");
+                if (headIdx >= 0) {
+                    // Bip01 y=+3.0 (quatPos @ t=0) + Spine1 y=+7.0 (matrix @ t=960) + Head rest y=+1.5 => +11.5
+                    J_CHECK(FloatNear(skeleton.GetBone(static_cast<size_t>(headIdx)).combined.m[3][1],
+                                      11.5f, 1e-3f));
+                }
+            }
+
+            // Prove 0x0103 vs 0x0102 field-order sensitivity: relabeling upBody track 0 from 0x0103
+            // to 0x0102 misaligns dwGarbage1/dwGarbage2 relative to positionKeys and matrixKeys.
+            {
+                std::vector<uint8_t> mislabeled = bin0103;
+                mislabeled[136] = 0x02;  // change first track version 0x0103 -> 0x0102
+                const RANMobile::EP7AnimClip wrongTrackVer =
+                    RANMobile::EP7AnimationReader::ParseContainer(mislabeled, true, false);
+                J_CHECK(!wrongTrackVer.valid);
+            }
+
+            // Every strict prefix of bin0103 (including mid-dwGarbageValue, mid-dwGarbage1/2,
+            // mid-quatPos, mid-80B-matrix, and mid-scale) must fail safely.
+            for (size_t cutLen = 0; cutLen < bin0103.size(); ++cutLen) {
+                const std::vector<uint8_t> prefix(bin0103.begin(),
+                                                  bin0103.begin() + static_cast<long>(cutLen));
+                J_CHECK(!RANMobile::EP7AnimationReader::ParseContainer(prefix, true, false).valid);
+            }
+
+            // Boundary: empty 0x0103 container (144B: upBody=0, dwGarbageValue=0x0103, main=0,
+            // matching authentic a_m_01_run_a.bin) and headerless 0x0103 container.
+            {
+                ByteWriter wEmpty103;
+                wEmpty103.Raw(std::vector<uint8_t>(128, 0));
+                wEmpty103.U32(0x0103);
+                wEmpty103.U32(0);        // upBody = 0
+                wEmpty103.U32(0x0103u);  // dwGarbageValue == 0x0103 + 0 + 0
+                wEmpty103.U32(0);        // main = 0
+                J_CHECK(wEmpty103.Data().size() == 144);
+                const RANMobile::EP7AnimClip e103 =
+                    RANMobile::EP7AnimationReader::ParseContainer(wEmpty103.Data(), true, false);
+                J_CHECK(e103.valid && e103.version == 0x0103 &&
+                        e103.upBodyTracks.empty() && e103.mainTracks.empty());
+
+                ByteWriter wHeaderless103;
+                wHeaderless103.U32(0x0103);
+                wHeaderless103.U32(0);
+                wHeaderless103.U32(0x0103u);
+                wHeaderless103.U32(0);
+                const RANMobile::EP7AnimClip hl103 =
+                    RANMobile::EP7AnimationReader::ParseContainer(wHeaderless103.Data(), false, false);
+                J_CHECK(hl103.valid && hl103.version == 0x0103);
+            }
+
+            // Invalid list counts and invalid 0x0103 track counts/lengths must fail cleanly.
+            for (int badList = 0; badList < 2; ++badList) {
+                ByteWriter wl;
+                wl.Raw(std::vector<uint8_t>(128, 0));
+                wl.U32(0x0103);
+                wl.U32(badList == 0 ? 4097u : 0u);  // upBody count
+                wl.U32(0x0103u);                    // dwGarbageValue
+                wl.U32(badList == 1 ? 4097u : 0u);  // main count
+                J_CHECK(!RANMobile::EP7AnimationReader::ParseContainer(wl.Data(), true, false).valid);
+            }
+            for (int badField = 0; badField < 6; ++badField) {
+                ByteWriter wt;
+                wt.Raw(std::vector<uint8_t>(128, 0));
+                wt.U32(0x0103);
+                wt.U32(1);       // 1 upBody track
+                wt.U32(0x0103);  // track version 0x0103
+                if (badField == 0) {
+                    wt.U32(5000u);  // bone string length > kMaxNameLen
+                } else {
+                    wt.Str("Bip01");
+                    wt.U32(badField == 1 ? 200001u : 0u);  // rotateKeys
+                    wt.U32(5u);                            // dwGarbage1
+                    wt.U32(badField == 2 ? 200001u : 0u);  // positionKeys
+                    wt.U32(badField == 3 ? 200001u : 0u);  // quatPosKeys
+                    wt.U32(badField == 4 ? 200001u : 0u);  // matrixKeys
+                    wt.U32(5u + 0x0103u);                  // dwGarbage2
+                    wt.U32(badField == 5 ? 200001u : 0u);  // scaleKeys
+                }
+                wt.U32(0x0104u);
+                wt.U32(0);
+                const RANMobile::EP7AnimClip rej =
+                    RANMobile::EP7AnimationReader::ParseContainer(wt.Data(), true, false);
+                J_CHECK(!rej.valid && !rej.error.empty());
+            }
+        }
+
+        // Unimplemented container versions (0x0104, 0x0200) and unimplemented inner track
+        // versions (0x0104) remain explicitly rejected in B14.
+        for (uint32_t unsupOuter : {0x0104u, 0x0200u}) {
             ByteWriter wu;
             wu.Raw(std::vector<uint8_t>(128, 0));
             wu.U32(unsupOuter);
@@ -1388,13 +1610,13 @@ void TestAnimation() {
         {
             ByteWriter wi;
             wi.Raw(std::vector<uint8_t>(128, 0));
-            wi.U32(0x0100);
+            wi.U32(0x0103);
             wi.U32(1);
-            wi.U32(0x0103);  // unimplemented inner track version
+            wi.U32(0x0104);  // unimplemented inner track version
             const RANMobile::EP7AnimClip ci =
                 RANMobile::EP7AnimationReader::ParseContainer(wi.Data(), true, false);
             J_CHECK(!ci.valid);
-            J_CHECK(ci.error.find("0x00000103") != std::string::npos);
+            J_CHECK(ci.error.find("0x00000104") != std::string::npos);
         }
     }
 }
@@ -1567,6 +1789,7 @@ void TestRobustness() {
     fixtures.push_back(PieceCps(0));
     fixtures.push_back(AnimationBin());
     fixtures.push_back(AnimationBin0100());
+    fixtures.push_back(AnimationBin0103());
     fixtures.push_back(AnimationCfg(true));
 
     RANMobile::EP7Skeleton skeleton;

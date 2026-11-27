@@ -187,26 +187,28 @@ void TestParsed0100WithEmptyBoneAndParserRejectedInner0103() {
         CHECK(rec.sourceSpec.emptyBoneNames == 1u);
     }
 
-    // Supported outer version (0x0102) carrying an unimplemented 0x0103 inner track is still
+    // Supported outer version (0x0103) carrying an unimplemented 0x0104 inner track is still
     // classified ParserRejected and pinpointed by the inspector trace.
     {
-        std::vector<uint8_t> b = MakeHeader("AnimContainer", 0x0102u);
-        AppendU32(b, 0u);  // upBody = 0
-        AppendU32(b, 1u);  // main = 1
-        AppendTrack0103(b, "Bip01");
+        std::vector<uint8_t> b = MakeHeader("AnimContainer", 0x0103u);
+        AppendU32(b, 0u);       // upBody = 0
+        AppendU32(b, 0x0104u);  // dwGarbageValue = 0x0103 + 0 + 1
+        AppendU32(b, 1u);       // main = 1
+        AppendU32(b, 0x0104u);  // unimplemented inner track version
 
-        const auto rec = EP7AnimInspect::InspectSingleBin("data/animation/mixed0103.bin", b, false, true);
+        const auto rec = EP7AnimInspect::InspectSingleBin("data/animation/bad_inner0104.bin", b, false, true);
         CHECK(rec.bucket == EP7AnimInspect::BinBucket::ParserRejected);
         CHECK(!rec.readerValid);
         CHECK(rec.failList == "main");
         CHECK(rec.failTrackIndex == 0u);
-        CHECK(rec.failOffset == 140u);
-        CHECK(rec.failTrackVersion == 0x0103u);
+        CHECK(rec.failOffset == 144u);
+        CHECK(rec.failTrackVersion == 0x0104u);
     }
 }
 
 void TestContainer0103And0104And0200SourceSpecExactEof() {
-    // 0x0103: upBody, garbage=(0x0103 + upBody + main), main
+    // B14: 0x0103 (upBody, garbage=(0x0103 + upBody + main), main) now parses to exact EOF
+    // in BOTH production EP7AnimationReader and VerifyAgainstBackupEngineSourceSpec!
     {
         std::vector<uint8_t> b = MakeHeader("AnimContainer", 0x0103u);
         AppendU32(b, 1u);  // upBody = 1
@@ -217,8 +219,11 @@ void TestContainer0103And0104And0200SourceSpecExactEof() {
         AppendTrack0103(b, "Bip01 Pelvis");
 
         const auto rec = EP7AnimInspect::InspectSingleBin("data/animation/v0103.bin", b, false, true);
-        CHECK(rec.bucket == EP7AnimInspect::BinBucket::UnsupportedOuterVersion);
-        CHECK(!rec.readerValid);
+        CHECK(rec.bucket == EP7AnimInspect::BinBucket::Parsed);
+        CHECK(rec.readerValid);
+        CHECK(rec.trailingBytes == 0u);
+        CHECK(rec.upBodyParsed == 1u && rec.mainParsed == 2u);
+        CHECK(rec.trackVersionsSeen.count(0x0103u) == 1u && rec.trackVersionsSeen.at(0x0103u) == 3u);
         CHECK(rec.sourceSpec.ok && rec.sourceSpec.exactEof);
         CHECK(rec.sourceSpec.container0103GarbageMatchesFormula);
     }
@@ -277,10 +282,17 @@ void TestDirectorySurveySeparatesAnimDirAndPreservesHashes() {
     AppendU32(ok0100Bin, 1u);
     AppendTrack0100(ok0100Bin, "Bip01");
 
-    std::vector<uint8_t> rejBin = MakeHeader("AnimContainer", 0x0102u);
+    std::vector<uint8_t> ok0103Bin = MakeHeader("AnimContainer", 0x0103u);
+    AppendU32(ok0103Bin, 0u);
+    AppendU32(ok0103Bin, 0x0104u);
+    AppendU32(ok0103Bin, 1u);
+    AppendTrack0103(ok0103Bin, "Bip01");
+
+    std::vector<uint8_t> rejBin = MakeHeader("AnimContainer", 0x0103u);
     AppendU32(rejBin, 0u);
+    AppendU32(rejBin, 0x0104u);
     AppendU32(rejBin, 1u);
-    AppendTrack0103(rejBin, "Bip01");
+    AppendU32(rejBin, 0x0104u);  // unimplemented inner track version
 
     std::vector<uint8_t> unsupBin = MakeHeader("AnimContainer", 0x0104u);
     AppendU32(unsupBin, 0u);
@@ -295,6 +307,7 @@ void TestDirectorySurveySeparatesAnimDirAndPreservesHashes() {
     };
     writeBytes(tmp / "data" / "animation" / "a_ok.bin", okBin);
     writeBytes(tmp / "data" / "animation" / "a_ok0100.bin", ok0100Bin);
+    writeBytes(tmp / "data" / "animation" / "a_ok0103.bin", ok0103Bin);
     writeBytes(tmp / "data" / "animation" / "a_rej.bin", rejBin);
     writeBytes(tmp / "data" / "animation" / "a_unsup.bin", unsupBin);
     writeBytes(tmp / "data" / "glogic" / "quest.bin", glogicBin);
@@ -302,10 +315,10 @@ void TestDirectorySurveySeparatesAnimDirAndPreservesHashes() {
     const std::string beforeHash = EP7AnimInspect::Sha256::DigestHex(rejBin);
     const auto sum = EP7AnimInspect::RunDirectorySurvey(tmp, 2);
 
-    CHECK(sum.totalLooseBin == 5);
-    CHECK(sum.totalAnimDirBin == 4);
+    CHECK(sum.totalLooseBin == 6);
+    CHECK(sum.totalAnimDirBin == 5);
     CHECK(sum.totalNonAnimDirBin == 1);
-    CHECK(sum.animDirParsed == 2);
+    CHECK(sum.animDirParsed == 3);
     CHECK(sum.animDirParserRejected == 1);
     CHECK(sum.animDirUnsupportedOuter == 1);
     CHECK(sum.animDirInvalidHeader == 0);
@@ -317,7 +330,7 @@ void TestDirectorySurveySeparatesAnimDirAndPreservesHashes() {
     CHECK(EP7AnimInspect::Sha256::DigestHex(afterBytes) == beforeHash);
 
     const std::string json = EP7AnimInspect::FormatJsonReport(sum);
-    CHECK(json.find("\"total_data_animation_bin\": 4") != std::string::npos);
+    CHECK(json.find("\"total_data_animation_bin\": 5") != std::string::npos);
     CHECK(json.find("EXACT_EOF") != std::string::npos);
     for (unsigned char c : json) {
         CHECK(c == '\n' || c == '\r' || c == '\t' || (c >= 0x20 && c <= 0x7E));

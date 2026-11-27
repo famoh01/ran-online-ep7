@@ -80,7 +80,7 @@ int main() {
     Counters u;
     CHECK(Verify(unsupported, u) == Outcome::Unsupported);
     CHECK(u.binUnsupported == 1 && u.binOk == 0 && u.binParserRejected == 0);
-    CHECK(g_unsupportedReasons.count("bin: unsupported animation container version 0x12345678 (implemented: 0x0100, 0x0101, 0x0102)") == 1);
+    CHECK(g_unsupportedReasons.count("bin: unsupported animation container version 0x12345678 (implemented: 0x0100, 0x0101, 0x0102, 0x0103)") == 1);
 
     auto invalid = Container(0x0102);
     SetU32(invalid, 132, 0xffffffff); // Count guard, not an unsupported version.
@@ -174,7 +174,59 @@ int main() {
         }
     }
 
-    for (uint32_t unsupVer : {0x0103u, 0x0104u, 0x0200u}) {
+    // Phase 3J B14: 0x0103 outer container (upBody, dwGarbageValue = 0x0103 + up + main, main)
+    // with 0x0103 inner tracks (bone, rot, dwGarbage1, pos, quatPos, 80B matrix, dwGarbage2, scale)
+    // must pass and reject every strict byte prefix safely; 0x0104 and 0x0200 remain UNSUPPORTED.
+    {
+        auto b103 = Header("AnimContainer", 0x0103u);
+        U32(b103, 1u);  // upBody count = 1
+        U32(b103, 0x0103u);
+        const char upBone[] = "Bip01_Spine1";
+        U32(b103, sizeof(upBone));
+        b103.insert(b103.end(), upBone, upBone + sizeof(upBone));
+        U32(b103, 1u); U32(b103, 160u); U32(b103, 0u); U32(b103, 0u); U32(b103, 0u); U32(b103, 0x3F800000u);  // rot
+        U32(b103, sizeof(upBone) - 1);  // dwGarbage1 == bone.len
+        U32(b103, 1u); U32(b103, 320u); U32(b103, 0x3F800000u); U32(b103, 0u); U32(b103, 0u);  // pos
+        U32(b103, 1u); U32(b103, 480u);  // quatPos (36B)
+        U32(b103, 0x3F800000u); U32(b103, 0x3F800000u); U32(b103, 0x3F800000u);
+        U32(b103, 0u); U32(b103, 0u); U32(b103, 0u);
+        U32(b103, (32767u << 16) | 32767u); U32(b103, (32767u << 16) | 65535u);
+        U32(b103, 1u); U32(b103, 640u);  // matrix (80B)
+        U32(b103, 0xDEADBEEFu); U32(b103, 0xCAFEBABEu); U32(b103, 0x13579BDFu);
+        for (int k = 0; k < 16; ++k) U32(b103, (k % 5 == 0) ? 0x3F800000u : 0u);
+        U32(b103, static_cast<uint32_t>(sizeof(upBone) - 1) + 0x0103u);  // dwGarbage2 == bone.len + 0x0103
+        U32(b103, 1u); U32(b103, 800u); U32(b103, 0x3F800000u); U32(b103, 0x3F800000u); U32(b103, 0x3F800000u);  // scale
+
+        U32(b103, 0x0103u + 1u + 1u);  // inter-list dwGarbageValue == 0x0103 + numUpBody + numMain
+        U32(b103, 1u);                 // main count = 1
+        U32(b103, 0x0103u);
+        const char mainBone[] = "Bip01";
+        U32(b103, sizeof(mainBone));
+        b103.insert(b103.end(), mainBone, mainBone + sizeof(mainBone));
+        U32(b103, 0u);                                                   // rot
+        U32(b103, sizeof(mainBone) - 1);                                 // dwGarbage1
+        U32(b103, 0u); U32(b103, 0u); U32(b103, 0u);                     // pos, quatPos, matrix
+        U32(b103, static_cast<uint32_t>(sizeof(mainBone) - 1) + 0x0103u);// dwGarbage2
+        U32(b103, 0u);                                                   // scale
+
+        Counters c103;
+        CHECK(Verify(b103, c103, "a_event_pierrot.bin") == Outcome::Pass);
+        CHECK(c103.binOk == 1 && c103.binParserRejected == 0 && c103.binUnsupported == 0);
+        const auto parsed103 = RANMobile::EP7AnimationReader::ParseContainer(b103, true, false);
+        CHECK(parsed103.valid && parsed103.version == 0x0103u);
+        CHECK(parsed103.upBodyTracks.size() == 1 && parsed103.mainTracks.size() == 1);
+        CHECK(parsed103.upBodyTracks[0].boneName == "Bip01_Spine1");
+        CHECK(parsed103.mainTracks[0].boneName == "Bip01");
+
+        for (size_t n = 0; n < b103.size(); ++n) {
+            Counters cut;
+            CHECK(Verify(std::vector<uint8_t>(b103.begin(), b103.begin() + n), cut) == Outcome::Fail);
+            CHECK(cut.binOk == 0 && cut.binUnsupported == 0);
+            CHECK(cut.binInvalidHeader + cut.binParserRejected == 1);
+        }
+    }
+
+    for (uint32_t unsupVer : {0x0104u, 0x0200u}) {
         Counters cu;
         CHECK(Verify(Header("AnimContainer", unsupVer), cu) == Outcome::Unsupported);
         CHECK(cu.binUnsupported == 1 && cu.binOk == 0 && cu.binParserRejected == 0);
