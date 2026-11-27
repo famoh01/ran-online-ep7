@@ -43,6 +43,13 @@ struct EP7CharacterPiece {
     EP7SkinnedMesh mesh;
     bool loaded = false;
     std::string error;
+
+    // B18: per-vertex GPU skinning streams (DxSkinMesh9_HLSL.cpp:95-106 parity),
+    // built once at load from the SkinWeights lists — renderer independent.
+    EP7GpuSkinStreams gpuStreams;
+    // Renderer handle of the uploaded static GPU mesh (0 = not uploaded).  Owned by
+    // the scene session: EP7CharacterScene::Clear releases every handle it created.
+    uint32_t gpuMeshHandle = 0;
 };
 
 // Everything shared by every instance of one .chf.
@@ -117,6 +124,11 @@ struct EP7CharacterInstance {
     std::vector<ep7math::Mat4> skinPaletteScratch;
     std::vector<float> skinPosScratch;
     std::vector<float> skinNormScratch;
+
+    // B18: per-piece palette snapshots (offset*combined, DxSkinMesh9_HLSL.cpp:220
+    // "mWorldMatrixArray" parity) captured during EvaluatePose and consumed by the
+    // GPU skinned draw. Capacity is reused across frames.
+    std::vector<std::vector<ep7math::Mat4>> piecePalettes;
 
     bool visible = true;
     bool poseValid = false;
@@ -206,6 +218,39 @@ public:
     // `outSkinMs` receives the measured skinning time for this character.
     static bool EvaluatePose(EP7CharacterInstance& instance, float* outSkinMs);
 
+    // ------------------------------------------------------------------
+    // B18: GPU skinning + texture binding integration.
+    //
+    // The renderer pointer must be set before GPU resources are requested
+    // (RANMobileEngine wires it at Initialize).  Uploaded mesh handles and
+    // decoded textures are scene-scoped caches; Clear() releases them.
+    //
+    // Authentic texture association (DxSkinPieceContainer.cpp:82
+    // SMATERIAL_PIECE::LoadTexture): the .cps material texture name is the
+    // binding key — TextureManager::LoadTexture(name) resolves it (with
+    // IsEncrypt: a ".mtf" name decrypts through CMemoryTexture) and caches by
+    // lowercase name.  The mobile resolver receives candidate names; the
+    // resolution ladder is: exact name -> stem + ".mtf" -> name + ".mtf".
+    // ------------------------------------------------------------------
+    using AssetResolver = bool (*)(void* userData, const std::string& name, std::vector<uint8_t>& outBytes);
+    void SetRenderer(MobileRenderer* renderer) { m_renderer = renderer; }
+    void SetTextureResolver(AssetResolver resolver, void* userData) {
+        m_textureResolver = resolver;
+        m_textureResolverData = userData;
+    }
+
+    // Returns the renderer handle for the piece's static GPU mesh (0 = unsupported
+    // piece; the caller falls back to the B17 CPU path).  Uploads once per piece.
+    uint32_t EnsurePieceGpuHandle(const AssetPtr& asset, uint32_t slot);
+
+    // Returns the GL texture id for the piece's subset material (0 = untextured:
+    // missing/unresolvable texture names are never fabricated).
+    uint32_t GetPieceTextureId(const AssetPtr& asset, uint32_t slot, uint32_t subsetIndex);
+
+    // Palette snapshot (offset*combined, row-major floats) for the piece's GPU draw.
+    bool GetPiecePalette(const EP7CharacterInstance& instance, uint32_t slot,
+                         const float** outPtr, uint32_t* outCount) const;
+
 private:
 
     std::vector<std::unique_ptr<EP7CharacterInstance>> m_instances;
@@ -214,6 +259,15 @@ private:
     float m_lastFrameMs = 0.0f;
     float m_lastFps = 0.0f;
     std::string m_lastError;
+
+    MobileRenderer* m_renderer = nullptr;
+    AssetResolver m_textureResolver = nullptr;
+    void* m_textureResolverData = nullptr;
+    std::unordered_map<std::string, uint32_t> m_textureCache;  // lowercase name -> GL id
+    std::vector<uint32_t> m_uploadedGpuMeshes;                 // handles this scene created
+
+    void ReleaseGpuResources();
+    uint32_t ResolveTextureLocked(const std::string& textureName);
 };
 
 }  // namespace RANMobile

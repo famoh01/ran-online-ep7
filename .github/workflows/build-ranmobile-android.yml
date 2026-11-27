@@ -130,6 +130,7 @@ jobs:
             RANMobile/Data/Importer/EP7Skeleton.cpp \
             RANMobile/Data/Importer/EP7SkinPiece.cpp \
             RANMobile/Data/Importer/EP7SkinnedMesh.cpp \
+            RANMobile/Data/Importer/EP7TextureDecoder.cpp \
             RANMobile/Data/Importer/EP7XFile.cpp \
             RANMobile/Tests/test_phase3j.cpp \
             -lpthread -o ranmobile_phase3j_tests
@@ -221,7 +222,13 @@ jobs:
             RANMobile/Data/Importer/EP7Skeleton.cpp \
             RANMobile/Data/Importer/EP7SkinPiece.cpp \
             RANMobile/Data/Importer/EP7SkinnedMesh.cpp \
+            RANMobile/Data/Importer/EP7TextureDecoder.cpp \
             RANMobile/Data/Importer/EP7XFile.cpp \
+            RANMobile/Engine/Core/Logger.cpp \
+            RANMobile/Engine/Renderer/MobileRenderer.cpp \
+            RANMobile/Engine/Camera/MobileCamera.cpp \
+            RANMobile/Engine/Scene/EP7CharacterScene.cpp \
+            RANMobile/Engine/Animation/EP7SkinAniControl.cpp \
             RANMobile/Tools/verify_ep7_character_assets.cpp \
             -o verify_ep7_character_assets
           if [ -d external/ep7_release/client_original ]; then

@@ -42,6 +42,10 @@ bool RANMobileEngine::Initialize() {
         return false;
     }
 
+    // B18: the character scene draws through this renderer (GPU skinned meshes +
+    // decoded textures are scene-scoped caches released at Clear/Shutdown).
+    m_characterScene->SetRenderer(m_renderer.get());
+
     m_loginScreen->Initialize(m_networkClient.get());
     m_mobileHUD->Initialize(1280.0f, 720.0f);
     m_initialized = true;
@@ -111,18 +115,61 @@ void RANMobileEngine::Render() {
             for (const auto& instance : m_characterScene->Instances()) {
                 if (!instance->visible || !instance->poseValid || !instance->inFrustum) continue;
                 const size_t vertexCount = instance->skinnedPositions.size() / 3;
-                if (vertexCount == 0) continue;
-                // One draw per loaded piece: skinned positions/normals are concatenated
-                // in piece order, so every submission advances the base pointer by the
-                // piece's vertex offset — piece.mesh.faces indexes piece-local vertices
-                // (indexing the concatenation start would skin slot > 0 against piece-0
-                // vertices). A piece that fails the bounds check is skipped; geometry is
-                // never substituted or fabricated.
+
+                // ------------------------------------------------------------------
+                // B18 GPU skinned path (authentic D3DINDEXEDHLSLVS parity): static
+                // per-piece vertex/index buffers + the per-frame bone palette
+                // (offset*combined, DxSkinMesh9_HLSL.cpp:220-229 parity) + per-subset
+                // texture binding (SMATERIAL_PIECE::LoadTexture parity).  Pieces the
+                // GPU path cannot represent (no decodable geometry, palette overflow,
+                // invalid face ranges) fall back to the B17 CPU-evaluated path —
+                // geometry is never substituted or fabricated.
+                // ------------------------------------------------------------------
                 bool submitted = false;
                 if (instance->asset) {
                     for (uint32_t slot = 0; slot < RANMobile::kEP7PieceSize; ++slot) {
                         const auto& piece = instance->asset->pieces[slot];
                         if (!piece.loaded || piece.mesh.faces.empty()) continue;
+
+                        const uint32_t gpuHandle = m_characterScene->EnsurePieceGpuHandle(instance->asset, slot);
+                        const float* palette = nullptr;
+                        uint32_t paletteCount = 0;
+                        const bool havePalette = m_characterScene->GetPiecePalette(*instance, slot, &palette, &paletteCount);
+                        if (gpuHandle != 0 && havePalette) {
+                            const auto& subsets = piece.mesh.subsets;
+                            if (!subsets.empty()) {
+                                for (uint32_t s = 0; s < subsets.size(); ++s) {
+                                    if (subsets[s].faceCount == 0) continue;
+                                    const uint32_t texId = m_characterScene->GetPieceTextureId(instance->asset, slot, s);
+                                    // cps FLAG_ALPHATEXTURE = 0x0001 (SMATERIAL_PIECE) drives
+                                    // per-subset alpha blending; untextured subsets keep the
+                                    // flat material colour.
+                                    bool alphaBlend = false;
+                                    if (s < piece.info.materials.size()) {
+                                        alphaBlend = (piece.info.materials[s].flags & 0x0001u) != 0;
+                                    }
+                                    const float texColor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+                                    const float flatColor[4] = {0.75f, 0.75f, 0.75f, 1.0f};
+                                    submitted = m_renderer->DrawGpuSkinnedMesh(
+                                        gpuHandle, palette, paletteCount, texId,
+                                        texId != 0 ? texColor : flatColor, alphaBlend,
+                                        subsets[s].faceStart, subsets[s].faceCount) || submitted;
+                                }
+                            } else {
+                                const float flatColor[4] = {0.75f, 0.75f, 0.75f, 1.0f};
+                                submitted = m_renderer->DrawGpuSkinnedMesh(
+                                    gpuHandle, palette, paletteCount, 0, flatColor, false,
+                                    0, static_cast<uint32_t>(piece.mesh.faces.size() / 3)) || submitted;
+                            }
+                            continue;
+                        }
+
+                        // B17 CPU-evaluated fallback: skinned positions/normals are
+                        // concatenated in piece order, so every submission advances the
+                        // base pointer by the piece's vertex offset — piece.mesh.faces
+                        // indexes piece-local vertices. A piece that fails the bounds
+                        // check is skipped; geometry is never substituted or fabricated.
+                        if (vertexCount == 0) continue;
                         const uint32_t offset = instance->pieceVertexOffsets[slot];
                         if (static_cast<size_t>(offset) + piece.mesh.vertexCount > vertexCount) continue;
                         RANMobile::SkinnedDrawInput pieceInput;

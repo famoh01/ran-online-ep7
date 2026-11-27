@@ -50,6 +50,8 @@
 #include "../Data/Importer/EP7Skeleton.h"
 #include "../Data/Importer/EP7SkinPiece.h"
 #include "../Data/Importer/EP7SkinnedMesh.h"
+#include "../Data/Importer/EP7TextureDecoder.h"
+#include "../Engine/Scene/EP7CharacterScene.h"
 
 namespace {
 
@@ -156,6 +158,80 @@ void ReportOutcome(const char* kind, const std::string& path, Outcome outcome,
     if (outcome == Outcome::Unsupported) ++g_unsupportedReasons[std::string(kind) + ": " + ReasonKey(detail)];
 }
 
+// ---------------------------------------------------------------------------
+// B18: entry cache + texture evidence.  Additive only — the B11-B17 outcome model
+// above is untouched.  Pack entries of character-relevant formats (and shipped
+// textures) are cached so the B18 deep-dive can load ONE authentic character and
+// resolve its .cps material texture names the way TextureManager does.
+// ---------------------------------------------------------------------------
+struct B18Evidence {
+    std::map<std::string, std::vector<uint8_t>> entries;   // lowercase entry name -> bytes
+    size_t cacheBytes = 0;
+    bool cacheFull = false;
+    uint32_t mtfTotal = 0, mtfDecryptOk = 0, mtfDecodeOk = 0;
+    uint32_t ddsTotal = 0, ddsOk = 0;
+    std::vector<std::string> chfNames;                     // for the deep-dive pick
+    static constexpr size_t kCacheCap = 160u * 1024 * 1024;
+};
+B18Evidence g_b18;
+
+void B18RememberEntry(const std::string& name, const std::vector<uint8_t>& bytes) {
+    if (g_b18.cacheFull) return;
+    if (g_b18.cacheBytes + bytes.size() > B18Evidence::kCacheCap) {
+        g_b18.cacheFull = true;
+        return;
+    }
+    std::string lower;
+    lower.reserve(name.size());
+    for (char c : name) lower.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+    const size_t slash = lower.find_last_of('/');
+    if (slash != std::string::npos) lower = lower.substr(slash + 1);
+    if (g_b18.entries.find(lower) != g_b18.entries.end()) return;
+    g_b18.entries[lower] = bytes;
+    g_b18.cacheBytes += bytes.size();
+}
+
+bool B18Resolve(const std::string& name, std::vector<uint8_t>& out) {
+    std::string lower;
+    lower.reserve(name.size());
+    for (char c : name) lower.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+    const auto it = g_b18.entries.find(lower);
+    if (it == g_b18.entries.end()) return false;
+    out = it->second;
+    return true;
+}
+
+// Decrypt+decode one texture buffer using the CMemoryTexture naming rules.
+bool B18DecodeTexture(const std::string& name, const std::vector<uint8_t>& bytes,
+                      uint32_t& outW, uint32_t& outH, std::string& outFmt) {
+    std::vector<uint8_t> raw;
+    int fileType = -1;
+    if (EndsWithNoCase(name, ".mtf")) {
+        if (!RANMobile::EP7TextureDecoder::DecryptMTF(bytes, raw, fileType)) return false;
+    } else {
+        raw = bytes;
+    }
+    RANMobile::DecodedTexture tex;
+    if (raw.size() >= 4 && std::memcmp(raw.data(), "DDS ", 4) == 0) {
+        outFmt = "dds";
+        tex = RANMobile::EP7TextureDecoder::DecodeDDS(raw);
+    } else if (fileType == 1) {
+        outFmt = "tga(mtf)";
+        tex = RANMobile::EP7TextureDecoder::DecodeTGA(raw);
+    } else {
+        outFmt = "tga";
+        tex = RANMobile::EP7TextureDecoder::DecodeTGA(raw);
+        if (!tex.valid) {
+            outFmt = "dds?";
+            tex = RANMobile::EP7TextureDecoder::DecodeDDS(raw);
+        }
+    }
+    if (!tex.valid) return false;
+    outW = tex.width;
+    outH = tex.height;
+    return true;
+}
+
 }  // namespace
 
 // Verifies one asset buffer. `path` is only used for reporting (it may be
@@ -172,6 +248,7 @@ Outcome VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& b
             std::snprintf(detail, sizeof(detail), "v0x%04X pieces=%u skeleton=%s anims=%zu", info.version,
                           info.PieceCount(), info.skeleton.c_str(), info.animations.size());
             ReportOutcome("chf", path, Outcome::Pass, detail);
+            g_b18.chfNames.push_back(path);
         } else {
             ReportOutcome("chf", path, Outcome::Fail, info.error);
         }
@@ -435,6 +512,32 @@ int main(int argc, char** argv) {
                 ++counters.packFailed;
                 continue;
             }
+            // B18: shipped textures (.mtf/.dds) are classified additively — they are
+            // not part of the B11-B17 character-entry outcome model, but the evidence
+            // (decrypt/decode rates) and the bytes are kept for the deep-dive below.
+            if (EndsWithNoCase(entry.name, ".mtf") || EndsWithNoCase(entry.name, ".dds")) {
+                if (EndsWithNoCase(entry.name, ".mtf")) {
+                    ++g_b18.mtfTotal;
+                    std::vector<uint8_t> raw;
+                    int fileType = -1;
+                    if (RANMobile::EP7TextureDecoder::DecryptMTF(entryBytes, raw, fileType)) {
+                        ++g_b18.mtfDecryptOk;
+                        uint32_t tw = 0;
+                        uint32_t th = 0;
+                        std::string fmt;
+                        if (B18DecodeTexture(entry.name, entryBytes, tw, th, fmt)) ++g_b18.mtfDecodeOk;
+                    }
+                } else {
+                    ++g_b18.ddsTotal;
+                    uint32_t tw = 0;
+                    uint32_t th = 0;
+                    std::string fmt;
+                    if (B18DecodeTexture(entry.name, entryBytes, tw, th, fmt)) ++g_b18.ddsOk;
+                }
+                B18RememberEntry(entry.name, entryBytes);
+                continue;
+            }
+            B18RememberEntry(entry.name, entryBytes);
             switch (VerifySingleAsset(label, entryBytes, counters)) {
                 case Outcome::Pass: ++counters.packOk; break;
                 case Outcome::Fail: ++counters.packFailed; break;
@@ -442,6 +545,121 @@ int main(int argc, char** argv) {
             }
         }
         if (checked == 0) std::printf("     (no character assets inside)\n");
+    }
+
+    // ---------------------------------------------------------------------------
+    // B18 evidence: load the FIRST valid .chf through the full character loader and
+    // report the GPU skinning/texture pipeline inputs built from that authentic data.
+    // Additive, informational: the B11-B17 outcome model above is untouched, but the
+    // numbers come only from authentic pack entries (no synthetic fixtures involved).
+    // ---------------------------------------------------------------------------
+    {
+        std::string chfName;
+        for (const auto& kv : g_b18.entries) {
+            if (EndsWithNoCase(kv.first, ".chf")) {
+                chfName = kv.first;
+                break;
+            }
+        }
+        std::printf("\n=== B18 GPU skinning / texture evidence ===\n");
+        std::printf("pack texture entries: %u .mtf (%u decrypt ok, %u decoded), %u .dds (%u decoded)\n",
+                    g_b18.mtfTotal, g_b18.mtfDecryptOk, g_b18.mtfDecodeOk, g_b18.ddsTotal, g_b18.ddsOk);
+        if (chfName.empty()) {
+            std::printf("no valid .chf entry cached; character deep-dive skipped\n");
+        } else {
+            RANMobile::EP7CharacterLoader loader;
+            loader.SetResolver([](void*, const std::string& name, std::vector<uint8_t>& out) {
+                return B18Resolve(name, out);
+            }, nullptr);
+            std::vector<uint8_t> chfBytes;
+            if (!B18Resolve(chfName, chfBytes)) {
+                std::printf("deep-dive: chf bytes unavailable\n");
+            } else {
+                const RANMobile::EP7CharacterScene::AssetPtr asset =
+                    std::make_shared<RANMobile::EP7CharacterAsset>(
+                        loader.LoadCharacter(chfBytes, false));
+                std::printf("deep-dive character: %s loaded=%d pieces=%u anims=%zu skeleton=%s\n",
+                            chfName.c_str(), asset->loaded ? 1 : 0, asset->pieceCount,
+                            asset->clips.size(), asset->file.skeleton.c_str());
+                if (asset->loaded) {
+                    RANMobile::EP7Skeleton skel = *asset->skeleton;
+                    for (uint32_t slot = 0; slot < RANMobile::kEP7PieceSize; ++slot) {
+                        const RANMobile::EP7CharacterPiece& piece = asset->pieces[slot];
+                        if (!piece.loaded) continue;
+                        // GPU skinning streams (DxSkinMesh9_HLSL BLENDWEIGHT/BLENDINDICES parity).
+                        uint32_t influenced = 0;
+                        uint32_t maxInfl = 0;
+                        if (piece.gpuStreams.valid) {
+                            for (uint32_t v = 0; v < piece.gpuStreams.vertexCount; ++v) {
+                                uint32_t count = 0;
+                                for (int i = 0; i < 4; ++i) {
+                                    if (piece.gpuStreams.boneWeights[static_cast<size_t>(v) * 4 + i] > 0.0f) ++count;
+                                }
+                                if (count > 0) ++influenced;
+                                if (count > maxInfl) maxInfl = count;
+                            }
+                        }
+                        std::printf("piece[%u] %s: verts=%u tris=%zu skinBones=%zu gpuStreams=%s "
+                                    "influenced=%u/%u maxInfl=%u palette=%zu\n",
+                                    slot, piece.info.xFileName.c_str(), piece.mesh.vertexCount,
+                                    piece.mesh.faces.size() / 3, piece.mesh.bones.size(),
+                                    piece.gpuStreams.valid ? "valid" : "INVALID",
+                                    influenced, piece.mesh.vertexCount, maxInfl,
+                                    piece.mesh.bones.size());
+                        // Palette composition at rest (offset * combined, DxSkinMesh9_CPU.cpp:625 parity).
+                        std::vector<RANMobile::ep7math::Mat4> palette;
+                        RANMobile::BuildBonePalette(piece.mesh, skel, palette);
+                        if (palette.size() != piece.mesh.bones.size()) {
+                            std::printf("  [B18-FAIL] palette size %zu != skin bone count %zu\n",
+                                        palette.size(), piece.mesh.bones.size());
+                        }
+                        // Texture resolution: .cps material names first (SMATERIAL_PIECE::LoadTexture
+                        // parity), then the .x MeshMaterialList names, through the ladder.
+                        std::map<std::string, int> names;
+                        for (const auto& mat : piece.info.materials) {
+                            if (!mat.texture.empty()) names[mat.texture] = 1;
+                        }
+                        for (const auto& subset : piece.mesh.subsets) {
+                            if (!subset.texture.empty() && names.find(subset.texture) == names.end()) {
+                                names[subset.texture] = 2;
+                            }
+                        }
+                        for (const auto& kv : names) {
+                            std::vector<uint8_t> texBytes;
+                            std::string hit;
+                            const std::string& n = kv.first;
+                            if (B18Resolve(n, texBytes)) hit = n;
+                            const size_t dot = n.find_last_of('.');
+                            if (hit.empty() && dot != std::string::npos &&
+                                B18Resolve(n.substr(0, dot) + ".mtf", texBytes)) {
+                                hit = n.substr(0, dot) + ".mtf";
+                            }
+                            if (hit.empty() && B18Resolve(n + ".mtf", texBytes)) hit = n + ".mtf";
+                            if (hit.empty()) {
+                                std::printf("  texture '%s' (cps=%d): NOT RESOLVED from packs\n",
+                                            kv.first.c_str(), kv.second);
+                            } else {
+                                uint32_t tw = 0;
+                                uint32_t th = 0;
+                                std::string fmt;
+                                if (B18DecodeTexture(hit, texBytes, tw, th, fmt)) {
+                                    std::printf("  texture '%s' (cps=%d) -> '%s' [%s] %ux%u\n",
+                                                kv.first.c_str(), kv.second, hit.c_str(),
+                                                fmt.c_str(), tw, th);
+                                } else {
+                                    std::printf("  texture '%s' (cps=%d) -> '%s' DECODE FAILED\n",
+                                                kv.first.c_str(), kv.second, hit.c_str());
+                                }
+                            }
+                        }
+                        if (names.empty()) {
+                            std::printf("  (no material texture names recorded)\n");
+                        }
+                    }
+                }
+            }
+        }
+        std::printf("(B18 evidence is informational; the verdict below is the B11-B16 outcome model)\n");
     }
 
     std::printf("\n=== SUMMARY (verified against authentic files only) ===\n");

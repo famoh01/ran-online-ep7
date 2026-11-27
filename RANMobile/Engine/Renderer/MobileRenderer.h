@@ -39,6 +39,30 @@ struct SkinnedDrawInput {
     float colorR = 0.75f, colorG = 0.75f, colorB = 0.75f, colorA = 1.0f;
 };
 
+// ---------------------------------------------------------------------------
+// B18: GPU skinning path (authentic D3DINDEXEDHLSLVS convention, DxSkinMesh9.cpp:18).
+//
+// UploadGpuSkinnedMesh stores a static per-piece vertex/index buffer once; the
+// per-frame data is ONLY the bone palette (offset*combined matrices, DxSkinMesh9_
+// HLSL.cpp:220-227 "mWorldMatrixArray" parity) written into a shared uniform block.
+// Vertex streams follow the authentic HLSL declaration (DxSkinMesh9_HLSL.cpp:95-106):
+// position + normal + uv + 4 float blend weights + 4 float blend indices, interleaved
+// in one 64-byte stride.  The shader reproduces SkinVerticesCPU semantics exactly
+// (per-influence row-vector transform with w-divide, translation-dropped normals,
+// |sum-1|>1e-4 renormalization, zero-sum -> bind passthrough).
+// ---------------------------------------------------------------------------
+struct GpuSkinnedMeshData {
+    const float* interleaved = nullptr;  // 16 floats per vertex: pos3, normal3, uv2, boneIdx4, boneWt4
+    uint32_t vertexCount = 0;
+    const uint32_t* indices = nullptr;   // triangle list
+    uint32_t indexCount = 0;             // multiple of 3
+};
+
+// Maximum palette entries the GLES3 program declares (256 mat4 = 16 KB, the ES 3.0
+// minimum guaranteed MAX_UNIFORM_BLOCK_SIZE).  Pieces whose palette exceeds this are
+// skipped with a logged error — never approximated.
+static constexpr uint32_t kMaxGpuBones = 256;
+
 class MobileRenderer {
 public:
     bool Initialize(int width, int height);
@@ -64,6 +88,31 @@ public:
     void EndScene3D();
     bool DrawSkinnedMesh(const SkinnedDrawInput& input);
     bool Scene3DActive() const { return m_scene3DActive; }
+
+    // ------------------------------------------------------------------
+    // B18: GPU skinned path.  Handles are 0 on failure and must be released
+    // (ReleaseGpuSkinnedMesh) before the owning asset is destroyed.
+    // ------------------------------------------------------------------
+    uint32_t UploadGpuSkinnedMesh(const GpuSkinnedMeshData& data);
+    void ReleaseGpuSkinnedMesh(uint32_t handle);
+    // Draws one contiguous face range [faceStart, faceStart+faceCount) of the uploaded
+    // mesh (the .x attribute-group/subset layout).  `paletteRowMajor` holds
+    // paletteCount * 16 row-major floats (offset*combined, DxSkinMesh9_HLSL.cpp:220
+    // parity — row-major storage fed into a column-major mat4 keeps the original
+    // v*M row-vector semantics for M*v in GLSL).  Returns false (with a logged
+    // error) on invalid handles, palette overflow, or out-of-range face ranges —
+    // never on a missing texture (textureId 0 keeps the flat material colour).
+    bool DrawGpuSkinnedMesh(uint32_t handle,
+                            const float* paletteRowMajor,
+                            uint32_t paletteCount,
+                            uint32_t textureId,
+                            const float color[4],
+                            bool alphaBlend,
+                            uint32_t faceStart,
+                            uint32_t faceCount);
+    uint32_t GpuMeshCount() const { return m_gpuMeshCount; }
+    uint32_t GpuDrawCount() const { return m_gpuDrawCount; }
+    uint32_t GpuDrawFailures() const { return m_gpuDrawFailures; }
 
     uint32_t UploadRGBA8Texture(uint32_t width, uint32_t height, const uint8_t* rgba8);
     void DeleteTexture(uint32_t texId);
@@ -91,6 +140,14 @@ private:
     RenderStats m_stats;
 
     bool m_scene3DActive = false;
+
+    // B18 GPU skinned mesh registry — kept outside __ANDROID__ so headless builds
+    // exercise the same upload/draw validation path (GL objects live only on Android).
+    std::unordered_map<uint32_t, void*> m_gpuMeshes;  // handle -> GpuMeshGlState*
+    uint32_t m_nextGpuMeshHandle = 1;
+    uint32_t m_gpuMeshCount = 0;
+    uint32_t m_gpuDrawCount = 0;
+    uint32_t m_gpuDrawFailures = 0;
 
     std::vector<uint8_t> m_primaryFontData;
     std::vector<uint8_t> m_thaiFontData;
@@ -123,6 +180,11 @@ private:
     int32_t m_uUseTexLoc3D = -1;
     int32_t m_uTexLoc3D = -1;
     float m_viewProj[16] = {0};
+
+    // B18 GPU skinned pass state.
+    uint32_t m_charGpuProgram = 0;
+    uint32_t m_gpuPaletteUBO = 0;   // shared std140 mat4[kMaxGpuBones] palette block
+    size_t m_gpuPaletteUBOBytes = 0;
 #endif
 };
 

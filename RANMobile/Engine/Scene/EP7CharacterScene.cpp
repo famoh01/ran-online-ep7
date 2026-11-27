@@ -1,7 +1,9 @@
 #include "EP7CharacterScene.h"
+#include "../../Data/Importer/EP7TextureDecoder.h"
 
 #include <chrono>
 #include <cmath>
+#include <cctype>
 #include <cstring>
 
 namespace RANMobile {
@@ -110,6 +112,9 @@ EP7CharacterAsset EP7CharacterLoader::LoadCharacter(const std::vector<uint8_t>& 
         }
 
         piece.loaded = true;
+        // B18: build the per-vertex GPU skinning streams once at load (DxSkinMesh9_HLSL
+        // BLENDWEIGHT/BLENDINDICES FLOAT4 parity; same influence rules as SkinVerticesCPU).
+        piece.gpuStreams = BuildGpuSkinStreams(piece.mesh);
         ++asset->pieceCount;
         asset->meshVertexCount += piece.mesh.vertexCount;
         asset->meshTriangleCount += static_cast<uint32_t>(piece.mesh.faces.size() / 3);
@@ -176,6 +181,7 @@ uint32_t EP7CharacterScene::Spawn(const AssetPtr& asset, float x, float y, float
     auto instance = std::make_unique<EP7CharacterInstance>();
     instance->asset = asset;
     instance->poseSkeleton = std::make_unique<EP7Skeleton>(*asset->skeleton);
+    instance->piecePalettes.resize(kEP7PieceSize);
     instance->position[0] = x;
     instance->position[1] = y;
     instance->position[2] = z;
@@ -211,6 +217,7 @@ bool EP7CharacterScene::Destroy(uint32_t instanceId) {
 }
 
 void EP7CharacterScene::Clear() {
+    ReleaseGpuResources();
     m_instances.clear();
     m_previewTarget = 0;
     m_nextId = 1;
@@ -343,6 +350,10 @@ bool EP7CharacterScene::EvaluatePose(EP7CharacterInstance& instance, float* outS
         instance.skinnedPositions.insert(instance.skinnedPositions.end(), positions.begin(), positions.end());
         instance.skinnedNormals.insert(instance.skinnedNormals.end(), normals.begin(), normals.end());
 
+        // B18: stash the palette for the GPU skinned draw (offset*combined per piece
+        // bone; consumed by DrawGpuSkinnedMesh through the shared uniform block).
+        instance.piecePalettes[slot].assign(palette.begin(), palette.end());
+
         // One draw call per material subset; the EP7 piece always has >= 1 material.
         instance.drawCalls += static_cast<uint32_t>(piece.mesh.subsets.empty() ? 1 : piece.mesh.subsets.size());
         instance.triangles += static_cast<uint32_t>(piece.mesh.faces.size() / 3);
@@ -456,6 +467,151 @@ EP7CharacterDiagnostics EP7CharacterScene::GetDiagnostics() const {
 
     if (diag.lastError.empty()) diag.lastError = m_lastError;
     return diag;
+}
+
+// ---------------------------------------------------------------------------
+// B18: GPU skinning + texture binding integration.
+// ---------------------------------------------------------------------------
+
+void EP7CharacterScene::ReleaseGpuResources() {
+    if (m_renderer) {
+        for (uint32_t handle : m_uploadedGpuMeshes) {
+            m_renderer->ReleaseGpuSkinnedMesh(handle);
+        }
+        for (const auto& kv : m_textureCache) {
+            m_renderer->DeleteTexture(kv.second);
+        }
+    }
+    m_uploadedGpuMeshes.clear();
+    m_textureCache.clear();
+}
+
+uint32_t EP7CharacterScene::EnsurePieceGpuHandle(const AssetPtr& asset, uint32_t slot) {
+    if (!asset || slot >= kEP7PieceSize || !m_renderer) return 0;
+    EP7CharacterPiece& piece = asset->pieces[slot];
+    if (!piece.loaded || !piece.gpuStreams.valid || piece.mesh.faces.empty()) return 0;
+    if (piece.gpuMeshHandle != 0) return piece.gpuMeshHandle;
+
+    // Interleave pos(3) + normal(3) + uv(2) + boneIdx(4) + boneWt(4) = 16 floats per
+    // vertex — the authentic DxSkinMesh9_HLSL.cpp:95-106 declaration (without the
+    // tangent stream, which no B18 draw consumes).
+    const size_t vertexFloats = static_cast<size_t>(piece.mesh.vertexCount) * 16;
+    std::vector<float> interleaved(vertexFloats);
+    const bool hasNormals = piece.mesh.normals.size() >= static_cast<size_t>(piece.mesh.vertexCount) * 3;
+    const bool hasUV = piece.mesh.texcoords.size() >= static_cast<size_t>(piece.mesh.vertexCount) * 2;
+    for (uint32_t v = 0; v < piece.mesh.vertexCount; ++v) {
+        float* d = interleaved.data() + static_cast<size_t>(v) * 16;
+        d[0] = piece.mesh.positions[v * 3 + 0];
+        d[1] = piece.mesh.positions[v * 3 + 1];
+        d[2] = piece.mesh.positions[v * 3 + 2];
+        d[3] = hasNormals ? piece.mesh.normals[v * 3 + 0] : 0.0f;
+        d[4] = hasNormals ? piece.mesh.normals[v * 3 + 1] : 1.0f;
+        d[5] = hasNormals ? piece.mesh.normals[v * 3 + 2] : 0.0f;
+        d[6] = hasUV ? piece.mesh.texcoords[v * 2 + 0] : 0.0f;
+        d[7] = hasUV ? piece.mesh.texcoords[v * 2 + 1] : 0.0f;
+        for (int k = 0; k < 4; ++k) {
+            d[8 + k] = piece.gpuStreams.boneIndices[static_cast<size_t>(v) * 4 + k];
+            d[12 + k] = piece.gpuStreams.boneWeights[static_cast<size_t>(v) * 4 + k];
+        }
+    }
+
+    RANMobile::GpuSkinnedMeshData data;
+    data.interleaved = interleaved.data();
+    data.vertexCount = piece.mesh.vertexCount;
+    data.indices = piece.mesh.faces.data();
+    data.indexCount = static_cast<uint32_t>(piece.mesh.faces.size());
+    const uint32_t handle = m_renderer->UploadGpuSkinnedMesh(data);
+    if (handle != 0) m_uploadedGpuMeshes.push_back(handle);
+    piece.gpuMeshHandle = handle;
+    return handle;
+}
+
+uint32_t EP7CharacterScene::ResolveTextureLocked(const std::string& textureName) {
+    if (!m_renderer || textureName.empty()) return 0;
+
+    // Resolution ladder (TextureManager::LoadTexture + IsEncrypt parity): exact name,
+    // stem + ".mtf", name + ".mtf".  Cached by lowercase key like the original manager.
+    std::vector<std::string> candidates;
+    candidates.push_back(textureName);
+    const size_t dot = textureName.find_last_of('.');
+    if (dot != std::string::npos) {
+        candidates.push_back(textureName.substr(0, dot) + ".mtf");
+    }
+    candidates.push_back(textureName + ".mtf");
+
+    for (const std::string& candidate : candidates) {
+        std::string lower;
+        lower.reserve(candidate.size());
+        for (char c : candidate) {
+            lower.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+        }
+        const auto cached = m_textureCache.find(lower);
+        if (cached != m_textureCache.end()) return cached->second;
+        if (!m_textureResolver) continue;
+
+        std::vector<uint8_t> bytes;
+        if (!m_textureResolver(m_textureResolverData, candidate, bytes) || bytes.empty()) continue;
+
+        // CMemoryTexture parity: a ".mtf" name decrypts before decoding
+        // (MemoryTexture.cpp IsEncrypt / DecryptTexture: (b + 3) ^ 0x47 body after
+        // the 12-byte {version,size,fileType} header).
+        const bool encrypted = lower.find(".mtf") != std::string::npos;
+        std::vector<uint8_t> raw;
+        int fileType = -1;
+        if (encrypted && EP7TextureDecoder::DecryptMTF(bytes, raw, fileType)) {
+            bytes.swap(raw);
+        } else if (encrypted) {
+            continue;  // undecryptable .mtf: not fabricated
+        }
+
+        DecodedTexture tex;
+        if (bytes.size() >= 4 && std::memcmp(bytes.data(), "DDS ", 4) == 0) {
+            tex = EP7TextureDecoder::DecodeDDS(bytes);
+        } else if (fileType == 1) {
+            // TEXTURE_TGA branch of the .mtf container (MemoryTexture.cpp EncryptTexture).
+            tex = EP7TextureDecoder::DecodeTGA(bytes);
+        } else {
+            tex = EP7TextureDecoder::DecodeTGA(bytes);  // plain .tga by content
+            if (!tex.valid) tex = EP7TextureDecoder::DecodeDDS(bytes);
+        }
+        if (!tex.valid) continue;
+
+        const uint32_t texId = m_renderer->UploadRGBA8Texture(tex.width, tex.height, tex.rgba8.data());
+        if (texId != 0) {
+            m_textureCache[lower] = texId;
+        }
+        return texId;
+    }
+    return 0;
+}
+
+uint32_t EP7CharacterScene::GetPieceTextureId(const AssetPtr& asset, uint32_t slot, uint32_t subsetIndex) {
+    if (!asset || slot >= kEP7PieceSize) return 0;
+    const EP7CharacterPiece& piece = asset->pieces[slot];
+    if (!piece.loaded) return 0;
+
+    // Authentic association (DxSkinPieceContainer.cpp:82 SMATERIAL_PIECE::LoadTexture):
+    // the .cps material texture name is the binding key; the .x MeshMaterialList name is
+    // the fallback (the .cps materials array corresponds 1:1 with the mesh's attribute
+    // groups — DxCharPart::SetPart copies SMATERIAL_PIECE[m_dwMaterialNum] verbatim).
+    std::string name;
+    if (subsetIndex < piece.info.materials.size() && !piece.info.materials[subsetIndex].texture.empty()) {
+        name = piece.info.materials[subsetIndex].texture;
+    } else if (subsetIndex < piece.mesh.subsets.size()) {
+        name = piece.mesh.subsets[subsetIndex].texture;
+    }
+    if (name.empty() || name.rfind("material_", 0) == 0) return 0;  // synthetic fallback name
+    return ResolveTextureLocked(name);
+}
+
+bool EP7CharacterScene::GetPiecePalette(const EP7CharacterInstance& instance, uint32_t slot,
+                                        const float** outPtr, uint32_t* outCount) const {
+    if (slot >= instance.piecePalettes.size()) return false;
+    const auto& palette = instance.piecePalettes[slot];
+    if (palette.empty()) return false;
+    *outPtr = reinterpret_cast<const float*>(palette.data());
+    *outCount = static_cast<uint32_t>(palette.size());
+    return true;
 }
 
 }  // namespace RANMobile

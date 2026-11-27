@@ -12,6 +12,15 @@ sources=(
   RANMobile/Data/Importer/EP7SkinPiece.cpp
   RANMobile/Data/Importer/EP7SkinnedMesh.cpp
   RANMobile/Data/Importer/EP7XFile.cpp
+  # B18: verify_ep7_character_assets.cpp (included textually by the test) now also
+  # carries the GPU-skinning/texture deep-dive, which pulls in the decoder and the
+  # headless-linkable renderer/scene layer.
+  RANMobile/Data/Importer/EP7TextureDecoder.cpp
+  RANMobile/Engine/Core/Logger.cpp
+  RANMobile/Engine/Renderer/MobileRenderer.cpp
+  RANMobile/Engine/Camera/MobileCamera.cpp
+  RANMobile/Engine/Scene/EP7CharacterScene.cpp
+  RANMobile/Engine/Animation/EP7SkinAniControl.cpp
   RANMobile/Tests/test_ep7_character_verifier.cpp
 )
 flags=(-std=c++17 -Wall -Wextra -Werror)

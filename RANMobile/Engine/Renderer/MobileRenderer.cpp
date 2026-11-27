@@ -14,6 +14,16 @@
 
 namespace RANMobile {
 
+// B18: per-uploaded-mesh GL state (also carries the counts DrawGpuSkinnedMesh
+// validates against, so headless builds exercise the same validation path).
+struct GpuMeshGlState {
+    uint32_t vao = 0;
+    uint32_t vbo = 0;
+    uint32_t ebo = 0;
+    uint32_t vertexCount = 0;
+    uint32_t indexCount = 0;
+};
+
 static constexpr int kAtlasSize = 1024;
 static constexpr float kBaseFontPx = 28.0f;
 
@@ -97,9 +107,95 @@ in vec3 vNormal;
 in vec2 vUV;
 out vec4 FragColor;
 void main() {
-    // Fixed directional key light + ambient floor (match the visible skeleton pose;
-    // the authentic renderer's full material stack arrives with the texture pipeline).
-    vec3 lightDir = normalize(vec3(0.4, 0.8, 0.45));
+    // Authentic fixed key light: DxSkinMesh9_HLSL.cpp:179-181 sets
+    // lhtDir = normalize(vec4(0,1,-1,0)) for every skinned draw (B18 aligns the
+    // B17 placeholder light with the authentic value; ambient floor unchanged).
+    vec3 lightDir = normalize(vec3(0.0, 1.0, -1.0));
+    float ndl = max(dot(normalize(vNormal), lightDir), 0.0);
+    vec3 lit = uColor.rgb * (0.35 + 0.65 * ndl);
+    if (uUseTexture == 1) {
+        lit *= texture(uTex, vUV).rgb;
+    }
+    FragColor = vec4(lit, uColor.a);
+}
+)";
+
+// ---------------------------------------------------------------------------
+// B18: GPU skinning program (authentic D3DINDEXEDHLSLVS convention).
+//
+// Vertex streams = the authentic HLSL declaration (DxSkinMesh9_HLSL.cpp:95-106:
+// POSITION/NORMAL/TEXCOORD/TANGENT + BLENDWEIGHT FLOAT4 + BLENDINDICES FLOAT4;
+// the tangent stream is not consumed yet — effects that need it are out of scope).
+// Palette = std140 uniform block fed per draw from the shared UBO, entries =
+// offsetMatrix * boneCombined (DxSkinMesh9_HLSL.cpp:220-229 "mWorldMatrixArray"
+// parity; BuildBonePalette already computes exactly this).
+//
+// Row-major storage in a column-major mat4 preserves the original v*M row-vector
+// semantics: GLSL M_glsl[c][r] = m[c][r] makes M_glsl*v == v*m (verified against
+// TransformCoord/TransformNormal in EP7Math.h).
+//
+// The shader reproduces SkinVerticesCPU exactly: per-influence position transform
+// with w-divide (TransformCoord), translation-dropped normals (TransformNormal via
+// mat3), |sum-1|>1e-4 weight renormalization, zero-weight-sum -> bind passthrough,
+// final normal normalization.
+// ---------------------------------------------------------------------------
+static const char* kCharGpuVertexShader = R"(#version 300 es
+precision highp float;
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in vec3 aNormal;
+layout(location = 2) in vec2 aUV;
+layout(location = 3) in vec4 aBoneIdx;
+layout(location = 4) in vec4 aBoneWt;
+layout(std140) uniform BonePaletteBlock {
+    mat4 uBonePalette[256];
+};
+uniform mat4 uVP;
+out vec3 vNormal;
+out vec2 vUV;
+void main() {
+    vec4 acc = vec4(0.0);
+    vec3 nAcc = vec3(0.0);
+    float wSum = 0.0;
+    for (int i = 0; i < 4; ++i) {
+        float w = aBoneWt[i];
+        if (w <= 0.0) continue;
+        int bi = int(aBoneIdx[i] + 0.5);
+        mat4 m = uBonePalette[bi];
+        vec4 tp = m * vec4(aPos, 1.0);
+        tp.xyz /= tp.w;                       // TransformCoord parity (affine: w==1)
+        acc += w * tp;
+        nAcc += w * (mat3(m) * aNormal);      // TransformNormal parity
+        wSum += w;
+    }
+    vec3 pos;
+    vec3 nrm;
+    if (wSum <= 1e-6) {
+        pos = aPos;                           // empty influence list: bind passthrough
+        nrm = aNormal;
+    } else {
+        if (abs(wSum - 1.0) > 1e-4) {
+            acc.xyz /= wSum;                  // SkinVerticesCPU renormalization parity
+            nAcc /= wSum;
+        }
+        pos = acc.xyz;
+        nrm = normalize(nAcc);
+    }
+    gl_Position = uVP * vec4(pos, 1.0);
+    vNormal = nrm;
+    vUV = aUV;
+}
+)";
+
+static const char* kCharGpuFragmentShader = R"(#version 300 es
+precision mediump float;
+uniform vec4 uColor;
+uniform int uUseTexture;
+uniform sampler2D uTex;
+in vec3 vNormal;
+in vec2 vUV;
+out vec4 FragColor;
+void main() {
+    vec3 lightDir = normalize(vec3(0.0, 1.0, -1.0));  // authentic lhtDir
     float ndl = max(dot(normalize(vNormal), lightDir), 0.0);
     vec3 lit = uColor.rgb * (0.35 + 0.65 * ndl);
     if (uUseTexture == 1) {
@@ -249,6 +345,49 @@ bool MobileRenderer::Initialize(int width, int height) {
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(6 * sizeof(float)));
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_charEBO);
     glBindVertexArray(0);
+
+    // B18: GPU skinning program + shared palette uniform block.  256 mat4 entries
+    // (kMaxGpuBones) = 16 KB, the ES 3.0 minimum guaranteed MAX_UNIFORM_BLOCK_SIZE;
+    // devices below that minimum are logged and GPU-skinned draws fail loudly.
+    GLuint gvs = CompileShader(GL_VERTEX_SHADER, kCharGpuVertexShader);
+    GLuint gfs = CompileShader(GL_FRAGMENT_SHADER, kCharGpuFragmentShader);
+    if (gvs && gfs) {
+        m_charGpuProgram = glCreateProgram();
+        glAttachShader(m_charGpuProgram, gvs);
+        glAttachShader(m_charGpuProgram, gfs);
+        glLinkProgram(m_charGpuProgram);
+        glDeleteShader(gvs);
+        glDeleteShader(gfs);
+        GLint linked = 0;
+        glGetProgramiv(m_charGpuProgram, GL_LINK_STATUS, &linked);
+        if (!linked) {
+            char log[512];
+            glGetProgramInfoLog(m_charGpuProgram, sizeof(log), nullptr, log);
+            Logger::Error("MobileRenderer", std::string("GPU skin program link error: ") + log);
+            glDeleteProgram(m_charGpuProgram);
+            m_charGpuProgram = 0;
+        }
+    }
+    if (m_charGpuProgram) {
+        GLint maxBlockSize = 0;
+        glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &maxBlockSize);
+        if (maxBlockSize < static_cast<GLint>(kMaxGpuBones * 64)) {
+            Logger::Error("MobileRenderer", "GL_MAX_UNIFORM_BLOCK_SIZE (" + std::to_string(maxBlockSize) +
+                          ") below the 16 KB palette requirement; GPU skinning will be skipped");
+        }
+        glGenBuffers(1, &m_gpuPaletteUBO);
+        m_gpuPaletteUBOBytes = kMaxGpuBones * 64;
+        glBindBuffer(GL_UNIFORM_BUFFER, m_gpuPaletteUBO);
+        glBufferData(GL_UNIFORM_BUFFER, static_cast<GLsizeiptr>(m_gpuPaletteUBOBytes), nullptr, GL_DYNAMIC_DRAW);
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        const GLuint blockIndex = glGetUniformBlockIndex(m_charGpuProgram, "BonePaletteBlock");
+        if (blockIndex != GL_INVALID_INDEX) {
+            glUniformBlockBinding(m_charGpuProgram, blockIndex, 0);
+        }
+        glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_gpuPaletteUBO);
+        Logger::Info("MobileRenderer", "GPU skinning program ready (palette " +
+                     std::to_string(kMaxGpuBones) + " bones, " + std::to_string(maxBlockSize) + " B max block)");
+    }
 #endif
 
     m_initialized = true;
@@ -277,6 +416,20 @@ void MobileRenderer::Shutdown() {
     if (m_charVBO) { glDeleteBuffers(1, &m_charVBO); m_charVBO = 0; }
     if (m_charVAO) { glDeleteVertexArrays(1, &m_charVAO); m_charVAO = 0; }
     if (m_charProgram) { glDeleteProgram(m_charProgram); m_charProgram = 0; }
+    for (auto& kv : m_gpuMeshes) {
+        GpuMeshGlState* state = static_cast<GpuMeshGlState*>(kv.second);
+        if (state) {
+            if (state->ebo) glDeleteBuffers(1, &state->ebo);
+            if (state->vbo) glDeleteBuffers(1, &state->vbo);
+            if (state->vao) glDeleteVertexArrays(1, &state->vao);
+            delete state;
+        }
+    }
+    m_gpuMeshes.clear();
+    m_gpuMeshCount = 0;
+    m_nextGpuMeshHandle = 1;
+    if (m_gpuPaletteUBO) { glDeleteBuffers(1, &m_gpuPaletteUBO); m_gpuPaletteUBO = 0; }
+    if (m_charGpuProgram) { glDeleteProgram(m_charGpuProgram); m_charGpuProgram = 0; }
 #endif
     m_glyphCache.clear();
     m_scene3DActive = false;
@@ -688,6 +841,146 @@ bool MobileRenderer::DrawSkinnedMesh(const SkinnedDrawInput& input) {
     }
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(input.indexCount), GL_UNSIGNED_INT, nullptr);
     glBindVertexArray(0);
+#endif
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// B18: GPU skinned mesh upload/draw/release (authentic D3DINDEXEDHLSLVS parity).
+// ---------------------------------------------------------------------------
+
+uint32_t MobileRenderer::UploadGpuSkinnedMesh(const GpuSkinnedMeshData& data) {
+    if (!data.interleaved || !data.indices || data.vertexCount == 0 || data.indexCount == 0) return 0;
+    if (data.indexCount % 3 != 0) return 0;
+
+    auto* state = new GpuMeshGlState();
+    state->vertexCount = data.vertexCount;
+    state->indexCount = data.indexCount;
+
+#ifdef __ANDROID__
+    if (m_initialized) {
+        const GLsizeiptr vboBytes = static_cast<GLsizeiptr>(data.vertexCount) * 16 * sizeof(float);
+        const GLsizeiptr eboBytes = static_cast<GLsizeiptr>(data.indexCount) * sizeof(uint32_t);
+        glGenVertexArrays(1, &state->vao);
+        glGenBuffers(1, &state->vbo);
+        glGenBuffers(1, &state->ebo);
+        glBindVertexArray(state->vao);
+        glBindBuffer(GL_ARRAY_BUFFER, state->vbo);
+        glBufferData(GL_ARRAY_BUFFER, vboBytes, data.interleaved, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16 * sizeof(float), reinterpret_cast<void*>(0));
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 16 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 16 * sizeof(float), reinterpret_cast<void*>(6 * sizeof(float)));
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float), reinterpret_cast<void*>(8 * sizeof(float)));
+        glEnableVertexAttribArray(4);
+        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float), reinterpret_cast<void*>(12 * sizeof(float)));
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, state->ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboBytes, data.indices, GL_STATIC_DRAW);
+        glBindVertexArray(0);
+    }
+#endif
+
+    const uint32_t handle = m_nextGpuMeshHandle++;
+    m_gpuMeshes[handle] = state;
+    ++m_gpuMeshCount;
+    return handle;
+}
+
+void MobileRenderer::ReleaseGpuSkinnedMesh(uint32_t handle) {
+    auto it = m_gpuMeshes.find(handle);
+    if (it == m_gpuMeshes.end()) return;
+    auto* state = static_cast<GpuMeshGlState*>(it->second);
+#ifdef __ANDROID__
+    if (m_initialized && state) {
+        if (state->ebo) glDeleteBuffers(1, &state->ebo);
+        if (state->vbo) glDeleteBuffers(1, &state->vbo);
+        if (state->vao) glDeleteVertexArrays(1, &state->vao);
+    }
+#endif
+    delete state;
+    m_gpuMeshes.erase(it);
+    if (m_gpuMeshCount > 0) --m_gpuMeshCount;
+}
+
+bool MobileRenderer::DrawGpuSkinnedMesh(uint32_t handle,
+                                        const float* paletteRowMajor,
+                                        uint32_t paletteCount,
+                                        uint32_t textureId,
+                                        const float color[4],
+                                        bool alphaBlend,
+                                        uint32_t faceStart,
+                                        uint32_t faceCount) {
+    if (!m_scene3DActive) return false;
+    auto it = m_gpuMeshes.find(handle);
+    if (it == m_gpuMeshes.end() || !it->second) {
+        Logger::Error("MobileRenderer", "DrawGpuSkinnedMesh: unknown mesh handle");
+        ++m_gpuDrawFailures;
+        return false;
+    }
+    auto* state = static_cast<GpuMeshGlState*>(it->second);
+    if (!paletteRowMajor || paletteCount == 0 || paletteCount > kMaxGpuBones) {
+        Logger::Error("MobileRenderer", "DrawGpuSkinnedMesh: palette overflow/invalid (count " +
+                      std::to_string(paletteCount) + ", max " + std::to_string(kMaxGpuBones) + ")");
+        ++m_gpuDrawFailures;
+        return false;
+    }
+    const uint64_t firstIndex = static_cast<uint64_t>(faceStart) * 3;
+    const uint64_t drawIndices = static_cast<uint64_t>(faceCount) * 3;
+    if (firstIndex + drawIndices > state->indexCount) {
+        Logger::Error("MobileRenderer", "DrawGpuSkinnedMesh: face range out of bounds (start " +
+                      std::to_string(faceStart) + ", count " + std::to_string(faceCount) +
+                      ", mesh indices " + std::to_string(state->indexCount) + ")");
+        ++m_gpuDrawFailures;
+        return false;
+    }
+
+    ++m_gpuDrawCount;
+    m_stats.drawCalls++;
+    m_stats.triangles += faceCount;
+
+#ifndef __ANDROID__
+    (void)textureId;
+    (void)color;
+    (void)alphaBlend;
+    return true;
+#else
+    if (!m_initialized || !m_charGpuProgram) return false;
+
+    // Palette upload (offset*combined, row-major — DxSkinMesh9_HLSL.cpp:220-229
+    // "mWorldMatrixArray" parity) into the shared uniform block; only the live
+    // entries are written, entries beyond paletteCount stay stale but are
+    // unreachable (the streams reference indices < mesh bone count = paletteCount).
+    glBindBuffer(GL_UNIFORM_BUFFER, m_gpuPaletteUBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, static_cast<GLsizeiptr>(paletteCount) * 64, paletteRowMajor);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    glUseProgram(m_charGpuProgram);
+    glUniformMatrix4fv(glGetUniformLocation(m_charGpuProgram, "uVP"), 1, GL_FALSE, m_viewProj);
+    glUniform4f(glGetUniformLocation(m_charGpuProgram, "uColor"),
+                color ? color[0] : 0.75f, color ? color[1] : 0.75f,
+                color ? color[2] : 0.75f, color ? color[3] : 1.0f);
+    if (textureId != 0) {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureId);
+        glUniform1i(glGetUniformLocation(m_charGpuProgram, "uTex"), 0);
+        glUniform1i(glGetUniformLocation(m_charGpuProgram, "uUseTexture"), 1);
+    } else {
+        glUniform1i(glGetUniformLocation(m_charGpuProgram, "uUseTexture"), 0);
+    }
+    if (alphaBlend) {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    } else {
+        glDisable(GL_BLEND);
+    }
+    glBindVertexArray(state->vao);
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(drawIndices), GL_UNSIGNED_INT,
+                   reinterpret_cast<const void*>(firstIndex * sizeof(uint32_t)));
+    glBindVertexArray(0);
+    if (alphaBlend) glDisable(GL_BLEND);
 #endif
     return true;
 }

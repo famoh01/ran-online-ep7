@@ -20,6 +20,7 @@
 #include "../Data/Importer/EP7Math.h"
 #include "../Data/Importer/EP7RccArchive.h"
 #include "../Data/Importer/EP7Skeleton.h"
+#include "../Data/Importer/EP7TextureDecoder.h"
 #include "../Data/Importer/EP7SkinPiece.h"
 #include "../Data/Importer/EP7SkinnedMesh.h"
 #include "../Data/Importer/EP7XFile.h"
@@ -2645,6 +2646,341 @@ void TestB17RuntimeSemantics() {
     }
 }
 
+
+void TestB18GpuSkinningAndTextures() {
+    Section("B18 GPU skinning streams / palette / textures (headless renderer)");
+    using namespace RANMobile;
+
+    // ------------------------------------------------------------------
+    // TGA decode (TEXTURE_TGA branch of the .mtf container).
+    // ------------------------------------------------------------------
+    {
+        // 2x2 24-bit uncompressed, top origin (descriptor 0x20): pixels BGR.
+        const uint8_t tgaTop[18 + 12] = {
+            0, 0, 2, 0,0, 0,0, 0, 0,0, 0,0,
+            2, 0, 2, 0, 24, 0x20,
+            0, 0, 255,   0, 255, 0,   255, 0, 0,   255, 255, 255  // BGR: red, green, blue, white
+        };
+        const DecodedTexture t1 = EP7TextureDecoder::DecodeTGA(
+            std::vector<uint8_t>(tgaTop, tgaTop + sizeof(tgaTop)));
+        J_CHECK(t1.valid);
+        J_CHECK(t1.width == 2 && t1.height == 2);
+        const uint8_t* px = t1.rgba8.data();
+        J_CHECK(px[0] == 255 && px[1] == 0 && px[2] == 0 && px[3] == 255);        // (0,0) red
+        J_CHECK(px[4] == 0 && px[5] == 255 && px[6] == 0);                        // (1,0) green
+        J_CHECK(px[8] == 0 && px[9] == 0 && px[10] == 255);                       // (0,1) blue
+        J_CHECK(px[12] == 255 && px[13] == 255 && px[14] == 255);                 // (1,1) white
+
+        // Same pixels with bottom origin (no origin bit): rows flip.
+        uint8_t tgaBottom[18 + 12];
+        std::memcpy(tgaBottom, tgaTop, sizeof(tgaBottom));
+        tgaBottom[17] = 0x00;
+        const DecodedTexture t2 = EP7TextureDecoder::DecodeTGA(
+            std::vector<uint8_t>(tgaBottom, tgaBottom + sizeof(tgaBottom)));
+        J_CHECK(t2.valid);
+        J_CHECK(t2.rgba8[0] == 0 && t2.rgba8[1] == 0 && t2.rgba8[2] == 255);      // row 0 is now blue
+        J_CHECK(t2.rgba8[8] == 255 && t2.rgba8[9] == 0 && t2.rgba8[10] == 0);     // row 1 is now red
+
+        // RLE type 10, 2x2 32-bit, one RLE packet (0x81) of the same BGRA pixel.
+        const uint8_t tgaRle[18 + 5] = {
+            0, 0, 10, 0,0, 0,0, 0, 0,0, 0,0,
+            2, 0, 2, 0, 32, 0x20,
+            0x83, 10, 20, 30, 40  // RLE packet: count = (0x83 & 0x7F) + 1 = 4
+        };
+        const DecodedTexture t3 = EP7TextureDecoder::DecodeTGA(
+            std::vector<uint8_t>(tgaRle, tgaRle + sizeof(tgaRle)));
+        J_CHECK(t3.valid);
+        J_CHECK(t3.rgba8.size() == 2 * 2 * 4);
+        J_CHECK(t3.rgba8[0] == 30 && t3.rgba8[1] == 20 && t3.rgba8[2] == 10 && t3.rgba8[3] == 40);
+        J_CHECK(t3.rgba8[15] == 40);
+
+        // Unsupported type (4) -> invalid, never guessed.
+        uint8_t tgaBad[18];
+        std::memcpy(tgaBad, tgaTop, 18);
+        tgaBad[2] = 4;
+        J_CHECK(!EP7TextureDecoder::DecodeTGA(std::vector<uint8_t>(tgaBad, tgaBad + 18)).valid);
+    }
+
+    // ------------------------------------------------------------------
+    // GPU skin streams: authentic DxSkinMesh9_HLSL BLENDWEIGHT/BLENDINDICES
+    // construction over the character fixture (SkinWeights: Bip01 -> verts 0,1,
+    // Bip01_Head -> verts 2,3, all weights 1.0).
+    // ------------------------------------------------------------------
+    RANMobile::EP7CharacterScene::AssetPtr asset;
+    {
+        const std::string skelText = SkeletonX();
+        const std::string meshText = SkinnedMeshX();
+        static std::vector<std::pair<std::string, std::vector<uint8_t>>> entries;
+        entries.clear();
+        entries.emplace_back("m_bone.skt", std::vector<uint8_t>(skelText.begin(), skelText.end()));
+        entries.emplace_back("body.x", std::vector<uint8_t>(meshText.begin(), meshText.end()));
+        entries.emplace_back("p_head.cps", PieceCps(0));
+        entries.emplace_back("p_upper.cps", PieceCps(1));
+        static ResolverMap map;
+        map.entries = &entries;
+        EP7CharacterLoader loader;
+        loader.SetResolver(&MapResolver, &map);
+        asset = std::make_shared<EP7CharacterAsset>(loader.LoadCharacter(CharacterChf(), false));
+        J_CHECK_MSG(asset->loaded, asset->error);
+
+        const EP7GpuSkinStreams& s0 = asset->pieces[0].gpuStreams;
+        J_CHECK(s0.valid);
+        J_CHECK(s0.vertexCount == 4);
+        J_CHECK(s0.boneIndices.size() == 16 && s0.boneWeights.size() == 16);
+        // Vertices 0,1 -> piece bone 0 (Bip01); vertices 2,3 -> piece bone 1 (Bip01_Head).
+        J_CHECK(FloatNear(s0.boneIndices[0], 0.0f) && FloatNear(s0.boneWeights[0], 1.0f));
+        J_CHECK(FloatNear(s0.boneIndices[4], 0.0f) && FloatNear(s0.boneWeights[4], 1.0f));
+        J_CHECK(FloatNear(s0.boneIndices[8], 1.0f) && FloatNear(s0.boneWeights[8], 1.0f));
+        J_CHECK(FloatNear(s0.boneIndices[12], 1.0f) && FloatNear(s0.boneWeights[12], 1.0f));
+        // Unused influence slots are zero.
+        J_CHECK(FloatNear(s0.boneWeights[1], 0.0f) && FloatNear(s0.boneWeights[2], 0.0f));
+
+        // Stream-driven CPU evaluation reproduces SkinVerticesCPU exactly (the shader
+        // formula, evaluated host-side through the same palette).
+        EP7Skeleton& sk = *asset->skeleton;
+        std::vector<ep7math::Mat4> palette;
+        BuildBonePalette(asset->pieces[0].mesh, sk, palette);
+        // Animate the skeleton pose manually: rotate Bip01_Spine1's combined via a
+        // simple 90-degree Y local on the Head bone.
+        EP7Bone& head = const_cast<EP7Bone&>(sk.GetBone(3));
+        head.position = ep7math::Vec3(0.0f, 0.0f, 0.0f);
+        head.rotation = ep7math::Quat(0.0f, std::sin(0.7853981633974483f), 0.0f, std::cos(0.7853981633974483f));
+        head.localIsFromSqt = true;
+        sk.UpdateBones(ep7math::Mat4::Identity(), 1.0f);
+        BuildBonePalette(asset->pieces[0].mesh, sk, palette);
+
+        std::vector<float> cpuPos;
+        std::vector<float> cpuNorm;
+        J_CHECK(SkinVerticesCPU(asset->pieces[0].mesh, palette, cpuPos, cpuNorm));
+
+        for (uint32_t v = 0; v < 4; ++v) {
+            const ep7math::Vec3 p(asset->pieces[0].mesh.positions[v * 3 + 0],
+                                  asset->pieces[0].mesh.positions[v * 3 + 1],
+                                  asset->pieces[0].mesh.positions[v * 3 + 2]);
+            ep7math::Vec3 acc(0.0f, 0.0f, 0.0f);
+            float wSum = 0.0f;
+            for (int i = 0; i < 4; ++i) {
+                const float w = s0.boneWeights[static_cast<size_t>(v) * 4 + i];
+                if (w <= 0.0f) continue;
+                const int32_t bi = static_cast<int32_t>(s0.boneIndices[static_cast<size_t>(v) * 4 + i] + 0.5f);
+                const ep7math::Vec3 tp = ep7math::TransformCoord(p, palette[static_cast<size_t>(bi)]);
+                acc.x += w * tp.x;
+                acc.y += w * tp.y;
+                acc.z += w * tp.z;
+                wSum += w;
+            }
+            if (wSum > 1e-6f && std::fabs(wSum - 1.0f) > 1e-4f) {
+                acc.x /= wSum;
+                acc.y /= wSum;
+                acc.z /= wSum;
+            }
+            J_CHECK(FloatNear(acc.x, cpuPos[v * 3 + 0], 1e-4f));
+            J_CHECK(FloatNear(acc.y, cpuPos[v * 3 + 1], 1e-4f));
+            J_CHECK(FloatNear(acc.z, cpuPos[v * 3 + 2], 1e-4f));
+        }
+        // The posed Head vertex actually moved (skin response is real, not identity).
+        J_CHECK(std::fabs(cpuPos[8] - asset->pieces[0].mesh.positions[8]) > 1e-4f ||
+                std::fabs(cpuPos[9] - asset->pieces[0].mesh.positions[9]) > 1e-4f);
+    }
+
+    // ------------------------------------------------------------------
+    // Influence construction rules (synthetic meshes, explicitly test-generated).
+    // ------------------------------------------------------------------
+    {
+        // Cap-4: one vertex listed by six bones -> first four kept, in bone order.
+        EP7SkinnedMesh mesh;
+        mesh.valid = true;
+        mesh.geometryDecoded = true;
+        mesh.layout = EP7VertexLayout::PosNormalUV32;
+        mesh.vertexStride = 32;
+        mesh.vertexCount = 1;
+        mesh.positions = {0.0f, 0.0f, 0.0f};
+        for (int b = 0; b < 6; ++b) {
+            EP7SkinBoneInfo bone;
+            bone.skeletonBoneIndex = b;
+            bone.vertices = {0};
+            bone.weights = {0.5f + 0.1f * static_cast<float>(b)};
+            mesh.bones.push_back(std::move(bone));
+        }
+        const EP7GpuSkinStreams capped = BuildGpuSkinStreams(mesh);
+        J_CHECK(capped.valid);
+        // The stream binds exactly 4 slots per vertex (the HLSL FLOAT4 declaration) —
+        // for a 1-vertex mesh the whole stream is 4 entries; influences 5 and 6
+        // (weights 0.9 / 1.0) are dropped, not stored somewhere else.
+        J_CHECK(capped.boneWeights.size() == 4 && capped.boneIndices.size() == 4);
+        for (int i = 0; i < 4; ++i) {
+            J_CHECK(FloatNear(capped.boneIndices[static_cast<size_t>(i)], static_cast<float>(i)));
+            J_CHECK(FloatNear(capped.boneWeights[static_cast<size_t>(i)], 0.5f + 0.1f * static_cast<float>(i)));
+        }
+        for (float w : capped.boneWeights) {
+            J_CHECK(std::fabs(w - 0.9f) > 1e-6f && std::fabs(w - 1.0f) > 1e-6f);  // dropped influences
+        }
+
+        // Out-of-range vertex references are skipped; no influence -> zero weights
+        // (bind passthrough contract, matching SkinVerticesCPU's empty-list branch).
+        EP7SkinnedMesh oob = mesh;
+        oob.bones.clear();
+        for (int b = 0; b < 2; ++b) {
+            EP7SkinBoneInfo bone;
+            bone.skeletonBoneIndex = b;
+            bone.vertices = {99};
+            bone.weights = {1.0f};
+            oob.bones.push_back(std::move(bone));
+        }
+        const EP7GpuSkinStreams oobStreams = BuildGpuSkinStreams(oob);
+        J_CHECK(oobStreams.valid);
+        J_CHECK(FloatNear(oobStreams.boneWeights[0], 0.0f));
+
+        // Invalid mesh -> invalid streams.
+        EP7SkinnedMesh broken;
+        broken.valid = false;
+        broken.vertexCount = 4;
+        J_CHECK(!BuildGpuSkinStreams(broken).valid);
+    }
+
+    // ------------------------------------------------------------------
+    // Headless renderer GPU API: upload/draw/release validation.
+    // ------------------------------------------------------------------
+    {
+        MobileRenderer renderer;
+        J_CHECK(renderer.Initialize(320, 240));
+        MobileCamera camera;
+        J_CHECK(renderer.BeginScene3D(camera));  // headless: true, scene3DActive
+
+        float interleaved[2 * 16] = {};
+        for (int v = 0; v < 2; ++v) {
+            interleaved[v * 16 + 0] = static_cast<float>(v);
+            interleaved[v * 16 + 12 + v] = 1.0f;  // weight 1.0 on bone v
+        }
+        const uint32_t indices[6] = {0, 1, 0, 1, 0, 1};
+
+        GpuSkinnedMeshData data;
+        data.interleaved = interleaved;
+        data.vertexCount = 2;
+        data.indices = indices;
+        data.indexCount = 6;
+        const uint32_t handle = renderer.UploadGpuSkinnedMesh(data);
+        J_CHECK(handle != 0);
+        J_CHECK(renderer.GpuMeshCount() == 1);
+
+        // Invalid uploads are rejected.
+        GpuSkinnedMeshData bad = data;
+        bad.interleaved = nullptr;
+        J_CHECK(renderer.UploadGpuSkinnedMesh(bad) == 0);
+        bad = data;
+        bad.indexCount = 4;  // not a multiple of 3
+        J_CHECK(renderer.UploadGpuSkinnedMesh(bad) == 0);
+
+        const float palette[2 * 16] = {};  // identity zeros: validates the path only
+        const float color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+
+        // Unknown handle -> failure counter.
+        J_CHECK(!renderer.DrawGpuSkinnedMesh(handle + 100, palette, 2, 0, color, false, 0, 2));
+        J_CHECK(renderer.GpuDrawFailures() == 1);
+
+        // Palette overflow (kMaxGpuBones + 1) -> rejected loudly.
+        J_CHECK(!renderer.DrawGpuSkinnedMesh(handle, palette, kMaxGpuBones + 1, 0, color, false, 0, 2));
+        J_CHECK(renderer.GpuDrawFailures() == 2);
+
+        // Face range out of bounds -> rejected.
+        J_CHECK(!renderer.DrawGpuSkinnedMesh(handle, palette, 2, 0, color, false, 1, 2));
+        J_CHECK(renderer.GpuDrawFailures() == 3);
+
+        // Valid draws: per-subset ranges within the uploaded indices.
+        const uint32_t statsBefore = renderer.GetStats().drawCalls;
+        J_CHECK(renderer.DrawGpuSkinnedMesh(handle, palette, 2, 0, color, false, 0, 1));
+        J_CHECK(renderer.DrawGpuSkinnedMesh(handle, palette, 2, 0, color, true, 1, 1));
+        J_CHECK(renderer.GpuDrawCount() == 2);
+        J_CHECK(renderer.GetStats().drawCalls == statsBefore + 2);
+        J_CHECK(renderer.GetStats().triangles == 2);
+
+        renderer.EndScene3D();
+        renderer.ReleaseGpuSkinnedMesh(handle);
+        J_CHECK(renderer.GpuMeshCount() == 0);
+        renderer.ReleaseGpuSkinnedMesh(handle);  // double release: safe no-op
+        J_CHECK(renderer.GpuMeshCount() == 0);
+        renderer.Shutdown();
+    }
+
+    // ------------------------------------------------------------------
+    // Scene texture binding: .cps material name -> .mtf resolution ladder
+    // (exact name miss -> stem + ".mtf" hit) + lowercase cache + Clear release.
+    // ------------------------------------------------------------------
+    {
+        // 2x2 24-bit top-origin TGA wrapped in the .mtf container (fileType 1 =
+        // TEXTURE_TGA, body encrypted with the (b + 3) ^ 0x47 CMemoryTexture rule).
+        const uint8_t tgaBody[18 + 12] = {
+            0, 0, 2, 0,0, 0,0, 0, 0,0, 0,0,
+            2, 0, 2, 0, 24, 0x20,
+            255, 0, 0,   0, 255, 0,   0, 0, 255,   255, 255, 255
+        };
+        std::vector<uint8_t> mtf;
+        for (int i = 0; i < 3; ++i) {
+            int32_t field = i == 0 ? 1 : (i == 1 ? static_cast<int32_t>(sizeof(tgaBody)) : 1);
+            const uint8_t* f = reinterpret_cast<const uint8_t*>(&field);
+            mtf.insert(mtf.end(), f, f + 4);
+        }
+        for (uint8_t b : tgaBody) {
+            mtf.push_back(static_cast<uint8_t>(static_cast<uint8_t>(b + 3) ^ 0x47));
+        }
+        // Sanity: the decrypt round-trips.
+        std::vector<uint8_t> decrypted;
+        int fileType = -1;
+        J_CHECK(EP7TextureDecoder::DecryptMTF(mtf, decrypted, fileType));
+        J_CHECK(fileType == 1);
+        J_CHECK(EP7TextureDecoder::DecodeTGA(decrypted).valid);
+
+        static std::vector<std::pair<std::string, std::vector<uint8_t>>> texEntries;
+        texEntries.clear();
+        texEntries.emplace_back("face.mtf", mtf);   // exact "face.dds" misses -> ladder hit
+        static ResolverMap texMap;
+        texMap.entries = &texEntries;
+
+        MobileRenderer renderer;
+        J_CHECK(renderer.Initialize(320, 240));
+
+        EP7CharacterScene scene;
+        scene.SetRenderer(&renderer);
+        scene.SetTextureResolver(&MapResolver, &texMap);
+
+        // Reuse the character fixture from the first block (still loaded).
+        const uint32_t id = scene.Spawn(asset, 0.0f, 0.0f, 0.0f, 0.0f);
+        J_CHECK(id != 0);
+        EP7CharacterInstance* instance = scene.Find(id);
+        J_CHECK(instance != nullptr);
+        if (!instance) return;
+        J_CHECK(EP7CharacterScene::EvaluatePose(*instance, nullptr));
+
+        // GPU upload happens lazily and only once per piece.
+        const uint32_t handle0 = scene.EnsurePieceGpuHandle(asset, 0);
+        J_CHECK(handle0 != 0);
+        J_CHECK(scene.EnsurePieceGpuHandle(asset, 0) == handle0);
+        J_CHECK(renderer.GpuMeshCount() == 1);
+
+        // The palette snapshot exists after EvaluatePose and matches the bone list.
+        const float* palette = nullptr;
+        uint32_t paletteCount = 0;
+        J_CHECK(scene.GetPiecePalette(*instance, 0, &palette, &paletteCount));
+        J_CHECK(paletteCount == asset->pieces[0].mesh.bones.size());
+
+        // Texture: the .cps material name is "face.dds"; only the ".mtf" candidate
+        // resolves -> decoded TGA uploaded, cached by lowercase name.
+        const uint32_t texId = scene.GetPieceTextureId(asset, 0, 0);
+        J_CHECK(texId != 0);
+        J_CHECK(scene.GetPieceTextureId(asset, 0, 0) == texId);  // cache hit
+
+        // An unknown subset index yields no texture and no crash.
+        J_CHECK(scene.GetPieceTextureId(asset, 0, 5) == 0);
+
+        // Clear releases GPU meshes + textures through the renderer.
+        scene.Clear();
+        J_CHECK(renderer.GpuMeshCount() == 0);
+        scene.Clear();  // second Clear: safe
+
+        renderer.Shutdown();
+    }
+}
+
 void TestMath() {
     Section("math / quaternion decompression");
     using namespace RANMobile::ep7math;
@@ -3005,6 +3341,7 @@ int main() {
     TestAnimation();
     TestCharacterScene();
     TestB17RuntimeSemantics();
+    TestB18GpuSkinningAndTextures();
     TestMath();
     TestRobustness();
     TestRccArchive();
