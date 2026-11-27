@@ -964,3 +964,122 @@ propose a separately scoped implementation.
 | after (no code changed) | **398** | **0** |
 
 ASan + UBSan + LSan clean (exit 0). Production code and all parsers untouched.
+
+
+> Preserved-branch B11 evidence: the following append was copied from
+> commits 80f932b/cf4e03c on arena/1491d572-ran-online-ep7. Its CI results
+> describe that source branch, NOT a newly integrated PR #5 head. Target CI
+> must be rerun after integration. No Phase 3B–3I implementation is copied.
+
+
+## 2026-11-27 — Phase 3J B11 verifier correction (implementation)
+
+### Verified starting point and scope
+
+- Session branch `arena/1491d572-ran-online-ep7`, HEAD `313b828`, clean tracked tree.
+- PR #5 OPEN/DRAFT, head `arena/42c5ac0c-ran-online-ep7` at
+  `01f391967c1121c581aa45033e56558702b1b599`. It is NOT this session's branch.
+  Session restrictions prohibit pushing to that other branch. No branch switch,
+  retarget, PR merge, or modifications to PR #3/#4/main are performed.
+- Baseline merged CI run `45936773745`: core tests and Android ARM64 lib/APK/AAB
+  succeeded; authentic assets failed. Its check annotations confirm the requested
+  pack baseline: **6,479 parsed / 3,550 failed / 1,631 unsupported**.
+- Only verifier, verifier tests/CI plumbing, and append-only documentation change.
+  Production animation parser, engine, UI, gameplay and server remain untouched.
+
+### Source evidence and correction
+
+The old `.bin` gate treated four printable leading bytes as UNSUPPORTED before
+calling the parser, falsely asserting that containers start with a version DWORD.
+`enginelib/Meshs/SAnimation.cpp:22` defines `SAnimContainer::szFILETYPE` as
+`"AnimContainer"`; `SaveToFile` at 1573-1617 calls `SetFileType` and writes up-body
+then main lists. `enginelib/Common/basestream.h:16` defines FILETYPESIZE=128;
+`SerialFile.cpp:34-65` copies the type, then writes/reads 128 type bytes and a
+DWORD. `SAnimation.cpp:1619-1735` dispatches on header versions 0x0100/0101/0102.
+`EP7Animation.cpp:267-360` already implements them; it reads but does not check
+the type. No new animation format is implemented here.
+
+Verifier now requires a complete 132-byte header and exact NUL-terminated
+`AnimContainer` identity (padding after NUL is unconstrained), invokes the existing
+header-aware parser, and preserves its explicit unsupported-version diagnostic.
+Headerless retry is removed: it could overwrite the real header's error. Cases:
+
+| Evidence | Existing outcome | Diagnostic bucket |
+|---|---|---|
+| Recognized header, parser success | PASS | parsed |
+| Recognized header, explicit container-version rejection | UNSUPPORTED | unsupported-version |
+| Fewer than 132 header bytes | FAIL | invalid-header |
+| Different/nonterminated type | FAIL | unrecognized-type (foreign OR damaged; not asserted which) |
+| Recognized header, other parser rejection | FAIL | parser-rejected (malformed payload OR reader limitation) |
+
+The last case cannot honestly distinguish corruption from a parser defect. First
+16 bytes (hex) and size are diagnostics, never verdict heuristics. `.cfg`, `.chf`,
+`.cps`, skeleton and `.x` classification branches are unchanged. Pack/loose/all
+`.bin` counts are now printed separately; binUnsupported is actually incremented.
+
+### Executed local validation
+
+- Verifier suite: **590 checks, 0 failures**, normal and ASan+UBSan builds.
+- ASan + UBSan + integrated LSan (`detect_leaks=1`, halt-on-error): clean exit 0.
+- Load-bearing mutation: reinstating the original printable gate causes **373 of
+  590 checks to fail**, exit 1. This is not a parser-only test.
+- Existing Phase 3J: **398 checks, 0 failures**. Union core compilation clean with
+  `-Wall -Wextra -Werror`; local execution aborts at `tpStats.found` because real
+  ThaiPack data is absent. CI must run that suite with release data.
+- Source-layout fixtures contain the actual nonzero `AnimContainer` type string,
+  DWORD at byte 128, nonzero padding, and a named nonempty zero-key track; these
+  are ABI fixtures, NOT authentic game assets. Every strict truncation is tested.
+- Android ARM64 and authentic-asset post-fix results pending remote CI; no claim
+  that all 6,228 former printable-ASCII entries parse. Final results appended below.
+
+CI adds verifier/sanitizer execution plus full authentic log artifact and compact
+classification annotation, preserving existing blocking failure/exit semantics.
+
+
+### 2026-11-27 — B11 post-correction CI evidence (final results)
+
+Implementation commit `80f932b287ebb2c5144014b8eb59f897efe1fc74` was tested in
+[CI run 45937494300](https://github.com/famoh01/ran-online-ep7/actions/runs/45937494300).
+Core C++ tests with downloaded release data PASSED; Phase 3J PASSED; verifier
+590/0 normal and 590/0 ASan+UBSan+integrated LSan PASSED. Android ARM64 native
+library and debug/release APK + release AAB PASSED. The authentic verifier ran
+against the extracted release and correctly remained FAIL (exit 1), not a green
+coverage claim. Full log artifact: `phase3j-authentic-assets-log`; core/sanitizer
+logs and Android outputs are also uploaded.
+
+#### Exact comparison: same pack baseline, separate loose .bin result
+
+| Scope / metric | Before | After | Delta |
+|---|---:|---:|---:|
+| Pack parsed | 6,479 | 6,479 | 0 |
+| Pack failed | 3,550 | 3,550 | 0 |
+| Pack unsupported | 1,631 | 1,631 | 0 |
+| Loose .bin parsed | 0 | 982 | +982 |
+| Loose .bin failed (parser-rejected after recognized header) | 0 | 1,209 | +1,209 |
+| Loose .bin unsupported | 6,228 (incorrect printable gate) | 4,037 (explicit version rejection) | -2,191 |
+| Loose .bin total | 6,228 | 6,228 | 0 |
+
+After correction: **0 invalid-header**, **0 unrecognized-type** among these 6,228.
+All have the recognized header, but only **982 parse successfully**. The 4,037
+unsupported outer container versions are **0x0103: 1,533**, **0x0104: 2,495**,
+**0x0200: 9**. All 1,209 recognized-header parser rejections report the existing
+parser diagnostic `unsupported animation version` (track-level, NOT the explicit
+outer-container-version error). They remain FAIL/parser-rejected; no assertion is
+made that the original files are corrupt or that every such failure is a parser
+bug. No parser implementation is changed to force them green.
+
+**Critical scope finding:** every .bin candidate in this release scan is a loose
+file under `data/animation`; **zero .bin entries were encountered inside packs**.
+That is why the pack verdict/counts remain unchanged. This does not prove no pack
+in any EP7 distribution contains .bin files; it describes this run only. The
+historical 6,228 figure must not be presented as a pack-only count or as 6,228
+valid animations. Header recognition/parse success also does not prove gameplay
+or rendered animation correctness. The old binUnsupported summary counter was
+not incremented; the before figure here is the actual emitted UNSUPPORTED outcome
+count, not that erroneous zero-valued counter.
+
+Remaining blockers: unsupported versions above; 1,209 parser rejections requiring
+separate investigation; pre-existing pack .chf/.cps/.abf/.cfg coverage gaps; and
+PR #5 head belonging to another session branch. The verifier correction is done
+on `arena/1491d572-ran-online-ep7`; PR #5 remains OPEN/DRAFT, unmerged, with its
+head unchanged. This task does not authorize changing runtime/parser behavior.

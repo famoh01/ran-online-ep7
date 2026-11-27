@@ -121,6 +121,7 @@ struct Counters {
     uint32_t cpsTotal = 0, cpsOk = 0;
     uint32_t xTotal = 0, xSkeletonOk = 0, xMeshOk = 0;
     uint32_t binTotal = 0, binOk = 0, binUnsupported = 0;
+    uint32_t binInvalidHeader = 0, binUnrecognizedType = 0, binParserRejected = 0;
     uint32_t cfgTotal = 0, cfgOk = 0, cfgUnsupported = 0;
     uint32_t extractFailures = 0;
     uint32_t packOk = 0, packFailed = 0;   // entries inside .rcc/.zip (engine-authoritative)
@@ -239,38 +240,54 @@ Outcome VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& b
 
     if (EndsWithNoCase(ext, ".bin")) {
         ++counters.binTotal;
-        // A .bin that begins with printable ASCII is not an EP7 basestream container at all
-        // (the client's own containers start with a small version DWORD). Name the magic so
-        // an unknown format is self-explanatory rather than just "unsupported version".
-        if (bytes.size() >= 4 && std::isprint(bytes[0]) && std::isprint(bytes[1]) &&
-            std::isprint(bytes[2]) && std::isprint(bytes[3])) {
-            char magic[5] = {static_cast<char>(bytes[0]), static_cast<char>(bytes[1]),
-                             static_cast<char>(bytes[2]), static_cast<char>(bytes[3]), 0};
-            char detail[192];
-            std::snprintf(detail, sizeof(detail),
-                          "not an EP7 basestream container — starts with magic '%s' (0x%02X%02X%02X%02X); "
-                          "the engine only loads SAnimContainer basestreams from Animation.rcc",
-                          magic, bytes[0], bytes[1], bytes[2], bytes[3]);
-            // A recognisable-but-undocumented container. This is B11 territory: the bytes
-            // are real, the format has no definition in this repository. Counting it as a
-            // FAILURE would report a missing format as a broken parser; counting it as a
-            // PASS would be a lie. It is UNSUPPORTED.
-            ReportOutcome("bin", path, Outcome::Unsupported, detail);
-            return Outcome::Unsupported;
+        // SAnimation.cpp:22,1573-1617: SetFileType("AnimContainer", VERSION).
+        // SerialFile.cpp:57-65: 128 type bytes, then the LE version DWORD.
+        // Printable ASCII is expected here, not evidence of an unsupported format.
+        // Validate identity here: ParseContainer reads but does not validate the type.
+        // Bytes after the NUL in the 128-byte field need not be zero (StringCchCopy).
+        constexpr char type[] = "AnimContainer";
+        std::string fingerprint;
+        for (size_t i = 0; i < std::min<size_t>(bytes.size(), 16); ++i) {
+            char hex[4];
+            std::snprintf(hex, sizeof(hex), "%02X", bytes[i]);
+            fingerprint += hex;
         }
-        // Try with the basestream header first (CSerialFile writes one), then without.
-        RANMobile::EP7AnimClip clip = RANMobile::EP7AnimationReader::ParseContainer(bytes, true, false);
-        if (!clip.valid) clip = RANMobile::EP7AnimationReader::ParseContainer(bytes, false, false);
+        const std::string diagnostic = " — prefix16=" + fingerprint +
+                                       " size=" + std::to_string(bytes.size());
+        if (bytes.size() < RANMobile::ep7byte::Stream::kHeaderSize) {
+            ++counters.binInvalidHeader;
+            ReportOutcome("bin", path, Outcome::Fail, "invalid/truncated container header" + diagnostic);
+            return Outcome::Fail;
+        }
+        if (std::memcmp(bytes.data(), type, sizeof(type)) != 0) {
+            ++counters.binUnrecognizedType;
+            // Could be foreign data, corruption, or an undocumented encoding. The bytes
+            // alone do not prove which; never invent an unsupported container version.
+            ReportOutcome("bin", path, Outcome::Fail, "unrecognized container type (foreign or damaged)" + diagnostic);
+            return Outcome::Fail;
+        }
+        // No headerless retry: it can mask a recognized header's real version/error.
+        const RANMobile::EP7AnimClip clip =
+            RANMobile::EP7AnimationReader::ParseContainer(bytes, true, false);
         if (clip.valid) {
             ++counters.binOk;
             char detail[256];
             std::snprintf(detail, sizeof(detail), "v0x%04X mainTracks=%zu upBodyTracks=%zu maxKeyTime=%u",
                           clip.version, clip.mainTracks.size(), clip.upBodyTracks.size(), clip.MaxKeyTime());
             ReportOutcome("bin", path, Outcome::Pass, detail);
-        } else {
-            ReportOutcome("bin", path, Outcome::Fail, clip.error);
+            return Outcome::Pass;
         }
-        return clip.valid ? Outcome::Pass : Outcome::Fail;
+        // Use the parser's explicit version rejection, not a guessed byte signature.
+        if (clip.error.rfind("unsupported animation container version ", 0) == 0) {
+            ++counters.binUnsupported;
+            ReportOutcome("bin", path, Outcome::Unsupported, clip.error + diagnostic);
+            return Outcome::Unsupported;
+        }
+        ++counters.binParserRejected;
+        // A rejected payload may be malformed OR expose a reader defect. Do not claim
+        // to distinguish those without further evidence. Preserve the actual error.
+        ReportOutcome("bin", path, Outcome::Fail, "recognized container parser rejection: " + clip.error + diagnostic);
+        return Outcome::Fail;
     }
 
     if (EndsWithNoCase(ext, ".cfg")) {
@@ -377,6 +394,8 @@ int main(int argc, char** argv) {
         }
     }
 
+    const Counters looseSnapshot = counters;
+
     // The authentic assets live inside these packs (GLOGIC::InitFile).
     for (const auto& archivePath : archives) {
         std::printf("\n--- archive %s\n", archivePath.c_str());
@@ -432,6 +451,17 @@ int main(int argc, char** argv) {
                 counters.xSkeletonOk + counters.xMeshOk, counters.xTotal);
     std::printf("bin  : %u ok / %u (%u unsupported format)\n", counters.binOk, counters.binTotal,
                 counters.binUnsupported);
+    auto printBins = [](const char* scope, const Counters& end, const Counters& start) {
+        std::printf("bin classifications (%s): %u parsed, %u unsupported-version, %u invalid-header, "
+                    "%u unrecognized-type, %u parser-rejected; total=%u\n", scope,
+                    end.binOk - start.binOk, end.binUnsupported - start.binUnsupported,
+                    end.binInvalidHeader - start.binInvalidHeader,
+                    end.binUnrecognizedType - start.binUnrecognizedType,
+                    end.binParserRejected - start.binParserRejected, end.binTotal - start.binTotal);
+    };
+    printBins("all", counters, Counters{});
+    printBins("loose", looseSnapshot, Counters{});
+    printBins("pack", counters, looseSnapshot);
     std::printf("cfg  : %u ok / %u (%u unsupported version)\n", counters.cfgOk, counters.cfgTotal,
                 counters.cfgUnsupported);
     std::printf("extract failures (could not decompress/decrypt): %u\n", counters.extractFailures);
