@@ -67,8 +67,8 @@ jobs:
           (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxSkinDefine.h
           (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxBoneCollector.h
           (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxBoneCollector.cpp
-          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxSkinMesh9_CPU.h
-          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxSkinMesh9_CPU.cpp
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxSkinMesh9_NORMAL.h
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxSkinMesh9_NORMAL.cpp
           EOF
           sed -i 's/^[[:space:]]*//' /tmp/b12_lfs_paths.txt
 
@@ -121,7 +121,7 @@ jobs:
               'conclusion': 'success',
               'output': {
                   'title': 'Phase 3J B12 verified EP7 engine animation sources',
-                  'summary': 'All 24 focused Lib_Engine animation/serialization files verified against LFS SHA-256 pointers (B17 adds DxSkinDefine.h, DxBoneCollector.*, DxSkinMesh9_CPU.*).',
+                  'summary': 'All 24 focused Lib_Engine animation/serialization files verified against LFS SHA-256 pointers (B17 adds DxSkinDefine.h, DxBoneCollector.*, DxSkinMesh9_NORMAL.*; the backup repo has no DxSkinMesh9_CPU.* — the CPU skinning path lives in DxSkinMesh9_NORMAL.* there).',
                   'text': '```tsv\n' + text[:60000] + '\n```'
               }
           }
@@ -163,7 +163,7 @@ jobs:
           facts['updatebones_mix_add'] = 'USE_ANI_ADD' in bone and 'm_vQuatMIX' in bone
           facts['updatebones_scale_rows_multiplied'] = bone.count('m_vScale') >= 3 and 'm_fScale' in bone
           facts['resetbone_cur_prev_to_orig'] = 'm_pQuatPosCUR = m_pQuatPosORIG' in bone and 'm_pQuatPosPREV = m_pQuatPosORIG' in bone
-          skin = read('DxSkinMesh9_CPU.cpp')
+          skin = read('DxSkinMesh9_NORMAL.cpp')
           facts['cpu_skin_palette_offset_times_bone'] = 'pBoneOffsetMatrices' in skin and 'ppBoneMatrixPtrs' in skin
           summary_lines = ''.join('%s: %s\n' % (k, v) for k, v in sorted(facts.items()))
           payload = {
