@@ -552,3 +552,68 @@ Verified against all `6,228` authentic `data/animation/*.bin` files in `ran-ep7-
 
 
 
+## 17. Phase 3J B16 Implementation & Authentic Validation Update (`SANIMCONINFO` `.cfg` `0x0108`–`0x0112`/`0x0114`/`0x0115`)
+
+Implemented in commit `d123d931592057d19dfc3c0fa5df4a07741f3a55` on branch `arena/00fd13f9-ran-online-ep7` (Draft PR #7). This closes the `.cfg` half of B11: the companion-metadata versions that `88.0%` of `0x0103` and `98.8%` of `0x0104` `.bin` files pair with (Section 11) are now parsed by the production reader.
+
+### 17.1 Evidence Chain (engine sources finally available)
+
+The blocker recorded in the B11 status review — *"No structure, offset, size or decoder for `0x0108`–`0x0115` … has been written, and none will be until evidence in (1)–(3) exists"* — is resolved by evidence route (1): an authentic EP7-Complete-Files engine drop containing the full `SANIMCONINFO` save/load implementation was retrieved and cross-verified:
+
+1. **Primary source:** backup-repo `matheomedrana/Ran-Online-EP7-Complete-Files` @ `tf661fbf`, `Lib_Engine/Meshs/SAnimationInfoSaveLoad.cpp` (Git LFS blob, SHA-256 `80de6ade…`, fetched as decoded C++ via the backup repo's LFS pointers) — contains the complete authentic dispatch `SANIMCONINFO::LoadFile`:
+   - `version >= 0x0200` → `EMBYTECRYPT_CFG` decoding (not implemented here; none observed in the authentic set);
+   - `0x0111/0x0112/0x0114/0x0115` → `LoadFile_0111_0112_0114_0115`;
+   - `0x0108/0x0109/0x0110` → `LoadFile_0108_0109_0110`;
+   - `0x0101`–`0x0107` → individual loaders (already implemented in B12);
+   - **no `case 0x0113`** — the authentic switch treats `0x0113` as `ErrorVersion`, so `0x0113` remains explicitly `UNSUPPORTED` here.
+   `SAnimationInfo.h` marks both B16 loaders `//official version partial read only` — the official readers stop mid-structure and leave the rest of the file unconsumed. Post-load the authentic code clears `m_dwFlag &= ~ACF_NEWINFO`.
+2. **Cross-checks:** the GDrive EP7 drop (`[Lib]__Engine`, `/tmp/ep7-b16-sources/`) carries byte-identical `SAnimationInfo{,.h}`/`SAnimationInfoSaveLoad.cpp`; every sub-structure used by the B16 layouts (`SANIMSTRIKE` 12 B × `ACF_STRIKE=9`, `SChaSoundData` 388 B, `DxAniScale::Load`, `DxEffAniSingle`/`Ghosting`/`Trace`/`FaceOff` `LoadFile` property blobs 464/400, 28, declared-size, 32 B) matches the local `enginelib/` tree already used since B12.
+
+### 17.2 Production Parser Changes (`RANMobile/Data/Importer/EP7Animation.{h,cpp}`)
+
+1. **`ParseInfo` gained the two authentic B16 branches** (pre-B16 explicitly rejected *all* of `0x0108`–`0x0115` as unsupported; `0x0101`–`0x0107` behavior is preserved unchanged):
+   - **`0x0108`–`0x0110`** (`LoadFile_0108_0109_0110`): `name[128]`, `skeleton[128]`, `flag`, `UNITTIME`, `STime`, `ETime`, `ETimeOrig`, `MainType`, `SubType`, `SANIMSTRIKE[9]` (108 B), `DivCount` + `DivFrame[8]` (16 B), effect list (`effCount` + entries), `DxAniScale` block, then a `SChaSoundData` (388 B) sound block **last**.
+   - **`0x0111`–`0x0112`/`0x0114`/`0x0115`** (`LoadFile_0111_0112_0114_0115`): four `TSTRING`s first (`szCfgFile`/`szBinFile` read and recorded as `cfgFileName`/`binFileName`; `szXFile` → name; `szSkeleton` → skeleton), then `flag`, `STime`, `ETime`, `ETimeOrig`, `UNITTIME`, types, `DivCount`+`DivFrame`, `SANIMSTRIKE[9]`, 388 B sound, effect list, and `DxAniScale` **last**.
+2. **Effect entries** are typed per the authentic `DxEffAni*` hierarchy (`TypeID` 0 `Single` / 1 `Ghosting` / 2 `Trace` / 3 `FaceOff`, then per-effect `Ver` + `Size` + property payload; `Single` property 464 B @ `0x0101` / 400 B @ `0x0100`, `Ghosting` 28 B, `Trace` declared-size, `FaceOff` 32 B; unknown `TypeID` and oversize property sizes are rejected with sanity bounds `kMaxCfgEffects = 4096`).
+3. **`DxAniScale`** (`u32` mapCount; entry = `TSTRING` + `u32` keyCount + keyCount × (`u32` key + `f32` scale), bounded by `kMaxAniScaleEntries = 4096`).
+4. **Partial-read fidelity:** because the official loaders stop early, B16 files legitimately contain bytes the official engine never reads. `EP7AnimInfo` now records `trailingBytes` and `exactEof` per file instead of failing or reinterpreting them; trailing bytes are counted, never parsed (same forensic discipline as B14/B15 `.bin` trailing audits).
+5. **`EP7AnimMainType`** extended to the authentic `DxAniKeys.h` enum (`AN_BIKE_A=21` … `AN_REARCAR_A=33`, `AN_NONE=34 = AN_TYPE_SIZE`); main types outside `0..33` are rejected in both B16 branches (`cfg main type out of range`).
+6. **`0x0113`** remains an explicit `UNSUPPORTED` classification, matching the authentic switch fall-through (`ErrorVersion`).
+
+### 17.3 Inspector B16 Survey (`RANMobile/Tools/inspect_ep7_animation_containers.cpp`)
+
+The read-only forensic survey now classifies every indexed `.cfg`: `cfg_version_counts` (full `0x0102`–`0x0115` histogram), and for `0x0108`–`0x0115` (≠ `0x0113`) the B16 outcome aggregates `cfg_b16_outcomes` (`<version>:exact-eof` / `<version>:trailing-bytes` / `<version>:rejected`), `cfg_b16_rejection_reasons` (normalized parser error, capped), `cfg_b16_effect_type_masks` (`<version>:mask-0x…` over the parsed effect list), `cfg_b16_trailing_byte_sizes` (`<version>:<n> bytes`), and `cfg_b16_totals` (`attempted`/`parsed`/`exact-eof`/`with-trailing`), plus per-sample `b16_*` JSON fields. The survey remains read-only (`asset SHA-256 unchanged after inspection: YES`).
+
+### 17.4 Authentic `ran-ep7-full-v1` Validation Results (CI Runs `46010599353` & `46010599537`)
+
+Surveyed in GitHub Actions run [`46010599353`](https://github.com/famoh01/ran-online-ep7/actions/runs/46010599353) (`b12-authentic-anim-survey`, check run `140545691201`; text report blob `13f4dee0f2e41532ead15ecc7f260039bdb00cf1`, JSON report blob `1e19f8313a2527e9dfb9de04d7a8242b5e1edb39`) and run [`46010599537`](https://github.com/famoh01/ran-online-ep7/actions/runs/46010599537) (`Inspect authentic ran-ep7-full-v1 animation containers`, check run `140544798789`):
+
+| `.cfg` version | Authentic files | B16 outcome | Notes |
+|---|---:|---|---|
+| `0x0102` / `0x0103` | `5` / `5` | pre-B16 path (unchanged) | |
+| `0x0104` | `414` | pre-B16 path (unchanged) | |
+| `0x0105` | `221` | pre-B16 path (unchanged) | |
+| `0x0106` | `1,095` | pre-B16 path (unchanged) | |
+| `0x0107` | `1,091` | pre-B16 path (unchanged) | |
+| `0x0108` | `168` | **`168` parsed, all `exact-eof`** | mask `0x0001`: 30, mask `0x0002`: 1 |
+| `0x0109` | `17` | **`17` parsed, all `trailing-bytes` (104 B)** | mask `0x0001`: 2 |
+| `0x0110` | `1,081` | **`1,081` parsed, all `trailing-bytes`** | 90 B: 219, 117 B: 846, 125 B: 2, 133 B: 6, 197 B: 8; masks `0x0001`: 258, `0x0002`: 2, `0x0003`: 3 |
+| `0x0111` | `887` | **`887` parsed, all `exact-eof`** | masks `0x0001`: 230, `0x0002`: 4, `0x0003`: 2 |
+| `0x0112` | `183` | **`183` parsed, all `trailing-bytes`** | 90 B: 157, 170 B: 8, 250 B: 10, 330 B: 4, 490 B: 4; masks `0x0001`: 35, `0x0002`: 2, `0x0003`: 2 |
+| `0x0113` | `0` | (absent from the authentic set) | authentic `LoadFile` has no `case 0x0113` |
+| `0x0114` | `1,002` | **`1,002` parsed, all `trailing-bytes`** | 115 B: 956, 195 B: 4, 203 B: 18, 275 B: 6, 291 B: 13, 379 B: 3, 467 B: 1, 555 B: 1; masks `0x0001`: 145, `0x0003`: 2 |
+| `0x0115` | `565` | **`565` parsed, all `trailing-bytes`** | 39 B: 1, 127 B: 486, 215 B: 30, 303 B: 29, 391 B: 9, 479 B: 9, 567 B: 1; mask `0x0001`: 65 |
+
+- **B16 totals: `attempted=3,903`, `parsed=3,903` (`100.00%`), `exact-eof=1,055`, `with-trailing=2,848`, rejections `0`.** Every B16-layout `.cfg` in the authentic release parses; the `1,631` previously-`UNSUPPORTED` `Animation.rcc` companion-metadata entries are now understood field-by-field.
+- **`.bin` side re-confirmed unchanged:** `6,219 / 6,228` parsed (`100%` `EXACT_EOF`), `9` `0x0200` `EMBYTECRYPT_BIN` unsupported, `parser-rejected=0`, header padding `zero-padded=6228`.
+- The trailing-byte size modes (`0x0109`:104, `0x0110`:117/90, `0x0112`:90/170, `0x0114`:115, `0x0115`:127/215) are the unread tail the official partial-read loaders leave behind — consistent with the `//official version partial read only` source note; B16 counts and records them per file.
+- Effect-type masks across all effect-bearing B16 `.cfg` (`783` files) use only `Single` (bit 0), `Ghosting` (bit 1), and `Single|Ghosting` (`0x0003`) — no `Trace`/`FaceOff` entries occur in the authentic set.
+
+### 17.5 Regression Suites & Android ARM64 Build Verification
+
+- **Phase 3J character/animation suite (`test_phase3j.cpp`):** **`5,686` checks, `0` failures** (up from `2,084`) under both `-O2 -Wall -Wextra -Werror` and `-fsanitize=address,undefined` (`detect_leaks=1`) — including per-version minimal parses `0x0108`–`0x0115`, rich `0x0108`/`0x0110`/`0x0111`/`0x0115` fixtures with effects + `DxAniScale`, 9 malformed mutations (effect-type/sanity/ani-scale/sound-truncation/main-type rejections), every strict prefix truncation, `mainType` `33`/`34` boundaries, and full-prefix single-byte corruption sweeps.
+- **B11/B16 verifier regression suite (`run_ep7_verifier_tests.sh`):** **`3,757` checks, `0` failures** (up from `3,755`) under normal and `ASan + UBSan + integrated LSan` (covers the `0x0108` minimal-body `Pass` classification and the `0x0113` `UNSUPPORTED` classification).
+- **B12/B16 inspector regression suite (`run_ep7_animation_inspector_tests.sh`):** **`13,423` checks, `0` failures** (up from `9,702`) ×2 configurations under normal and `ASan + UBSan + integrated LSan` (covers the B16 `.cfg` survey aggregation: outcomes, trailing sizes, effect masks, rejection reasons, JSON emission).
+- **CI `Core C++17 tests (blocking)` (run `46010599353`, job `140544798259`):** **success**.
+- **CI `Android ARM64 build (lib + APK/AAB)` (run `46010599353`, job `140544798206`):** **success** — `libranmobile-arm64-v8a` artifact (`2,355,338` B) and `ranmobile-android-packages` (`assembleDebug` + `assembleRelease` + `bundleRelease`, artifact `2,024,876` B).
+- **CI `Authentic EP7 asset verification (diagnostic)` (run `46010599353`, job `140544797658`):** failure — the long-documented expected diagnostic exit `1` from the pre-existing `SkinObject.rcc` `.chf`/`.cps`/`.abf` pack gaps (`3,550` entries, unchanged; out of B16 scope).

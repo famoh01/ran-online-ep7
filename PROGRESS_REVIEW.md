@@ -1204,3 +1204,34 @@ Implemented authentic `SAnimContainer` outer version `0x0104` on `arena/00fd13f9
 
 
 
+
+
+## 2026-11-27 — Phase 3J B16: Implement Authentic `SANIMCONINFO` `.cfg` `0x0108`–`0x0112`/`0x0114`/`0x0115` (`arena/00fd13f9-ran-online-ep7`)
+
+Implemented the authentic companion-metadata reader for the B16 `.cfg` layout family on `arena/00fd13f9-ran-online-ep7` (commit `d123d931592057d19dfc3c0fa5df4a07741f3a55`, stacked Draft PR #7 -> `arena/42c5ac0c-ran-online-ep7`; Draft PR #5 untouched).
+
+### What Changed in B16
+
+- **`RANMobile/Data/Importer/EP7Animation.{h,cpp}:**
+  - Implemented the authentic `SANIMCONINFO::LoadFile` B16 branches per the EP7-Complete-Files engine drop (`Lib_Engine/Meshs/SAnimationInfoSaveLoad.cpp`, LFS SHA-256 `80de6ade…`): `LoadFile_0108_0109_0110` (`name[128]`, `skeleton[128]`, `flag`, `UNITTIME`, `STime`, `ETime`, `ETimeOrig`, types, `SANIMSTRIKE[9]`, `DivCount`+`DivFrame`, effect list, `DxAniScale`, 388 B `SChaSoundData` last) and `LoadFile_0111_0112_0114_0115` (four `TSTRING`s — `szCfgFile`/`szBinFile` recorded, `szXFile`→name, `szSkeleton`→skeleton — then flag/times/types, `DivCount`+`DivFrame`, `SANIMSTRIKE[9]`, 388 B sound, effect list, `DxAniScale` last).
+  - Parsed effect entries per the authentic `DxEffAni*` property blobs (Single 464/400 B, Ghosting 28 B, Trace declared-size, FaceOff 32 B; unknown types and oversize payloads rejected with `kMaxCfgEffects = 4096` sanity bound) and `DxAniScale` maps (`kMaxAniScaleEntries = 4096`).
+  - Honored the `//official version partial read only` source note: trailing bytes the official loaders never consume are counted and recorded (`trailingBytes` / `exactEof`), never reinterpreted. `0x0113` stays explicitly `UNSUPPORTED` (no `case 0x0113` in the authentic switch); `mainType` bounded to the authentic `DxAniKeys.h` enum (`AN_BIKE_A=21`…`AN_REARCAR_A=33`, `AN_NONE=34`); `0x0101`–`0x0107` behavior preserved unchanged.
+- **`RANMobile/Tools/inspect_ep7_animation_containers.cpp`:** added the read-only B16 `.cfg` survey (`cfg_version_counts`, `cfg_b16_outcomes`, `cfg_b16_rejection_reasons`, `cfg_b16_effect_type_masks`, `cfg_b16_trailing_byte_sizes`, `cfg_b16_totals`, per-sample `b16_*` JSON fields) alongside the existing `.bin` trace.
+- **Regression tests (`test_phase3j.cpp`, `test_ep7_character_verifier.cpp`, `test_ep7_animation_inspector.cpp`):** added per-version minimal-parse and rich-fixture coverage (`0x0108`–`0x0115`), 9 malformed mutations with exact rejection substrings, sound-block truncations, `mainType` 33/34 boundaries, full-prefix single-byte corruption sweeps, `0x0108`-minimal `Pass` vs `0x0113` `UNSUPPORTED` verifier classification, and the B16 survey aggregation test.
+
+### Authentic Validation, Test & Android Build Results ([CI run 46010599353](https://github.com/famoh01/ran-online-ep7/actions/runs/46010599353), [CI run 46010599537](https://github.com/famoh01/ran-online-ep7/actions/runs/46010599537))
+
+| Verification Target | Pre-B16 (B15) | Post-B16 | Status |
+|---|---:|---:|---|
+| Authentic B16-layout `.cfg` parsed (`0x0108`–`0x0112`/`0x0114`/`0x0115`) | `0 / 3,903` | **`3,903 / 3,903` (`100.00%`; `1,055` exact-EOF, `2,848` trailing recorded)** | **VERIFIED (`0` rejections)** |
+| Authentic `.cfg` version coverage (`0x0102`–`0x0115`, `6,734` indexed) | `2,831` | **`6,734` (`+3,903`)** | **VERIFIED** |
+| Authentic `data/animation/*.bin` parsed (`EXACT_EOF`) | `6,219 / 6,228` | **`6,219 / 6,228` (unchanged; `9` `0x0200` unsupported)** | **VERIFIED (no regression)** |
+| `.bin` `parser-rejected` | `0` | **`0`** | **CLEAN** |
+| Phase 3J host tests (`test_phase3j.cpp`, `-O2` & `ASan+UBSan+LSan`) | `2,084 / 0` | **`5,686 checks, 0 failures`** | **PASS** |
+| Verifier regression (`run_ep7_verifier_tests.sh`, `-O2` & `ASan+UBSan+LSan`) | `3,755 / 0` | **`3,757 checks, 0 failures`** | **PASS** |
+| Inspector regression (`run_ep7_animation_inspector_tests.sh`, `-O2` & `ASan+UBSan+LSan`) | `9,702 / 0` | **`13,423 checks, 0 failures` ×2** | **PASS** |
+| CI `Core C++17 tests (blocking)` (`46010599353`, job `140544798259`) | pass | **pass** | **PASS** |
+| CI `Android ARM64 build (lib + APK/AAB)` (`46010599353`, job `140544798206`) | pass | **`libranmobile-arm64-v8a` artifact (`2,355,338` B), `ranmobile-android-packages` artifact (`2,024,876` B)** | **PASS** |
+| CI `Authentic EP7 asset verification (diagnostic)` (`46010599353`, job `140544797658`) | expected exit `1` | **expected exit `1` (pre-existing `SkinObject.rcc` `.chf`/`.cps`/`.abf` gaps, `3,550` entries)** | **TRACKED** |
+
+*Explicit non-claims:* Parsing `3,903 / 3,903` authentic B16 `.cfg` metadata files proves metadata-compatibility for the `.bin`+`.cfg` pairing path (`EP7CharacterScene` reads per-clip metadata via `ParseInfo`), not on-device rendering or live gameplay. Outer `.bin` version `0x0200` (`9` `EMBYTECRYPT_BIN` files) and the `0x0200` `EMBYTECRYPT_CFG` encrypted-`.cfg` path remain unimplemented per B16 scope, `0x0113` remains `UNSUPPORTED` by authentic design (no `case 0x0113`), and no Android emulator/device or live server test was executed in this sandbox.

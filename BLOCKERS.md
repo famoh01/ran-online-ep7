@@ -880,3 +880,19 @@ Implemented in commit `263ef9cf7ae0e355b1363c0a615415ecaac291a6` on `arena/00fd1
 
 
 
+
+## 2026-11-27 — Phase 3J B16: Authentic `SANIMCONINFO` `.cfg` `0x0108`–`0x0112`/`0x0114`/`0x0115` Implementation
+
+**Status: RESOLVED for the `.cfg` companion-metadata half of B11 — all `3,903 / 3,903` (`100.00%`) authentic B16-layout `Animation.rcc` `.cfg` entries parse field-by-field in the production reader (`0` rejections; `1,055` exact-EOF, `2,848` with the official partial-read tail counted and recorded).**
+
+Implemented in commit `d123d931592057d19dfc3c0fa5df4a07741f3a55` on `arena/00fd13f9-ran-online-ep7` (Draft PR #7) and verified in GitHub Actions runs [`46010599353`](https://github.com/famoh01/ran-online-ep7/actions/runs/46010599353) and [`46010599537`](https://github.com/famoh01/ran-online-ep7/actions/runs/46010599537):
+
+1. **Evidence the blocker demanded now exists (route (1) of "What would be required to close B11"):** the backup-repo EP7-Complete-Files engine drop (`matheomedrana/Ran-Online-EP7-Complete-Files` @ `tf661fbf`, `Lib_Engine/Meshs/SAnimationInfoSaveLoad.cpp`, LFS blob SHA-256 `80de6ade…`) supplies the complete authentic `SANIMCONINFO::LoadFile` dispatch — `LoadFile_0108_0109_0110` and `LoadFile_0111_0112_0114_0115` (both marked `//official version partial read only`), no `case 0x0113` (so `0x0113` correctly stays `UNSUPPORTED`), `0x0200` → `EMBYTECRYPT_CFG`. Sub-structures (`SANIMSTRIKE`, `SChaSoundData`, `DxAniScale`, `DxEffAniSingle`/`Ghosting`/`Trace`/`FaceOff`) cross-verified against the GDrive drop and the local `enginelib/` tree. No layout was inferred or fabricated.
+2. **Resolved in B16:**
+   - `EP7AnimationReader::ParseInfo` implements both authentic B16 field orders exactly (effect list + `DxAniScale` parsing, sound block, `cfgFileName`/`binFileName` recording) and counts/records `trailingBytes` + `exactEof` instead of rejecting or reinterpreting the partial-read tail; `0x0101`–`0x0107` behavior unchanged; `mainType` bounded to the authentic `DxAniKeys.h` enum (`0..33`).
+   - **Authentic proof (`b12-authentic-anim-survey`, check run `140545691201`, text blob `13f4dee0f2e41532ead15ecc7f260039bdb00cf1`):** `cfg version` histogram `0x0102:5, 0x0103:5, 0x0104:414, 0x0105:221, 0x0106:1095, 0x0107:1091, 0x0108:168, 0x0109:17, 0x0110:1081, 0x0111:887, 0x0112:183, 0x0114:1002, 0x0115:565`; **B16 attempted=3,903, parsed=3,903 (`100.00%`), exact-eof=1,055 (`0x0108` + `0x0111`), with-trailing=2,848, rejected=0**; effect masks only `Single`/`Ghosting`/`Single|Ghosting` (`783` effect-bearing files); `.bin` side unchanged (`6,219` parsed `EXACT_EOF`, `9` `0x0200` unsupported, `0` rejected).
+   - **Regression & Android ARM64 builds:** `test_phase3j` (`5,686` checks, normal + ASan/UBSan/LSan), verifier suite (`3,757` checks, normal + ASan/UBSan/LSan), inspector suite (`13,423` checks ×2, normal + ASan/UBSan/LSan), CI `Core C++17 tests` (`140544798259`) and CI `Android ARM64 build (lib + APK/AAB)` (`140544798206`) all **PASSED**.
+3. **Remaining animation & character asset blockers (deferred to separate tasks per scope):**
+   - **Unsupported `.bin` outer container version `0x0200` (`9` loose `.bin` files):** `EMBYTECRYPT_BIN`-encoded containers (`457` `0x0103` tracks; `8` pair with supported `.cfg` `0x0107`, `1` has no `.cfg`), plus the `0x0200` `EMBYTECRYPT_CFG` encrypted-`.cfg` path (none observed in the authentic set).
+   - **Pre-existing `SkinObject.rcc` pack gaps (`3,550` failed pack entries):** `243` unsupported `.chf` versions, `3,097` unsupported `.cps` versions, and `210` `.abf` binary skeleton files (unchanged from B11–B15; the sole cause of the diagnostic verification job's expected exit `1`).
+   - **Unchanged environment/runtime blockers:** B1 (no local Android SDK/NDK or physical device/emulator execution in sandbox), B3/B6 (no live server login/gameplay test), B8 (`GameServer` DirectX header conflict), and B10 (GPU skinning / 3D character draw pass integration).
