@@ -610,3 +610,190 @@ and `.x`/`.skt` categories are identical to the previous run.
   fixed; the reader is immune because it consumes the body structurally on a version match).
 - The "why 0x0104 files exist without a flag" question is answered by source and needs no
   further work.
+
+---
+
+## Phase 3J follow-up — B14: `SVERTEXINFLU::SaveFile` size arithmetic audited
+
+**Date:** 2026-11-26 · **Branch:** `arena/42c5ac0c-ran-online-ep7` · **Commit:** `80a6336`
+
+### Verdict
+
+B14 is **a genuine defect in the original engine's writer** — confirmed by source and by a
+compiled verbatim transcription. It is **not a defect in this codebase**, and the mobile reader
+is **already immune** to it. Therefore **no production code was changed**; this task adds the
+regression coverage that pins the behaviour down and prevents a future "helpful" fix from
+introducing the bug.
+
+The previously recorded 8/16/48-byte figures were **correct but incomplete**. They sampled
+`numBone` = 1, 2, 6 and missed two cases: `numBone == 0` (where the two terms coincide and
+`dwSize` is right) and `numBone == COL_ERR` (where the DWORD arithmetic **wraps and
+under-states**). Both are now documented and tested.
+
+### Source evidence
+
+`SVERTEXINFLU::SaveFile` — `enginelib/Meshs/DxSkinMeshContainer9.cpp:59-92`, byte-identical in
+`enginelib/Meshs/SMeshContainer.cpp:52-85`:
+
+```cpp
+DWORD dwSize = sizeof(DWORD) +
+               sizeof(D3DXVECTOR3) +
+               sizeof(D3DXVECTOR3) +
+               sizeof(DWORD) +
+               sizeof(DWORD)*m_dwNumBone +
+               sizeof(float)*m_dwNumBone;
+
+if ( m_dwNumBone > 0 && m_dwNumBone!=COL_ERR )
+{
+    GASSERT(m_pBone);
+    GASSERT(m_pWeights);
+    dwSize += sizeof(DWORD)*m_dwNumBone + sizeof(float)*m_dwNumBone;   // <-- added AGAIN
+}
+
+SFile << VERSION;
+SFile << dwSize;
+SFile << m_dwIndex;
+SFile << m_vVector;
+SFile << m_vNormal;
+SFile << m_dwNumBone;
+if ( m_dwNumBone > 0 && m_dwNumBone!=COL_ERR )
+{
+    SFile.WriteBuffer ( m_pBone,    sizeof(DWORD)*m_dwNumBone );   // written ONCE
+    SFile.WriteBuffer ( m_pWeights, sizeof(float)*m_dwNumBone );   // written ONCE
+}
+```
+
+The initial expression already contains `sizeof(DWORD)*n + sizeof(float)*n`. The `if` block adds
+the same two terms a second time, while the body writes each array exactly once. **The arrays are
+counted twice and written once.**
+
+### Exact size arithmetic (compiled, not hand-computed)
+
+A verbatim transcription was compiled with `static_assert(sizeof(DWORD)==4)` and
+`static_assert(sizeof(V3)==12)`, using `DWORD` (unsigned) arithmetic so it wraps like the original:
+
+| `m_dwNumBone` | `dwSize` written | body actually written | delta |
+|---|---|---|---|
+| 0 | `0x20` (32) | 32 | **0 — agrees** |
+| 1 | `0x30` (48) | 40 | **+8** over-states |
+| 2 | `0x40` (64) | 48 | **+16** |
+| 3 | `0x50` (80) | 56 | **+24** |
+| 4 | `0x60` (96) | 64 | **+32** |
+| 5 | `0x70` (112) | 72 | **+40** |
+| 6 (`MAX_BONE`) | `0x80` (128) | 80 | **+48** |
+| `COL_ERR` (0xFFFFFFFF) | **`0x18` (24)** | **32** | **−8 — UNDER-states** |
+
+General form: body = `0x20 + 8n`; declared `dwSize` = `0x20 + 16n` for `1 <= n <= 6`, `0x20` for
+`n == 0`, and `0x18` (wrapped) for `COL_ERR`.
+
+The `COL_ERR` row is the new finding. `4*n` overflows the 32-bit sum, so `dwSize` becomes
+*smaller* than the record. A reader that trusted `dwSize` as a body length would under-read
+there and over-read everywhere else — wrong in both directions depending on the record.
+
+### Block-size accounting: `SVERTEXINFLU` vs `SMATERIAL_PIECE`
+
+The defect is specific to `SVERTEXINFLU`. `SMATERIAL_PIECE::SaveFile`
+(`DxSkinPieceContainer.cpp:109-122`) wraps its body in `BeginBlock`/`EndBlock`, and `EndBlock`
+(`enginelib/Common/SerialFile.cpp:189-208`) derives the size from the **actual file positions**:
+
+```cpp
+long nEndPos = GetfTell();
+DWORD dwTotalSize = DWORD ( ( nEndPos - m_nMarkPos[m_dwBlockMarkPOS] ) - sizeof(DWORD) );
+```
+
+That size is measured, so it cannot be wrong. `SVERTEXINFLU` hand-computes its size from field
+counts instead of measuring, which is why only it is affected. Confirmed: no
+`BeginBlock`/`EndBlock` appears anywhere in either `SVERTEXINFLU::SaveFile` or `::LoadFile`.
+
+### Why the reader is not affected, and why that is not luck
+
+`SVERTEXINFLU::LoadFile` (`DxSkinMeshContainer9.cpp:94-127`) reads the tag and `dwSize`, then
+branches:
+
+- **tag matches** → read `index`, `vVector`, `vNormal`, `numBone`, then `bones[n]`/`weights[n]`
+  by structure. **`dwSize` is never consulted.**
+- **tag differs** → `SetOffSet ( SFile.GetfTell() + dwSize )`. This is the **only** place
+  `dwSize` is authoritative, and the mobile reader mirrors it exactly with
+  `s.Skip(blockSize)` (`EP7SkinPiece.cpp:44-46`).
+
+A structural read cannot be misplaced by a size the writer got wrong. So the engine — and this
+reader — simply never observe the bad value on real data, which is why the bug survived in a
+shipping client.
+
+`SetOffSet` on `CSerialFile` (`SerialFile.cpp:161-168`) is a bare `fseek` returning `FALSE` on
+failure and is **not** range-checked. `Stream::Skip` (`EP7ByteFormat.h:294-298`) is
+bounds-checked through `Ensure`, so on the mismatch path this reader is strictly safer than the
+engine while producing the same cursor movement for in-range values.
+
+### Version specificity
+
+Not version-specific. `SVERTEXINFLU` is its own nested record with its own `VERSION` (`0x0101`),
+independent of the `.cps` container version. The same writer produced these records for every
+`.cps` version that stores traces — 0x0101 through 0x0107. The three writer call sites are
+`DxSkinPiece::SavePiece` (`:1006`), plus the fixed-slot legacy paths that call
+`sTraceArray[i].SaveFile`; all inherit the same arithmetic.
+
+### Mobile parser impact: none, verified
+
+- There is **no `.cps` writer in RANMobile** — `EP7SkinPiece` is reader-only (grep for
+  `SavePiece`/`SaveFile`/`WriteBuffer` returns only comments). So B14 cannot be "fixed" here
+  without inventing a serializer, which would be out of scope and would fabricate format code.
+- The only consumer of the field is the mismatch-path `Skip`, which is what the engine does.
+
+### Regression tests added (`TestSkinPieceInfluenceSizeAccounting`)
+
+`RANMobile/Tests/test_phase3j.cpp` — the only file changed by this task.
+
+| Case | Why it matters |
+|---|---|
+| `numBone == 0` | the one legal count where `dwSize` and body **agree**; a compensating reader breaks here |
+| `numBone == COL_ERR` | `dwSize` **under-states** (wrapped `0x18` for a `0x20` body) — must still parse |
+| `numBone` 0..6 loop | every legal count round-trips and lands exactly on `effectCount` |
+| mismatch tag | `dwSize` must still be honoured as the skip distance, matching `LoadFile`'s `else` |
+
+The new fixture `PieceCpsWithInfluence(numBone, index)` reproduces the writer's arithmetic
+*before* it is printed, so the test data cannot drift away from the real encoding.
+
+### Controls — proof the tests are load-bearing
+
+Temporary copies with the behaviour deliberately broken, then reverted:
+
+| Control | Injected change | Result |
+|---|---|---|
+| A | trust `dwSize` unconditionally on a match | many failures |
+| B | trust `dwSize` when it "looks plausible" | many failures |
+| C | drop the `COL_ERR` special case | many failures |
+| D | add a `dwSize`-vs-body consistency check | **31 failures**, incl. `COL_ERR` and `numBone == 0` |
+
+Control D is the important one. Adding a consistency check is the single most likely future
+"hardening", and the suite now rejects it — because the writer, not the reader, is wrong.
+
+### Results (executed)
+
+| Stage | Checks | Failures |
+|---|---|---|
+| before | 339 | 0 |
+| after | **398** | **0** |
+
+ASan + UBSan + LSan clean (exit 0). Core suite compiles clean under `-Werror`; its run still
+stops at the pre-existing `test_main.cpp:186` external-data assertion (exit 134), unchanged.
+
+### Authentic-asset CI (run `45926387844`, commit `80a6336`)
+
+| Job | Result |
+|---|---|
+| `Core C++17 tests (blocking)` | **success** |
+| `Android ARM64 build (lib + APK/AAB)` | **success** |
+| `Authentic EP7 asset verification` | failure — correct; genuine FAILs remain |
+
+Pack entries: `6,479 parsed, 3,550 failed, 1,631 unsupported` — **identical** to the previous
+run on `6ee1b02` (`6,479 / 3,550 / 1,631`) and to `a591320`. That is the expected result for a
+test-only change and confirms **no authentic-asset regression**. No improvement is claimed.
+
+### Remaining
+
+B14 stays **OPEN as an observation about the original source**, not as a task for this
+repository: there is nothing here to fix. It would matter only if someone (a) writes a `.cps`
+serializer in RANMobile, or (b) changes the influence reader to trust `dwSize` on a version
+match. Both are now guarded by tests and documented. `SMATERIAL_PIECE` needs no change; its
+block size is measured by `EndBlock`.

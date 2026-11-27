@@ -270,3 +270,63 @@ defines the `DxReplaceContainer` family used by `DxLandMan`/`DxPieceContainer` (
 into the character path. The authoritative `.cps` loader is `DxSkinPieceContainer.cpp`, with
 `VERSION = 0x00000107` (`:158`) and the seven branches above. Do not take a version bound from
 `ReplaceContainer.cpp`.
+
+---
+
+## Appendix — `SVERTEXINFLU` `dwSize` is unreliable (B14), and why the reader ignores it
+
+The `dwSize` DWORD that follows the `SVERTEXINFLU` tag is **not** a trustworthy body length. It
+is hand-computed by `SVERTEXINFLU::SaveFile`
+(`enginelib/Meshs/DxSkinMeshContainer9.cpp:59-92`; byte-identical copy at
+`enginelib/Meshs/SMeshContainer.cpp:52-85`) and the computation counts the bone and weight
+arrays twice while the body writes them once.
+
+| `m_dwNumBone` | declared `dwSize` | actual body | delta |
+|---|---|---|---|
+| 0 | `0x20` | `0x20` | 0 |
+| 1..6 | `0x20 + 16n` | `0x20 + 8n` | `+8n` (over) |
+| `COL_ERR` (`0xFFFFFFFF`) | `0x18` (wrapped) | `0x20` | `−8` (under) |
+
+Body layout actually written after the `dwSize` field:
+
+```
+DWORD  m_dwIndex              //  4
+float  m_vVector[3]           // 12
+float  m_vNormal[3]           // 12
+DWORD  m_dwNumBone            //  4       = 32 bytes so far
+DWORD  m_pBone[numBone]       // 4n      only when 0 < numBone <= MAX_BONE(6)
+float  m_pWeights[numBone]    // 4n      only when 0 < numBone <= MAX_BONE(6)
+```
+
+So the body is `32` bytes for `numBone == 0` and for `COL_ERR`, and `32 + 8n` otherwise.
+
+### The rule the reader follows
+
+Mirroring `SVERTEXINFLU::LoadFile` (`:94-127`):
+
+- **tag matches `SVERTEXINFLU::VERSION` (0x0101)** → consume the body **structurally**; never
+  consult `dwSize`. A structural read cannot be displaced by a wrong size.
+- **tag does not match** → skip exactly `dwSize` bytes, because that is what `LoadFile` does
+  (`SetOffSet(GetfTell() + dwSize)`, `:126`). This is the *only* place the field is
+  authoritative, incorrect or not.
+
+Do **not** add a "consistency check" comparing `dwSize` against the bytes consumed. The writer
+is wrong, not the reader: such a check rejects valid data at `numBone == 0` and at `COL_ERR`,
+and at every other count alike. `TestSkinPieceInfluenceSizeAccounting` fails 31 checks if this
+check is introduced.
+
+### Contrast with `SMATERIAL_PIECE`, whose size *is* reliable
+
+`SMATERIAL_PIECE::SaveFile` (`DxSkinPieceContainer.cpp:109-122`) brackets its body with
+`BeginBlock`/`EndBlock`. `EndBlock` (`enginelib/Common/SerialFile.cpp:189-208`) back-patches the
+size from the measured positions:
+
+```cpp
+long nEndPos = GetfTell();
+DWORD dwTotalSize = DWORD ( ( nEndPos - m_nMarkPos[m_dwBlockMarkPOS] ) - sizeof(DWORD) );
+```
+
+Measured, therefore exact. That is why the material block can be skipped safely by its size and
+the influence record cannot. When reading a block, establish which of the two conventions
+applies — measured (`BeginBlock`/`EndBlock`) or predicted (hand-summed). Only the former may be
+trusted for a skip.

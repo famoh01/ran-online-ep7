@@ -386,3 +386,66 @@ The residual 3,097 `.cps` failures are files whose version DWORD is outside `0x0
 The engine rejects those too (same terminal `else`), so this is correct behaviour, not a
 remaining bug in the branch logic. No speculative version branch was added. Confirming whether
 any are legitimate would need the files themselves, which are unobtainable in this sandbox.
+
+---
+
+## 15. Phase 3J follow-up — `SVERTEXINFLU` `dwSize` accounting (B14)
+
+Source: `SVERTEXINFLU::SaveFile`, `DxSkinMeshContainer9.cpp:59-92` (copy at
+`SMeshContainer.cpp:52-85`); reader `:94-127`.
+
+### Regression coverage (`TestSkinPieceInfluenceSizeAccounting`)
+
+| Item | Requirement | Result |
+|---|---|---|
+| `numBone == 0` | `dwSize` and body agree; record parses; reaches `effectCount` | PASS |
+| `numBone == COL_ERR` | `dwSize` under-states (wrapped `0x18` vs `0x20` body); record parses | PASS |
+| `numBone` 0..6 | every legal count round-trips, `index`/`boneCount` exact, lands on `effectCount` and `m_dwFlag` | PASS |
+| mismatch tag | `dwSize` still honoured as the skip distance (engine parity) | PASS |
+| fixture fidelity | `PieceCpsWithInfluence` reproduces the writer's arithmetic before printing it | PASS |
+
+### Controls — the tests are load-bearing
+
+| Control | Injected change | Result |
+|---|---|---|
+| A | trust `dwSize` unconditionally on a match | many failures |
+| B | trust `dwSize` when it looks plausible | many failures |
+| C | drop the `COL_ERR` special case | many failures |
+| D | add a `dwSize`-vs-body consistency check | **31 failures**, incl. `numBone == 0` and `COL_ERR` |
+
+Control D is the guard rail that matters: a consistency check is the most likely future
+"hardening" and the suite now rejects it, because the writer is wrong rather than the reader.
+
+### Executed local results
+
+| Stage | Checks | Failures |
+|---|---|---|
+| before | 339 | 0 |
+| after | **398** | **0** |
+
+ASan + UBSan + LSan: clean, exit 0. Core suite compile (`-Werror`): exit 0; run stops at the
+pre-existing `test_main.cpp:186` external-data assertion (exit 134), unchanged.
+
+### Executed CI results (run `45926387844`, commit `80a6336`)
+
+| Job | Result |
+|---|---|
+| `Core C++17 tests (blocking)` | **success** |
+| `Android ARM64 build (lib + APK/AAB)` | **success** |
+| `Authentic EP7 asset verification` | failure — correct; genuine FAILs remain |
+
+| Pack entries | `6ee1b02` (before) | `80a6336` (after) |
+|---|---|---|
+| parsed | 6,479 | 6,479 |
+| failed | 3,550 | 3,550 |
+| unsupported | 1,631 | 1,631 |
+
+Identical, as expected for a test-only change. **No authentic-asset improvement is claimed and
+none was predicted** — B14 does not affect parsing. The value of this run is the negative
+result: adding the tests did not perturb behaviour.
+
+### Production code
+
+Unchanged. This task modified **only** `RANMobile/Tests/test_phase3j.cpp`. RANMobile has no
+`.cps` writer, and the reader already ignores `dwSize` on a version match, so there was nothing
+to correct.

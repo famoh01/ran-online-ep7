@@ -561,3 +561,78 @@ reader required it anyway. Gating the flag read to `>= 0x0105` makes all 88 pars
 reason no longer occurs in run `45923517031`.
 
 See B13 above. B14 remains open and unchanged.
+
+## B14 — AUDITED / CLOSED: `SVERTEXINFLU::SaveFile` over- and under-states `dwSize`
+
+**Status: CLOSED. The defect is in the original engine's writer, confirmed by source; this
+codebase is not affected and needed no production change.** It is retained as a documented
+hazard rather than an open task.
+
+### Confirmed defect
+
+`SVERTEXINFLU::SaveFile` — `enginelib/Meshs/DxSkinMeshContainer9.cpp:59-92`, byte-identical in
+`enginelib/Meshs/SMeshContainer.cpp:52-85` — counts the bone and weight arrays **twice** while
+writing them **once**:
+
+```cpp
+DWORD dwSize = ... + sizeof(DWORD)*m_dwNumBone + sizeof(float)*m_dwNumBone;  // counted
+if ( m_dwNumBone > 0 && m_dwNumBone!=COL_ERR )
+    dwSize += sizeof(DWORD)*m_dwNumBone + sizeof(float)*m_dwNumBone;          // counted AGAIN
+...
+if ( m_dwNumBone > 0 && m_dwNumBone!=COL_ERR )
+{
+    SFile.WriteBuffer ( m_pBone,    sizeof(DWORD)*m_dwNumBone );  // written ONCE
+    SFile.WriteBuffer ( m_pWeights, sizeof(float)*m_dwNumBone );  // written ONCE
+}
+```
+
+### Exact arithmetic (compiled verbatim transcription, `DWORD` semantics)
+
+| `m_dwNumBone` | `dwSize` | body written | delta |
+|---|---|---|---|
+| 0 | 32 | 32 | **0** |
+| 1 | 48 | 40 | **+8** |
+| 2 | 64 | 48 | **+16** |
+| 3 | 80 | 56 | **+24** |
+| 4 | 96 | 64 | **+32** |
+| 5 | 112 | 72 | **+40** |
+| 6 | 128 | 80 | **+48** |
+| `COL_ERR` | **24** | **32** | **−8 (wraps)** |
+
+The previous 8/16/48 figures were correct for `n` = 1/2/6 but sampled only three points. Two
+cases were missing: `n == 0`, where the two terms coincide and the size is **right**, and
+`COL_ERR`, where the 32-bit sum **overflows and under-states**. The defect therefore errs in
+both directions.
+
+### Not version-specific, and not a `SMATERIAL_PIECE` problem
+
+`SVERTEXINFLU` is a nested record with its own tag (`0x0101`), independent of the `.cps`
+container version, so the same writer produced this for every version that stores traces
+(0x0101–0x0107). By contrast `SMATERIAL_PIECE::SaveFile` is **correct**: it wraps its body in
+`BeginBlock`/`EndBlock`, and `EndBlock` (`enginelib/Common/SerialFile.cpp:189-208`) computes the
+size from actual file positions, so it is measured rather than predicted.
+
+### Why nothing in RANMobile needed changing
+
+1. **There is no `.cps` writer in RANMobile.** `EP7SkinPiece` is reader-only. Fixing a writer
+   defect here would mean inventing a serializer — out of scope, and fabricated code.
+2. **The reader never trusts `dwSize` on a version match.** `ReadVertexInfluence`
+   (`EP7SkinPiece.cpp:38-66`) reads the body structurally when the tag matches and consults
+   `blockSize` only on the mismatch path, where it calls `Skip` — exactly mirroring
+   `SVERTEXINFLU::LoadFile`'s `else { SetOffSet(GetfTell() + dwSize); }`
+   (`DxSkinMeshContainer9.cpp:124-127`). A structural read cannot be displaced by a size the
+   writer got wrong.
+3. On that mismatch path the mobile reader is **safer** than the engine: `SetOffSet` is a bare
+   `fseek` (`SerialFile.cpp:161-168`) with no range check, while `Stream::Skip` is bounds-checked
+   via `Ensure` (`EP7ByteFormat.h:294-298`).
+
+### Guard rails now in place
+
+`TestSkinPieceInfluenceSizeAccounting` covers `numBone` = 0, `COL_ERR`, every legal count 0..6,
+and the mismatch-tag skip. Four controls confirm the tests bite; notably adding a
+`dwSize`-vs-body consistency check — the most likely future "hardening" — produces **31
+failures**. Anyone who later tries to make the reader trust `dwSize`, or who writes a `.cps`
+serializer, will be stopped by the suite.
+
+**If a `.cps` writer is ever added to RANMobile, it must compute the body size as
+`0x20 + 8n` and must not reproduce this arithmetic.**
