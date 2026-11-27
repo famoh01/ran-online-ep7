@@ -1137,3 +1137,37 @@ Implemented Stage 1 of the B12 animation parser plan on `arena/00fd13f9-ran-onli
 *Explicit non-claims:* Parsing `2,191` authentic `.bin` containers (`1,208` of the `1,210` `0x0100` files also pair with supported `.cfg` `0x0103`–`0x0107`) proves binary container/track compatibility, not on-device rendering or live gameplay. No Android emulator/device or live server test was executed in this sandbox.
 
 
+## 2026-11-27 — Phase 3J B14: Implement Authentic Animation `0x0103` Container & Track (`arena/00fd13f9-ran-online-ep7`)
+
+Implemented authentic `SAnimContainer` outer version `0x0103` and `SAnimation` inner track version `0x0103` on `arena/00fd13f9-ran-online-ep7` (commit `63c8c805ff66c3c89a3e8143757efe11c4c29a9a`, stacked Draft PR #7 -> `arena/42c5ac0c-ran-online-ep7`; Draft PR #5 untouched).
+
+### What Changed in B14
+
+- **`RANMobile/Data/Importer/EP7Animation.cpp`:**
+  - Implemented authentic outer `SAnimContainer::Load_0103` (`hdr.version == 0x0103` in `ParseContainer` per `Lib_Engine/Meshs/SAnimationSaveLoad.cpp:412-442,644-668`): `upBodyTracks` (`u32 numUpBody` + tracks), `uint32_t garbageValue` (`s.ReadU32(garbageValue)` where authentic writer emits `0x0103 + numUpBody + numMain`), and `mainTracks` (`u32 numMain` + tracks).
+  - Implemented authentic inner `SAnimation::Load_0103` (`version == 0x0103` in `ReadBoneTrack` per `Lib_Engine/Meshs/SAnimationSaveLoad.cpp:192-293`): `m_strBone`, `rotateKeys` (`20`B), `dwGarbage1` (`u32`), `positionKeys` (`16`B), `quatPosKeys` (`36`B), `matrixKeys` (`80`B including `kMatrixKeyAlignPadSize = 12`), `dwGarbage2` (`u32`), and `scaleKeys` (`16`B), while preserving `0x0100`, `0x0101`, and `0x0102` behavior unchanged.
+  - Preserved explicit rejection of unimplemented outer container versions (`0x0104` and `0x0200`) with `"unsupported animation container version 0x... (implemented: 0x0100, 0x0101, 0x0102, 0x0103)"`.
+- **`RANMobile/Tools/inspect_ep7_animation_containers.cpp`:**
+  - Synchronized the inspector's production-reader cursor trace with B14 `EP7AnimationReader` (`0x0100`–`0x0103` outer + inner) so `acceptedTrailingBytes` audits exact-EOF consumption across all `3,724` parsed authentic files.
+- **Regression tests (`test_phase3j.cpp`, `test_ep7_character_verifier.cpp`, `test_ep7_animation_inspector.cpp`):**
+  - Added regression coverage for outer `0x0103` (`upBodyTracks` + `dwGarbageValue` + `mainTracks` + non-formula `dwGarbageValue`), inner track `0x0103` (`rotateKeys`, `dwGarbage1`, `positionKeys`, `quatPosKeys`, `matrixKeys` 80B, `dwGarbage2`, `scaleKeys`, empty `m_strBone`), `0x0103` vs `0x0102` field-order differentiation, `EP7AnimationPlayer::ApplyToSkeleton` evaluation on `0x0103` `upBodyTracks` and `mainTracks`, invalid count/length bounds checks, byte-by-byte prefix truncations (`0 .. size-1`), 8-fixture fuzz sweep, `0x0100`/`0x0101`/`0x0102` non-regression, and explicit `0x0104`/`0x0200` rejection.
+
+### Authentic Validation, Test & Android Build Results ([CI run 45995539967](https://github.com/famoh01/ran-online-ep7/actions/runs/45995539967), [CI run 45995540399](https://github.com/famoh01/ran-online-ep7/actions/runs/45995540399))
+
+| Verification Target | Pre-B14 (B13) | Post-B14 | Status |
+|---|---:|---:|---|
+| Authentic `0x0103` `data/animation/*.bin` parsed | `0 / 1,533` | **`1,533 / 1,533` (`100.00%`, `114,210` tracks)** | **VERIFIED (`EXACT_EOF`)** |
+| Authentic `0x0100` + `0x0101` + `0x0102` `data/animation/*.bin` parsed | `2,191 / 2,191` | **`2,191 / 2,191` (`140,293` tracks)** | **VERIFIED (`EXACT_EOF`)** |
+| Total `data/animation/*.bin` parsed (`EXACT_EOF`, `0` trailing bytes) | `2,191 / 6,228` | **`3,724 / 6,228` (`+1,533`, `254,503` tracks)** | **VERIFIED** |
+| `data/animation/*.bin` `parser-rejected` (FAIL) | `0` | **`0`** | **CLEAN** |
+| `data/animation/*.bin` `unsupported-version` (`0x0104`: `2,495`, `0x0200`: `9`) | `4,037` | **`2,504` (`-1,533`, out of B14 scope)** | **TRACKED** |
+| Phase 3J host tests (`test_phase3j.cpp`, `-O2` & `ASan+UBSan+LSan`) | `952 / 0` | **`1,499 checks, 0 failures`** | **PASS** |
+| Verifier regression (`run_ep7_verifier_tests.sh`, `-O2` & `ASan+UBSan+LSan`) | `1,571 / 0` | **`2,784 checks, 0 failures`** | **PASS** |
+| Inspector regression (`run_ep7_animation_inspector_tests.sh`, `-O2` & `ASan+UBSan+LSan`) | `7,035 / 0` | **`8,303 checks, 0 failures`** | **PASS** |
+| CI `Core C++17 tests (blocking)` (`45995539967`, job `140493888315`) | pass | **pass** | **PASS** |
+| CI `Android ARM64 build (lib + APK/AAB)` (`45995539967`, job `140493888339`) | pass | **`libranmobile-arm64-v8a` (`2,303,142` B), `ranmobile-android-packages` (`1,989,193` B)** | **PASS** |
+
+*Explicit non-claims:* Parsing `3,724` authentic `.bin` containers (`1,533 / 1,533` `0x0103` files; `161` of those `0x0103` files already pair with supported `.cfg` `0x0107` while `1,349` pair with unimplemented `.cfg` `0x0108`–`0x0114`) proves binary container/track compatibility, not on-device rendering or live gameplay. Outer `.bin` versions `0x0104` (`2,495` files) and `0x0200` (`9` files) remain unimplemented per B14 scope, and no Android emulator/device or live server test was executed in this sandbox.
+
+
+

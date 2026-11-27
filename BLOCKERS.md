@@ -838,3 +838,24 @@ Implemented in commit `1e11d2ec7f77bf938cdefa0bda6668a5f2a85b48` on `arena/00fd1
    - **Unchanged environment/runtime blockers:** B1 (no local Android SDK/NDK or physical device/emulator execution in sandbox), B3/B6 (no live server login/gameplay test), B8 (`GameServer` DirectX header conflict), and B10 (GPU skinning / 3D character draw pass integration).
 
 
+## 2026-11-27 — Phase 3J B14: Authentic Animation `0x0103` Container & Track Implementation
+
+**Status: RESOLVED for outer container `0x0103` and inner `SAnimation` track `0x0103` (`1,533 / 1,533` authentic `0x0103` `.bin` files and `3,724 / 3,724` total supported `.bin` files parsed with `0` trailing bytes; `0 / 6,228` `parser-rejected` loose `.bin` files).**
+
+Implemented in commit `63c8c805ff66c3c89a3e8143757efe11c4c29a9a` on `arena/00fd13f9-ran-online-ep7` (Draft PR #7) and verified in GitHub Actions runs [`45995539967`](https://github.com/famoh01/ran-online-ep7/actions/runs/45995539967) and [`45995540399`](https://github.com/famoh01/ran-online-ep7/actions/runs/45995540399):
+
+1. **Resolved in B14:**
+   - **Authentic outer `SAnimContainer::Load_0103` (`EP7Animation.cpp`):** Implemented `hdr.version == 0x0103` (`upBodyTracks`, `uint32_t garbageValue` where authentic writer emits `0x0103 + numUpBody + numMain`, `mainTracks`) per `Lib_Engine/Meshs/SAnimationSaveLoad.cpp:412-442,644-668`.
+   - **Authentic inner `SAnimation::Load_0103` (`EP7Animation.cpp`):** Implemented `version == 0x0103` in `ReadBoneTrack` (`m_strBone`, `rotateKeys`, `dwGarbage1`, `positionKeys`, `quatPosKeys`, `matrixKeys` 80B, `dwGarbage2`, `scaleKeys`) per `Lib_Engine/Meshs/SAnimationSaveLoad.cpp:192-293`, preserving `0x0100`, `0x0101`, and `0x0102` behavior.
+   - **Authentic EP7 Release (`ran-ep7-full-v1`) proof:**
+     - `verify_ep7_character_assets` (`45995539967`, job `140493888068`): `3,724 parsed, 2,504 unsupported-version, 0 invalid-header, 0 unrecognized-type, 0 parser-rejected; total=6,228`.
+     - `inspect_ep7_animation_containers` (`45995540399`, check run `140495005201`, JSON report blob `0ef25dcc3a2e6de8abd8b9632f2813cfed724716`): **`1,533 / 1,533` (`100.00%`)** `0x0103` files (`114,210` `0x0103` tracks; `1,532` w/ `quatPosKeys` + `1` zero-track) plus all `2,191` `0x0100`–`0x0102` files (`140,293` tracks) parse with **`trailing_bytes=0` (`3,724 / 3,724` `EXACT_EOF`, `254,503` tracks total)**. `161` `0x0103` `.bin` files already pair with currently supported `.cfg` `0x0107` (bringing supported `.bin`+`.cfg` pairs to `2,338`), while `1,349` pair with `.cfg` `0x0108`–`0x0114` (`23` have no `.cfg` stem).
+   - **Regression & Android ARM64 builds:** `test_phase3j` (`1,499` checks, normal + ASan/UBSan/LSan), verifier suite (`2,784` checks, normal + ASan/UBSan/LSan), inspector suite (`8,303` checks, normal + ASan/UBSan/LSan), CI `Core C++17 tests` (`140493888315`), and CI `Android ARM64 build (lib + APK/AAB)` (`140493888339`: `libranmobile-arm64-v8a` `2,303,142` B, `ranmobile-android-packages` `1,989,193` B) all **PASSED**.
+2. **Remaining animation & character asset blockers (deferred to separate tasks per scope):**
+   - **Unsupported `.bin` outer container versions (`2,504` loose `.bin` files):** `0x0104` (`2,495` files, `129,379` `0x0103` tracks across `main` + `upBody1` + `upBody2`) and `0x0200` (`9` `EMBYTECRYPT_BIN`-encoded files, `457` `0x0103` tracks). Note that inner `SAnimation` track `0x0103` used inside both `0x0104` and `0x0200` is now implemented and verified in B14.
+   - **Unsupported companion `.cfg` (`SANIMCONINFO`) versions in `Animation.rcc` (`1,631` pack entries):** versions `0x0108`–`0x0115` (+ `0x0200` `EMBYTECRYPT_CFG`), needed for metadata pairing on `1,349 / 1,533` `0x0103` `.bin` files and `2,464 / 2,495` `0x0104` `.bin` files.
+   - **Pre-existing `SkinObject.rcc` pack gaps (`3,550` failed pack entries):** `243` unsupported `.chf` versions, `3,097` unsupported `.cps` versions, and `210` `.abf` binary skeleton files (unchanged from B11–B13).
+   - **Unchanged environment/runtime blockers:** B1 (no local Android SDK/NDK or physical device/emulator execution in sandbox), B3/B6 (no live server login/gameplay test), B8 (`GameServer` DirectX header conflict), and B10 (GPU skinning / 3D character draw pass integration).
+
+
+
