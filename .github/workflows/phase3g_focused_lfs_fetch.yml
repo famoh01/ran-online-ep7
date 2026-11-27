@@ -1,0 +1,129 @@
+name: Phase 3G Focused Git LFS Asset Retrieval
+
+# Retrieves only explicitly requested paths from the backup repository with the
+# standard Git LFS client, verifies each object against its LFS pointer, then
+# publishes verified bytes as Git blobs in this repository. No branch, commit,
+# release, or existing file is modified.
+
+on:
+  workflow_dispatch:
+    inputs:
+      includes:
+        description: 'Comma-separated backup-repo paths to retrieve with Git LFS'
+        required: true
+        default: 'Ran Online Game Client/data/glogic/mapslist.mst,Ran Online Game Client/data/map/login.wld'
+  push:
+    branches:
+      - arena/075e1725-ran-online-ep7
+    paths:
+      - '.github/workflows/phase3g_focused_lfs_fetch.yml'
+
+permissions:
+  contents: write
+  checks: write
+
+jobs:
+  fetch-verified-objects:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+
+      - name: Install Git LFS
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git-lfs
+          git lfs version
+
+      - name: Pull focused objects and publish verified blobs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INCLUDES: ${{ inputs.includes || 'Ran Online Game Client/data/glogic/mapslist.mst,Ran Online Game Client/data/map/login.wld' }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          trap 'rc=$?; if [ "$rc" -ne 0 ]; then printf "exit=%s command=%s\n" "$rc" "$BASH_COMMAND" >> /tmp/phase3g_error.txt; fi' EXIT
+          python3 - <<'PY'
+          import os, re, sys
+          paths = [p.strip() for p in os.environ['INCLUDES'].split(',') if p.strip()]
+          if not paths or len(paths) > 8:
+              sys.exit('expected 1-8 paths')
+          for p in paths:
+              if p.startswith('/') or '..' in p.split('/') or not re.fullmatch(r'[A-Za-z0-9_. /()+$-]+', p):
+                  sys.exit('unsafe path: ' + p)
+          with open('/tmp/phase3g_paths.txt', 'w') as f:
+              f.write('\n'.join(paths) + '\n')
+          with open('/tmp/phase3g_includes.txt', 'w') as f:
+              f.write(','.join(paths))
+          print('validated paths:')
+          print('\n'.join(paths))
+          PY
+          GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 https://github.com/matheomedrana/Ran-Online-EP7-Complete-Files.git /tmp/ep7backup
+          cd /tmp/ep7backup
+          git lfs install --local
+          # The backup repo's tracked .gitattributes is itself an LFS pointer,
+          # so declare LFS tracking locally for only the requested paths.
+          : > .git/info/attributes
+          while IFS= read -r p; do
+            [ -n "$p" ] || continue
+            printf '"%s" filter=lfs diff=lfs merge=lfs -text\n' "$p" >> .git/info/attributes
+          done < /tmp/phase3g_paths.txt
+          git lfs pull --include="$(cat /tmp/phase3g_includes.txt)" --exclude="" 2>&1 | tee /tmp/phase3g_pull.log
+          : > /tmp/phase3g_results.tsv
+          while IFS= read -r p; do
+            [ -n "$p" ] || continue
+            git show "HEAD:$p" > /tmp/phase3g_pointer.txt
+            expected_oid=$(sed -n 's/^oid sha256://p' /tmp/phase3g_pointer.txt)
+            expected_size=$(sed -n 's/^size //p' /tmp/phase3g_pointer.txt)
+            if head -c 40 "$p" | grep -q 'version https://git-lfs'; then
+              echo "ERROR: LFS pointer remains after pull: $p" | tee /tmp/phase3g_error.txt >&2
+              exit 1
+            fi
+            actual_size=$(stat -c %s "$p")
+            actual_sha=$(sha256sum "$p" | cut -d' ' -f1)
+            if [ "$actual_sha" != "$expected_oid" ] || [ "$actual_size" != "$expected_size" ]; then
+              echo "ERROR: verification failed for $p ($actual_sha/$actual_size vs $expected_oid/$expected_size)" | tee /tmp/phase3g_error.txt >&2
+              exit 1
+            fi
+            base64 -w0 "$p" > /tmp/phase3g_b64.txt
+            python3 - <<'PY'
+          import json
+          with open('/tmp/phase3g_b64.txt') as src, open('/tmp/phase3g_blob.json', 'w') as dst:
+              json.dump({'content': src.read(), 'encoding': 'base64'}, dst)
+          PY
+            blob_sha=$(gh api --method POST "repos/$REPO/git/blobs" --input /tmp/phase3g_blob.json --jq .sha)
+            printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$p" "$expected_oid" "$actual_sha" "$actual_size" "$blob_sha" 'git-lfs pull + GitHub blob API' >> /tmp/phase3g_results.tsv
+          done < /tmp/phase3g_paths.txt
+          gh api --method POST "repos/$REPO/check-runs" \
+            -f name='phase3g-lfs-retrieval' \
+            -f head_sha="$HEAD_SHA" \
+            -f status=completed \
+            -f conclusion=success \
+            -f 'output[title]=Phase 3G focused LFS retrieval' \
+            -f 'output[summary]=Verified authentic Git LFS objects; blobs published for byte-preserving transfer.' \
+            -f "output[text]=$(cat /tmp/phase3g_results.tsv)" \
+            --jq .id > /tmp/phase3g_check_id.txt
+          cat /tmp/phase3g_results.tsv
+
+      - name: Publish failure details
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          detail=$(cat /tmp/phase3g_error.txt 2>/dev/null || echo 'unknown failure')
+          partial=$(cat /tmp/phase3g_results.tsv 2>/dev/null || true)
+          pull_log=$(cat /tmp/phase3g_pull.log 2>/dev/null || true)
+          gh api --method POST "repos/$REPO/check-runs" \
+            -f name='phase3g-lfs-retrieval-failed' \
+            -f head_sha="$HEAD_SHA" \
+            -f status=completed \
+            -f conclusion=failure \
+            -f 'output[title]=Phase 3G focused LFS retrieval failed' \
+            -f 'output[summary]=Focused retrieval did not complete.' \
+            -f "output[text]=$detail"$'\n'"PULL LOG:"$'\n'"$pull_log"$'\n'"PARTIAL:"$'\n'"$partial" \
+            --jq .id

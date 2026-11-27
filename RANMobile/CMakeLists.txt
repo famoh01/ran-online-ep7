@@ -11,13 +11,19 @@ set(RANMOBILE_SOURCES
     Engine/Resource/ResourceManager.cpp
     Engine/Touch/TouchSystem.cpp
     Engine/Camera/MobileCamera.cpp
+    Engine/Scene/EP7SceneRenderer.cpp
     Engine/Animation/AnimationManager.cpp
     Engine/Audio/AudioManager.cpp
     Engine/Network/NetworkClient.cpp
     Data/Validator/DataValidator.cpp
     Data/Importer/EP7AssetImporter.cpp
+    Data/Importer/EP7AssetPipeline.cpp
+    Data/Importer/EP7HashVerify.cpp
+    Data/Importer/EP7SerialFile.cpp
+    Data/Importer/EP7SceneData.cpp
     Data/Importer/EP7TextureDecoder.cpp
     Data/Importer/EP7WorldCharParser.cpp
+    Data/Importer/EP7WorldParser.cpp
     Data/Converter/RANMobileDataConverter.cpp
     Data/Loader/GameDataLoader.cpp
     Data/Loader/ThaiPackLoader.cpp
@@ -30,6 +36,7 @@ set(RANMOBILE_SOURCES
     Client/Quest/QuestManager.cpp
     Client/Map/MapManager.cpp
     Client/Chat/ChatManager.cpp
+    UI/Foundation/MobileUIKit.cpp
     UI/Login/LoginScreen.cpp
     UI/Joystick/VirtualJoystick.cpp
     UI/Buttons/MobileButton.cpp
