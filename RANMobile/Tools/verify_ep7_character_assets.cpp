@@ -411,9 +411,14 @@ int main(int argc, char** argv) {
 
     const std::string root = argv[1];
     size_t maxFiles = 20000;
+    std::string bundleDir;
+    std::string bundleChf;
     for (int i = 2; i < argc; ++i) {
         if (std::strcmp(argv[i], "--max-files") == 0 && i + 1 < argc) {
             maxFiles = static_cast<size_t>(std::strtoul(argv[++i], nullptr, 10));
+        } else if (std::strcmp(argv[i], "--bundle-plan") == 0 && i + 2 < argc) {
+            bundleDir = argv[++i];
+            bundleChf = argv[++i];
         }
     }
 
@@ -545,6 +550,106 @@ int main(int argc, char** argv) {
             }
         }
         if (checked == 0) std::printf("     (no character assets inside)\n");
+    }
+
+    // ---------------------------------------------------------------------------
+    // B19 bundle-plan: write ONE authentic character's dependency set (chf + cps +
+    // x + textures, exactly what the loader/resolver requested) to a directory for
+    // APK bundling.  Runs only when --bundle-plan is given; exit code is unchanged
+    // (a bundle failure is printed, not turned into a verdict change).
+    // ---------------------------------------------------------------------------
+    if (!bundleDir.empty()) {
+        std::string chfName;
+        for (const auto& kv : g_b18.entries) {
+            if (!EndsWithNoCase(kv.first, ".chf")) continue;
+            if (kv.first.find(bundleChf) == std::string::npos) continue;
+            chfName = kv.first;
+            break;
+        }
+        if (chfName.empty()) {
+            std::printf("\nbundle-plan: no .chf matching '%s' found in packs\n", bundleChf.c_str());
+        } else {
+            std::map<std::string, std::vector<uint8_t>> written;
+            std::vector<std::string> requestedOrder;
+            std::pair<std::map<std::string, std::vector<uint8_t>>*, std::vector<std::string>*>
+                bundleCtx{&written, &requestedOrder};
+            RANMobile::EP7CharacterLoader loader;
+            loader.SetResolver([](void* ud, const std::string& name, std::vector<uint8_t>& out) {
+                auto* ctx = static_cast<std::pair<std::map<std::string, std::vector<uint8_t>>*,
+                                                  std::vector<std::string>*>*>(ud);
+                if (B18Resolve(name, out)) {
+                    (*ctx->first)[name] = out;
+                    ctx->second->push_back(name);
+                    return true;
+                }
+                ctx->second->push_back(name);
+                return false;
+            }, &bundleCtx);
+            std::vector<uint8_t> chfBytes;
+            if (B18Resolve(chfName, chfBytes)) {
+                written[chfName] = chfBytes;
+                requestedOrder.push_back(chfName);
+                const RANMobile::EP7CharacterScene::AssetPtr asset =
+                    std::make_shared<RANMobile::EP7CharacterAsset>(
+                        loader.LoadCharacter(chfBytes, false));
+                std::printf("bundle-plan: chf '%s' loaded=%d pieces=%u\n", chfName.c_str(),
+                            asset->loaded ? 1 : 0, asset->pieceCount);
+                // Texture names via the production ladder (cps materials + .x subsets).
+                for (uint32_t slot = 0; slot < RANMobile::kEP7PieceSize; ++slot) {
+                    const RANMobile::EP7CharacterPiece& piece = asset->pieces[slot];
+                    if (!piece.loaded) continue;
+                    std::map<std::string, int> names;
+                    for (const auto& mat : piece.info.materials) {
+                        if (!mat.texture.empty()) names[mat.texture] = 1;
+                    }
+                    for (const auto& subset : piece.mesh.subsets) {
+                        if (!subset.texture.empty()) names[subset.texture] = 2;
+                    }
+                    for (const auto& kv : names) {
+                        std::vector<uint8_t> bytes;
+                        std::string hit;
+                        const std::string& n = kv.first;
+                        if (B18Resolve(n, bytes)) hit = n;
+                        const size_t dot = n.find_last_of('.');
+                        if (hit.empty() && dot != std::string::npos &&
+                            B18Resolve(n.substr(0, dot) + ".mtf", bytes)) {
+                            hit = n.substr(0, dot) + ".mtf";
+                        }
+                        if (hit.empty() && B18Resolve(n + ".mtf", bytes)) hit = n + ".mtf";
+                        if (!hit.empty() && written.find(hit) == written.end()) {
+                            written[hit] = bytes;
+                            requestedOrder.push_back(hit);
+                        }
+                    }
+                }
+                std::sort(requestedOrder.begin(), requestedOrder.end());
+                requestedOrder.erase(std::unique(requestedOrder.begin(), requestedOrder.end()),
+                                     requestedOrder.end());
+                size_t totalBytes = 0;
+                bool allWritten = true;
+                for (const auto& name : requestedOrder) {
+                    const auto it = written.find(name);
+                    if (it == written.end()) continue;
+                    const std::string path = bundleDir + "/" + name;
+                    std::FILE* f = std::fopen(path.c_str(), "wb");
+                    if (!f) {
+                        allWritten = false;
+                        continue;
+                    }
+                    std::fwrite(it->second.data(), 1, it->second.size(), f);
+                    std::fclose(f);
+                    totalBytes += it->second.size();
+                }
+                std::FILE* manifest = std::fopen((bundleDir + "/manifest.txt").c_str(), "wb");
+                if (manifest) {
+                    for (const auto& name : requestedOrder) std::fprintf(manifest, "%s\n", name.c_str());
+                    std::fclose(manifest);
+                }
+                std::printf("bundle-plan: %zu files, %zu bytes -> %s (allWritten=%d)\n",
+                            requestedOrder.size(), totalBytes, bundleDir.c_str(),
+                            allWritten ? 1 : 0);
+            }
+        }
     }
 
     // ---------------------------------------------------------------------------

@@ -135,18 +135,30 @@ void RANMobileEngine::Render() {
                         const float* palette = nullptr;
                         uint32_t paletteCount = 0;
                         const bool havePalette = m_characterScene->GetPiecePalette(*instance, slot, &palette, &paletteCount);
-                        if (gpuHandle != 0 && havePalette) {
+                        // B19 §5: validate subset/material mapping before drawing
+                        // (face ranges + AttribId bounds).  A mismatch is reported and
+                        // the piece falls back to the CPU path — never guessed.
+                        RANMobile::EP7CharacterScene::EP7SubsetValidation subsetValidation;
+                        const bool subsetsValid = m_characterScene->ValidatePieceSubsets(
+                            instance->asset, slot, &subsetValidation);
+                        if (!subsetsValid && !piece.mesh.subsets.empty()) {
+                            RANMobile::Logger::Warn("RANMobileEngine",
+                                "subset validation failed for piece slot " + std::to_string(slot) +
+                                ": " + subsetValidation.detail + " — using CPU path");
+                        }
+                        if (gpuHandle != 0 && havePalette && (subsetsValid || piece.mesh.subsets.empty())) {
                             const auto& subsets = piece.mesh.subsets;
                             if (!subsets.empty()) {
                                 for (uint32_t s = 0; s < subsets.size(); ++s) {
                                     if (subsets[s].faceCount == 0) continue;
                                     const uint32_t texId = m_characterScene->GetPieceTextureId(instance->asset, slot, s);
                                     // cps FLAG_ALPHATEXTURE = 0x0001 (SMATERIAL_PIECE) drives
-                                    // per-subset alpha blending; untextured subsets keep the
-                                    // flat material colour.
+                                    // per-subset alpha blending; the material is selected by
+                                    // the subset's AttribId (DxSkinMesh9_CPU.cpp:584-587), so
+                                    // out-of-order/shared materials still get the right flag.
                                     bool alphaBlend = false;
-                                    if (s < piece.info.materials.size()) {
-                                        alphaBlend = (piece.info.materials[s].flags & 0x0001u) != 0;
+                                    if (subsets[s].materialIndex < piece.info.materials.size()) {
+                                        alphaBlend = (piece.info.materials[subsets[s].materialIndex].flags & 0x0001u) != 0;
                                     }
                                     const float texColor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
                                     const float flatColor[4] = {0.75f, 0.75f, 0.75f, 1.0f};
@@ -235,6 +247,37 @@ void RANMobileEngine::OnTextInput(const std::string& utf8) {
 
 void RANMobileEngine::OnBackspace() {
     if (m_loginScreen) m_loginScreen->HandleBackspace();
+}
+
+void RANMobileEngine::OnGpuContextLost() {
+    if (!m_initialized) return;
+    RANMobile::Logger::Info("RANMobileEngine", "GPU context lost — releasing GL resources (game state preserved)");
+    if (m_characterScene) {
+        m_characterScene->ReleaseGpuResources();  // B19: also resets piece.gpuMeshHandle
+    }
+    if (m_renderer) {
+        m_renderer->ReleaseGlResources();
+    }
+}
+
+bool RANMobileEngine::EnsureGpuContext(int width, int height) {
+    if (!m_initialized) return Initialize();
+    if (!m_renderer) return false;
+    if (m_renderer->IsInitialized()) {
+        m_renderer->Resize(width, height);
+        return true;
+    }
+    // Rebuild after a context loss.  Initialize() recreates the GL objects
+    // (programs, VAO/VBO/EBO, palette UBO); the scene re-uploads lazily because
+    // ReleaseGpuResources reset every cached handle.
+    if (!m_renderer->Initialize(width, height)) {
+        RANMobile::Logger::Error("RANMobileEngine", "Failed to rebuild renderer after GPU context loss");
+        return false;
+    }
+    if (m_characterScene) {
+        m_characterScene->SetRenderer(m_renderer.get());
+    }
+    return true;
 }
 
 void RANMobileEngine::Shutdown() {

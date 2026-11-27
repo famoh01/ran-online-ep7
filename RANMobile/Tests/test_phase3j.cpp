@@ -2981,6 +2981,270 @@ void TestB18GpuSkinningAndTextures() {
     }
 }
 
+void TestB19SubsetMappingAndLifecycle() {
+    using namespace RANMobile;
+    // Minimal VALID uncompressed TGA (2x1 red) — the scene decodes before caching,
+    // so the resolver must return real image bytes, not arbitrary ones.
+    const auto MakeTgaBytes = [](std::vector<uint8_t>& out) {
+        out.clear();
+        out.insert(out.end(), {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 1, 0, 24, 0x20});  // 2x1
+        out.push_back(0); out.push_back(0); out.push_back(255);  // BGR red
+        out.push_back(0); out.push_back(0); out.push_back(255);
+    };
+    auto MakeSkeleton = []() {
+        auto skel = std::make_shared<EP7Skeleton>();
+        const std::string sx = SkeletonX();
+        skel->LoadFromXFile(reinterpret_cast<const uint8_t*>(sx.data()), sx.size());
+        return skel;
+    };
+    // ------------------------------------------------------------------
+    // B19 §5: subset -> material resolution goes through the subset's
+    // AttribId (DxSkinMesh9_CPU.cpp:584-587: pMaterialEx[AttribId]), NOT the
+    // subset position.  Subsets may be out of order / share materials.
+    // ------------------------------------------------------------------
+    {
+        EP7CharacterAsset asset;
+        asset.loaded = true;
+        asset.skeleton = MakeSkeleton();
+        asset.pieces.resize(kEP7PieceSize);
+        EP7CharacterPiece& piece = asset.pieces[0];
+        piece.loaded = true;
+        // .cps materials: index 0 -> "alpha.dds", index 1 -> "body.dds".
+        piece.info.materials.resize(2);
+        piece.info.materials[0].texture = "alpha.dds";
+        piece.info.materials[1].texture = "body.dds";
+        // Mesh with out-of-order subsets: subset 0 uses material 1, subset 1 uses
+        // material 0 (authentic face->material collapse, EP7SkinnedMesh.cpp:204-218).
+        piece.mesh.valid = true;
+        piece.mesh.geometryDecoded = true;
+        piece.mesh.vertexCount = 3;
+        piece.mesh.positions.assign(9, 0.0f);
+        piece.mesh.faces = {0, 1, 2};
+        EP7MeshSubset s0;
+        s0.materialIndex = 1;
+        s0.attributeId = 1;
+        s0.faceStart = 0;
+        s0.faceCount = 1;
+        s0.texture = "body_from_x.dds";
+        EP7MeshSubset s1;
+        s1.materialIndex = 0;
+        s1.attributeId = 0;
+        s1.faceStart = 0;
+        s1.faceCount = 1;
+        s1.texture = "alpha_from_x.dds";
+        piece.mesh.subsets.push_back(s0);
+        piece.mesh.subsets.push_back(s1);
+        piece.mesh.textures = {"body_from_x.dds", "alpha_from_x.dds"};
+        piece.gpuStreams.valid = true;
+        piece.gpuStreams.vertexCount = 3;
+        piece.gpuStreams.boneIndices.assign(12, 0.0f);
+        piece.gpuStreams.boneWeights.assign(12, 1.0f);
+
+        EP7CharacterScene scene;
+        std::vector<std::string> requested;
+        std::vector<uint8_t> tgaBytes;
+        MakeTgaBytes(tgaBytes);
+        // The resolver context is a pointer pair — keep it in a struct.
+        struct ResolveCtx {
+            std::vector<std::string>* names;
+            std::vector<uint8_t>* bytes;
+        } rctx{&requested, &tgaBytes};
+        scene.SetTextureResolver(
+            [](void* ud, const std::string& name, std::vector<uint8_t>& out) {
+                ResolveCtx* ctx = static_cast<ResolveCtx*>(ud);
+                ctx->names->push_back(name);
+                out = *ctx->bytes;
+                return true;
+            },
+            &rctx);
+        std::shared_ptr<MobileRenderer> renderer = std::make_shared<MobileRenderer>();
+        J_CHECK(renderer->Initialize(128, 128));
+        scene.SetRenderer(renderer.get());
+
+        J_CHECK(scene.ValidatePieceSubsets(std::make_shared<EP7CharacterAsset>(asset), 0, nullptr));
+
+        // Subset 0 (AttribId 1) must resolve the .cps material of index 1, not 0.
+        requested.clear();
+        const uint32_t t0 = scene.GetPieceTextureId(std::make_shared<EP7CharacterAsset>(asset), 0, 0);
+        J_CHECK(t0 != 0);
+        J_CHECK(requested.size() == 1 && requested[0] == "body.dds");
+        // Subset 1 (AttribId 0) must resolve "alpha.dds".
+        requested.clear();
+        const uint32_t t1 = scene.GetPieceTextureId(std::make_shared<EP7CharacterAsset>(asset), 0, 1);
+        J_CHECK(t1 != 0);
+        J_CHECK(requested.size() == 1 && requested[0] == "alpha.dds");
+    }
+
+    // materialIndex outside the .cps materials falls back to the .x subset texture
+    // (never the wrong .cps material, never a guess).
+    {
+        EP7CharacterAsset asset;
+        asset.loaded = true;
+        asset.skeleton = MakeSkeleton();
+        asset.pieces.resize(kEP7PieceSize);
+        EP7CharacterPiece& piece = asset.pieces[0];
+        piece.loaded = true;
+        piece.info.materials.resize(1);
+        piece.info.materials[0].texture = "mat0.dds";
+        piece.mesh.valid = true;
+        piece.mesh.geometryDecoded = true;
+        piece.mesh.vertexCount = 3;
+        piece.mesh.positions.assign(9, 0.0f);
+        piece.mesh.faces = {0, 1, 2};
+        EP7MeshSubset s;
+        s.materialIndex = 3;  // outside .cps materials (1) AND .x textures (1)
+        s.faceStart = 0;
+        s.faceCount = 1;
+        piece.mesh.subsets.push_back(s);
+        piece.mesh.textures = {"mat0_from_x.dds"};
+        piece.gpuStreams.valid = true;
+        piece.gpuStreams.vertexCount = 3;
+        piece.gpuStreams.boneIndices.assign(12, 0.0f);
+        piece.gpuStreams.boneWeights.assign(12, 1.0f);
+
+        EP7CharacterScene scene;
+        std::vector<std::string> requested;
+        scene.SetTextureResolver(
+            [](void* ud, const std::string& name, std::vector<uint8_t>& out) {
+                static_cast<std::vector<std::string>*>(ud)->push_back(name);
+                out.assign(4, 0);
+                return true;
+            },
+            &requested);
+        std::shared_ptr<MobileRenderer> renderer = std::make_shared<MobileRenderer>();
+        scene.SetRenderer(renderer.get());
+
+        EP7CharacterScene::EP7SubsetValidation v;
+        J_CHECK(!scene.ValidatePieceSubsets(std::make_shared<EP7CharacterAsset>(asset), 0, &v));
+        J_CHECK(v.detail.find("materialIndex 3") != std::string::npos);
+        J_CHECK(!v.valid);
+        (void)requested;
+    }
+
+    // Face range outside the index buffer is rejected (never drawn).
+    {
+        EP7CharacterAsset asset;
+        asset.loaded = true;
+        asset.skeleton = MakeSkeleton();
+        asset.pieces.resize(kEP7PieceSize);
+        EP7CharacterPiece& piece = asset.pieces[0];
+        piece.loaded = true;
+        piece.mesh.valid = true;
+        piece.mesh.geometryDecoded = true;
+        piece.mesh.vertexCount = 3;
+        piece.mesh.positions.assign(9, 0.0f);
+        piece.mesh.faces = {0, 1, 2};
+        EP7MeshSubset s;
+        s.materialIndex = 0;
+        s.faceStart = 0;
+        s.faceCount = 4;  // only 1 face exists
+        piece.mesh.subsets.push_back(s);
+        piece.gpuStreams.valid = true;
+        piece.gpuStreams.vertexCount = 3;
+        piece.gpuStreams.boneIndices.assign(12, 0.0f);
+        piece.gpuStreams.boneWeights.assign(12, 1.0f);
+
+        EP7CharacterScene scene;
+        EP7CharacterScene::EP7SubsetValidation v;
+        J_CHECK(!scene.ValidatePieceSubsets(std::make_shared<EP7CharacterAsset>(asset), 0, &v));
+        J_CHECK(v.detail.find("face range") != std::string::npos);
+    }
+
+    // subsetIndex outside the subset table -> 0 with a logged warning, no OOB.
+    {
+        EP7CharacterAsset asset;
+        asset.loaded = true;
+        asset.skeleton = MakeSkeleton();
+        asset.pieces.resize(kEP7PieceSize);
+        EP7CharacterPiece& piece = asset.pieces[0];
+        piece.loaded = true;
+        piece.info.materials.resize(1);
+        piece.info.materials[0].texture = "mat0.dds";
+        piece.mesh.valid = true;
+        piece.mesh.geometryDecoded = true;
+        piece.mesh.vertexCount = 3;
+        piece.mesh.positions.assign(9, 0.0f);
+        piece.mesh.faces = {0, 1, 2};
+        EP7MeshSubset s;
+        s.materialIndex = 0;
+        s.faceStart = 0;
+        s.faceCount = 1;
+        piece.mesh.subsets.push_back(s);
+        piece.gpuStreams.valid = true;
+        piece.gpuStreams.vertexCount = 3;
+        piece.gpuStreams.boneIndices.assign(12, 0.0f);
+        piece.gpuStreams.boneWeights.assign(12, 1.0f);
+
+        EP7CharacterScene scene;
+        std::shared_ptr<MobileRenderer> renderer = std::make_shared<MobileRenderer>();
+        J_CHECK(renderer->Initialize(128, 128));
+        scene.SetRenderer(renderer.get());
+        J_CHECK(scene.GetPieceTextureId(std::make_shared<EP7CharacterAsset>(asset), 0, 1) == 0);
+        J_CHECK(scene.GetPieceTextureId(std::make_shared<EP7CharacterAsset>(asset), 0, 99) == 0);
+    }
+
+    // ------------------------------------------------------------------
+    // B19 §7: ReleaseGpuResources resets every piece's cached GPU handle so a
+    // context loss never leaves stale handles behind (rotation/restore path).
+    // ------------------------------------------------------------------
+    {
+        EP7CharacterScene scene;
+        std::shared_ptr<MobileRenderer> renderer = std::make_shared<MobileRenderer>();
+        J_CHECK(renderer->Initialize(128, 128));
+        scene.SetRenderer(renderer.get());
+
+        EP7CharacterAsset asset;
+        asset.loaded = true;
+        asset.skeleton = MakeSkeleton();
+        asset.pieces.resize(kEP7PieceSize);
+        EP7CharacterPiece& piece = asset.pieces[0];
+        piece.loaded = true;
+        piece.mesh.valid = true;
+        piece.mesh.geometryDecoded = true;
+        piece.mesh.vertexCount = 3;
+        piece.mesh.positions.assign(9, 0.0f);
+        piece.mesh.faces = {0, 1, 2};
+        piece.gpuStreams.valid = true;
+        piece.gpuStreams.vertexCount = 3;
+        piece.gpuStreams.boneIndices.assign(12, 0.0f);
+        piece.gpuStreams.boneWeights.assign(12, 1.0f);
+
+        EP7CharacterScene::AssetPtr shared = std::make_shared<EP7CharacterAsset>(asset);
+        J_CHECK(scene.RegisterAsset(shared));
+        const uint32_t handle = scene.EnsurePieceGpuHandle(shared, 0);
+        J_CHECK(handle != 0);
+        J_CHECK(shared->pieces[0].gpuMeshHandle == handle);
+        J_CHECK(renderer->GpuMeshCount() == 1);
+
+        scene.ReleaseGpuResources();
+        J_CHECK(shared->pieces[0].gpuMeshHandle == 0);          // stale handle reset
+        J_CHECK(renderer->GpuMeshCount() == 0);
+        scene.ReleaseGpuResources();                            // second release is safe
+        J_CHECK(shared->pieces[0].gpuMeshHandle == 0);
+        // Re-upload after release must produce a working handle again.
+        const uint32_t handle2 = scene.EnsurePieceGpuHandle(shared, 0);
+        J_CHECK(handle2 != 0);
+        scene.ReleaseGpuResources();
+    }
+
+    // Renderer Shutdown must free unreleased GPU mesh registry entries
+    // (B19 leak fix: the headless path previously skipped the cleanup).
+    {
+        std::shared_ptr<MobileRenderer> renderer = std::make_shared<MobileRenderer>();
+        RANMobile::GpuSkinnedMeshData data;
+        std::vector<float> interleaved(3 * 16, 0.0f);
+        std::vector<uint32_t> indices = {0, 1, 2};
+        data.interleaved = interleaved.data();
+        data.vertexCount = 3;
+        data.indices = indices.data();
+        data.indexCount = 3;
+        const uint32_t handle = renderer->UploadGpuSkinnedMesh(data);
+        J_CHECK(handle != 0);
+        renderer->Shutdown();  // ASan validates the registry objects are freed
+        J_CHECK(renderer->GpuMeshCount() == 0);
+    }
+}
+
 void TestMath() {
     Section("math / quaternion decompression");
     using namespace RANMobile::ep7math;
@@ -3342,6 +3606,7 @@ int main() {
     TestCharacterScene();
     TestB17RuntimeSemantics();
     TestB18GpuSkinningAndTextures();
+    TestB19SubsetMappingAndLifecycle();
     TestMath();
     TestRobustness();
     TestRccArchive();

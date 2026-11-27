@@ -34,6 +34,16 @@ public:
     void Start();
     void Update(float deltaTime);
     void Render();
+
+    // B19 GPU-resource lifecycle: called by the Android bridge when the EGL context is
+    // destroyed (window loss/rotation).  Releases every GL object (renderer + scene
+    // caches) and resets cached handles so the next window rebuilds cleanly instead
+    // of drawing with stale handles.  Game/login state is preserved.
+    void OnGpuContextLost();
+
+    // B19: re-creates the renderer's GL objects after OnGpuContextLost (the engine
+    // itself stays initialized).  Returns false when the renderer cannot be rebuilt.
+    bool EnsureGpuContext(int width, int height);
     void Resize(int width, int height);
     void Pause();
     void Resume();

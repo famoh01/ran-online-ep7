@@ -91,6 +91,7 @@ layout(location = 2) in vec2 aUV;
 uniform mat4 uVP;
 out vec3 vNormal;
 out vec2 vUV;
+out vec3 vSkinnedPos;  // B19: transform-feedback capture point (CPU/GPU skinning comparison)
 void main() {
     gl_Position = uVP * vec4(aPos, 1.0);
     vNormal = aNormal;
@@ -152,6 +153,7 @@ layout(std140) uniform BonePaletteBlock {
 uniform mat4 uVP;
 out vec3 vNormal;
 out vec2 vUV;
+out vec3 vSkinnedPos;  // B19: transform-feedback capture point (CPU/GPU skinning comparison)
 void main() {
     vec4 acc = vec4(0.0);
     vec3 nAcc = vec3(0.0);
@@ -183,6 +185,7 @@ void main() {
     gl_Position = uVP * vec4(pos, 1.0);
     vNormal = nrm;
     vUV = aUV;
+    vSkinnedPos = pos;
 }
 )";
 
@@ -355,6 +358,11 @@ bool MobileRenderer::Initialize(int width, int height) {
         m_charGpuProgram = glCreateProgram();
         glAttachShader(m_charGpuProgram, gvs);
         glAttachShader(m_charGpuProgram, gfs);
+        // B19: declare the transform-feedback capture set BEFORE linking so the
+        // self-test captures skinned positions/normals from this exact program.
+        // Inert for normal rendering (TF objects are bound only during capture).
+        static const char* tfVaryings[] = { "vSkinnedPos", "vNormal" };
+        glTransformFeedbackVaryings(m_charGpuProgram, 2, tfVaryings, GL_INTERLEAVED_ATTRIBS);
         glLinkProgram(m_charGpuProgram);
         glDeleteShader(gvs);
         glDeleteShader(gfs);
@@ -407,7 +415,34 @@ void MobileRenderer::Resize(int width, int height) {
 }
 
 void MobileRenderer::Shutdown() {
+    ReleaseGlResources();
+    m_glyphCache.clear();
+    m_scene3DActive = false;
+    m_initialized = false;
+}
+
+// B19: full GL resource release.  Runs on every build: on Android the GL objects
+// are deleted against the current (still-live) context; headless builds only
+// free the registry heap (B19 leak fix — Shutdown previously left unreleased
+// GpuMeshGlState objects alive outside __ANDROID__).  The renderer stays
+// reusable: Initialize() rebuilds everything.
+void MobileRenderer::ReleaseGlResources() {
+    for (auto& kv : m_gpuMeshes) {
+        GpuMeshGlState* state = static_cast<GpuMeshGlState*>(kv.second);
+        if (state) {
 #ifdef __ANDROID__
+            if (state->ebo) glDeleteBuffers(1, &state->ebo);
+            if (state->vbo) glDeleteBuffers(1, &state->vbo);
+            if (state->vao) glDeleteVertexArrays(1, &state->vao);
+#endif
+            delete state;
+        }
+    }
+    m_gpuMeshes.clear();
+    m_gpuMeshCount = 0;
+    m_nextGpuMeshHandle = 1;
+#ifdef __ANDROID__
+    if (m_gpuPaletteUBO) { glDeleteBuffers(1, &m_gpuPaletteUBO); m_gpuPaletteUBO = 0; }
     if (m_fontAtlasTex) { glDeleteTextures(1, &m_fontAtlasTex); m_fontAtlasTex = 0; }
     if (m_uiVBO) { glDeleteBuffers(1, &m_uiVBO); m_uiVBO = 0; }
     if (m_uiVAO) { glDeleteVertexArrays(1, &m_uiVAO); m_uiVAO = 0; }
@@ -416,25 +451,19 @@ void MobileRenderer::Shutdown() {
     if (m_charVBO) { glDeleteBuffers(1, &m_charVBO); m_charVBO = 0; }
     if (m_charVAO) { glDeleteVertexArrays(1, &m_charVAO); m_charVAO = 0; }
     if (m_charProgram) { glDeleteProgram(m_charProgram); m_charProgram = 0; }
-    for (auto& kv : m_gpuMeshes) {
-        GpuMeshGlState* state = static_cast<GpuMeshGlState*>(kv.second);
-        if (state) {
-            if (state->ebo) glDeleteBuffers(1, &state->ebo);
-            if (state->vbo) glDeleteBuffers(1, &state->vbo);
-            if (state->vao) glDeleteVertexArrays(1, &state->vao);
-            delete state;
-        }
-    }
-    m_gpuMeshes.clear();
-    m_gpuMeshCount = 0;
-    m_nextGpuMeshHandle = 1;
-    if (m_gpuPaletteUBO) { glDeleteBuffers(1, &m_gpuPaletteUBO); m_gpuPaletteUBO = 0; }
     if (m_charGpuProgram) { glDeleteProgram(m_charGpuProgram); m_charGpuProgram = 0; }
 #endif
-    m_glyphCache.clear();
-    m_scene3DActive = false;
-    m_initialized = false;
 }
+
+#ifdef __ANDROID__
+// B19 self-test accessors: the harness inspects the SAME shader source the
+// driver compiled, so the verified math is literally the shipped math.
+const char* MobileRenderer::CharGpuVertexShaderSource() { return kCharGpuVertexShader; }
+const char* MobileRenderer::CharGpuFragmentShaderSource() { return kCharGpuFragmentShader; }
+#else
+const char* MobileRenderer::CharGpuVertexShaderSource() { return nullptr; }
+const char* MobileRenderer::CharGpuFragmentShaderSource() { return nullptr; }
+#endif
 
 void MobileRenderer::BeginFrame() {
     m_stats = RenderStats{};
@@ -633,16 +662,31 @@ uint32_t MobileRenderer::UploadRGBA8Texture(uint32_t width, uint32_t height, con
     glGenTextures(1, &texId);
     if (texId == 0) return 0;
     glBindTexture(GL_TEXTURE_2D, texId);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    // B19: authentic sampling state.  The original engine requests a full mip
+    // chain (D3DXCreateTextureFromFileEx, MipLevels=D3DX_DEFAULT, MipFilter=BOX,
+    // TextureManager.cpp:212-217) and sets MINFILTER=MIPFILTER=LINEAR for skin
+    // draws (DxSkinMesh9_HLSL.cpp:324-325) with the D3D9 default WRAP address
+    // mode.  GLES3 supports REPEAT + mipmaps on NPOT textures, so reproduce it.
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, static_cast<GLsizei>(width), static_cast<GLsizei>(height),
                  0, GL_RGBA, GL_UNSIGNED_BYTE, rgba8);
+    glGenerateMipmap(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
     return static_cast<uint32_t>(texId);
 #else
     return 1; // Non-Android headless test stub
+#endif
+}
+
+void MobileRenderer::SetViewProjectionOverride(const float colMajor[16]) {
+#ifdef __ANDROID__
+    if (!colMajor) return;
+    for (int i = 0; i < 16; ++i) m_viewProj[i] = colMajor[i];
+#else
+    (void)colMajor;
 #endif
 }
 

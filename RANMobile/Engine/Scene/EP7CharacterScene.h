@@ -175,6 +175,11 @@ public:
     bool Destroy(uint32_t instanceId);
     void Clear();
 
+    // B19: releases every GL object this scene created (mesh handles + texture
+    // cache) and resets the pieces' cached handles.  Called by the engine when
+    // the GPU context is lost and by Clear(); safe to call twice.
+    void ReleaseGpuResources();
+
     EP7CharacterInstance* Find(uint32_t instanceId);
     const std::vector<std::unique_ptr<EP7CharacterInstance>>& Instances() const { return m_instances; }
 
@@ -239,6 +244,20 @@ public:
         m_textureResolverData = userData;
     }
 
+    // B19 (§5): subset/material mapping validation — resolves the B18 TODO.
+    // Authentic semantics (DxSkinMesh9_CPU.cpp:584-587): each attribute group
+    // ("subset") indexes the material array through its AttribId, not by position.
+    // Validates every subset of the piece: face range inside the index buffer and
+    // materialIndex inside the material array.  Mismatches are reported, never
+    // guessed or patched.
+    struct EP7SubsetValidation {
+        bool valid = false;
+        uint32_t subsetCount = 0;
+        uint32_t materialCount = 0;
+        std::string detail;   // empty when valid; first mismatch otherwise
+    };
+    bool ValidatePieceSubsets(const AssetPtr& asset, uint32_t slot, EP7SubsetValidation* out) const;
+
     // Returns the renderer handle for the piece's static GPU mesh (0 = unsupported
     // piece; the caller falls back to the B17 CPU path).  Uploads once per piece.
     uint32_t EnsurePieceGpuHandle(const AssetPtr& asset, uint32_t slot);
@@ -265,8 +284,8 @@ private:
     void* m_textureResolverData = nullptr;
     std::unordered_map<std::string, uint32_t> m_textureCache;  // lowercase name -> GL id
     std::vector<uint32_t> m_uploadedGpuMeshes;                 // handles this scene created
+    std::vector<AssetPtr> m_assetRegistry;                     // B19: so ReleaseGpuResources can reset piece.gpuMeshHandle
 
-    void ReleaseGpuResources();
     uint32_t ResolveTextureLocked(const std::string& textureName);
 };
 

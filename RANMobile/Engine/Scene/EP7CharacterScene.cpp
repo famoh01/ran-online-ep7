@@ -1,9 +1,12 @@
 #include "EP7CharacterScene.h"
 #include "../../Data/Importer/EP7TextureDecoder.h"
+#include "../Core/Logger.h"
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cctype>
+#include <cstdio>
 #include <cstring>
 
 namespace RANMobile {
@@ -171,6 +174,11 @@ bool EP7CharacterScene::RegisterAsset(const AssetPtr& asset) {
     if (!asset->loaded || !asset->skeleton || !asset->skeleton->IsValid()) {
         m_lastError = "character asset is not loaded: " + asset->error;
         return false;
+    }
+    // B19: keep a reference so ReleaseGpuResources can reset piece.gpuMeshHandle
+    // (a stale handle must never survive a GPU-context release — see OnGpuContextLost).
+    if (std::find(m_assetRegistry.begin(), m_assetRegistry.end(), asset) == m_assetRegistry.end()) {
+        m_assetRegistry.push_back(asset);
     }
     return true;
 }
@@ -484,6 +492,15 @@ void EP7CharacterScene::ReleaseGpuResources() {
     }
     m_uploadedGpuMeshes.clear();
     m_textureCache.clear();
+    // B19: reset every piece's cached handle — after a GPU-context loss those GL
+    // objects no longer exist, so a later EnsurePieceGpuHandle must re-upload.
+    for (const AssetPtr& asset : m_assetRegistry) {
+        if (!asset) continue;
+        for (EP7CharacterPiece& piece : asset->pieces) {
+            piece.gpuMeshHandle = 0;
+        }
+    }
+    m_assetRegistry.clear();
 }
 
 uint32_t EP7CharacterScene::EnsurePieceGpuHandle(const AssetPtr& asset, uint32_t slot) {
@@ -585,20 +602,79 @@ uint32_t EP7CharacterScene::ResolveTextureLocked(const std::string& textureName)
     return 0;
 }
 
+bool EP7CharacterScene::ValidatePieceSubsets(const AssetPtr& asset, uint32_t slot,
+                                             EP7SubsetValidation* out) const {
+    EP7SubsetValidation local;
+    EP7SubsetValidation& v = out ? *out : local;
+    v.valid = false;
+    v.detail.clear();
+    v.subsetCount = 0;
+    v.materialCount = 0;
+    if (!asset || slot >= kEP7PieceSize) {
+        v.detail = "invalid asset or slot";
+        return false;
+    }
+    const EP7CharacterPiece& piece = asset->pieces[slot];
+    if (!piece.loaded) {
+        v.detail = "piece not loaded";
+        return false;
+    }
+    v.subsetCount = static_cast<uint32_t>(piece.mesh.subsets.size());
+    v.materialCount = static_cast<uint32_t>(piece.info.materials.size());
+    const uint32_t faceTotal = static_cast<uint32_t>(piece.mesh.faces.size()) / 3;
+    for (const EP7MeshSubset& subset : piece.mesh.subsets) {
+        // Face range must sit inside the index buffer (SMeshContainer draws the
+        // index buffer per attribute group — an OOB range would read garbage).
+        if (subset.faceCount == 0 || subset.faceStart + subset.faceCount > faceTotal) {
+            char buf[160];
+            std::snprintf(buf, sizeof(buf), "subset face range [%u,+%u) exceeds %u faces",
+                          subset.faceStart, subset.faceCount, faceTotal);
+            v.detail = buf;
+            return false;
+        }
+        // materialIndex is the AttribId into the material array
+        // (DxSkinMesh9_CPU.cpp:584-587: pMaterialEx[pAttribTable[iAttrib].AttribId]).
+        // A materialIndex outside BOTH arrays cannot resolve any texture.
+        if (subset.materialIndex >= v.materialCount &&
+            subset.materialIndex >= piece.mesh.textures.size()) {
+            char buf[160];
+            std::snprintf(buf, sizeof(buf), "subset materialIndex %u outside %u .cps materials and %zu .x materials",
+                          subset.materialIndex, v.materialCount, piece.mesh.textures.size());
+            v.detail = buf;
+            return false;
+        }
+    }
+    v.valid = true;
+    return true;
+}
+
 uint32_t EP7CharacterScene::GetPieceTextureId(const AssetPtr& asset, uint32_t slot, uint32_t subsetIndex) {
     if (!asset || slot >= kEP7PieceSize) return 0;
     const EP7CharacterPiece& piece = asset->pieces[slot];
     if (!piece.loaded) return 0;
+    if (subsetIndex >= piece.mesh.subsets.size()) {
+        // B19: never guess — the subset table is authoritative for face ranges.
+        Logger::Warn("EP7CharacterScene", "subset index " + std::to_string(subsetIndex) +
+                     " outside " + std::to_string(piece.mesh.subsets.size()) +
+                     " subsets of piece slot " + std::to_string(slot));
+        return 0;
+    }
 
-    // Authentic association (DxSkinPieceContainer.cpp:82 SMATERIAL_PIECE::LoadTexture):
-    // the .cps material texture name is the binding key; the .x MeshMaterialList name is
-    // the fallback (the .cps materials array corresponds 1:1 with the mesh's attribute
-    // groups — DxCharPart::SetPart copies SMATERIAL_PIECE[m_dwMaterialNum] verbatim).
+    // B19 authentic association, resolving the B18 TODO (subsetIndex <-> EP7MaterialPiece):
+    // the .x importer collapses the face->material array into contiguous subsets and
+    // records each subset's AttribId (EP7SkinnedMesh.cpp:204-218).  The original draw
+    // loop binds the material THROUGH that AttribId — pMaterialEx[pAttribTable[iAttrib].
+    // AttribId] (DxSkinMesh9_CPU.cpp:584-587) — so subsets may reference materials out
+    // of order or share one material.  Texture name priority is unchanged
+    // (DxSkinPieceContainer.cpp:82 SMATERIAL_PIECE::LoadTexture: .cps material name is
+    // the binding key, .x MeshMaterialList name is the fallback).
+    const EP7MeshSubset& subset = piece.mesh.subsets[subsetIndex];
     std::string name;
-    if (subsetIndex < piece.info.materials.size() && !piece.info.materials[subsetIndex].texture.empty()) {
-        name = piece.info.materials[subsetIndex].texture;
-    } else if (subsetIndex < piece.mesh.subsets.size()) {
-        name = piece.mesh.subsets[subsetIndex].texture;
+    if (subset.materialIndex < piece.info.materials.size() &&
+        !piece.info.materials[subset.materialIndex].texture.empty()) {
+        name = piece.info.materials[subset.materialIndex].texture;
+    } else {
+        name = subset.texture;  // .x MeshMaterialList material name (already material-resolved)
     }
     if (name.empty() || name.rfind("material_", 0) == 0) return 0;  // synthetic fallback name
     return ResolveTextureLocked(name);

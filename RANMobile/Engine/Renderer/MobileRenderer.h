@@ -114,8 +114,35 @@ public:
     uint32_t GpuDrawCount() const { return m_gpuDrawCount; }
     uint32_t GpuDrawFailures() const { return m_gpuDrawFailures; }
 
+    // B19 diagnostics (live-GLES verification): whether the GPU skin program is
+    // compiled and linked, and the shader sources used for the skinning program
+    // (the GpuSelfTest harness inspects the exact source text shipped to the GL
+    // driver).  Headless builds have no GL program — Ready() is false and the
+    // source accessors return nullptr.
+    bool GpuSkinProgramReady() const {
+#ifdef __ANDROID__
+        return m_charGpuProgram != 0;
+#else
+        return false;
+#endif
+    }
+    static const char* CharGpuVertexShaderSource();
+    static const char* CharGpuFragmentShaderSource();
+
+    // B19 GPU-resource lifecycle: releases every GL object the renderer owns
+    // (programs, VAO/VBO/EBO, palette UBO, per-mesh buffers, font atlas) while
+    // keeping the renderer object usable.  Called by the app when the EGL
+    // context is destroyed (window loss/rotation) so the next context rebuilds
+    // instead of drawing with stale handles; Shutdown() forwards here.
+    void ReleaseGlResources();
+
     uint32_t UploadRGBA8Texture(uint32_t width, uint32_t height, const uint8_t* rgba8);
     void DeleteTexture(uint32_t texId);
+
+    // B19 diagnostic: overrides the view-projection matrix DrawGpuSkinnedMesh
+    // uploads until the next BeginScene3D recomputes it.  Lets the GpuSelfTest
+    // render NDC-space fixtures deterministically (pixel-level verification).
+    void SetViewProjectionOverride(const float colMajor[16]);
 
     static uint32_t DecodeUTF8(const std::string& text, size_t& index);
 
