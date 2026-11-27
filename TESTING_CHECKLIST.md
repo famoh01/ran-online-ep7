@@ -187,3 +187,78 @@ The existing 33-source host build now includes the 8 Phase 3J sources.
   (B1), not executed here.
 * No physical Android device was used.
 * No mobile performance measurement was taken.
+
+---
+
+## 12. CI isolation & authentic-asset outcome model — 2026-11-26
+
+### 12.1 Workflow structure (three independent jobs)
+
+`.github/workflows/build-ranmobile-android.yml` previously ran everything in **one job**.
+The authentic-asset step exits non-zero when real data cannot be parsed, so a coverage gap
+in an unimplemented format also skipped the core C++17 tests, the test summary, the log
+artifact and the whole Android build. That is fixed by splitting into three jobs with **no
+`needs:` between them**:
+
+| Job | Contents | Client data needed | Blocks CI |
+|---|---|---|---|
+| `core-tests` | `test_main.cpp` suite + Phase 3J character suite | no | **yes** |
+| `authentic-assets` | `verify_ep7_character_assets` against the real client | yes (~2.5 GB) | on `FAIL` only |
+| `android-arm64` | NDK arm64 lib + `assembleDebug/Release`, `bundleRelease` | no | yes |
+
+Because the jobs are independent, the workflow's overall status is the AND of three real
+statuses: a core failure can never be masked, and an asset verdict cannot stop core tests.
+
+### 12.2 Outcome model
+
+`verify_ep7_character_assets` classifies every entry as **PASS / FAIL / UNSUPPORTED** and
+returns one of four exit codes:
+
+| Exit | Outcome | Step behaviour |
+|---|---|---|
+| 0 | PASS | `::notice`, job green |
+| 1 | FAIL | `::error` + `exit 1` — **job fails** |
+| 2 | UNSUPPORTED | `::warning` + step summary table; job green (B11 coverage gap) |
+| 3 | NOT FOUND | `::warning`; job green (nothing to verify is not a defect) |
+
+`UNSUPPORTED` is never counted as parsed. `continue-on-error` is **not used anywhere**: the
+non-blocking decision for exit 2 is an explicit `case` in the step, so the reasoning is
+visible in the log.
+
+### 12.3 Verified commands (run 2026-11-26, Ubuntu sandbox, g++ 12)
+
+```bash
+# Phase 3J suite (276 checks)
+g++ -std=c++17 -Wall -Wextra -Werror \
+  RANMobile/Tests/test_phase3j.cpp \
+  RANMobile/Data/Importer/EP7CharacterFile.cpp RANMobile/Data/Importer/EP7SkinPiece.cpp \
+  RANMobile/Data/Importer/EP7Skeleton.cpp      RANMobile/Data/Importer/EP7XFile.cpp \
+  RANMobile/Data/Importer/EP7SkinnedMesh.cpp   RANMobile/Data/Importer/EP7Animation.cpp \
+  RANMobile/Data/Importer/EP7RccArchive.cpp    RANMobile/Engine/Scene/EP7CharacterScene.cpp \
+  RANMobile/Engine/Camera/MobileCamera.cpp     RANMobile/Engine/Renderer/MobileRenderer.cpp \
+  RANMobile/Engine/Core/Logger.cpp -o t && ./t
+
+# Sanitizers
+g++ -std=c++17 -g -fsanitize=address,undefined <same sources> -o t_asan
+LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=1 ./t_asan
+
+# Authentic-asset probe against any extracted client root
+g++ -std=c++17 -Wall -Wextra -Werror \
+  RANMobile/Data/Importer/EP7Animation.cpp RANMobile/Data/Importer/EP7CharacterFile.cpp \
+  RANMobile/Data/Importer/EP7RccArchive.cpp RANMobile/Data/Importer/EP7Skeleton.cpp \
+  RANMobile/Data/Importer/EP7SkinPiece.cpp RANMobile/Data/Importer/EP7SkinnedMesh.cpp \
+  RANMobile/Data/Importer/EP7XFile.cpp RANMobile/Tools/verify_ep7_character_assets.cpp \
+  -o verify && ./verify <extracted-client-root>; echo "exit=$?"
+```
+
+Outcome matrix confirmed locally with synthetic clients:
+
+| Client root | Probe exit | Expected |
+|---|---|---|
+| all assets parse | 0 | PASS |
+| `SANIMCONINFO` 0x0114 only | 2 | UNSUPPORTED |
+| corrupted pack entry | 1 | FAIL |
+| empty directory | 3 | NOT FOUND |
+
+Core-failure handling was also reproduced verbatim (`test_main.cpp:186` assertion, exit 134):
+the step's shell propagates the failure (`exit $TEST_EXIT`) and emits `::error::`.

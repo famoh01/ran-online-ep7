@@ -186,3 +186,59 @@ compatibility — exactly what B9 records and what the CI probe measures. This p
 move the mobile client any closer to showing a character on a phone by itself; it removes the
 data-format unknown so that PR #4's renderer only needs the four hooks in
 `PHASE3J_CHARACTER_ANIMATION.md` §8.
+
+---
+
+## 2026-11-26 — Phase 3J CI isolation and B11 management
+
+### What was wrong
+
+The Phase 3J verification work ended with an honest but badly-placed red light: the
+authentic-asset step exited 1 because unimplemented formats remain, and because the whole
+workflow was a **single job**, that failure also skipped the core C++17 suite, the Phase 3J
+suite's summary, the log artifact and the entire Android APK/AAB build. The signal was
+correct; its blast radius was not.
+
+There was a second, quieter problem: the probe had only two outcomes. "This build has no
+definition for this format" and "this build is broken" produced the same word — `FAIL` — so
+a reviewer could not tell a tracked coverage gap from a genuine reader defect.
+
+### What changed
+
+1. **Three independent CI jobs** (no `needs:`): `core-tests`, `authentic-assets`,
+   `android-arm64`. Core tests and the Android build no longer require the 2.5 GB client
+   download, and no asset verdict can skip them.
+2. **Three-way outcome in the probe** — `PASS` / `FAIL` / `UNSUPPORTED` (plus `NOT FOUND`),
+   with exit codes 0 / 1 / 2 / 3. `UNSUPPORTED` is counted, printed, annotated and summarised
+   separately and is **never** reported as parsed.
+3. **Format family check** — `ParseInfo` now reads the 128-byte basestream type and only
+   grants `UNSUPPORTED` to files that really say `SANIMCONINFO`. A different type is a
+   genuine failure. This is the one B11 claim made, and it rests only on
+   `CSerialFile::ReadFileType()`.
+4. **B11 evidence audit** recorded in `BLOCKERS.md`: the `0x0108`–`0x0115` grep hits in the
+   engine are `DxLandMan`/`DxFogMan` **landscape** versions (`FILEMARK "LAND.MAN"`), not
+   animation layouts, and were rejected as fabricated evidence.
+
+### Verified results (2026-11-26)
+
+| Check | Result |
+|---|---|
+| Phase 3J suite | **276 checks, 0 failures** (was 263; +13 for the new classification rules) |
+| ASan + UBSan + LSan | clean |
+| Probe outcome matrix (PASS/UNSUPPORTED/FAIL/NOT FOUND) | 0 / 2 / 1 / 3 as designed |
+| Core test binary compiles from the workflow's exact command | yes |
+| Core failure propagation | reproduced (`test_main.cpp:186`, exit 134 → step exit 134) |
+| `EP7RccArchive` / ZIP / Deflate / ZipCrypto / CRC | unchanged, still covered by the suite |
+| `.cfg` 0x0101–0x0107 | unchanged, still covered |
+
+### What is deliberately *not* done
+
+No structure, offset, size or decoder for `.cfg` `0x0108`–`0x0115` or for the `"Anim"`
+`.bin` container was written. B11 stays **OPEN** with an explicit evidence requirement list.
+The asset job will therefore report `UNSUPPORTED` — green, warned, and clearly labelled —
+until reliable definitions exist.
+
+`SERVER_REQUIREMENTS.md` was inspected and needed no change (it covers server OS/DB/ports,
+not client asset formats). `UI_LOGIN_REDESIGN.md` does not exist on this branch; it lives
+only on the PR #3 / PR #4 branches and is unrelated to CI isolation, so it was not copied
+here.

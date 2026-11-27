@@ -347,6 +347,14 @@ EP7AnimClip EP7AnimationReader::ParseContainer(const std::vector<uint8_t>& bytes
     return clip;
 }
 
+// The engine writes SetFileType("SANIMCONINFO", VERSION). A packer may write a shorter or
+// empty type string, so an empty type is treated as "unknown, assume same family"; a
+// non-empty, different type is a genuine mismatch.
+static bool IsSanimconinfoType(const std::string& fileType) {
+    if (fileType.empty()) return true;  // unknown; do not accuse the file
+    return fileType.rfind("SANIMCONINFO", 0) == 0;
+}
+
 EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, bool hasHeader, bool compByteEncoded) {
     EP7AnimInfo info;
 
@@ -360,6 +368,7 @@ EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, boo
             info.error = "animation cfg header unreadable";
             return info;
         }
+        info.fileType = fileType;
     } else {
         info.error = "SANIMCONINFO requires the basestream header (version lives in it)";
         return info;
@@ -427,12 +436,25 @@ EP7AnimInfo EP7AnimationReader::ParseInfo(const std::vector<uint8_t>& bytes, boo
     static constexpr uint32_t kInfoSize0107 = 800;
 
     if (version < 0x0101 || version > EP7AnimInfo::kVersion) {
-        // The shipped client uses 0x0108..0x0110 and 0x0114/0x0115 as well; none of those
-        // appear in the engine source, so their layout is unknown and guessing would risk
-        // silently misreading every field after the version DWORD.
-        char message[200];
-        std::snprintf(message, sizeof(message),
-                      "unsupported animation cfg version 0x%08X (implemented: 0x0101-0x0107)", version);
+        // The shipped client uses 0x0108..0x0115 as well. None of those appear in the engine
+        // source, so their layout is unknown and guessing would silently misread every field
+        // after the version DWORD. Report it as UNSUPPORTED -- a known, tracked coverage gap
+        // (BLOCKERS.md B11), not a defect in this reader. `unsupported` is claimed only for
+        // files whose basestream type really is SANIMCONINFO; a different type is a genuine
+        // mismatch and must not be excused.
+        char message[240];
+        if (IsSanimconinfoType(info.fileType)) {
+            info.unsupported = true;
+            std::snprintf(message, sizeof(message),
+                          "UNSUPPORTED animation cfg version 0x%08X (basestream type \"%s\"; this "
+                          "build implements 0x0101-0x0107 -- see B11)",
+                          version, info.fileType.c_str());
+        } else {
+            std::snprintf(message, sizeof(message),
+                          "not a SANIMCONINFO file: basestream type is \"%s\" but layout 0x%08X was "
+                          "expected (implemented 0x0101-0x0107)",
+                          info.fileType.c_str(), version);
+        }
         info.error = message;
         return info;
     }

@@ -674,6 +674,36 @@ void TestAnimation() {
         char expected[16];
         std::snprintf(expected, sizeof(expected), "0x%08X", version);
         J_CHECK(rejected.error.find(expected) != std::string::npos);
+        // A known-but-unimplemented version must be classified UNSUPPORTED (a tracked
+        // coverage gap, B11), never silently accepted and never reported as parsed.
+        J_CHECK(rejected.unsupported);
+        J_CHECK(rejected.error.find("UNSUPPORTED") != std::string::npos);
+    }
+
+    // The type string in the 132-byte header is what separates "this build is behind a newer
+    // SANIMCONINFO" from "this is not a SANIMCONINFO file at all". A foreign type must NOT be
+    // excused as UNSUPPORTED.
+    {
+        std::vector<uint8_t> foreign = AnimationCfg(true, 0x0106);
+        const char* type = "SOMETHINGELSE";
+        for (size_t i = 0; i < 128; ++i) foreign[i] = 0;
+        for (size_t i = 0; type[i] != 0; ++i) foreign[i] = static_cast<uint8_t>(type[i]);
+        foreign[128] = 0x14;  // an unimplemented version, but the wrong file family
+        foreign[129] = 0x01;
+        const RANMobile::EP7AnimInfo wrongFamily =
+            RANMobile::EP7AnimationReader::ParseInfo(foreign, true, false);
+        J_CHECK(!wrongFamily.valid);
+        J_CHECK(!wrongFamily.unsupported);  // a genuine mismatch, not a coverage gap
+        J_CHECK(wrongFamily.error.find("not a SANIMCONINFO file") != std::string::npos);
+        J_CHECK(wrongFamily.fileType == "SOMETHINGELSE");
+    }
+
+    // A real 0x0107 file reports its basestream type, and is neither unsupported nor invalid.
+    {
+        const RANMobile::EP7AnimInfo good = RANMobile::EP7AnimationReader::ParseInfo(cfg, true, false);
+        J_CHECK(good.valid);
+        J_CHECK(!good.unsupported);
+        J_CHECK(good.version == 0x0107);
     }
 
     // Player: looping wraps, non-looping ends.

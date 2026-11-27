@@ -267,3 +267,77 @@ this in one line on the next run.
 Impact: `verify_ep7_character_assets` now exits **1**, so the "Verify Authentic EP7
 Character Assets" step is red. That is the honest signal — a green step would mean
 authentic data parsed — and it is deliberate, not a regression.
+
+---
+
+## B11 — status review, 2026-11-26 (evidence audit, no guessing)
+
+This section records what was actually checked, so B11 is not re-litigated from memory.
+
+### Investigation performed
+
+| Question | Method | Result |
+|---|---|---|
+| Does any loader in the repo know the `"Anim"` magic? | `grep -rn "'Anim'\|\"Anim\""` over `enginelib/`, `xskinexp/`, `EngineSoundLib/` | **No hits** outside our own probe/tests |
+| Do `0x0108`–`0x0115` appear as `SANIMCONINFO` versions? | `grep -rn "0x01xx"` over `enginelib/`, `xskinexp/`, `EngineSoundLib/` | Appear, but **all in the wrong file family** (see below) |
+| Is the struct defined for any of them? | `SAnimation.h` | Only `SANIMCONINFO_101`…`_106` and `SANIMCONINFO` (0x0107) |
+| Are authentic samples committed? | `find -name "*.rcc" -o -name "*.bin"` | **No** — `external/ep7_release/` is git-ignored; data exists only as release assets |
+
+### Why the `0x0108`–`0x0115` grep hits do **not** resolve B11
+
+Every hit belongs to the **landscape** family, not animation:
+
+```
+enginelib/DxOctree/DxLandManSaveLoad.cpp:30   const DWORD DxLandMan::VERSION = 0x0114;
+enginelib/DxOctree/DxLandManSaveLoad.cpp:742  if ( dwVersion>=0x0108 && dwVersion<=DxLandMan::VERSION )
+enginelib/DxOctree/DxLandManSaveLoad.cpp:752..764   0x0108 / 0x0109 / 0x0110 / 0x0111 / 0x0112
+enginelib/DxCommon/DxFogMan.h:57              enum { VERSION = 0x0108, };
+```
+
+`DxLandMan` identifies its files with `FILEMARK[128] = "LAND.MAN"`, a different basestream
+type from `SANIMCONINFO`. The two families merely happen to share small integer version
+numbers. **Treating those constants as animation layouts would be a fabricated format**, so
+they were explicitly rejected as evidence.
+
+### Resolution of the version/type question (implemented, evidence-backed)
+
+The 128-byte basestream header carries a type string. `ParseInfo` now reads it and
+distinguishes:
+
+* **type `SANIMCONINFO`, version `0x0108`–`0x0115`** → `unsupported = true`. This is B11: a
+  real animation file of a version whose struct exists nowhere in this repository.
+* **any other type** → a genuine `FAIL` ("not a SANIMCONINFO file"), **not** excused.
+
+This is the only B11 assertion made, and it rests solely on the type string that
+`CSerialFile::ReadFileType()` demonstrably reads (`EP7ByteFormat.h`). No offset, field size
+or layout is inferred.
+
+### What would be required to close B11
+
+1. **Newer engine source** containing `SANIMCONINFO_108` … `_115` or an `SAnimContainer`
+   reader that accepts the `"Anim"` magic — this would be definitive.
+2. **Format documentation** for the EP7 animation exporter that emits `"Anim"`.
+3. Otherwise, **reverse engineering from samples** with per-field validation: the probes for
+   `0x0108`–`0x0115` must first confirm the 302-byte prefix (`name[128]`, `skeleton[128]`,
+   `flag`, `STime`, `ETime`, `ETimeOrig`, `UNITTIME`, `MainType`, `SubType`, `DivCount`,
+   `DivFrame[8]`) is unchanged, since that prefix is identical for **every** version that
+   *is* defined in source.
+
+### Status: **OPEN** — implementation of those formats is stopped
+
+No structure, offset, size or decoder for `0x0108`–`0x0115` or the `"Anim"` container has
+been written, and none will be until evidence in (1)–(3) exists.
+
+### CI treatment of an open B11 (new, 2026-11-26)
+
+An open B11 must not be able to hide core-test results, and must not be mistakable for
+success. The verification tool therefore reports three outcomes with three exit codes:
+
+| Outcome | Exit | Meaning | CI effect |
+|---|---|---|---|
+| PASS | 0 | every pack entry parsed | job green |
+| FAIL | 1 | a pack entry is genuinely broken | **job fails** |
+| UNSUPPORTED | 2 | nothing broken, some formats undefined (B11) | job green, **warning + summary** |
+| NOT FOUND | 3 | no character entry in any pack | warning, not a failure |
+
+`UNSUPPORTED` is never counted as parsed and is never silent.

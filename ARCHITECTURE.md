@@ -116,3 +116,41 @@ for (instance : characterScene.Instances())
 
 A GPU skinning path can replace the vertex upload by sending `BuildBonePalette()` output as a
 palette uniform; the mesh already carries per-vertex blend data in its `SkinWeights`.
+
+---
+
+## 2026-11-26 — Verification boundaries in CI
+
+The character pipeline now has an explicit *verification* layer with its own outcome model,
+kept separate from the runtime path:
+
+```
+external/ep7_release/client_original/         (git-ignored, ~2.5 GB, release asset)
+        │
+        ├── SkinObject.rcc ─┐
+        └── Animation.rcc ──┤   EP7RccArchive (ZIP + deflate + ZipCrypto "tkqwlf" + CRC-32)
+                            ▼
+              verify_ep7_character_assets      ← tool, not runtime code
+                            │
+             ┌──────────────┼───────────────┐
+          PASS           UNSUPPORTED      FAIL
+        (parsed)      (no definition       (reader
+                       in this repo)       defect)
+             │              │               │
+          exit 0         exit 2          exit 1
+```
+
+Rules this layer enforces:
+
+1. **`UNSUPPORTED` is a first-class outcome, not an error and not a pass.** It is produced
+   only when the basestream type really is `SANIMCONINFO` *and* the version is outside
+   `0x0101`–`0x0107`. Anything else — wrong type, missing header, corrupt entry — is `FAIL`.
+2. **Verification can never be mistaken for runtime support.** Nothing in the runtime path
+   consults the probe; the probe only reads and reports.
+3. **CI keeps the boundary.** `core-tests` and `android-arm64` need no client data; only the
+   isolated `authentic-assets` job downloads it. A format coverage gap therefore cannot gate
+   the build, and a build failure cannot be excused by one.
+
+For the record of *why* `0x0108`–`0x0115` stay unimplemented, see `BLOCKERS.md` B11: the
+matching constants in the engine belong to the landscape (`DxLandMan`) family, whose
+`FILEMARK` is `"LAND.MAN"`, so reusing them for animation would fabricate a layout.

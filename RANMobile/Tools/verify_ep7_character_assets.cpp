@@ -11,10 +11,18 @@
 // exactly what parsed and what did not.
 //
 // It never invents data: if a file fails, it is reported as failed with the parser's
-// error string. Exit codes distinguish the three honest outcomes:
-//   0 = authentic character entries were found and every one parsed
-//   1 = entries were found but at least one failed to parse or could not be extracted
-//   2 = nothing authentic was found, so nothing was verified
+// error string. Each asset is classified as PASS, FAIL or UNSUPPORTED:
+//   PASS        bytes parsed by the real parser
+//   FAIL        the parser rejected data it should have accepted (a reader defect, or a
+//               corrupt/undecryptable entry)
+//   UNSUPPORTED the bytes are real, but the format/version has no definition anywhere in
+//               this repository (BLOCKERS.md B11). Reported, counted and warned about --
+//               never reported as parsed.
+// Exit codes:
+//   0 = PASS         all pack entries parsed
+//   1 = FAIL         at least one pack entry failed  (the build is wrong)
+//   2 = UNSUPPORTED  nothing failed, some formats are unknown (the build is incomplete)
+//   3 = NOT FOUND    no character entry found in any pack; nothing was verified
 //
 // USAGE
 //   verify_ep7_character_assets <ep7-data-root> [--max-files N]
@@ -103,21 +111,30 @@ bool IsInCharacterDataPath(const std::string& path) {
            lower.find("\\data\\character\\") != std::string::npos;
 }
 
+// Outcome of verifying one asset. UNSUPPORTED is NOT a pass and NOT a failure: it means the
+// bytes belong to a format version this build has no definition for (BLOCKERS.md B11). It is
+// counted, printed and reported separately so it can never be mistaken for either.
+enum class Outcome { Pass, Fail, Unsupported };
+
 struct Counters {
     uint32_t chfTotal = 0, chfOk = 0;
     uint32_t cpsTotal = 0, cpsOk = 0;
     uint32_t xTotal = 0, xSkeletonOk = 0, xMeshOk = 0;
-    uint32_t binTotal = 0, binOk = 0;
-    uint32_t cfgTotal = 0, cfgOk = 0;
+    uint32_t binTotal = 0, binOk = 0, binUnsupported = 0;
+    uint32_t cfgTotal = 0, cfgOk = 0, cfgUnsupported = 0;
     uint32_t extractFailures = 0;
     uint32_t packOk = 0, packFailed = 0;   // entries inside .rcc/.zip (engine-authoritative)
     uint32_t looseOk = 0, looseFailed = 0; // loose files under data/animation|character
+    uint32_t packUnsupported = 0;          // pack entries of a format with no definition
+    uint32_t looseUnsupported = 0;
     uint32_t firstVersionSeenNonZero = 0;
 };
 
-// Failure reasons are aggregated so the summary survives CI's annotation cap (~10 per check
-// run): a client with 400 unimplemented animation versions must still say so in one line.
+// Reasons are aggregated so the summary survives CI's annotation cap (~10 per check run): a
+// client with 400 unimplemented animation versions must still say so in one line. Failures
+// and unsupported formats are accumulated in separate maps.
 std::map<std::string, uint32_t> g_failureReasons;
+std::map<std::string, uint32_t> g_unsupportedReasons;
 
 std::string ReasonKey(const std::string& detail) {
     // Keep the leading clause only; trailing numbers/paths vary per file.
@@ -127,17 +144,22 @@ std::string ReasonKey(const std::string& detail) {
     return key;
 }
 
-void ReportFile(const char* kind, const std::string& path, bool ok, const std::string& detail) {
-    std::printf("  [%s] %-10s %s%s%s\n", ok ? " OK " : "FAIL", kind, path.c_str(),
+// Three-way report. The tag is deliberately unambiguous in a log that is read by humans and
+// by grep: [ OK ], [FAIL] and [UNSUP] are distinct tokens.
+void ReportOutcome(const char* kind, const std::string& path, Outcome outcome,
+                   const std::string& detail) {
+    const char* tag = outcome == Outcome::Pass ? " OK " : (outcome == Outcome::Fail ? "FAIL" : "UNSUP");
+    std::printf("  [%s] %-10s %s%s%s\n", tag, kind, path.c_str(),
                 detail.empty() ? "" : " — ", detail.c_str());
-    if (!ok) ++g_failureReasons[std::string(kind) + ": " + ReasonKey(detail)];
+    if (outcome == Outcome::Fail) ++g_failureReasons[std::string(kind) + ": " + ReasonKey(detail)];
+    if (outcome == Outcome::Unsupported) ++g_unsupportedReasons[std::string(kind) + ": " + ReasonKey(detail)];
 }
 
 }  // namespace
 
 // Verifies one asset buffer. `path` is only used for reporting (it may be
 // "<archive>:/entry/name" for packed entries).
-bool VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& bytes, Counters& counters) {
+Outcome VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& bytes, Counters& counters) {
     const std::string ext = ExtractExtension(path);
 
     if (EndsWithNoCase(ext, ".chf")) {
@@ -148,11 +170,11 @@ bool VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& byte
             char detail[256];
             std::snprintf(detail, sizeof(detail), "v0x%04X pieces=%u skeleton=%s anims=%zu", info.version,
                           info.PieceCount(), info.skeleton.c_str(), info.animations.size());
-            ReportFile("chf", path, true, detail);
+            ReportOutcome("chf", path, Outcome::Pass, detail);
         } else {
-            ReportFile("chf", path, false, info.error);
+            ReportOutcome("chf", path, Outcome::Fail, info.error);
         }
-        return info.valid;
+        return info.valid ? Outcome::Pass : Outcome::Fail;
     }
 
     if (EndsWithNoCase(ext, ".cps")) {
@@ -164,11 +186,11 @@ bool VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& byte
             std::snprintf(detail, sizeof(detail), "v0x%04X type=%d mesh=%s skeleton=%s materials=%zu traces=%zu",
                           info.fileVersion, static_cast<int>(info.pieceType), info.meshName.c_str(),
                           info.skeletonFile.c_str(), info.materials.size(), info.traces.size());
-            ReportFile("cps", path, true, detail);
+            ReportOutcome("cps", path, Outcome::Pass, detail);
         } else {
-            ReportFile("cps", path, false, info.error);
+            ReportOutcome("cps", path, Outcome::Fail, info.error);
         }
-        return info.valid;
+        return info.valid ? Outcome::Pass : Outcome::Fail;
     }
 
     if (EndsWithNoCase(ext, ".skt") || EndsWithNoCase(ext, ".abf")) {
@@ -179,11 +201,11 @@ bool VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& byte
             ++counters.xSkeletonOk;
             char detail[128];
             std::snprintf(detail, sizeof(detail), "bones=%zu", skeleton.BoneCount());
-            ReportFile("skeleton", path, true, detail);
+            ReportOutcome("skeleton", path, Outcome::Pass, detail);
         } else {
-            ReportFile("skeleton", path, false, skeleton.Error());
+            ReportOutcome("skeleton", path, Outcome::Fail, skeleton.Error());
         }
-        return ok;
+        return ok ? Outcome::Pass : Outcome::Fail;
     }
 
     if (EndsWithNoCase(ext, ".x")) {
@@ -200,19 +222,19 @@ bool VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& byte
             std::snprintf(detail, sizeof(detail), "mesh=%s verts=%u tris=%zu bones=%zu stride=%u decoded=%s",
                           mesh.name.c_str(), mesh.vertexCount, mesh.faces.size() / 3, mesh.bones.size(),
                           mesh.vertexStride, mesh.geometryDecoded ? "yes" : "no");
-            ReportFile("x-mesh", path, true, detail);
-            return true;
+            ReportOutcome("x-mesh", path, Outcome::Pass, detail);
+            return Outcome::Pass;
         }
         RANMobile::EP7Skeleton skeleton;
         if (skeleton.LoadFromXFile(bytes)) {
             ++counters.xSkeletonOk;
             char detail[128];
             std::snprintf(detail, sizeof(detail), "skeleton bones=%zu", skeleton.BoneCount());
-            ReportFile("x-skeleton", path, true, detail);
-            return true;
+            ReportOutcome("x-skeleton", path, Outcome::Pass, detail);
+            return Outcome::Pass;
         }
-        ReportFile("x", path, false, mesh.error + " | " + skeleton.Error());
-        return false;
+        ReportOutcome("x", path, Outcome::Fail, mesh.error + " | " + skeleton.Error());
+        return Outcome::Fail;
     }
 
     if (EndsWithNoCase(ext, ".bin")) {
@@ -229,8 +251,12 @@ bool VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& byte
                           "not an EP7 basestream container — starts with magic '%s' (0x%02X%02X%02X%02X); "
                           "the engine only loads SAnimContainer basestreams from Animation.rcc",
                           magic, bytes[0], bytes[1], bytes[2], bytes[3]);
-            ReportFile("bin", path, false, detail);
-            return false;
+            // A recognisable-but-undocumented container. This is B11 territory: the bytes
+            // are real, the format has no definition in this repository. Counting it as a
+            // FAILURE would report a missing format as a broken parser; counting it as a
+            // PASS would be a lie. It is UNSUPPORTED.
+            ReportOutcome("bin", path, Outcome::Unsupported, detail);
+            return Outcome::Unsupported;
         }
         // Try with the basestream header first (CSerialFile writes one), then without.
         RANMobile::EP7AnimClip clip = RANMobile::EP7AnimationReader::ParseContainer(bytes, true, false);
@@ -240,11 +266,11 @@ bool VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& byte
             char detail[256];
             std::snprintf(detail, sizeof(detail), "v0x%04X mainTracks=%zu upBodyTracks=%zu maxKeyTime=%u",
                           clip.version, clip.mainTracks.size(), clip.upBodyTracks.size(), clip.MaxKeyTime());
-            ReportFile("bin", path, true, detail);
+            ReportOutcome("bin", path, Outcome::Pass, detail);
         } else {
-            ReportFile("bin", path, false, clip.error);
+            ReportOutcome("bin", path, Outcome::Fail, clip.error);
         }
-        return clip.valid;
+        return clip.valid ? Outcome::Pass : Outcome::Fail;
     }
 
     if (EndsWithNoCase(ext, ".cfg")) {
@@ -256,14 +282,17 @@ bool VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& byte
             std::snprintf(detail, sizeof(detail), "name=%s skeleton=%s main=%d sub=%d window=%u..%u loop=%s",
                           info.name.c_str(), info.skeleton.c_str(), info.mainType, info.subType,
                           info.startTime, info.endTime, info.IsLoop() ? "yes" : "no");
-            ReportFile("cfg", path, true, detail);
+            ReportOutcome("cfg", path, Outcome::Pass, detail);
+        } else if (info.unsupported) {
+            ++counters.cfgUnsupported;
+            ReportOutcome("cfg", path, Outcome::Unsupported, info.error);
         } else {
-            ReportFile("cfg", path, false, info.error);
+            ReportOutcome("cfg", path, Outcome::Fail, info.error);
         }
-        return info.valid;
+        return info.valid ? Outcome::Pass : (info.unsupported ? Outcome::Unsupported : Outcome::Fail);
     }
 
-    return false;
+    return Outcome::Fail;  // recognised character extension we have no reader for
 }
 
 bool IsCharacterAssetName(const std::string& name) {
@@ -338,22 +367,26 @@ int main(int argc, char** argv) {
 
     for (const auto& path : looseFiles) {
         if (!ReadWholeFile(path, bytes, error)) {
-            ReportFile("read", path, false, error);
+            ReportOutcome("read", path, Outcome::Fail, error);
             continue;
         }
-        if (VerifySingleAsset(path, bytes, counters)) ++counters.looseOk; else ++counters.looseFailed;
+        switch (VerifySingleAsset(path, bytes, counters)) {
+            case Outcome::Pass: ++counters.looseOk; break;
+            case Outcome::Fail: ++counters.looseFailed; break;
+            case Outcome::Unsupported: ++counters.looseUnsupported; break;
+        }
     }
 
     // The authentic assets live inside these packs (GLOGIC::InitFile).
     for (const auto& archivePath : archives) {
         std::printf("\n--- archive %s\n", archivePath.c_str());
         if (!ReadWholeFile(archivePath, bytes, error)) {
-            ReportFile("read", archivePath, false, error);
+            ReportOutcome("read", archivePath, Outcome::Fail, error);
             continue;
         }
         RANMobile::EP7RccArchive archive;
         if (!archive.Open(bytes)) {
-            ReportFile("archive", archivePath, false, archive.Error());
+            ReportOutcome("archive", archivePath, Outcome::Fail, archive.Error());
             continue;
         }
         std::printf("     %zu entries\n", archive.EntryCount());
@@ -375,7 +408,7 @@ int main(int argc, char** argv) {
                               "could not extract (method=%u flags=0x%04X csize=%u usize=%u) — corrupt, "
                               "another password, or an unsupported method",
                               entry.method, entry.flags, entry.compressedSize, entry.uncompressedSize);
-                ReportFile("extract", label, false, detail);
+                ReportOutcome("extract", label, Outcome::Fail, detail);
                 // An entry we could not even decompress is an UNVERIFIED character asset. It
                 // must count against the pass rate; otherwise "2 entries, 1 unreadable" would
                 // still print "parsed 1 of 1" and exit 0.
@@ -383,7 +416,11 @@ int main(int argc, char** argv) {
                 ++counters.packFailed;
                 continue;
             }
-            if (VerifySingleAsset(label, entryBytes, counters)) ++counters.packOk; else ++counters.packFailed;
+            switch (VerifySingleAsset(label, entryBytes, counters)) {
+                case Outcome::Pass: ++counters.packOk; break;
+                case Outcome::Fail: ++counters.packFailed; break;
+                case Outcome::Unsupported: ++counters.packUnsupported; break;
+            }
         }
         if (checked == 0) std::printf("     (no character assets inside)\n");
     }
@@ -393,8 +430,10 @@ int main(int argc, char** argv) {
     std::printf("cps  : %u ok / %u\n", counters.cpsOk, counters.cpsTotal);
     std::printf("x    : %u skeleton / %u mesh / %u parsed of %u\n", counters.xSkeletonOk, counters.xMeshOk,
                 counters.xSkeletonOk + counters.xMeshOk, counters.xTotal);
-    std::printf("bin  : %u ok / %u\n", counters.binOk, counters.binTotal);
-    std::printf("cfg  : %u ok / %u\n", counters.cfgOk, counters.cfgTotal);
+    std::printf("bin  : %u ok / %u (%u unsupported format)\n", counters.binOk, counters.binTotal,
+                counters.binUnsupported);
+    std::printf("cfg  : %u ok / %u (%u unsupported version)\n", counters.cfgOk, counters.cfgTotal,
+                counters.cfgUnsupported);
     std::printf("extract failures (could not decompress/decrypt): %u\n", counters.extractFailures);
 
     // "0 ok / 0" is ambiguous between "all fine" and "never seen". Say which.
@@ -439,26 +478,48 @@ int main(int argc, char** argv) {
     //   0 = at least one authentic entry was found and every one of them parsed
     //   1 = authentic entries were found but at least one failed to parse
     //   2 = no authentic candidate was found at all; nothing was verified
-    std::printf("\npack entries (what the engine actually loads): %u parsed, %u failed\n",
-                counters.packOk, counters.packFailed);
-    std::printf("loose files (informational only):            %u parsed, %u failed\n",
-                counters.looseOk, counters.looseFailed);
+    std::printf("\npack entries (what the engine actually loads): %u parsed, %u failed, %u unsupported\n",
+                counters.packOk, counters.packFailed, counters.packUnsupported);
+    std::printf("loose files (informational only):            %u parsed, %u failed, %u unsupported\n",
+                counters.looseOk, counters.looseFailed, counters.looseUnsupported);
+
+    if (!g_unsupportedReasons.empty()) {
+        std::printf("\nunsupported formats (real data, no definition in this build -- B11):\n");
+        for (const auto& [reason, count] : g_unsupportedReasons) {
+            std::printf("  %4u x %s\n", count, reason.c_str());
+        }
+    }
 
     // The verdict is about pack entries ONLY. The engine resolves character assets through
     // GLOGIC::openfile_basestream(bENGLIB_ZIPFILE, ...), i.e. from SkinObject.rcc /
-    // Animation.rcc. Loose files are reported for information; failing the build on data
-    // the engine never reads would be a false alarm, and ignoring pack failures would be
-    // the opposite. Say which is which.
-    if (counters.packOk == 0 && counters.packFailed == 0) {
-        std::printf("\nVERDICT: no character entries were found inside any pack. Nothing was verified.\n");
-        return 2;
+    // Animation.rcc. Loose files are reported for information; failing on data the engine
+    // never reads would be a false alarm, and ignoring pack failures would be the opposite.
+    //
+    // Three outcomes, three exit codes -- and UNSUPPORTED outranks a clean pass because a
+    // build that cannot read half the client is not "verified", even if nothing is broken:
+    //   0  PASS         every pack entry parsed
+    //   1  FAIL         at least one pack entry is genuinely broken (reader defect)
+    //   2  UNSUPPORTED  nothing failed, but some entries are of a format this build has no
+    //                   definition for (B11) -- coverage gap, tracked, not a defect
+    //   3  NOT FOUND    no character entry was found inside any pack; nothing verified
+    if (counters.packOk == 0 && counters.packFailed == 0 && counters.packUnsupported == 0) {
+        std::printf("\nVERDICT: NOT FOUND — no character entries were found inside any pack. "
+                    "Nothing was verified.\n");
+        return 3;
     }
     if (counters.packFailed != 0) {
-        std::printf("\nVERDICT: %u pack entr(y/ies) FAILED to parse — this build cannot load that data.\n",
-                    counters.packFailed);
+        std::printf("\nVERDICT: FAIL — %u pack entr(y/ies) could not be parsed. This build cannot "
+                    "load that data.\n", counters.packFailed);
         return 1;
     }
-    std::printf("\nVERDICT: every character entry inside the packs parsed.\n");
+    if (counters.packUnsupported != 0) {
+        std::printf("\nVERDICT: UNSUPPORTED — %u pack entr(y/ies) parsed cleanly, but %u are of a "
+                    "format this build has no definition for (see B11). No reader defect was "
+                    "observed; coverage is incomplete.\n",
+                    counters.packOk, counters.packUnsupported);
+        return 2;
+    }
+    std::printf("\nVERDICT: PASS — every character entry inside the packs parsed.\n");
     (void)parsed;
     (void)attempted;
     return 0;

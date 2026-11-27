@@ -160,7 +160,11 @@ struct EP7AnimInfo {
     static constexpr uint32_t kDiv = 8;          // ACF_DIV
     static constexpr uint32_t kStrike = 9;       // ACF_STRIKE
 
-    uint32_t version = 0;   // header fileId of the layout that was parsed
+    uint32_t version = 0;   // header fileId — set even when the layout is unsupported
+    bool unsupported = false;  // a real SANIMCONINFO file, but of a version this build
+                               // has no definition for (see BLOCKERS.md B11). This is a
+                               // deferred gap in coverage, NOT a defect in the reader.
+    std::string fileType;   // 128-byte basestream type string, e.g. "SANIMCONINFO"
     std::string name;       // m_szName
     std::string skeleton;   // m_szSkeletion
     uint32_t flag = 0;
