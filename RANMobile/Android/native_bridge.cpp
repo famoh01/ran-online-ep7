@@ -105,12 +105,19 @@ static void InitEGL(AndroidAppContext* ctx, ANativeWindow* window) {
         return;
     }
     eglMakeCurrent(ctx->display, ctx->surface, ctx->surface, ctx->context);
+    // B19 CI: bracket logs — the +8s window showed a run stuck between
+    // APP_CMD_INIT_WINDOW and "EGL+engine ready" with nothing in between;
+    // these lines pinpoint the exact stage (EGL calls vs engine Initialize).
+    __android_log_print(ANDROID_LOG_INFO, "RANMobile", "EGL context+surface current");
 
     EGLint w = 1280, h = 720;
     eglQuerySurface(ctx->display, ctx->surface, EGL_WIDTH, &w);
     eglQuerySurface(ctx->display, ctx->surface, EGL_HEIGHT, &h);
     if (!ctx->engine.IsInitialized()) {
-        ctx->engine.Initialize();
+        if (!ctx->engine.Initialize()) {
+            __android_log_print(ANDROID_LOG_ERROR, "RANMobile",
+                                "engine Initialize FAILED (renderer init returned false)");
+        }
     } else {
         // B19: re-entry after context loss (rotation/restore) — rebuild GL objects.
         ctx->engine.EnsureGpuContext(w, h);
@@ -140,6 +147,23 @@ static void InitEGL(AndroidAppContext* ctx, ANativeWindow* window) {
         }
         __android_log_print(ANDROID_LOG_INFO, "RANMobile", "gpu selftest verdict=%s -> %s",
                             result.overallPass ? "PASS" : "FAIL", jsonPath.c_str());
+        // B19 CI: logcat is the only retrieval channel that worked on every CI
+        // run (run-as cat returns empty; adbd-root cat died mid-poll once).
+        // Emit the verdict as COMPACT single-line chunks under a fixed tag;
+        // CI reassembles the chunks by index.  Chunk < 3000 chars stays well
+        // under the ~4068-char logcat line limit.
+        std::string compact;
+        compact.reserve(result.json.size() + 16);
+        for (char c : result.json) {
+            if (c == '\n' || c == '\t' || c == '\r') compact += ' ';
+            else compact += c;
+        }
+        constexpr size_t kChunk = 3000;
+        const size_t parts = (compact.size() + kChunk - 1) / kChunk;
+        for (size_t i = 0; i < parts; ++i) {
+            __android_log_print(ANDROID_LOG_INFO, "GPUSELFTEST_JSON", "%zu/%zu %s",
+                                i + 1, parts, compact.substr(i * kChunk, kChunk).c_str());
+        }
         ANativeActivity_finish(activity);
         return;
     }

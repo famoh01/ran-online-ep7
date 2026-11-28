@@ -518,6 +518,10 @@ jobs:
             exit 1
           fi
           "$ADB" shell getprop ro.build.version.release || true
+          # Settle: launches within ~1 min of boot_completed showed a wedged
+          # EGL/init state (app stuck before selftest); 30 s lets the guest
+          # graphics stack finish coming up.
+          sleep 30
           # Take root NOW: 'adb root' restarts adbd (adb is broken for a few
           # seconds) — doing it minutes before the poll, with a settle + check,
           # lets the verdict be read with a plain root cat (run-as cat returns
@@ -555,6 +559,7 @@ jobs:
           done
           [ "$install_ok" = "1" ] || { echo "::error::adb install failed or timed out after 2 attempts"; exit 1; }
           echo "::notice::install completed"
+          "$ADB" logcat -G 4M 2>/dev/null || true
           amout=$(timeout 60 "$ADB" shell am start -n com.famhawaii.ranmobile/android.app.NativeActivity --es selftest gpu 2>&1 | tr -d '\r') \
             || { echo "::error::am start failed or timed out"; printf '%s\n' "$amout" | while IFS= read -r line; do echo "::error::$line"; done || true; exit 1; }
           printf '%s\n' "$amout" | while IFS= read -r line; do echo "::notice::am: $line"; done || true
@@ -596,16 +601,50 @@ jobs:
             "$ADB" logcat -d 2>/dev/null | grep -iE "ranmobile|start proc|nativeactivity|linker|DEBUG|FATAL|AndroidRuntime|selftest|gpu self" | tail -n 35 | while IFS= read -r line; do echo "::error::start2|$line"; done || true
           fi
           timeout 600 bash -c '
+            adb_fail=0
             while true; do
-              out=$("$ADB" shell "cat /data/user/0/com.famhawaii.ranmobile/files/gpu_selftest.json 2>/dev/null" 2>/dev/null | tr -d '\r')
-              if [ -z "$out" ]; then
-                out=$("$ADB" exec-out run-as com.famhawaii.ranmobile cat files/gpu_selftest.json 2>/dev/null)
+              # PRIMARY: the app emits the verdict JSON to logcat as compact
+              # chunks tagged GPUSELFTEST_JSON ("i/n payload").  Reassemble.
+              lc=$("$ADB" logcat -d -s GPUSELFTEST_JSON 2>/dev/null | tr -d '\r')
+              if [ -n "$lc" ]; then
+                spec=$(printf "%s\n" "$lc" | sed -E "s/^.*GPUSELFTEST_JSON: //" | head -n1 | cut -d" " -f1)
+                total=${spec#*/}
+                if [ -n "$total" ] && [ "$total" -ge 1 ] 2>/dev/null; then
+                  json=""
+                  ok=1
+                  for i in $(seq 1 "$total"); do
+                    piece=$(printf "%s\n" "$lc" | sed -E "s/^.*GPUSELFTEST_JSON: //" | grep -E "^$i/$total " | head -n1 | cut -d" " -f2-)
+                    if [ -z "$piece" ]; then ok=0; break; fi
+                    json="$json$piece"
+                  done
+                  if [ "$ok" = "1" ] && printf "%s" "$json" | grep -q "verdict"; then
+                    printf "%s" "$json" > gpu_selftest.json
+                    echo "=== GPU SELFTEST VERDICT (from logcat) ==="
+                    cat gpu_selftest.json
+                    exit 0
+                  fi
+                fi
               fi
+              # SECONDARY: root cat of the file (also produces the artifact).
+              out=$("$ADB" shell "cat /data/user/0/com.famhawaii.ranmobile/files/gpu_selftest.json 2>/dev/null" 2>/dev/null | tr -d '\r')
               if [ -n "$out" ]; then
                 echo "$out" > gpu_selftest.json
-                echo "=== GPU SELFTEST VERDICT ==="
+                echo "=== GPU SELFTEST VERDICT (from file) ==="
                 cat gpu_selftest.json
-                break
+                exit 0
+              fi
+              # SELF-HEAL: if adb itself stopped answering, try to reconnect.
+              if ! "$ADB" get-state >/dev/null 2>&1; then
+                adb_fail=$((adb_fail + 1))
+                if [ $adb_fail -eq 1 ] || [ $((adb_fail % 6)) -eq 0 ]; then
+                  "$ADB" reconnect offline >/dev/null 2>&1 || true
+                fi
+                if [ $adb_fail -ge 40 ]; then
+                  echo "::error::adb unresponsive for ~200s inside the poll — giving up"
+                  exit 1
+                fi
+              else
+                adb_fail=0
               fi
               sleep 5
             done' || true
@@ -615,9 +654,14 @@ jobs:
             # annotations — they are the only log channel readable from outside.
             "$ADB" logcat -d -b crash 2>/dev/null | tail -n 25 | while IFS= read -r line; do echo "::error::crash|$line"; done || true
             "$ADB" logcat -d 2>/dev/null | grep -iE "ranmobile|nativeactivity|linker|DEBUG|FATAL|AndroidRuntime|EGL|selftest|GLES" | tail -n 60 | while IFS= read -r line; do echo "::error::log|$line"; done || true
-            "$ADB" shell "ps -T -p $(pidof com.famhawaii.ranmobile) 2>/dev/null | head -n 16" | while IFS= read -r line; do echo "::error::thr|$line"; done || true
-            "$ADB" shell "dumpsys package com.famhawaii.ranmobile | grep -E 'primaryCpuAbi|versionName' | head -n 3" || true
-            "$ADB" shell "ls -la /data/user/0/com.famhawaii.ranmobile/files/ 2>&1" | while IFS= read -r line; do echo "::error::files|$line"; done || true
+            echo "::error::adb state: $("$ADB" get-state 2>&1 | tr -d '\r' || echo unreachable)"
+            echo "::error::logcat GPUSELFTEST_JSON chunks present: $("$ADB" logcat -d -s GPUSELFTEST_JSON 2>/dev/null | grep -c GPUSELFTEST_JSON || echo 0)"
+            thr=$("$ADB" shell "ps -T -p $(pidof com.famhawaii.ranmobile) 2>/dev/null | head -n 16" 2>/dev/null | tr -d '\r')
+            if [ -n "$thr" ]; then printf '%s\n' "$thr" | while IFS= read -r line; do echo "::error::thr|$line"; done; else echo "::error::thread probe returned nothing (process gone or adb dead)"; fi
+            dsy=$("$ADB" shell "dumpsys package com.famhawaii.ranmobile | grep -E 'primaryCpuAbi|versionName' | head -n 3" 2>/dev/null | tr -d '\r')
+            if [ -n "$dsy" ]; then printf '%s\n' "$dsy" | while IFS= read -r line; do echo "::error::pkg|$line"; done; else echo "::error::dumpsys probe returned nothing (adb dead?)"; fi
+            fls=$("$ADB" shell "ls -la /data/user/0/com.famhawaii.ranmobile/files/ 2>&1" 2>/dev/null | tr -d '\r')
+            if [ -n "$fls" ]; then printf '%s\n' "$fls" | while IFS= read -r line; do echo "::error::files|$line"; done; else echo "::error::files probe returned nothing (adb dead?)"; fi
             echo "::notice::poll budget exhausted (600s) — diagnostics above"
             tail -n 20 emulator.log || true
             exit 1
