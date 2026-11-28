@@ -1116,3 +1116,24 @@ tails capped at 128 B (annotation message limit).
 **Gates:** phase3j **8,362/0**; ASan+UBSan+LSan clean; verify tool `-Werror` clean; synthetic
 negative fixtures reject with unchanged reasons; authentic-layout 0x0104-in-.rcc end-to-end
 PASS. CI validation: TESTING_CHECKLIST §24.
+
+**Round 6 CI (run `46151830460`):** the admitted-version `.chf` failures collapsed 50 -> 12,
+all `.chf bbox flag out of range`; verdict 8298/3362 (+38 parsed). The remaining class was
+decoded from the full dump of its smallest member, `sumon_ocmyeonsin.chf` (0x0107, 653 B):
+the dword after `[r]` is a **bone-attach COUNT**, not a flag — count records of
+`[3 floats][strlen][name]` (`Bip01_Head`, `Bip01_R_Thigh`, `Bip01_R_Calf`, `Bip01_L_Calf`,
+`Bip01_L_Thigh`, `Bip01_Pelvis`, `Bip01_Spine`; floats 0.6..0.8) sit between `[r]` and the
+constant-1 dword, followed by the same box/run/extension shapes. count=0 attests in every
+table-less file (that dword had been labeled "boxFlag0"; the old "boxFlag1" is the single
+constant-1 dword).
+
+**Round 7 (commit `53ecd21`).** `LoadVer0103Plus()` reads the count: >= 2 switches the table
+on (`kMaxBoneAttach = 64` sanity cap; names via the existing length-prefixed reader);
+0/1 keep the unchanged table-less path; the table is recorded as
+`hasBoneAttachTable` / `boneAttachCount` and skipped positionally. count == 1 with a real
+record is unattested and fails cleanly into the census. Tests +777 → **9,139** (sumon
+byte-exact fixture: 653 B total, table + 24-B extension + exact float bits; negatives:
+garbage count -> truncated-table reject, count 65 -> sanity reject, count-1 shape legal).
+
+**Round 7 gates:** phase3j **9,139/0**; ASan+UBSan+LSan clean; verify tool `-Werror` clean;
+both synthetic packs behave as before. CI validation: TESTING_CHECKLIST §24.

@@ -823,10 +823,18 @@ g++ -std=c++17 -Wall -Wextra -Werror \
       (hasExtensionSections/extensionBytes), stray bytes after more=0 rejected.
 - [x] Round 6 gates: phase3j 8,362/0 (was 7,721); ASan+UBSan+LSan clean; verify tool -Werror;
       synthetic negative fixtures unchanged; authentic-layout 0x0104-in-.rcc PASS.
-- [ ] CI validation round 6 (pending): expect the admitted-version .chf failures to collapse
-      to the truly-unknown classes (the dump priority now targets `trailing bytes after .chf
-      trailer block` / world-flag / bbox-flag rejects); run id + census to be recorded here
-      after the diagnostic run.
-- [ ] Remaining gaps: 0x0200 container (43 files, trees/props); whatever the round-6 census
+- [x] CI validation round 6 (run `46151830460`): core/arm64/emulator green; admitted-version
+      .chf failures collapsed 50 -> 12, all `.chf bbox flag out of range`; verdict 8298/3362
+      (+38 parsed); the full dump (sumon_ocmyeonsin, 0x0107, 653 B) decoded byte-exact: the
+      dword after [r] is a bone-attach COUNT (7 records [3 floats][strlen][name] Bip01 bones),
+      not a flag.
+- [x] Round 7 parser (commit `53ecd21`): bone-attach table inside the block (count >= 2;
+      kMaxBoneAttach=64 sanity; count 0/1 = unchanged table-less path; the constant-1 dword
+      follows the records); recorded as hasBoneAttachTable/boneAttachCount; tests
+      8,362 -> 9,139/0; sanitizers clean; verify tool -Werror; synthetic gates unchanged.
+- [ ] CI validation round 7 (pending): expect the remaining 12 bbox-flag .chf to parse
+      (bone-attach tables); run id + census to be recorded here after the diagnostic run.
+- [ ] Remaining gaps: 0x0200 container (43 files, trees/props); whatever the round-7 census
       still lists; piece `.cps`/`.x`/`.bin`/`.cfg` support for the files these .chf reference
-      (next milestone); device run.
+      (next milestone; the round-6 failure reasons already show 3097 x cps-version and
+      210 x skeleton as the dominant classes); device run.

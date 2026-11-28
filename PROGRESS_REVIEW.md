@@ -1377,6 +1377,11 @@ minimal markers, 120-byte prop geometry (GBOX02), 5 x 40-byte bone-attach record
 (m_cos_wing04: [3 floats][0][16-byte name][strlen][15]). `LoadVer0103Plus` rewritten; the
 extension is skipped positionally (its 256/4 DWORDs and floats must not be flag-validated) and
 recorded. Stray bytes after a more=0 block are a hard error. phase3j 7,721 -> 8,362/0,
-sanitizers clean, verify tool -Werror clean. Remaining: 0x0200 container class (43 files),
-the post-decode census for anything still unknown, downstream piece/skeleton/animation assets,
-device run.
+sanitizers clean, verify tool -Werror clean. The round-6 CI census (run 46151830460) collapsed
+the admitted-version failures 50 -> 12 and their dump decoded the LAST variant: the dword
+after [r] is a bone-attach COUNT (sumon_ocmyeonsin: 7 x [3 floats][strlen][Bip01-name]
+records inside the block) — round 7 (commit 53ecd21) implements it (count >= 2, sanity-capped,
+recorded, skipped positionally; count 0/1 = unchanged path), phase3j 9,139/0. Remaining:
+0x0200 container class (43 files), the round-7 census for anything still unknown, downstream
+piece/skeleton/animation assets (3097 x cps-version + 210 x skeleton dominate the remaining
+pack failures), device run.
