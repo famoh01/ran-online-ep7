@@ -518,6 +518,14 @@ jobs:
             exit 1
           fi
           "$ADB" shell getprop ro.build.version.release || true
+          # Take root NOW: 'adb root' restarts adbd (adb is broken for a few
+          # seconds) — doing it minutes before the poll, with a settle + check,
+          # lets the verdict be read with a plain root cat (run-as cat returns
+          # empty on this API-30 image — observed in CI).
+          "$ADB" root >/dev/null 2>&1 || true
+          sleep 5
+          "$ADB" devices 2>/dev/null | grep -q "device" || sleep 10
+          "$ADB" shell "id -u" 2>/dev/null | tr -d '\r' || true
 
       - name: Install APK and run GPU selftest
         env:
@@ -551,7 +559,10 @@ jobs:
           fi
           timeout 600 bash -c '
             while true; do
-              out=$("$ADB" exec-out run-as com.famhawaii.ranmobile cat files/gpu_selftest.json 2>/dev/null)
+              out=$("$ADB" shell "cat /data/user/0/com.famhawaii.ranmobile/files/gpu_selftest.json 2>/dev/null" 2>/dev/null | tr -d '\r')
+              if [ -z "$out" ]; then
+                out=$("$ADB" exec-out run-as com.famhawaii.ranmobile cat files/gpu_selftest.json 2>/dev/null)
+              fi
               if [ -n "$out" ]; then
                 echo "$out" > gpu_selftest.json
                 echo "=== GPU SELFTEST VERDICT ==="
@@ -573,8 +584,11 @@ jobs:
             tail -n 20 emulator.log || true
             exit 1
           fi
-          # Pull the screenshot through run-as (app-internal files dir).
-          "$ADB" exec-out run-as com.famhawaii.ranmobile cat files/gpu_selftest.ppm > gpu_selftest.ppm || true
+          # Pull the screenshot (root cat primary, run-as fallback).
+          "$ADB" shell "cat /data/user/0/com.famhawaii.ranmobile/files/gpu_selftest.ppm" > gpu_selftest.ppm 2>/dev/null || true
+          if ! grep -q "P6" gpu_selftest.ppm 2>/dev/null; then
+            "$ADB" exec-out run-as com.famhawaii.ranmobile cat files/gpu_selftest.ppm > gpu_selftest.ppm 2>/dev/null || true
+          fi
           "$ADB" logcat -d > emulator-logcat.txt || true
           verdict=$(python3 -c "import json;print(json.load(open('gpu_selftest.json'))['verdict'])" 2>/dev/null || echo UNKNOWN)
           renderer=$(python3 -c "import json;print(json.load(open('gpu_selftest.json')).get('gl',{}).get('renderer',''))" 2>/dev/null || echo "")
