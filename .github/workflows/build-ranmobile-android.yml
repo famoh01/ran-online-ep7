@@ -563,42 +563,44 @@ jobs:
           amout=$(timeout 60 "$ADB" shell am start -n com.famhawaii.ranmobile/android.app.NativeActivity --es selftest gpu 2>&1 | tr -d '\r') \
             || { echo "::error::am start failed or timed out"; printf '%s\n' "$amout" | while IFS= read -r line; do echo "::error::$line"; done || true; exit 1; }
           printf '%s\n' "$amout" | while IFS= read -r line; do echo "::notice::am: $line"; done || true
-          echo "::notice::am start completed, polling for verdict"
-          sleep 8
-          # Capture the app's STARTUP logcat window NOW — a few seconds after the
-          # intent — these lines rotate out of the buffer later and end-of-poll
-          # dumps have repeatedly missed them.  No 'adb root' here or anywhere:
-          # it restarts adbd and breaks the following commands (observed twice).
-          app_pid=$("$ADB" shell "ps -A 2>/dev/null | grep -w com.famhawaii.ranmobile" 2>/dev/null | head -n 1 | tr -d '\r' || true)
-          if [ -n "$app_pid" ]; then
-            echo "::notice::app process alive: $app_pid"
-          else
-            echo "::error::app process not alive 8s after am start"
-          fi
-          "$ADB" shell "dmesg 2>/dev/null | grep -iE 'killed process|lowmemory|out of memory|avc: denied' | tail -n 6" | while IFS= read -r line; do echo "::error::dmesg|$line"; done || true
-          "$ADB" logcat -d 2>/dev/null | grep -iE "ranmobile|start proc|nativeactivity|linker|DEBUG|FATAL|AndroidRuntime|selftest|gpu self" | tail -n 35 | while IFS= read -r line; do echo "::error::start|$line"; done || true
-          if [ -n "$app_pid" ]; then
-            "$ADB" shell "ps -T -p $(pidof com.famhawaii.ranmobile) 2>/dev/null | head -n 14" | while IFS= read -r line; do echo "::error::thr|$line"; done || true
-          fi
-          # The launch races system settle right after boot_completed (observed:
-          # one run completes the selftest in 2s, the next dies before
-          # android_main).  One retry: force-stop, relaunch, re-probe.
-          verdict_now=$("$ADB" shell "cat /data/user/0/com.famhawaii.ranmobile/files/gpu_selftest.json 2>/dev/null" 2>/dev/null | tr -d '\r')
-          if [ -z "$app_pid" ] && [ -z "$verdict_now" ]; then
-            echo "::error::no process and no verdict 8s after am start — retrying launch once"
+          echo "::notice::am start completed - bounded launch loop begins"
+          # BOUNDED LAUNCH LOOP (deterministic): the app may (a) complete and
+          # EXIT within ~2 s (verdict chunks already in logcat, process gone -
+          # "not alive" is then a SUCCESS signal), (b) run for a while, or
+          # (c) die before android_main on a fresh boot (flaky, observed).
+          # Success = verdict chunks visible OR process alive; 3 bounded tries.
+          launch_ok=0
+          for attempt in 1 2 3; do
             "$ADB" logcat -c 2>/dev/null || true
-            "$ADB" shell "am force-stop com.famhawaii.ranmobile" || true
-            sleep 5
-            retry_out=$("$ADB" shell am start -n com.famhawaii.ranmobile/android.app.NativeActivity --es selftest gpu 2>&1 | tr -d '\r')
-            printf '%s\n' "$retry_out" | while IFS= read -r line; do echo "::notice::retry am: $line"; done || true
-            sleep 10
-            app_pid=$("$ADB" shell "ps -A 2>/dev/null | grep -w com.famhawaii.ranmobile" 2>/dev/null | head -n 1 | tr -d '\r' || true)
-            if [ -n "$app_pid" ]; then
-              echo "::notice::app process alive after retry: $app_pid"
-            else
-              echo "::error::app process not alive after retry"
-            fi
-            "$ADB" logcat -d 2>/dev/null | grep -iE "ranmobile|start proc|nativeactivity|linker|DEBUG|FATAL|AndroidRuntime|selftest|gpu self" | tail -n 35 | while IFS= read -r line; do echo "::error::start2|$line"; done || true
+            timeout 60 "$ADB" shell am start -n com.famhawaii.ranmobile/android.app.NativeActivity --es selftest gpu >/dev/null 2>&1 \
+              || echo "::notice::attempt $attempt: am start command failed (retrying)"
+            ok=0
+            for i in 1 2 3 4; do
+              sleep 5
+              chunks=$("$ADB" logcat -d -s GPUSELFTEST_JSON 2>/dev/null | grep -c GPUSELFTEST_JSON || true)
+              if [ "$chunks" -ge 1 ] 2>/dev/null; then
+                echo "::notice::attempt $attempt: verdict chunks in logcat after ~$((i * 5))s (selftest completed + exited)"
+                ok=1
+                break
+              fi
+              alive=$("$ADB" shell "ps -A 2>/dev/null | grep -w com.famhawaii.ranmobile" 2>/dev/null | head -n 1 | tr -d '\r' || true)
+              if [ -n "$alive" ]; then
+                echo "::notice::attempt $attempt: app process alive after ~$((i * 5))s"
+                ok=1
+                break
+              fi
+            done
+            if [ "$ok" = "1" ]; then launch_ok=1; break; fi
+            # Startup-window dump for THIS attempt as ::notice (uncounted -
+            # ::error hits GitHub's 10-per-step annotation cap and silently
+            # drops later diagnostics, which hid evidence in 4 earlier runs).
+            "$ADB" logcat -d 2>/dev/null | grep -iE "ranmobile|start proc.*ranmobile|nativeactivity|linker|DEBUG|FATAL|AndroidRuntime" | tail -n 15 > appattempt.txt || true
+            while IFS= read -r line; do echo "::notice::att$attempt|$line"; done < appattempt.txt || true
+            "$ADB" shell "am force-stop com.famhawaii.ranmobile" 2>/dev/null || true
+          done
+          if [ "$launch_ok" != "1" ]; then
+            echo "::error::app never launched (died pre-main or process never started) across 3 bounded attempts"
+            exit 1
           fi
           timeout 600 bash -c '
             adb_fail=0
@@ -677,8 +679,13 @@ jobs:
           echo "GPU renderer: $renderer"
           echo "GPU selftest verdict: $verdict" >> "$GITHUB_STEP_SUMMARY"
           echo "GPU renderer: $renderer" >> "$GITHUB_STEP_SUMMARY"
+          # Per-test results as ::notice (uncounted; visible without log access).
+          jq -r '.tests[] | "::notice::test \(.name) pass=\(.pass) :: \((.detail // "")[0:220])"' gpu_selftest.json 2>/dev/null || true
+          jq -r 'if .authenticTexture then "::notice::authenticTexture attempted=\(.authenticTexture.attempted) pass=\(.authenticTexture.pass) :: \((.authenticTexture.detail // "")[0:220])" else empty end' gpu_selftest.json 2>/dev/null || true
+          jq -r 'if .authentic then "::notice::authenticCharacter attempted=\(.authentic.attempted) pass=\(.authentic.pass) :: \((.authentic.detail // "")[0:220])" else empty end' gpu_selftest.json 2>/dev/null || true
+          PYV
           if [ "$verdict" != "PASS" ]; then
-            echo "::error::GPU selftest verdict = $verdict"
+            echo "::error::GPU selftest verdict = $verdict (failing tests listed in the notices above)"
             exit 1
           fi
 
