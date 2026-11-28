@@ -66,6 +66,10 @@ void main() {
 // driver error (the CI evidence channel cannot read device logcat off-box).
 static std::string g_gpuSkinProgramLog;
 
+const std::string& MobileRenderer::GpuSkinProgramLog() {
+    return g_gpuSkinProgramLog;
+}
+
 static std::string SanitizeLogLine(const char* log) {
     std::string s(log ? log : "");
     for (char& c : s) {
