@@ -1157,10 +1157,15 @@ int main(int argc, char** argv) {
         }
         // Full dumps of the smallest example per version (the layout deltas
         // are derived from complete small files; skip the 0x0200 class).
+        // Two tags keep the annotation steps under the per-step cap:
+        //   cps-dump   -- versions <= 0x0109 (smallest, <= 800 B)
+        //   cps-dump-b -- versions 0x0110+ (<= 1500 B, emitted in a third step)
         for (const auto& [ver, ex] : g_cpsUnsupportedExamples) {
             if (ver == 0x0200 || ex.full.empty()) continue;
             if (ex.size <= 800) {
                 DumpChfFile("cps-dump", ver, ex.name, ex.size, ex.full);
+            } else if (ex.size <= 1500) {
+                DumpChfFile("cps-dump-b", ver, ex.name, ex.size, ex.full);
             }
         }
     }
