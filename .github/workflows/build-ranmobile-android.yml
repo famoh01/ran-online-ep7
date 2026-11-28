@@ -523,8 +523,18 @@ jobs:
           # lets the verdict be read with a plain root cat (run-as cat returns
           # empty on this API-30 image — observed in CI).
           "$ADB" root >/dev/null 2>&1 || true
-          sleep 5
-          "$ADB" devices 2>/dev/null | grep -q "device" || sleep 10
+          # Wait until adbd is REALLY back in 'device' state (the header line
+          # 'List of devices attached' also contains the word 'device' — match
+          # the state column specifically).
+          adb_ok=0
+          for i in $(seq 1 12); do
+            if "$ADB" devices 2>/dev/null | grep -qE "emulator-[0-9]+[[:space:]]+device[[:space:]]*$"; then
+              adb_ok=1
+              break
+            fi
+            sleep 5
+          done
+          [ "$adb_ok" = "1" ] || echo "::warning::emulator not in device state 60s after adb root"
           "$ADB" shell "id -u" 2>/dev/null | tr -d '\r' || true
 
       - name: Install APK and run GPU selftest
@@ -534,8 +544,16 @@ jobs:
           ADB="$ANDROID_HOME/platform-tools/adb"
           # NOTE: GH Actions runs steps under `bash -e` — a failing poll/timeout
           # aborts the step BEFORE the diagnostics below unless we add `|| true`.
-          timeout 180 "$ADB" install -r RANMobile/Android/app/build/outputs/apk/debug/app-debug.apk \
-            || { echo "::error::adb install failed or timed out"; exit 1; }
+          install_ok=0
+          for attempt in 1 2; do
+            if timeout 240 "$ADB" install -r RANMobile/Android/app/build/outputs/apk/debug/app-debug.apk; then
+              install_ok=1
+              break
+            fi
+            echo "::warning::adb install attempt $attempt failed — retrying in 15s"
+            sleep 15
+          done
+          [ "$install_ok" = "1" ] || { echo "::error::adb install failed or timed out after 2 attempts"; exit 1; }
           echo "::notice::install completed"
           amout=$(timeout 60 "$ADB" shell am start -n com.famhawaii.ranmobile/android.app.NativeActivity --es selftest gpu 2>&1 | tr -d '\r') \
             || { echo "::error::am start failed or timed out"; printf '%s\n' "$amout" | while IFS= read -r line; do echo "::error::$line"; done || true; exit 1; }
