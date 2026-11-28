@@ -243,6 +243,15 @@ bool B18DecodeTexture(const std::string& name, const std::vector<uint8_t>& bytes
     return true;
 }
 
+// B20: unsupported-version census (see VerifySingleAsset .chf branch).
+struct ChfVersionExample {
+    std::string name;
+    size_t size = 0;
+    std::string hexHead;  // payload head from file offset 132, hex
+};
+std::map<uint32_t, int> g_chfUnsupportedVersions;
+std::map<uint32_t, std::vector<ChfVersionExample>> g_chfUnsupportedExamples;
+
 }  // namespace
 
 // Verifies one asset buffer. `path` is only used for reporting (it may be
@@ -262,6 +271,42 @@ Outcome VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& b
             g_b18.chfNames.push_back(path);
         } else {
             ReportOutcome("chf", path, Outcome::Fail, info.error);
+            // B20: census of the versions the pack actually ships. `info.version`
+            // is recorded by the parser BEFORE the unsupported-version gate, so
+            // this is the real on-disk value. For the first example of each
+            // distinct version, keep name + size + a hex dump of the payload
+            // head (version DWORD + the first 72 payload bytes at file offset
+            // 132) -- the layout evidence needed to extend the parser without
+            // guessing. Bytes are raw pack-entry bytes (this pack stores entries
+            // unencoded; every working format classification proves that).
+            if (info.error.find("unsupported .chf version") != std::string::npos) {
+                ++g_chfUnsupportedVersions[info.version];
+                auto& exs = g_chfUnsupportedExamples[info.version];
+                bool distinct = true;
+                for (const auto& e : exs) {
+                    if (e.size == bytes.size()) distinct = false;
+                }
+                if (exs.size() < 3 && distinct) {
+                    ChfVersionExample ex;
+                    ex.name = path;
+                    ex.size = bytes.size();
+                    // Payload head from file offset 132: version DWORD + the first
+                    // 188 payload bytes (scale / counts / piece slots / strings in
+                    // the 0x0100-0x0102 layouts) -- enough to align an unknown
+                    // version's fields against the known templates.
+                    const size_t payload = 132;
+                    const size_t take = std::min<size_t>(188, bytes.size() > payload ? bytes.size() - payload : 0);
+                    static const char* hexd = "0123456789abcdef";
+                    std::string hx;
+                    hx.reserve(take * 2);
+                    for (size_t i = 0; i < take; ++i) {
+                        hx.push_back(hexd[bytes[payload + i] >> 4]);
+                        hx.push_back(hexd[bytes[payload + i] & 0xF]);
+                    }
+                    ex.hexHead = hx;
+                    exs.push_back(ex);
+                }
+            }
         }
         return info.valid ? Outcome::Pass : Outcome::Fail;
     }
@@ -892,6 +937,18 @@ int main(int argc, char** argv) {
         std::printf("\n(that category is untested against real data — not a pass)   \n");
     }
 
+    if (!g_chfUnsupportedVersions.empty()) {
+        std::printf("\nchf version census (real pack data; parser-unsupported versions):\n");
+        for (const auto& [ver, count] : g_chfUnsupportedVersions) {
+            std::printf("  chf-census: 0x%04X x%d\n", ver, count);
+        }
+        for (const auto& [ver, exs] : g_chfUnsupportedExamples) {
+            for (const auto& ex : exs) {
+                std::printf("  chf-example: v0x%04X %s size=%zu\n", ver, ex.name.c_str(), ex.size);
+                std::printf("  chf-hex: v0x%04X %s\n", ver, ex.hexHead.c_str());
+            }
+        }
+    }
     if (!g_failureReasons.empty()) {
         std::printf("\nfailure reasons (aggregated, so none are lost to log/annotation caps):\n");
         for (const auto& [reason, count] : g_failureReasons) {
