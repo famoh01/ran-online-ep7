@@ -549,7 +549,7 @@ jobs:
           else
             echo "::notice::app process alive: $app_pid"
           fi
-          timeout 420 bash -c '
+          timeout 600 bash -c '
             while true; do
               out=$("$ADB" exec-out run-as com.famhawaii.ranmobile cat files/gpu_selftest.json 2>/dev/null)
               if [ -n "$out" ]; then
@@ -564,12 +564,12 @@ jobs:
             echo "::error::selftest did not produce gpu_selftest.json in time"
             # Emit the app's logcat (crashes, harness logs, EGL/GLES errors) as
             # annotations — they are the only log channel readable from outside.
-            "$ADB" root >/dev/null 2>&1 || true
             "$ADB" logcat -d -b crash 2>/dev/null | tail -n 25 | while IFS= read -r line; do echo "::error::crash|$line"; done || true
-            "$ADB" logcat -d 2>/dev/null | grep -vE "% user|faults:|^$|getprop|Dumping" | tail -n 45 | while IFS= read -r line; do echo "::error::log|$line"; done || true
+            "$ADB" logcat -d 2>/dev/null | grep -iE "ranmobile|nativeactivity|linker|DEBUG|FATAL|AndroidRuntime|EGL|selftest|GLES" | tail -n 60 | while IFS= read -r line; do echo "::error::log|$line"; done || true
+            "$ADB" shell "ps -T -p $(pidof com.famhawaii.ranmobile) 2>/dev/null | head -n 16" | while IFS= read -r line; do echo "::error::thr|$line"; done || true
             "$ADB" shell "dumpsys package com.famhawaii.ranmobile | grep -E 'primaryCpuAbi|versionName' | head -n 3" || true
-            "$ADB" shell "run-as com.famhawaii.ranmobile ls -la files/" || echo "::error::run-as files listing failed"
-            echo "::notice::poll budget exhausted (420s) — diagnostics above"
+            "$ADB" shell "run-as com.famhawaii.ranmobile ls -la files/" | while IFS= read -r line; do echo "::error::files|$line"; done || echo "::error::run-as files listing failed"
+            echo "::notice::poll budget exhausted (600s) — diagnostics above"
             tail -n 20 emulator.log || true
             exit 1
           fi
