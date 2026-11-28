@@ -832,9 +832,16 @@ g++ -std=c++17 -Wall -Wextra -Werror \
       kMaxBoneAttach=64 sanity; count 0/1 = unchanged table-less path; the constant-1 dword
       follows the records); recorded as hasBoneAttachTable/boneAttachCount; tests
       8,362 -> 9,139/0; sanitizers clean; verify tool -Werror; synthetic gates unchanged.
-- [ ] CI validation round 7 (pending): expect the remaining 12 bbox-flag .chf to parse
-      (bone-attach tables); run id + census to be recorded here after the diagnostic run.
-- [ ] Remaining gaps: 0x0200 container (43 files, trees/props); whatever the round-7 census
-      still lists; piece `.cps`/`.x`/`.bin`/`.cfg` support for the files these .chf reference
-      (next milestone; the round-6 failure reasons already show 3097 x cps-version and
-      210 x skeleton as the dominant classes); device run.
+- [x] CI rounds 7-9 (runs `46154866749`, `46157679279`, `46162179669`): the class collapses
+      12 -> 6 -> 0.  Round 8 dumped the wing-class table region (parser reports the table
+      offset; tool dumps a 564-B window there): m_cos_wing04's records are a FIXED 40-byte
+      stride [3 floats][0][16-byte name field][strlen][15] (vs sumon's length-prefixed).
+- [x] Round 9 (commit `e570c01`): version-gated record shapes (0x0103/0x0104 wing stride,
+      0x0106+ length-prefixed); tests 9,139 -> 9,287/0; sanitizers clean.
+- [x] CI round 9 closure (run `46162179669`): ZERO admitted-version .chf failures — all
+      200 non-0x0200 .chf parse (243 total = 200 parsed + 43 x 0x0200 unsupported, exactly
+      the documented encrypted class); verdict 8310/3350; core/arm64/emulator green.
+- [ ] Remaining gaps: 0x0200 container (43 files, trees/props — only .chf class left);
+      piece `.cps`/`.x`/`.bin`/`.cfg` support for the files these .chf reference (next
+      milestone; 3097 x cps-version, 210 x skeleton, 9 x bin-0x00000200 dominate the
+      remaining pack failures); device run.

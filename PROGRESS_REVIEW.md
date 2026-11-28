@@ -1381,7 +1381,10 @@ sanitizers clean, verify tool -Werror clean. The round-6 CI census (run 46151830
 the admitted-version failures 50 -> 12 and their dump decoded the LAST variant: the dword
 after [r] is a bone-attach COUNT (sumon_ocmyeonsin: 7 x [3 floats][strlen][Bip01-name]
 records inside the block) — round 7 (commit 53ecd21) implements it (count >= 2, sanity-capped,
-recorded, skipped positionally; count 0/1 = unchanged path), phase3j 9,139/0. Remaining:
-0x0200 container class (43 files), the round-7 census for anything still unknown, downstream
-piece/skeleton/animation assets (3097 x cps-version + 210 x skeleton dominate the remaining
-pack failures), device run.
+recorded, skipped positionally; count 0/1 = unchanged path), phase3j 9,139/0. Rounds 8-9 (commits 9f80ffe, e570c01) finished the class: the parser reports the bone-table
+offset, CI dumped the wing-class table region, and its records proved to be a fixed 40-byte
+stride ([3 floats][0][16-byte name][strlen][15]) — version-gated against sumon's
+length-prefixed shape. Run 46162179669: ZERO admitted-version .chf failures; all 200
+non-0x0200 .chf parse; phase3j 9,287/0. Remaining: the 0x0200 encrypted container (43 files,
+the only .chf class left), downstream piece/skeleton/animation assets (3097 x cps-version +
+210 x skeleton dominate the remaining pack failures), device run.

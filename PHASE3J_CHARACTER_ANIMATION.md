@@ -1137,3 +1137,36 @@ garbage count -> truncated-table reject, count 65 -> sanity reject, count-1 shap
 
 **Round 7 gates:** phase3j **9,139/0**; ASan+UBSan+LSan clean; verify tool `-Werror` clean;
 both synthetic packs behave as before. CI validation: TESTING_CHECKLIST §24.
+
+
+### 16.11 B20 rounds 8–9 — wing-class bone records; the 0x0103+ `.chf` class closes clean (2026-11-27)
+
+**Round 7 CI (run `46154866749`)** collapsed the class 12 -> 6, all `truncated .chf bone table`.
+The smallest, `m_cos_wing04.chf` (0x0104, 3955 B), turned out to have its front ending at 1673
+(178 animations) — the round-5 dump (first 1128 B) never reached its block, so the round-6
+interpretation of that file was a misparse, not a shape. Round 8 made the evidence channel
+target mid-file data: the parser reports the table's byte offset in the error string
+(`truncated .chf bone table (table starts at N)`; the substring the tests match is unchanged)
+and the verify tool dumps a 564-byte window starting 24 bytes before that offset (census keys
+normalized so per-file offsets aggregate).
+
+**Round 8 CI (run `46157679279`)** delivered the wing window, which decodes byte-exact
+(244 B = 4 + 5 x 40 + 40): the wing class uses the 15-dword block with scale=1.0 and raw
+Y=1, count=5, records in a **fixed 40-byte stride** `[3 floats][0 u32][16-byte name field]
+[strlen u32][15 u32]` — `Bip01_Head` 0.7/0.95/1.0, `Bip01_R_Thigh`/`Bip01_L_Thigh` 1.2/0.95/1.0,
+`Bip01_R_Calf`/`Bip01_L_Calf` 1.1/0.95/1.0 (strlen = len+1, name zero-padded to 16) — then
+`[1][vMax(7,20,7)][vMin(-7,0,-7)][1][0][0]`, no extension. sumon (0x0106+) uses the
+length-prefixed `[3 floats][strlen][name]` instead. No cross-attestation exists, so the record
+shape is **version-gated** (0x0103/0x0104 -> wing stride via `ReadFixedString(16)`;
+0x0106+ -> length-prefixed) — commit `e570c01`.
+
+**Closure (run `46162179669`):** the failure reasons line contains NO admitted-version `.chf`
+entry — every 0x0103-0x0108 `.chf` in the authentic packs parses. The remaining 43 are exactly
+the documented 0x0200 encrypted container class. Verdict trajectory across the rounds:
+8260/3400 (round 1) -> 8298/3362 (round 6) -> 8304/3356 (round 7) -> 8310/3350 (round 9).
+The remaining pack failures are downstream assets (3097 x `.cps` version, 210 x skeleton `.x`,
+9 x `.bin` 0x00000200) — the next milestone, outside B20.
+
+**Gates:** phase3j **9,287/0**; ASan+UBSan+LSan clean; verify tool `-Werror` clean; synthetic
+negative fixtures unchanged; core/arm64/emulator green at every round commit
+(`53ecd21`, `9f80ffe`, `e570c01`).  Device: NOT TESTED ON DEVICE (unchanged).

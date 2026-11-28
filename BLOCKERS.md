@@ -1018,9 +1018,12 @@ layout). Byte-exact fixtures assert the layout via 160-B-window round-trips; pha
   recorded. phase3j 8,362/0. The round-6 CI census (run 46151830460) collapsed the
   admitted-version .chf failures 50 -> 12 (all bbox-flag) and their dump decoded the last
   variant: a bone-attach table inside the block ([count][records][constant 1]), implemented
-  in round 7 (commit 53ecd21, phase3j 9,139/0). The round-7 census is expected to zero the
-  class; the dominant remaining pack failures are downstream assets (3097 x .cps version,
-  210 x skeleton .x, 9 x .bin 0x00000200) plus the 0x0200 container (43 files).
+  in round 7 (commit 53ecd21, phase3j 9,139/0). Rounds 8-9 (commits 9f80ffe,
+  e570c01) closed the class to ZERO admitted-version failures (run 46162179669): the wing
+  class (0x0103/0x0104) uses a fixed 40-byte record stride, version-gated against the
+  length-prefixed 0x0106+ shape. The only .chf class left is the 0x0200 encrypted container
+  (43 files); the dominant remaining pack failures are downstream assets (3097 x .cps
+  version, 210 x skeleton .x, 9 x .bin 0x00000200).
 
 **Still unsupported (documented, not a guess):**
 * **0x0200 (43 files)** — a different container: 128-B type block reads `default`, payload is
