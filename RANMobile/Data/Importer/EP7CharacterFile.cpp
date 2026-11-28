@@ -7,6 +7,7 @@ namespace {
 
 constexpr uint32_t kMaxAnimNames = 4096;
 constexpr uint32_t kMaxPieceName = 1024;
+constexpr uint32_t kMaxBoneAttach = 64;  // 7 attested (sumon_ocmyeonsin)
 
 bool ReadPieceSlot(ep7byte::Stream& s, std::string& out) {
     bool present = false;
@@ -117,14 +118,46 @@ bool LoadVer0103Plus(ep7byte::Stream& s, EP7CharacterFileInfo& info, uint32_t ve
         std::memcpy(&radius, &slotHOrR, sizeof(radius));
     }
 
-    uint32_t boxFlag0 = 0, boxFlag1 = 0;
-    if (!s.ReadU32(boxFlag0) || !s.ReadU32(boxFlag1) ||
+    // The dword after [r] (after [X] in the 16-dword shape) is a bone-attach
+    // COUNT (sumon_ocmyeonsin: 7 records [3 floats][strlen][name]; runs
+    // 46147778604 + 46151830460).  0 attests in every table-less file (the
+    // old "boxFlag0"), and is then followed by the constant 1 (the old
+    // "boxFlag1").  count >= 2 switches the table on; after the records the
+    // same single constant dword precedes the bounding box.  count == 1 is
+    // unattested and intentionally not special-cased (it fails cleanly and
+    // surfaces in the census).
+    uint32_t boneCount = 0;
+    if (!s.ReadU32(boneCount)) {
+        info.error = "truncated .chf bounding box";
+        return false;
+    }
+    if (boneCount >= 2) {
+        if (boneCount > kMaxBoneAttach) {
+            info.error = ".chf bone table count exceeds sanity limit";
+            return false;
+        }
+        for (uint32_t i = 0; i < boneCount; ++i) {
+            float bx = 0.0f, by = 0.0f, bz = 0.0f;
+            std::string boneName;
+            if (!s.ReadF32(bx) || !s.ReadF32(by) || !s.ReadF32(bz) ||
+                !s.ReadString(boneName, kMaxPieceName)) {
+                info.error = "truncated .chf bone table";
+                return false;
+            }
+        }
+        info.hasBoneAttachTable = true;
+        info.boneAttachCount = boneCount;
+    }
+    // The single constant dword (attested 1) follows the records when the
+    // table is on and the count itself when it is off.
+    uint32_t boxFlag1 = 0;
+    if (!s.ReadU32(boxFlag1) ||
         !s.ReadF32(info.boundsMax[0]) || !s.ReadF32(info.boundsMax[1]) || !s.ReadF32(info.boundsMax[2]) ||
         !s.ReadF32(info.boundsMin[0]) || !s.ReadF32(info.boundsMin[1]) || !s.ReadF32(info.boundsMin[2])) {
         info.error = "truncated .chf bounding box";
         return false;
     }
-    if (boxFlag0 > 1 || boxFlag1 > 1) {
+    if (boxFlag1 > 1) {
         info.error = ".chf bbox flag out of range";
         return false;
     }

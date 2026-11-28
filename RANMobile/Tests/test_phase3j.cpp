@@ -1789,6 +1789,67 @@ void TestCharacterFileMobileV3() {
         J_CHECK(FloatBitsOf(info.radius) == 0x40e00000u);  // 7
     }
 
+    // sumon_ocmyeonsin class (0x0107): bone-attach table between [r] and the
+    // constant 1 dword — count=7 records [3 floats][strlen][name], then box,
+    // run, and the same 24-byte extension as mob_raikan_7.  Authentic decode
+    // (runs 46151830460; total 653 B consumed exactly).
+    {
+        ChfV3Fixture f;
+        f.version = 0x0107;
+        f.pieces.push_back({true, "m_ocmyeonsin_mask.cps"});
+        f.pieces.push_back({true, "m_ocmyeonsin_body.cps"});
+        f.pieces.push_back({true, "m_ocmyeonsin_leg.cps"});
+        f.pieces.push_back({true, "m_ocmyeonsin_hand.cps"});
+        f.pieces.push_back({false, ""});
+        f.pieces.push_back({false, ""});
+        f.pieces.push_back({true, "m_ocmyeonsin_foot.cps"});
+        f.pieces.push_back({false, ""});
+        f.pieces.push_back({false, ""});
+        f.pieces.push_back({false, ""});
+        f.skeleton = "b_effet_char.X";
+        f.anims = {"a_m_fs_ocmyensin_somon.cfg"};
+        f.blockHex = "00004040000010c1010000000000a0410000e040070000003333333f3333333f3333333f0b00000042697030315f48656164003333333fcdcc4c3fcdcc4c3f0e00000042697030315f525f5468696768009a99193f3333333f3333333f0d00000042697030315f525f43616c66009a99193f3333333f3333333f0d00000042697030315f4c5f43616c66003333333fcdcc4c3fcdcc4c3f0e00000042697030315f4c5f5468696768003333333fcdcc4c3fcdcc4c3f0d00000042697030315f50656c76697300cdcc4c3fcdcc4c3fcdcc4c3f0c00000042697030315f5370696e6500010000000000e0400000a0410000e0400000e0c0000000000000e0c0010000000000000001000000000000000100000000010000040000000000000000000000";
+        const std::vector<uint8_t> bytes = BuildChfV3(f);
+        J_CHECK(bytes.size() == 653);
+        const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(bytes, false);
+        J_CHECK_MSG(info.valid, info.error);
+        J_CHECK(info.hasBoneAttachTable);
+        J_CHECK(info.boneAttachCount == 7);
+        J_CHECK(info.hasExtensionSections);
+        J_CHECK(info.extensionBytes == 24);
+        J_CHECK(FloatBitsOf(info.height) == 0x41a00000u);  // 20
+        J_CHECK(FloatBitsOf(info.radius) == 0x40e00000u);  // 7
+        J_CHECK(FloatBitsOf(info.boundsMax[0]) == 0x40e00000u);
+        J_CHECK(FloatBitsOf(info.boundsMax[1]) == 0x41a00000u);
+        J_CHECK(FloatBitsOf(info.boundsMin[0]) == 0xc0e00000u);
+    }
+
+    // Bone-table negatives: count=2 pointed at the box bytes reads an
+    // over-long name -> truncated reject; a huge count hits the sanity
+    // limit.  count == 1 is not special-cased: it parses as the table-less
+    // shape (the count dword doubles as the old boxFlag0, attested 0).
+    {
+        ChfV3Fixture f;
+        f.version = 0x0107;
+        for (int i = 0; i < 13; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_test.X";
+        f.anims = {"a_test.x"};
+        f.blockHex = "00004040000010c1010000000000a0410000e04002000000010000000000e0400000a0410000e0400000e0c0000000000000e0c0010000000000000001000000000000000100000000010000040000000000000000000000";
+        const RANMobile::EP7CharacterFileInfo bad = RANMobile::EP7CharacterFileReader::Parse(BuildChfV3(f), false);
+        J_CHECK_MSG(!bad.valid, "garbage bone count must reject");
+        J_CHECK(bad.error.find("truncated .chf bone table") != std::string::npos);
+
+        f.blockHex = "00004040000010c1010000000000a0410000e040410000003333333f3333333f3333333f0b00000042697030315f48656164003333333fcdcc4c3fcdcc4c3f0e00000042697030315f525f5468696768009a99193f3333333f3333333f0d00000042697030315f525f43616c66009a99193f3333333f3333333f0d00000042697030315f4c5f43616c66003333333fcdcc4c3fcdcc4c3f0e00000042697030315f4c5f5468696768003333333fcdcc4c3fcdcc4c3f0d00000042697030315f50656c76697300cdcc4c3fcdcc4c3fcdcc4c3f0c00000042697030315f5370696e6500010000000000e0400000a0410000e0400000e0c0000000000000e0c0010000000000000001000000000000000100000000010000040000000000000000000000";
+        const RANMobile::EP7CharacterFileInfo over = RANMobile::EP7CharacterFileReader::Parse(BuildChfV3(f), false);
+        J_CHECK_MSG(!over.valid, "bone count over the sanity limit must reject");
+        J_CHECK(over.error.find(".chf bone table count exceeds sanity limit") != std::string::npos);
+
+        f.blockHex = "00004040000010c1010000000000a0410000e04001000000010000000000e0400000a0410000e0400000e0c0000000000000e0c0010000000000000001000000000000000100000000010000040000000000000000000000";
+        const RANMobile::EP7CharacterFileInfo one = RANMobile::EP7CharacterFileReader::Parse(BuildChfV3(f), false);
+        J_CHECK_MSG(one.valid, one.error);
+        J_CHECK(!one.hasBoneAttachTable);
+    }
+
     // 15-dword (60 B) shape with more=1: extension follows even there.
     {
         ChfV3Fixture f;

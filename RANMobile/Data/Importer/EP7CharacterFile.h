@@ -62,7 +62,10 @@
 //   (72 B).  Y/X are raw (the TrickBoomLow class carries an arbitrary float
 //   12.5f in Y); the shape is picked by value: X-slot dword 0/1 selects the
 //   16-dword shape (a real height float never has bit pattern 0 or 1), an
-//   exact 60-B block forces the 15-dword shape.
+//   exact 60-B block forces the 15-dword shape.  The dword after [r] is a
+//   bone-attach COUNT: 0 in table-less files (then a constant 1 dword), >= 2
+//   switches count x ([3 floats][strlen][name]) records (sumon_ocmyeonsin: 7
+//   Bip01 bones) after which the same constant 1 dword precedes the box.
 //   The trailing [t0 t1 more] run maps naturally to hasWorldObj=1 /
 //   worldObj=0 in the 0x0102 field order, and more switches an opaque
 //   extension section on that runs to EOF (attested sizes: 8 B and 24 B
@@ -145,6 +148,8 @@ struct EP7CharacterFileInfo {
     bool worldObj = false;
     bool hasExtensionSections = false;  // 0x0103+: opaque tail after more==1
     uint32_t extensionBytes = 0;        // size of that tail (skipped, not interpreted)
+    bool hasBoneAttachTable = false;    // 0x0103+: count dword >= 2 after [r]
+    uint32_t boneAttachCount = 0;       // records [3 floats][strlen][name], skipped
     bool hasHeightRadius = false;
     float height = 20.0f;   // default m_fHeight
     float radius = 7.0f;    // default m_fRadius
