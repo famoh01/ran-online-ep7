@@ -532,22 +532,22 @@ jobs:
           amout=$(timeout 60 "$ADB" shell am start -n com.famhawaii.ranmobile/android.app.NativeActivity --es selftest gpu 2>&1 | tr -d '\r') \
             || { echo "::error::am start failed or timed out"; printf '%s\n' "$amout" | while IFS= read -r line; do echo "::error::$line"; done || true; exit 1; }
           printf '%s\n' "$amout" | while IFS= read -r line; do echo "::notice::am: $line"; done || true
-          # adb root restarts adbd — do it BEFORE launching the app and give it time.
-          "$ADB" root >/dev/null 2>&1 || true
-          sleep 3
           echo "::notice::am start completed, polling for verdict"
-          sleep 10
+          sleep 8
+          # Capture the app's STARTUP logcat window NOW — a few seconds after the
+          # intent — these lines rotate out of the buffer later and end-of-poll
+          # dumps have repeatedly missed them.  No 'adb root' here or anywhere:
+          # it restarts adbd and breaks the following commands (observed twice).
           app_pid=$("$ADB" shell "ps -A 2>/dev/null | grep -w com.famhawaii.ranmobile" 2>/dev/null | head -n 1 | tr -d '\r' || true)
-          if [ -z "$app_pid" ]; then
-            echo "::error::app process not alive 10s after am start"
-            # NOTE: adb root was executed BEFORE am start (it restarts adbd and
-            # breaks logcat for a few seconds — running it here silenced every dump).
-            "$ADB" logcat -d -b crash 2>/dev/null | tail -n 25 | while IFS= read -r line; do echo "::error::crash|$line"; done || true
-            "$ADB" logcat -d 2>/dev/null | grep -vE "% user|faults:|^$|getprop|Dumping|GC Profile|jdwp|chatty" | tail -n 45 | while IFS= read -r line; do echo "::error::log|$line"; done || true
-            "$ADB" shell "dmesg 2>/dev/null | grep -iE 'killed process|lowmemory|out of memory' | tail -n 8" || true
-            "$ADB" shell "ls -n /data/tombstones/ 2>/dev/null | tail -n 4" || echo "::error::tombstones listing failed (root?)"
-          else
+          if [ -n "$app_pid" ]; then
             echo "::notice::app process alive: $app_pid"
+          else
+            echo "::error::app process not alive 8s after am start"
+          fi
+          "$ADB" shell "dmesg 2>/dev/null | grep -iE 'killed process|lowmemory|out of memory' | tail -n 6" | while IFS= read -r line; do echo "::error::dmesg|$line"; done || true
+          "$ADB" logcat -d 2>/dev/null | grep -iE "ranmobile|start proc|nativeactivity|linker|DEBUG|FATAL|AndroidRuntime|selftest|gpu self" | tail -n 35 | while IFS= read -r line; do echo "::error::start|$line"; done || true
+          if [ -n "$app_pid" ]; then
+            "$ADB" shell "ps -T -p $(pidof com.famhawaii.ranmobile) 2>/dev/null | head -n 14" | while IFS= read -r line; do echo "::error::thr|$line"; done || true
           fi
           timeout 600 bash -c '
             while true; do
@@ -568,7 +568,7 @@ jobs:
             "$ADB" logcat -d 2>/dev/null | grep -iE "ranmobile|nativeactivity|linker|DEBUG|FATAL|AndroidRuntime|EGL|selftest|GLES" | tail -n 60 | while IFS= read -r line; do echo "::error::log|$line"; done || true
             "$ADB" shell "ps -T -p $(pidof com.famhawaii.ranmobile) 2>/dev/null | head -n 16" | while IFS= read -r line; do echo "::error::thr|$line"; done || true
             "$ADB" shell "dumpsys package com.famhawaii.ranmobile | grep -E 'primaryCpuAbi|versionName' | head -n 3" || true
-            "$ADB" shell "run-as com.famhawaii.ranmobile ls -la files/" | while IFS= read -r line; do echo "::error::files|$line"; done || echo "::error::run-as files listing failed"
+            "$ADB" shell "run-as com.famhawaii.ranmobile ls -la files/ 2>&1" | while IFS= read -r line; do echo "::error::files|$line"; done || true
             echo "::notice::poll budget exhausted (600s) — diagnostics above"
             tail -n 20 emulator.log || true
             exit 1
