@@ -207,6 +207,25 @@ jobs:
         \ ! -f gpu_selftest.json ]; then\n  echo \"::error::verdict never retrieved within 600s (launch saw chunks: the app completed but adb wedged, or the poll failed)\"\n  \"$ADB\" logcat -d -b crash 2>/dev/null | tail -n 25 | while IFS= read -r line; do echo \"::notice::crash|$line\"; done || true\n  \"$ADB\" logcat -d 2>/dev/null | grep -iE \"ranmobile|nativeactivity|linker|DEBUG|FATAL|AndroidRuntime|EGL|selftest|GLES\" | tail -n 50 | while IFS= read -r line; do echo \"::notice::log|$line\"; done || true\n  echo \"::notice::adb state: $(\"$ADB\" get-state 2>&1 | tr -d \"\\r\" || echo unreachable)\"\n  echo \"::notice::GPUSELFTEST_JSON chunks in buffer: $(\"$ADB\" logcat -d -s GPUSELFTEST_JSON 2>/dev/null | grep -c \"GPUSELFTEST_JSON: \" || echo 0)\"\n  fls=$(\"$ADB\" shell \"ls -la /data/user/0/com.famhawaii.ranmobile/files/ 2>&1\" 2>/dev/null | tr -d \"\\r\")\n  if [ -n \"$fls\" ]; then printf \"%s\\n\" \"$fls\" | while IFS= read -r line; do echo \"::notice::files|$line\"; done; else\
         \ echo \"::notice::files probe returned nothing (adb dead?)\"; fi\n  tail -n 15 emulator.log || true\n  exit 1\nfi\n\n# EVIDENCE PRIORITY: annotations are capped at 10 PER LEVEL per step - the\n# verdict JSON is the decisive evidence (it now embeds the driver's shader\n# compile/link info log), so emit it FIRST and compactly; skip noisy dumps.\n# ::notice budget here: install(1) + attempt(1) + json chunks (<=6) = 8/10.\njsonc=$(jq -c '{verdict, gl, tests, authenticTexture, authentic}' gpu_selftest.json 2>/dev/null || true)\nif [ -z \"$jsonc\" ]; then jsonc=$(tr -d '\\n\\t' < gpu_selftest.json); fi\nprintf '%s\\n' \"$jsonc\" | fold -w 900 -s > jsonchunks.txt || true\nni=0\nwhile IFS= read -r line; do\n  ni=$((ni + 1))\n  echo \"::notice::json$ni|$line\"\ndone < jsonchunks.txt\n# Pull the screenshot (root cat primary, run-as fallback).\n\"$ADB\" shell \"cat /data/user/0/com.famhawaii.ranmobile/files/gpu_selftest.ppm\" > gpu_selftest.ppm 2>/dev/null || true\nif ! grep -q \"P6\" gpu_selftest.ppm\
         \ 2>/dev/null; then\n  \"$ADB\" exec-out run-as com.famhawaii.ranmobile cat files/gpu_selftest.ppm > gpu_selftest.ppm 2>/dev/null || true\nfi\n\"$ADB\" logcat -d > emulator-logcat.txt || true\nverdict=$(python3 -c \"import json;print(json.load(open('gpu_selftest.json'))['verdict'])\" 2>/dev/null || echo UNKNOWN)\nrenderer=$(python3 -c \"import json;print(json.load(open('gpu_selftest.json')).get('gl',{}).get('renderer',''))\" 2>/dev/null || echo \"\")\necho \"GPU renderer: $renderer\"\necho \"GPU selftest verdict: $verdict\" >> \"$GITHUB_STEP_SUMMARY\"\necho \"GPU renderer: $renderer\" >> \"$GITHUB_STEP_SUMMARY\"\n# Per-test results as ::notice (uncounted; visible without artifact access).\nif [ \"$verdict\" != \"PASS\" ]; then\n  echo \"::error::GPU selftest verdict = $verdict (failing tests listed in the notices above)\"\n  exit 1\nfi\n"
+    - name: Dump app logcat diagnostics
+      if: always()
+      env:
+        ANDROID_HOME: /usr/local/lib/android/sdk
+      run: |
+        ADB="$ANDROID_HOME/platform-tools/adb"
+        # Dedicated step = its own 10-notices-per-step budget; the selftest step's
+        # budget was repeatedly exhausted before the app-log dump ran (B19 CI).
+        # Newest lines first so the cap keeps the most decisive ones.
+        if ! "$ADB" get-state >/dev/null 2>&1; then
+          echo "::notice::adb unreachable in diagnostics step"
+          exit 0
+        fi
+        "$ADB" logcat -d 2>/dev/null | grep -E "RANMobile|GpuSelfTest|RANMobileEngine|GPUSELFTEST_JSON|FATAL|SIGSEGV|SIGABRT|linker" | tail -n 10 | tac > applog.txt || true
+        n=$(wc -l < applog.txt || echo 0)
+        echo "::notice::app-log lines matched: $n (printing newest first, cap 10)"
+        while IFS= read -r line; do echo "::notice::app|$line"; done < applog.txt || true
+        "$ADB" logcat -d > emulator-logcat.txt 2>/dev/null || true
+
     - name: Upload GPU selftest evidence
       if: always()
       uses: actions/upload-artifact@v4
