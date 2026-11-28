@@ -72,7 +72,7 @@ jobs:
           echo "no verify log"
           exit 0
         fi
-        grep "^  cps-dump" phase3j_authentic_assets.log 2>/dev/null | head -5 |
+        grep "^  cps-dump:" phase3j_authentic_assets.log 2>/dev/null | head -8 |
           while IFS= read -r fdl; do
             echo "::warning title=cps dump (B21)::${fdl#*  }"
           done

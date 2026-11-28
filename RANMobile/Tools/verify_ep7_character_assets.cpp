@@ -498,6 +498,7 @@ Outcome VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& b
                 ex.hexHead = toHex(bytes.data(), headTake);
                 const size_t tailTake = std::min<size_t>(96, bytes.size());
                 ex.hexTail = toHex(bytes.data() + bytes.size() - tailTake, tailTake);
+                ex.full = bytes;  // full dump for small files (<= 800 B)
                 if (g_skelSmallest.second.size == 0 || bytes.size() < g_skelSmallest.second.size) {
                     g_skelSmallest = {reason, ex};
                 }
