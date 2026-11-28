@@ -469,9 +469,20 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
         const int W = 256;
         const int H = 256;
         Logger::Info("GpuSelfTest", "probe: creating RGBA8 FBO");
+        // NOTE: the active texture unit here is GL_TEXTURE1 - DrawGpuSkinnedMesh
+        // leaves the bone-palette texture bound there, and the probe program
+        // samples uBonePalette from unit 1.  Binding the probe's COLOR texture
+        // on the active unit replaced the palette binding AND attached that
+        // texture to the framebuffer below, so the probe sampled the FBO's own
+        // color target - a texture feedback loop (undefined behavior; the
+        // emulator's translator hangs on it, B19 CI evidence: app hangs at the
+        // FBO probe with no verdict).  Unit 0 is unused by the probe program
+        // (it declares no uTex), so the color target binds there and unit 1
+        // keeps the palette for the probe draws.
         GLuint probeTex = 0;
         GLuint probeFbo = 0;
         glGenTextures(1, &probeTex);
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, probeTex);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, W, H, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -586,6 +597,10 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
 
         Logger::Info("GpuSelfTest", "probe: done");
         glBindFramebuffer(GL_FRAMEBUFFER, 0);  // back to the default surface
+        // Unbind the color target on unit 0 before deleting (unit 1 keeps the
+        // palette; later renderer draws rebind unit 1 themselves).
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, 0);
         glDeleteFramebuffers(1, &probeFbo);
         glDeleteTextures(1, &probeTex);
         const bool match = warmed && fboComplete && probed > 0 && errProbe == GL_NO_ERROR &&

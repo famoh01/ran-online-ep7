@@ -222,8 +222,27 @@ jobs:
         fi
         "$ADB" logcat -d 2>/dev/null | grep -E "RANMobile|GpuSelfTest|RANMobileEngine|GPUSELFTEST_JSON|FATAL|SIGSEGV|SIGABRT|linker" | tail -n 10 | tac > applog.txt || true
         n=$(wc -l < applog.txt || echo 0)
+        if [ "$n" = "0" ]; then
+          # First dump empty: one bounded adb-server restart + retry (a wedged
+          # adbd session returns empty logs silently under 2>/dev/null).
+          echo "::notice::first logcat dump empty - one bounded adb restart + retry"
+          "$ADB" kill-server >/dev/null 2>&1 || true
+          sleep 3
+          "$ADB" start-server >/dev/null 2>&1 || true
+          for i in 1 2 3 4 5 6; do
+            "$ADB" devices 2>/dev/null | grep -qE "emulator-[0-9]+[[:space:]]+device[[:space:]]*$" && break
+            sleep 5
+          done
+          "$ADB" logcat -d 2>/dev/null | grep -E "RANMobile|GpuSelfTest|RANMobileEngine|GPUSELFTEST_JSON|FATAL|SIGSEGV|SIGABRT|linker" | tail -n 10 | tac > applog.txt || true
+          n=$(wc -l < applog.txt || echo 0)
+        fi
         echo "::notice::app-log lines matched: $n (printing newest first, cap 10)"
         while IFS= read -r line; do echo "::notice::app|$line"; done < applog.txt || true
+        if [ "$n" = "0" ]; then
+          # Kernel-side evidence does not rotate with the logcat buffer.
+          "$ADB" shell "dmesg 2>/dev/null | tail -n 12" | tac | while IFS= read -r line; do echo "::notice::dmesg|$line"; done || true
+          "$ADB" logcat -d -b events 2>/dev/null | grep -iE "ranmobile|am_proc" | tail -n 8 | tac | while IFS= read -r line; do echo "::notice::ev|$line"; done || true
+        fi
         "$ADB" logcat -d > emulator-logcat.txt 2>/dev/null || true
 
     - name: Upload GPU selftest evidence
