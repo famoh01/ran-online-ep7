@@ -1,701 +1,218 @@
 name: Build RANMobile Android (ARM64) & Verify EP7 Release
-
 on:
-  workflow_dispatch:
+  workflow_dispatch: null
   push:
     branches:
-      - main
-      - "arena/**"
-
-# Three INDEPENDENT jobs, deliberately not chained with `needs`:
-#
-#   core-tests            C++17 suite + Phase 3J character suite. Must be able to fail CI on
-#                         its own, and must never be skipped because of asset verification.
-#   authentic-assets      Real client data validation. Isolated so that a coverage gap in a
-#                         format this build does not implement (BLOCKERS.md B11) cannot stop
-#                         unrelated core tests from running or hide their result.
-#   android-arm64         Native lib + APK/AAB. Needs no client data at all.
-#
-# Because the jobs are independent, the workflow's overall status is the AND of the three
-# real statuses: core failures are never masked, and an UNSUPPORTED asset verdict shows up
-# as a distinct, readable outcome rather than as a green tick on a failed suite.
+    - main
+    - arena/**
 jobs:
   core-tests:
     name: Core C++17 tests (blocking)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    - name: Download & Extract Original EP7 Client Data (ran-ep7-full-v1)
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: "mkdir -p external/ep7_release/original external/ep7_release/client_original external/ep7_release/thaipack_original\ngh release download ran-ep7-full-v1 \\\n  --repo famoh01/ran-online-ep7 \\\n  --pattern \"RAN-EP7-Client-TH.zip.part*\" \\\n  --pattern \"RAN-EP7-ThaiPack-FamHawaii.zip\" \\\n  --dir external/ep7_release/original\ncat external/ep7_release/original/RAN-EP7-Client-TH.zip.part00 \\\n    external/ep7_release/original/RAN-EP7-Client-TH.zip.part01 \\\n    > external/ep7_release/original/RAN-EP7-Client-TH.zip\nunzip -t external/ep7_release/original/RAN-EP7-Client-TH.zip > /dev/null\nunzip -q -o external/ep7_release/original/RAN-EP7-Client-TH.zip -d external/ep7_release/client_original\nunzip -q -o external/ep7_release/original/RAN-EP7-ThaiPack-FamHawaii.zip -d external/ep7_release/thaipack_original\necho \"=== EP7 DATA VERIFICATION ===\"\nfind external/ep7_release/client_original -maxdepth 3 \\( -iname \"mapslist.mst\" -o -iname \"crow.mnsf\" -o -iname \"item.isf\" -o\
+        \ -iname \"skill.ssf\" -o -iname \"quest.lst\" \\)\n"
+    - name: Run Linux C++17 Unit & Integration Tests
+      run: "g++ -std=c++17 -Wall -Wextra -Werror \\\n  RANMobile/Engine/Core/Logger.cpp \\\n  RANMobile/Engine/Core/RANMobileEngine.cpp \\\n  RANMobile/Engine/Renderer/MobileRenderer.cpp \\\n  RANMobile/Engine/Resource/ResourceManager.cpp \\\n  RANMobile/Engine/Touch/TouchSystem.cpp \\\n  RANMobile/Engine/Camera/MobileCamera.cpp \\\n  RANMobile/Engine/Animation/AnimationManager.cpp \\\n  RANMobile/Engine/Animation/EP7SkinAniControl.cpp \\\n  RANMobile/Engine/Audio/AudioManager.cpp \\\n  RANMobile/Engine/Network/NetworkClient.cpp \\\n  RANMobile/Data/Validator/DataValidator.cpp \\\n  RANMobile/Data/Importer/EP7AssetImporter.cpp \\\n  RANMobile/Data/Importer/EP7TextureDecoder.cpp \\\n  RANMobile/Data/Importer/EP7WorldCharParser.cpp \\\n  RANMobile/Data/Importer/EP7Animation.cpp \\\n  RANMobile/Data/Importer/EP7CharacterFile.cpp \\\n  RANMobile/Data/Importer/EP7RccArchive.cpp \\\n  RANMobile/Data/Importer/EP7Skeleton.cpp \\\n  RANMobile/Data/Importer/EP7SkinPiece.cpp \\\n  RANMobile/Data/Importer/EP7SkinnedMesh.cpp\
+        \ \\\n  RANMobile/Data/Importer/EP7XFile.cpp \\\n  RANMobile/Engine/Scene/EP7CharacterScene.cpp \\\n  RANMobile/UI/Character/CharacterPreviewOverlay.cpp \\\n  RANMobile/Data/Converter/RANMobileDataConverter.cpp \\\n  RANMobile/Data/Loader/GameDataLoader.cpp \\\n  RANMobile/Data/Loader/ThaiPackLoader.cpp \\\n  RANMobile/Client/Login/AuthenticationManager.cpp \\\n  RANMobile/Client/Character/CharacterSelectManager.cpp \\\n  RANMobile/Client/Gameplay/CharacterController.cpp \\\n  RANMobile/Client/Combat/TargetManager.cpp \\\n  RANMobile/Client/Combat/CombatController.cpp \\\n  RANMobile/Client/Inventory/InventoryManager.cpp \\\n  RANMobile/Client/Quest/QuestManager.cpp \\\n  RANMobile/Client/Map/MapManager.cpp \\\n  RANMobile/Client/Chat/ChatManager.cpp \\\n  RANMobile/UI/Login/LoginScreen.cpp \\\n  RANMobile/UI/Joystick/VirtualJoystick.cpp \\\n  RANMobile/UI/Buttons/MobileButton.cpp \\\n  RANMobile/UI/Buttons/MobileSkillButton.cpp \\\n  RANMobile/UI/HUD/MobileHUD.cpp \\\n  RANMobile/UI/Quest/QuestUI.cpp\
+        \ \\\n  RANMobile/Server/MobileServerHost.cpp \\\n  RANMobile/Tests/test_main.cpp \\\n  -lpthread -o ranmobile_tests 2>&1 | tee -a compile_output.log\n"
+    - name: Run Linux C++17 Tests
+      run: "set +e\n./ranmobile_tests > test_output.log 2>&1\nTEST_EXIT=$?\nset -e\necho \"TEST_EXIT=$TEST_EXIT\" >> $GITHUB_ENV\ncat test_output.log\nif [ $TEST_EXIT -ne 0 ]; then\n  ERR_LINE=$(grep -i \"Assertion\\|Aborted\\|Error\\|fail\" test_output.log | tail -n 5 | tr '\\n' ' ')\n  echo \"::error::ranmobile_tests failed (exit $TEST_EXIT): $ERR_LINE\"\nfi\nexit $TEST_EXIT\n"
+    - name: Build & Run Phase 3J Character Tests
+      run: "set -e\nset -o pipefail\ng++ -std=c++17 -Wall -Wextra -Werror \\\n  RANMobile/Engine/Core/Logger.cpp \\\n  RANMobile/Engine/Renderer/MobileRenderer.cpp \\\n  RANMobile/Engine/Camera/MobileCamera.cpp \\\n  RANMobile/Engine/Scene/EP7CharacterScene.cpp \\\n  RANMobile/Engine/Animation/EP7SkinAniControl.cpp \\\n  RANMobile/Data/Importer/EP7Animation.cpp \\\n  RANMobile/Data/Importer/EP7CharacterFile.cpp \\\n  RANMobile/Data/Importer/EP7RccArchive.cpp \\\n  RANMobile/Data/Importer/EP7Skeleton.cpp \\\n  RANMobile/Data/Importer/EP7SkinPiece.cpp \\\n  RANMobile/Data/Importer/EP7SkinnedMesh.cpp \\\n  RANMobile/Data/Importer/EP7TextureDecoder.cpp \\\n  RANMobile/Data/Importer/EP7XFile.cpp \\\n  RANMobile/Tests/test_phase3j.cpp \\\n  -lpthread -o ranmobile_phase3j_tests\n./ranmobile_phase3j_tests 2>&1 | tee phase3j_test_output.log\n"
+    - name: Verifier regression tests (normal, ASan, UBSan, LSan)
+      run: 'set -o pipefail
 
-      # Restored in the merged session (2026-11-27): the core tests include data-dependent
-      # assertions (ThaiPackLoader ntk/qst counts, EP7 asset pipeline). PR #4's single job
-      # downloaded the release data before running them and was green; PR #5's split job
-      # compiled the core binary but never executed it, which silently dropped those checks.
-      # The download step is duplicated from the authentic-assets job on purpose: each job
-      # must be independently runnable.
-      - name: Download & Extract Original EP7 Client Data (ran-ep7-full-v1)
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          mkdir -p external/ep7_release/original external/ep7_release/client_original external/ep7_release/thaipack_original
-          gh release download ran-ep7-full-v1 \
-            --repo famoh01/ran-online-ep7 \
-            --pattern "RAN-EP7-Client-TH.zip.part*" \
-            --pattern "RAN-EP7-ThaiPack-FamHawaii.zip" \
-            --dir external/ep7_release/original
-          cat external/ep7_release/original/RAN-EP7-Client-TH.zip.part00 \
-              external/ep7_release/original/RAN-EP7-Client-TH.zip.part01 \
-              > external/ep7_release/original/RAN-EP7-Client-TH.zip
-          unzip -t external/ep7_release/original/RAN-EP7-Client-TH.zip > /dev/null
-          unzip -q -o external/ep7_release/original/RAN-EP7-Client-TH.zip -d external/ep7_release/client_original
-          unzip -q -o external/ep7_release/original/RAN-EP7-ThaiPack-FamHawaii.zip -d external/ep7_release/thaipack_original
-          echo "=== EP7 DATA VERIFICATION ==="
-          find external/ep7_release/client_original -maxdepth 3 \( -iname "mapslist.mst" -o -iname "crow.mnsf" -o -iname "item.isf" -o -iname "skill.ssf" -o -iname "quest.lst" \)
+        bash RANMobile/Tests/run_ep7_verifier_tests.sh 2>&1 | tee verifier_test_output.log
 
-      - name: Run Linux C++17 Unit & Integration Tests
-        run: |
-          g++ -std=c++17 -Wall -Wextra -Werror \
-            RANMobile/Engine/Core/Logger.cpp \
-            RANMobile/Engine/Core/RANMobileEngine.cpp \
-            RANMobile/Engine/Renderer/MobileRenderer.cpp \
-            RANMobile/Engine/Resource/ResourceManager.cpp \
-            RANMobile/Engine/Touch/TouchSystem.cpp \
-            RANMobile/Engine/Camera/MobileCamera.cpp \
-            RANMobile/Engine/Animation/AnimationManager.cpp \
-            RANMobile/Engine/Animation/EP7SkinAniControl.cpp \
-            RANMobile/Engine/Audio/AudioManager.cpp \
-            RANMobile/Engine/Network/NetworkClient.cpp \
-            RANMobile/Data/Validator/DataValidator.cpp \
-            RANMobile/Data/Importer/EP7AssetImporter.cpp \
-            RANMobile/Data/Importer/EP7TextureDecoder.cpp \
-            RANMobile/Data/Importer/EP7WorldCharParser.cpp \
-            RANMobile/Data/Importer/EP7Animation.cpp \
-            RANMobile/Data/Importer/EP7CharacterFile.cpp \
-            RANMobile/Data/Importer/EP7RccArchive.cpp \
-            RANMobile/Data/Importer/EP7Skeleton.cpp \
-            RANMobile/Data/Importer/EP7SkinPiece.cpp \
-            RANMobile/Data/Importer/EP7SkinnedMesh.cpp \
-            RANMobile/Data/Importer/EP7XFile.cpp \
-            RANMobile/Engine/Scene/EP7CharacterScene.cpp \
-            RANMobile/UI/Character/CharacterPreviewOverlay.cpp \
-            RANMobile/Data/Converter/RANMobileDataConverter.cpp \
-            RANMobile/Data/Loader/GameDataLoader.cpp \
-            RANMobile/Data/Loader/ThaiPackLoader.cpp \
-            RANMobile/Client/Login/AuthenticationManager.cpp \
-            RANMobile/Client/Character/CharacterSelectManager.cpp \
-            RANMobile/Client/Gameplay/CharacterController.cpp \
-            RANMobile/Client/Combat/TargetManager.cpp \
-            RANMobile/Client/Combat/CombatController.cpp \
-            RANMobile/Client/Inventory/InventoryManager.cpp \
-            RANMobile/Client/Quest/QuestManager.cpp \
-            RANMobile/Client/Map/MapManager.cpp \
-            RANMobile/Client/Chat/ChatManager.cpp \
-            RANMobile/UI/Login/LoginScreen.cpp \
-            RANMobile/UI/Joystick/VirtualJoystick.cpp \
-            RANMobile/UI/Buttons/MobileButton.cpp \
-            RANMobile/UI/Buttons/MobileSkillButton.cpp \
-            RANMobile/UI/HUD/MobileHUD.cpp \
-            RANMobile/UI/Quest/QuestUI.cpp \
-            RANMobile/Server/MobileServerHost.cpp \
-            RANMobile/Tests/test_main.cpp \
-            -lpthread -o ranmobile_tests 2>&1 | tee -a compile_output.log
+        echo "::notice title=Verifier regression and sanitizers::$(grep -E ''Verifier regression:|Sanitizers:'' verifier_test_output.log | tr ''\n'' '';'')"
 
-      - name: Run Linux C++17 Tests
-        run: |
-          set +e
-          ./ranmobile_tests > test_output.log 2>&1
-          TEST_EXIT=$?
-          set -e
-          echo "TEST_EXIT=$TEST_EXIT" >> $GITHUB_ENV
-          cat test_output.log
-          if [ $TEST_EXIT -ne 0 ]; then
-            ERR_LINE=$(grep -i "Assertion\|Aborted\|Error\|fail" test_output.log | tail -n 5 | tr '\n' ' ')
-            echo "::error::ranmobile_tests failed (exit $TEST_EXIT): $ERR_LINE"
-          fi
-          exit $TEST_EXIT
+        '
+    - name: Write Test Summary
+      if: always()
+      run: "{\n  echo \"### Core C++17 Test Summary: ${{ job.status }}\"\n  echo \"- Exit Code: ${TEST_EXIT:-unknown}\"\n  echo '```'\n  tail -n 60 test_output.log 2>/dev/null || echo \"No test_output.log\"\n  echo '```'\n  echo \"### Phase 3J Character Tests\"\n  echo '```'\n  tail -n 30 phase3j_test_output.log 2>/dev/null || echo \"No phase3j_test_output.log\"\n  echo '```'\n  echo \"### external/ep7_release\"\n  ls -la external/ep7_release 2>/dev/null || echo \"Missing external/ep7_release\"\n  ls -la external/ep7_release/thaipack_original 2>/dev/null | head -n 20 || echo \"Missing thaipack_original\"\n} >> $GITHUB_STEP_SUMMARY\n"
+    - name: Upload Failed Test Log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: core-test-logs
+        path: 'test_output.log
 
-      - name: Build & Run Phase 3J Character Tests
-        run: |
-          set -e
-          set -o pipefail
-          g++ -std=c++17 -Wall -Wextra -Werror \
-            RANMobile/Engine/Core/Logger.cpp \
-            RANMobile/Engine/Renderer/MobileRenderer.cpp \
-            RANMobile/Engine/Camera/MobileCamera.cpp \
-            RANMobile/Engine/Scene/EP7CharacterScene.cpp \
-            RANMobile/Engine/Animation/EP7SkinAniControl.cpp \
-            RANMobile/Data/Importer/EP7Animation.cpp \
-            RANMobile/Data/Importer/EP7CharacterFile.cpp \
-            RANMobile/Data/Importer/EP7RccArchive.cpp \
-            RANMobile/Data/Importer/EP7Skeleton.cpp \
-            RANMobile/Data/Importer/EP7SkinPiece.cpp \
-            RANMobile/Data/Importer/EP7SkinnedMesh.cpp \
-            RANMobile/Data/Importer/EP7TextureDecoder.cpp \
-            RANMobile/Data/Importer/EP7XFile.cpp \
-            RANMobile/Tests/test_phase3j.cpp \
-            -lpthread -o ranmobile_phase3j_tests
-          ./ranmobile_phase3j_tests 2>&1 | tee phase3j_test_output.log
+          phase3j_test_output.log
 
-      - name: Verifier regression tests (normal, ASan, UBSan, LSan)
-        run: |
-          set -o pipefail
-          bash RANMobile/Tests/run_ep7_verifier_tests.sh 2>&1 | tee verifier_test_output.log
-          echo "::notice title=Verifier regression and sanitizers::$(grep -E 'Verifier regression:|Sanitizers:' verifier_test_output.log | tr '\n' ';')"
+          verifier_test_output.log
 
-      - name: Write Test Summary
-        if: always()
-        run: |
-          {
-            echo "### Core C++17 Test Summary: ${{ job.status }}"
-            echo "- Exit Code: ${TEST_EXIT:-unknown}"
-            echo '```'
-            tail -n 60 test_output.log 2>/dev/null || echo "No test_output.log"
-            echo '```'
-            echo "### Phase 3J Character Tests"
-            echo '```'
-            tail -n 30 phase3j_test_output.log 2>/dev/null || echo "No phase3j_test_output.log"
-            echo '```'
-            echo "### external/ep7_release"
-            ls -la external/ep7_release 2>/dev/null || echo "Missing external/ep7_release"
-            ls -la external/ep7_release/thaipack_original 2>/dev/null | head -n 20 || echo "Missing thaipack_original"
-          } >> $GITHUB_STEP_SUMMARY
-
-      - name: Upload Failed Test Log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: core-test-logs
-          path: |
-            test_output.log
-            phase3j_test_output.log
-            verifier_test_output.log
-
+          '
   authentic-assets:
     name: Authentic EP7 asset verification (diagnostic)
     runs-on: ubuntu-latest
-    # NOT continue-on-error: a genuine FAIL (exit 1) must fail this job and the workflow.
-    # Only the UNSUPPORTED outcome (B11) is treated as non-blocking, and that decision is
-    # made explicitly in the step below so the reason is visible in the log.
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Download & Extract Original EP7 Client Data (ran-ep7-full-v1)
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          mkdir -p external/ep7_release/original external/ep7_release/client_original external/ep7_release/thaipack_original
-          gh release download ran-ep7-full-v1 \
-            --repo famoh01/ran-online-ep7 \
-            --pattern "RAN-EP7-Client-TH.zip.part*" \
-            --pattern "RAN-EP7-ThaiPack-FamHawaii.zip" \
-            --dir external/ep7_release/original
-          cat external/ep7_release/original/RAN-EP7-Client-TH.zip.part00 \
-              external/ep7_release/original/RAN-EP7-Client-TH.zip.part01 \
-              > external/ep7_release/original/RAN-EP7-Client-TH.zip
-          unzip -t external/ep7_release/original/RAN-EP7-Client-TH.zip > /dev/null
-          unzip -q -o external/ep7_release/original/RAN-EP7-Client-TH.zip -d external/ep7_release/client_original
-          unzip -q -o external/ep7_release/original/RAN-EP7-ThaiPack-FamHawaii.zip -d external/ep7_release/thaipack_original
-          echo "=== EP7 DATA VERIFICATION ==="
-          find external/ep7_release/client_original -maxdepth 3 \( -iname "mapslist.mst" -o -iname "crow.mnsf" -o -iname "item.isf" -o -iname "skill.ssf" -o -iname "quest.lst" \)
-
-      - name: Verify Authentic EP7 Character Assets
-        # Runs the Phase 3J parsers against the REAL extracted client data.
-        #
-        # Outcome model (see RANMobile/Tools/verify_ep7_character_assets.cpp):
-        #   exit 0  PASS         every pack entry parsed
-        #   exit 1  FAIL         a pack entry is genuinely broken  -> this job FAILS
-        #   exit 2  UNSUPPORTED  nothing failed, some formats have no definition in this
-        #                        build (BLOCKERS.md B11)           -> this job stays green,
-        #                        but the step emits ::warning:: and a summary that says so
-        #   exit 3  NOT FOUND    no character entry in any pack     -> warning, not a failure
-        #
-        # UNSUPPORTED deliberately does NOT fail this job: the gap is a documented coverage
-        # limit, not a regression, and the core test job is independent of it. It is never
-        # reported as parsed, and the distinction is printed and annotated explicitly.
-        run: |
-          set -e
-          g++ -std=c++17 -Wall -Wextra -Werror \
-            RANMobile/Data/Importer/EP7Animation.cpp \
-            RANMobile/Data/Importer/EP7CharacterFile.cpp \
-            RANMobile/Data/Importer/EP7RccArchive.cpp \
-            RANMobile/Data/Importer/EP7Skeleton.cpp \
-            RANMobile/Data/Importer/EP7SkinPiece.cpp \
-            RANMobile/Data/Importer/EP7SkinnedMesh.cpp \
-            RANMobile/Data/Importer/EP7TextureDecoder.cpp \
-            RANMobile/Data/Importer/EP7XFile.cpp \
-            RANMobile/Engine/Core/Logger.cpp \
-            RANMobile/Engine/Renderer/MobileRenderer.cpp \
-            RANMobile/Engine/Camera/MobileCamera.cpp \
-            RANMobile/Engine/Scene/EP7CharacterScene.cpp \
-            RANMobile/Engine/Animation/EP7SkinAniControl.cpp \
-            RANMobile/Tools/verify_ep7_character_assets.cpp \
-            -o verify_ep7_character_assets
-          if [ -d external/ep7_release/client_original ]; then
-            set +e
-            ./verify_ep7_character_assets external/ep7_release/client_original \
-              2>&1 | tee phase3j_authentic_assets.log
-            verify_status=${PIPESTATUS[0]}
-            set -e
-          else
-            echo "external/ep7_release/client_original missing; nothing verified." \
-              | tee phase3j_authentic_assets.log
-            verify_status=3
-          fi
-          echo "verify_ep7_character_assets exit status: ${verify_status}"
-
-          ok_count=$(grep -c '^  \[ OK \] ' phase3j_authentic_assets.log || true)
-          arc_count=$(grep -c '^--- archive ' phase3j_authentic_assets.log || true)
-          bad_count=$(grep -c '^  \[FAIL\] ' phase3j_authentic_assets.log || true)
-          unsup_count=$(grep -c '^  \[UNSUP\] ' phase3j_authentic_assets.log || true)
-          verdict=$(grep '^VERDICT: ' phase3j_authentic_assets.log | head -1 || true)
-          packs=$(grep '^pack entries ' phase3j_authentic_assets.log | head -1 || true)
-          reasons=$(grep -E '^ +[0-9]+ x ' phase3j_authentic_assets.log | head -8 | tr '\n' ';' || true)
-
-          case "${verify_status}" in
-            0) outcome="PASS" ;;
-            1) outcome="FAIL" ;;
-            2) outcome="UNSUPPORTED" ;;
-            3) outcome="NOT FOUND" ;;
-            *) outcome="ERROR(${verify_status})" ;;
-          esac
-          echo "ASSET_VERIFY_OUTCOME=$outcome" >> "$GITHUB_ENV"
-          echo "ASSET_VERIFY_EXIT=$verify_status" >> "$GITHUB_ENV"
-
-          # Annotations are the only channel that survives without credentials, and GitHub
-          # keeps only the first ~10 per check run -- so the verdict goes first.
-          case "${verify_status}" in
-            0) echo "::notice title=Asset verification: PASS::${packs:-$ok_count ok} -- ${verdict:-all pack entries parsed}" ;;
-            1) echo "::error title=Asset verification: FAIL::${packs:-$ok_count ok / $bad_count failed} -- ${verdict:-pack entries failed}" ;;
-            2) echo "::warning title=Asset verification: UNSUPPORTED (B11)::$unsup_count pack entries are of a format this build has no definition for. NOT a regression and NOT counted as parsed; core tests are unaffected. ${packs}" ;;
-            *) echo "::warning title=Asset verification: NOT FOUND::no authentic character entries were found; nothing was verified." ;;
-          esac
-          echo "::notice title=B11 bin classifications::$(grep '^bin classifications' phase3j_authentic_assets.log | tr '\n' ';')"
-          if [ -n "$reasons" ]; then
-            echo "::warning title=Asset verification - failure reasons::${reasons}"
-          fi
-          if [ "$unsup_count" -gt 0 ]; then
-            echo "::warning title=Asset verification - unsupported formats (B11)::$(grep -c '^  \[UNSUP\] ' phase3j_authentic_assets.log || true) entries; see the job summary for the aggregated list."
-          fi
-          grep '^  \[FAIL\] ' phase3j_authentic_assets.log 2>/dev/null | head -8 | \
-            while IFS= read -r line; do
-              echo "::warning title=Authentic asset FAILED::${line}"
-            done
-
-          {
-            echo "### Authentic Asset Verification: ${outcome}"
-            echo ""
-            echo "| Metric | Count |"
-            echo "|---|---|"
-            echo "| parsed (PASS) | ${ok_count} |"
-            echo "| failed (FAIL) | ${bad_count} |"
-            echo "| unsupported (UNSUPPORTED, B11) | ${unsup_count} |"
-            echo "| archives examined | ${arc_count} |"
-            echo ""
-            echo "\`${packs:-no pack line}\`"
-            echo ""
-            echo "\`${verdict:-no verdict line}\`"
-            echo ""
-            echo "**UNSUPPORTED is not a pass.** Those entries belong to formats with no"
-            echo "definition in this repository (B11); they are neither parsed nor reported"
-            echo "as successful."
-            echo ""
-            echo '```'
-            sed -n '/unsupported formats (real data/,$p' phase3j_authentic_assets.log 2>/dev/null | head -20 || true
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-
-          if [ "${verify_status}" -eq 1 ]; then
-            echo "Failing this job: authentic pack entries exist that this build cannot parse."
-            exit 1
-          fi
-
-      - name: Upload authentic verifier log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: phase3j-authentic-assets-log
-          path: phase3j_authentic_assets.log
-
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    - name: Download & Extract Original EP7 Client Data (ran-ep7-full-v1)
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: "mkdir -p external/ep7_release/original external/ep7_release/client_original external/ep7_release/thaipack_original\ngh release download ran-ep7-full-v1 \\\n  --repo famoh01/ran-online-ep7 \\\n  --pattern \"RAN-EP7-Client-TH.zip.part*\" \\\n  --pattern \"RAN-EP7-ThaiPack-FamHawaii.zip\" \\\n  --dir external/ep7_release/original\ncat external/ep7_release/original/RAN-EP7-Client-TH.zip.part00 \\\n    external/ep7_release/original/RAN-EP7-Client-TH.zip.part01 \\\n    > external/ep7_release/original/RAN-EP7-Client-TH.zip\nunzip -t external/ep7_release/original/RAN-EP7-Client-TH.zip > /dev/null\nunzip -q -o external/ep7_release/original/RAN-EP7-Client-TH.zip -d external/ep7_release/client_original\nunzip -q -o external/ep7_release/original/RAN-EP7-ThaiPack-FamHawaii.zip -d external/ep7_release/thaipack_original\necho \"=== EP7 DATA VERIFICATION ===\"\nfind external/ep7_release/client_original -maxdepth 3 \\( -iname \"mapslist.mst\" -o -iname \"crow.mnsf\" -o -iname \"item.isf\" -o\
+        \ -iname \"skill.ssf\" -o -iname \"quest.lst\" \\)\n"
+    - name: Verify Authentic EP7 Character Assets
+      run: "set -e\ng++ -std=c++17 -Wall -Wextra -Werror \\\n  RANMobile/Data/Importer/EP7Animation.cpp \\\n  RANMobile/Data/Importer/EP7CharacterFile.cpp \\\n  RANMobile/Data/Importer/EP7RccArchive.cpp \\\n  RANMobile/Data/Importer/EP7Skeleton.cpp \\\n  RANMobile/Data/Importer/EP7SkinPiece.cpp \\\n  RANMobile/Data/Importer/EP7SkinnedMesh.cpp \\\n  RANMobile/Data/Importer/EP7TextureDecoder.cpp \\\n  RANMobile/Data/Importer/EP7XFile.cpp \\\n  RANMobile/Engine/Core/Logger.cpp \\\n  RANMobile/Engine/Renderer/MobileRenderer.cpp \\\n  RANMobile/Engine/Camera/MobileCamera.cpp \\\n  RANMobile/Engine/Scene/EP7CharacterScene.cpp \\\n  RANMobile/Engine/Animation/EP7SkinAniControl.cpp \\\n  RANMobile/Tools/verify_ep7_character_assets.cpp \\\n  -o verify_ep7_character_assets\nif [ -d external/ep7_release/client_original ]; then\n  set +e\n  ./verify_ep7_character_assets external/ep7_release/client_original \\\n    2>&1 | tee phase3j_authentic_assets.log\n  verify_status=${PIPESTATUS[0]}\n  set -e\n\
+        else\n  echo \"external/ep7_release/client_original missing; nothing verified.\" \\\n    | tee phase3j_authentic_assets.log\n  verify_status=3\nfi\necho \"verify_ep7_character_assets exit status: ${verify_status}\"\n\nok_count=$(grep -c '^  \\[ OK \\] ' phase3j_authentic_assets.log || true)\narc_count=$(grep -c '^--- archive ' phase3j_authentic_assets.log || true)\nbad_count=$(grep -c '^  \\[FAIL\\] ' phase3j_authentic_assets.log || true)\nunsup_count=$(grep -c '^  \\[UNSUP\\] ' phase3j_authentic_assets.log || true)\nverdict=$(grep '^VERDICT: ' phase3j_authentic_assets.log | head -1 || true)\npacks=$(grep '^pack entries ' phase3j_authentic_assets.log | head -1 || true)\nreasons=$(grep -E '^ +[0-9]+ x ' phase3j_authentic_assets.log | head -8 | tr '\\n' ';' || true)\n\ncase \"${verify_status}\" in\n  0) outcome=\"PASS\" ;;\n  1) outcome=\"FAIL\" ;;\n  2) outcome=\"UNSUPPORTED\" ;;\n  3) outcome=\"NOT FOUND\" ;;\n  *) outcome=\"ERROR(${verify_status})\" ;;\nesac\necho \"ASSET_VERIFY_OUTCOME=$outcome\"\
+        \ >> \"$GITHUB_ENV\"\necho \"ASSET_VERIFY_EXIT=$verify_status\" >> \"$GITHUB_ENV\"\n\n# Annotations are the only channel that survives without credentials, and GitHub\n# keeps only the first ~10 per check run -- so the verdict goes first.\ncase \"${verify_status}\" in\n  0) echo \"::notice title=Asset verification: PASS::${packs:-$ok_count ok} -- ${verdict:-all pack entries parsed}\" ;;\n  1) echo \"::error title=Asset verification: FAIL::${packs:-$ok_count ok / $bad_count failed} -- ${verdict:-pack entries failed}\" ;;\n  2) echo \"::warning title=Asset verification: UNSUPPORTED (B11)::$unsup_count pack entries are of a format this build has no definition for. NOT a regression and NOT counted as parsed; core tests are unaffected. ${packs}\" ;;\n  *) echo \"::warning title=Asset verification: NOT FOUND::no authentic character entries were found; nothing was verified.\" ;;\nesac\necho \"::notice title=B11 bin classifications::$(grep '^bin classifications' phase3j_authentic_assets.log\
+        \ | tr '\\n' ';')\"\nif [ -n \"$reasons\" ]; then\n  echo \"::warning title=Asset verification - failure reasons::${reasons}\"\nfi\nif [ \"$unsup_count\" -gt 0 ]; then\n  echo \"::warning title=Asset verification - unsupported formats (B11)::$(grep -c '^  \\[UNSUP\\] ' phase3j_authentic_assets.log || true) entries; see the job summary for the aggregated list.\"\nfi\ngrep '^  \\[FAIL\\] ' phase3j_authentic_assets.log 2>/dev/null | head -8 | \\\n  while IFS= read -r line; do\n    echo \"::warning title=Authentic asset FAILED::${line}\"\n  done\n\n{\n  echo \"### Authentic Asset Verification: ${outcome}\"\n  echo \"\"\n  echo \"| Metric | Count |\"\n  echo \"|---|---|\"\n  echo \"| parsed (PASS) | ${ok_count} |\"\n  echo \"| failed (FAIL) | ${bad_count} |\"\n  echo \"| unsupported (UNSUPPORTED, B11) | ${unsup_count} |\"\n  echo \"| archives examined | ${arc_count} |\"\n  echo \"\"\n  echo \"\\`${packs:-no pack line}\\`\"\n  echo \"\"\n  echo \"\\`${verdict:-no verdict line}\\`\"\n \
+        \ echo \"\"\n  echo \"**UNSUPPORTED is not a pass.** Those entries belong to formats with no\"\n  echo \"definition in this repository (B11); they are neither parsed nor reported\"\n  echo \"as successful.\"\n  echo \"\"\n  echo '```'\n  sed -n '/unsupported formats (real data/,$p' phase3j_authentic_assets.log 2>/dev/null | head -20 || true\n  echo '```'\n} >> \"$GITHUB_STEP_SUMMARY\"\n\nif [ \"${verify_status}\" -eq 1 ]; then\n  echo \"Failing this job: authentic pack entries exist that this build cannot parse.\"\n  exit 1\nfi\n"
+    - name: Upload authentic verifier log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: phase3j-authentic-assets-log
+        path: phase3j_authentic_assets.log
   android-arm64:
     name: Android ARM64 build (lib + APK/AAB)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    - name: Setup Android NDK
+      uses: nttld/setup-ndk@v1
+      id: setup-ndk
+      with:
+        ndk-version: r26d
+    - name: Build RANMobile Native Library (arm64-v8a)
+      run: "rm -rf build-android-arm64\ncmake -S RANMobile -B build-android-arm64 \\\n  -DCMAKE_TOOLCHAIN_FILE=${{ steps.setup-ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake \\\n  -DANDROID_ABI=arm64-v8a \\\n  -DANDROID_PLATFORM=android-24\ncmake --build build-android-arm64 -j\nfile build-android-arm64/libranmobile.so\n"
+    - name: Upload ARM64 Native Library Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: libranmobile-arm64-v8a
+        path: build-android-arm64/libranmobile.so
+    - name: Setup Java 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '17'
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: '8.5'
+    - name: Build Android APK & AAB (assembleDebug, assembleRelease, bundleRelease)
+      working-directory: RANMobile/Android
+      run: 'gradle assembleDebug assembleRelease bundleRelease
 
-      - name: Setup Android NDK
-        uses: nttld/setup-ndk@v1
-        id: setup-ndk
-        with:
-          ndk-version: r26d
+        ls -lh app/build/outputs/apk/debug/*.apk
 
-      - name: Build RANMobile Native Library (arm64-v8a)
-        run: |
-          rm -rf build-android-arm64
-          cmake -S RANMobile -B build-android-arm64 \
-            -DCMAKE_TOOLCHAIN_FILE=${{ steps.setup-ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake \
-            -DANDROID_ABI=arm64-v8a \
-            -DANDROID_PLATFORM=android-24
-          cmake --build build-android-arm64 -j
-          file build-android-arm64/libranmobile.so
+        ls -lh app/build/outputs/apk/release/*.apk
 
-      - name: Upload ARM64 Native Library Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: libranmobile-arm64-v8a
-          path: build-android-arm64/libranmobile.so
+        ls -lh app/build/outputs/bundle/release/*.aab
 
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+        '
+    - name: Upload APK & AAB Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ranmobile-android-packages
+        path: 'RANMobile/Android/app/build/outputs/apk/debug/*.apk
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.5'
+          RANMobile/Android/app/build/outputs/apk/release/*.apk
 
-      - name: Build Android APK & AAB (assembleDebug, assembleRelease, bundleRelease)
-        working-directory: RANMobile/Android
-        run: |
-          gradle assembleDebug assembleRelease bundleRelease
-          ls -lh app/build/outputs/apk/debug/*.apk
-          ls -lh app/build/outputs/apk/release/*.apk
-          ls -lh app/build/outputs/bundle/release/*.aab
+          RANMobile/Android/app/build/outputs/bundle/release/*.aab
 
-      - name: Upload APK & AAB Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ranmobile-android-packages
-          path: |
-            RANMobile/Android/app/build/outputs/apk/debug/*.apk
-            RANMobile/Android/app/build/outputs/apk/release/*.apk
-            RANMobile/Android/app/build/outputs/bundle/release/*.aab
-
+          '
   android-emulator-gpu-verification:
     name: Android Emulator GPU verification (GLES3 selftest)
     runs-on: ubuntu-latest
     timeout-minutes: 75
-    # B19: boots a real Android emulator (x86_64 AVD with KVM) and runs the GPU
-    # selftest harness inside the debug APK against the live GLES3 implementation
-    # (SwiftShader).  Verdict JSON + screenshot are uploaded as artifacts; the job
-    # conclusion reflects the harness verdict.  A physical-device run is still NOT
-    # performed by this job.
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    - name: Download & Extract Original EP7 Client Data (ran-ep7-full-v1)
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: "mkdir -p external/ep7_release/original external/ep7_release/client_original\ngh release download ran-ep7-full-v1 \\\n  --repo famoh01/ran-online-ep7 \\\n  --pattern \"RAN-EP7-Client-TH.zip.part*\" \\\n  --dir external/ep7_release/original\ncat external/ep7_release/original/RAN-EP7-Client-TH.zip.part00 \\\n    external/ep7_release/original/RAN-EP7-Client-TH.zip.part01 \\\n    > external/ep7_release/original/RAN-EP7-Client-TH.zip\nunzip -q -o external/ep7_release/original/RAN-EP7-Client-TH.zip -d external/ep7_release/client_original\n"
+    - name: Build verify tool
+      run: "g++ -std=c++17 -Wall -Wextra -Werror \\\n  RANMobile/Data/Importer/EP7Animation.cpp \\\n  RANMobile/Data/Importer/EP7CharacterFile.cpp \\\n  RANMobile/Data/Importer/EP7RccArchive.cpp \\\n  RANMobile/Data/Importer/EP7Skeleton.cpp \\\n  RANMobile/Data/Importer/EP7SkinPiece.cpp \\\n  RANMobile/Data/Importer/EP7SkinnedMesh.cpp \\\n  RANMobile/Data/Importer/EP7TextureDecoder.cpp \\\n  RANMobile/Data/Importer/EP7XFile.cpp \\\n  RANMobile/Engine/Core/Logger.cpp \\\n  RANMobile/Engine/Renderer/MobileRenderer.cpp \\\n  RANMobile/Engine/Camera/MobileCamera.cpp \\\n  RANMobile/Engine/Scene/EP7CharacterScene.cpp \\\n  RANMobile/Engine/Animation/EP7SkinAniControl.cpp \\\n  RANMobile/Tools/verify_ep7_character_assets.cpp \\\n  -o verify_ep7_character_assets\n"
+    - name: Select authentic character files for the APK bundle
+      run: 'mkdir -p bundle
 
-      - name: Download & Extract Original EP7 Client Data (ran-ep7-full-v1)
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          mkdir -p external/ep7_release/original external/ep7_release/client_original
-          gh release download ran-ep7-full-v1 \
-            --repo famoh01/ran-online-ep7 \
-            --pattern "RAN-EP7-Client-TH.zip.part*" \
-            --dir external/ep7_release/original
-          cat external/ep7_release/original/RAN-EP7-Client-TH.zip.part00 \
-              external/ep7_release/original/RAN-EP7-Client-TH.zip.part01 \
-              > external/ep7_release/original/RAN-EP7-Client-TH.zip
-          unzip -q -o external/ep7_release/original/RAN-EP7-Client-TH.zip -d external/ep7_release/client_original
+        ./verify_ep7_character_assets external/ep7_release/client_original --bundle-plan bundle "" || true
 
-      - name: Build verify tool
-        run: |
-          g++ -std=c++17 -Wall -Wextra -Werror \
-            RANMobile/Data/Importer/EP7Animation.cpp \
-            RANMobile/Data/Importer/EP7CharacterFile.cpp \
-            RANMobile/Data/Importer/EP7RccArchive.cpp \
-            RANMobile/Data/Importer/EP7Skeleton.cpp \
-            RANMobile/Data/Importer/EP7SkinPiece.cpp \
-            RANMobile/Data/Importer/EP7SkinnedMesh.cpp \
-            RANMobile/Data/Importer/EP7TextureDecoder.cpp \
-            RANMobile/Data/Importer/EP7XFile.cpp \
-            RANMobile/Engine/Core/Logger.cpp \
-            RANMobile/Engine/Renderer/MobileRenderer.cpp \
-            RANMobile/Engine/Camera/MobileCamera.cpp \
-            RANMobile/Engine/Scene/EP7CharacterScene.cpp \
-            RANMobile/Engine/Animation/EP7SkinAniControl.cpp \
-            RANMobile/Tools/verify_ep7_character_assets.cpp \
-            -o verify_ep7_character_assets
+        ls -la bundle/
 
-      - name: Select authentic character files for the APK bundle
-        run: |
-          mkdir -p bundle
-          ./verify_ep7_character_assets external/ep7_release/client_original --bundle-plan bundle "" || true
-          ls -la bundle/
-          [ -f bundle/manifest.txt ] || { echo "::error::bundle-plan produced no manifest (see the tool output above)"; exit 1; }
+        [ -f bundle/manifest.txt ] || { echo "::error::bundle-plan produced no manifest (see the tool output above)"; exit 1; }
 
-      - name: Copy authentic files into APK assets
-        run: |
-          mkdir -p RANMobile/Android/app/src/main/assets/ep7auth
-          cp bundle/* RANMobile/Android/app/src/main/assets/ep7auth/
-          ls -la RANMobile/Android/app/src/main/assets/ep7auth/
+        '
+    - name: Copy authentic files into APK assets
+      run: 'mkdir -p RANMobile/Android/app/src/main/assets/ep7auth
 
-      - name: Setup Android NDK
-        uses: nttld/setup-ndk@v1
-        id: setup-ndk
-        with:
-          ndk-version: r26d
+        cp bundle/* RANMobile/Android/app/src/main/assets/ep7auth/
 
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+        ls -la RANMobile/Android/app/src/main/assets/ep7auth/
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.5'
+        '
+    - name: Setup Android NDK
+      uses: nttld/setup-ndk@v1
+      id: setup-ndk
+      with:
+        ndk-version: r26d
+    - name: Setup Java 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '17'
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: '8.5'
+    - name: Build debug APK (x86_64 for the emulator)
+      working-directory: RANMobile/Android
+      env:
+        ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+      run: 'gradle assembleDebug -PemulatorOnly --no-daemon
 
-      - name: Build debug APK (x86_64 for the emulator)
-        working-directory: RANMobile/Android
-        env:
-          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
-        run: |
-          gradle assembleDebug -PemulatorOnly --no-daemon
-          ls -lh app/build/outputs/apk/debug/*.apk
+        ls -lh app/build/outputs/apk/debug/*.apk
 
-      - name: Enable KVM
-        run: |
-          sudo -E apt-get -y install cpu-checker
-          kvm-ok || true
-          ls -l /dev/kvm
-          sudo chmod a+rw /dev/kvm || true
+        '
+    - name: Enable KVM
+      run: 'sudo -E apt-get -y install cpu-checker
 
-      - name: Create AVD and boot emulator (SwiftShader GLES3)
-        env:
-          ANDROID_HOME: /usr/local/lib/android/sdk
-          # Newer avdmanager writes AVDs under ~/.config/.android/avd while the
-          # emulator searches $ANDROID_AVD_HOME then ~/.android/avd — pin both to
-          # one directory so "create" and "launch" agree (B19 CI fix).
-          ANDROID_AVD_HOME: /home/runner/.android/avd
-        run: |
-          mkdir -p "$ANDROID_AVD_HOME"
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "system-images;android-30;default;x86_64" >/dev/null
-          "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd -n gpu-test \
-            -k "system-images;android-30;default;x86_64" -d pixel --force
-          ls -la "$ANDROID_AVD_HOME" || true
-          nohup "$ANDROID_HOME/emulator/emulator" -avd gpu-test \
-            -no-window -no-audio -no-boot-anim -no-snapshot \
-            -gpu swiftshader_indirect -accel on \
-            > emulator.log 2>&1 &
-          ADB="$ANDROID_HOME/platform-tools/adb"
-          # NOTE: 'adb wait-for-device' blocks forever if the emulator never comes
-          # up — poll 'adb devices' (never blocks) with a hard budget instead.
-          adb_ok=0
-          for i in $(seq 1 60); do
-            if "$ADB" devices 2>/dev/null | grep -qE "emulator-[0-9]+[[:space:]]+device"; then
-              adb_ok=1
-              echo "device online after ~$((i * 5))s"
-              break
-            fi
-            sleep 5
-          done
-          if [ "$adb_ok" != "1" ]; then
-            echo "::error::emulator device never appeared in adb within 300s"
-            tail -n 40 emulator.log | while IFS= read -r line; do echo "::error::$line"; done || true
-            "$ADB" devices -l || true
-            exit 1
-          fi
-          boot_ok=0
-          for i in $(seq 1 180); do
-            boot=$("$ADB" shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")
-            if [ "$boot" = "1" ]; then
-              boot_ok=1
-              echo "emulator booted after ~$((i * 5))s"
-              break
-            fi
-            sleep 5
-          done
-          if [ "$boot_ok" != "1" ]; then
-            echo "::error::emulator did not finish booting within 900s"
-            tail -n 40 emulator.log | while IFS= read -r line; do echo "::error::$line"; done || true
-            "$ADB" devices -l || true
-            exit 1
-          fi
-          "$ADB" shell getprop ro.build.version.release || true
-          # Settle: launches within ~1 min of boot_completed showed a wedged
-          # EGL/init state (app stuck before selftest); 30 s lets the guest
-          # graphics stack finish coming up.
-          sleep 30
-          # Take root NOW: 'adb root' restarts adbd (adb is broken for a few
-          # seconds) — doing it minutes before the poll, with a settle + check,
-          # lets the verdict be read with a plain root cat (run-as cat returns
-          # empty on this API-30 image — observed in CI).
-          "$ADB" root >/dev/null 2>&1 || true
-          # Wait until adbd is REALLY back in 'device' state (the header line
-          # 'List of devices attached' also contains the word 'device' — match
-          # the state column specifically).
-          adb_ok=0
-          for i in $(seq 1 12); do
-            if "$ADB" devices 2>/dev/null | grep -qE "emulator-[0-9]+[[:space:]]+device[[:space:]]*$"; then
-              adb_ok=1
-              break
-            fi
-            sleep 5
-          done
-          [ "$adb_ok" = "1" ] || echo "::warning::emulator not in device state 60s after adb root"
-          "$ADB" shell "id -u" 2>/dev/null | tr -d '\r' || true
+        kvm-ok || true
 
-      - name: Install APK and run GPU selftest
-        env:
-          ANDROID_HOME: /usr/local/lib/android/sdk
-        run: |
-          ADB="$ANDROID_HOME/platform-tools/adb"
-          # NOTE: GH Actions runs steps under `bash -e` — a failing poll/timeout
-          # aborts the step BEFORE the diagnostics below unless we add `|| true`.
-          install_ok=0
-          for attempt in 1 2; do
-            if timeout 240 "$ADB" install -r RANMobile/Android/app/build/outputs/apk/debug/app-debug.apk; then
-              install_ok=1
-              break
-            fi
-            echo "::warning::adb install attempt $attempt failed — retrying in 15s"
-            sleep 15
-          done
-          [ "$install_ok" = "1" ] || { echo "::error::adb install failed or timed out after 2 attempts"; exit 1; }
-          echo "::notice::install completed"
-          "$ADB" logcat -G 4M 2>/dev/null || true
-          amout=$(timeout 60 "$ADB" shell am start -n com.famhawaii.ranmobile/android.app.NativeActivity --es selftest gpu 2>&1 | tr -d '\r') \
-            || { echo "::error::am start failed or timed out"; printf '%s\n' "$amout" | while IFS= read -r line; do echo "::error::$line"; done || true; exit 1; }
-          printf '%s\n' "$amout" | while IFS= read -r line; do echo "::notice::am: $line"; done || true
-          echo "::notice::am start completed - bounded launch loop begins"
-          # BOUNDED LAUNCH LOOP (deterministic): the app may (a) complete and
-          # EXIT within ~2 s (verdict chunks already in logcat, process gone -
-          # "not alive" is then a SUCCESS signal), (b) run for a while, or
-          # (c) die before android_main on a fresh boot (flaky, observed).
-          # Success = verdict chunks visible OR process alive; 3 bounded tries.
-          launch_ok=0
-          for attempt in 1 2 3; do
-            "$ADB" logcat -c 2>/dev/null || true
-            timeout 60 "$ADB" shell am start -n com.famhawaii.ranmobile/android.app.NativeActivity --es selftest gpu >/dev/null 2>&1 \
-              || echo "::notice::attempt $attempt: am start command failed (retrying)"
-            ok=0
-            for i in 1 2 3 4; do
-              sleep 5
-              chunks=$("$ADB" logcat -d -s GPUSELFTEST_JSON 2>/dev/null | grep -c GPUSELFTEST_JSON || true)
-              if [ "$chunks" -ge 1 ] 2>/dev/null; then
-                echo "::notice::attempt $attempt: verdict chunks in logcat after ~$((i * 5))s (selftest completed + exited)"
-                ok=1
-                break
-              fi
-              alive=$("$ADB" shell "ps -A 2>/dev/null | grep -w com.famhawaii.ranmobile" 2>/dev/null | head -n 1 | tr -d '\r' || true)
-              if [ -n "$alive" ]; then
-                echo "::notice::attempt $attempt: app process alive after ~$((i * 5))s"
-                ok=1
-                break
-              fi
-            done
-            if [ "$ok" = "1" ]; then launch_ok=1; break; fi
-            # Startup-window dump for THIS attempt as ::notice (uncounted -
-            # ::error hits GitHub's 10-per-step annotation cap and silently
-            # drops later diagnostics, which hid evidence in 4 earlier runs).
-            "$ADB" logcat -d 2>/dev/null | grep -iE "ranmobile|start proc.*ranmobile|nativeactivity|linker|DEBUG|FATAL|AndroidRuntime" | tail -n 15 > appattempt.txt || true
-            while IFS= read -r line; do echo "::notice::att$attempt|$line"; done < appattempt.txt || true
-            "$ADB" shell "am force-stop com.famhawaii.ranmobile" 2>/dev/null || true
-          done
-          if [ "$launch_ok" != "1" ]; then
-            echo "::error::app never launched (died pre-main or process never started) across 3 bounded attempts"
-            exit 1
-          fi
-          timeout 600 bash -c '
-            adb_fail=0
-            while true; do
-              # PRIMARY: the app emits the verdict JSON to logcat as compact
-              # chunks tagged GPUSELFTEST_JSON ("i/n payload").  Reassemble.
-              lc=$("$ADB" logcat -d -s GPUSELFTEST_JSON 2>/dev/null | tr -d '\r')
-              if [ -n "$lc" ]; then
-                spec=$(printf "%s\n" "$lc" | sed -E "s/^.*GPUSELFTEST_JSON: //" | head -n1 | cut -d" " -f1)
-                total=${spec#*/}
-                if [ -n "$total" ] && [ "$total" -ge 1 ] 2>/dev/null; then
-                  json=""
-                  ok=1
-                  for i in $(seq 1 "$total"); do
-                    piece=$(printf "%s\n" "$lc" | sed -E "s/^.*GPUSELFTEST_JSON: //" | grep -E "^$i/$total " | head -n1 | cut -d" " -f2-)
-                    if [ -z "$piece" ]; then ok=0; break; fi
-                    json="$json$piece"
-                  done
-                  if [ "$ok" = "1" ] && printf "%s" "$json" | grep -q "verdict"; then
-                    printf "%s" "$json" > gpu_selftest.json
-                    echo "=== GPU SELFTEST VERDICT (from logcat) ==="
-                    cat gpu_selftest.json
-                    exit 0
-                  fi
-                fi
-              fi
-              # SECONDARY: root cat of the file (also produces the artifact).
-              out=$("$ADB" shell "cat /data/user/0/com.famhawaii.ranmobile/files/gpu_selftest.json 2>/dev/null" 2>/dev/null | tr -d '\r')
-              if [ -n "$out" ]; then
-                echo "$out" > gpu_selftest.json
-                echo "=== GPU SELFTEST VERDICT (from file) ==="
-                cat gpu_selftest.json
-                exit 0
-              fi
-              # SELF-HEAL: if adb itself stopped answering, try to reconnect.
-              if ! "$ADB" get-state >/dev/null 2>&1; then
-                adb_fail=$((adb_fail + 1))
-                if [ $adb_fail -eq 1 ] || [ $((adb_fail % 6)) -eq 0 ]; then
-                  "$ADB" reconnect offline >/dev/null 2>&1 || true
-                fi
-                if [ $adb_fail -ge 40 ]; then
-                  echo "::error::adb unresponsive for ~200s inside the poll — giving up"
-                  exit 1
-                fi
-              else
-                adb_fail=0
-              fi
-              sleep 5
-            done' || true
-          if [ ! -f gpu_selftest.json ]; then
-            echo "::error::selftest did not produce gpu_selftest.json in time"
-            # Emit the app's logcat (crashes, harness logs, EGL/GLES errors) as
-            # annotations — they are the only log channel readable from outside.
-            "$ADB" logcat -d -b crash 2>/dev/null | tail -n 25 | while IFS= read -r line; do echo "::error::crash|$line"; done || true
-            "$ADB" logcat -d 2>/dev/null | grep -iE "ranmobile|nativeactivity|linker|DEBUG|FATAL|AndroidRuntime|EGL|selftest|GLES" | tail -n 60 | while IFS= read -r line; do echo "::error::log|$line"; done || true
-            echo "::error::adb state: $("$ADB" get-state 2>&1 | tr -d '\r' || echo unreachable)"
-            echo "::error::logcat GPUSELFTEST_JSON chunks present: $("$ADB" logcat -d -s GPUSELFTEST_JSON 2>/dev/null | grep -c GPUSELFTEST_JSON || echo 0)"
-            thr=$("$ADB" shell "ps -T -p $(pidof com.famhawaii.ranmobile) 2>/dev/null | head -n 16" 2>/dev/null | tr -d '\r')
-            if [ -n "$thr" ]; then printf '%s\n' "$thr" | while IFS= read -r line; do echo "::error::thr|$line"; done; else echo "::error::thread probe returned nothing (process gone or adb dead)"; fi
-            dsy=$("$ADB" shell "dumpsys package com.famhawaii.ranmobile | grep -E 'primaryCpuAbi|versionName' | head -n 3" 2>/dev/null | tr -d '\r')
-            if [ -n "$dsy" ]; then printf '%s\n' "$dsy" | while IFS= read -r line; do echo "::error::pkg|$line"; done; else echo "::error::dumpsys probe returned nothing (adb dead?)"; fi
-            fls=$("$ADB" shell "ls -la /data/user/0/com.famhawaii.ranmobile/files/ 2>&1" 2>/dev/null | tr -d '\r')
-            if [ -n "$fls" ]; then printf '%s\n' "$fls" | while IFS= read -r line; do echo "::error::files|$line"; done; else echo "::error::files probe returned nothing (adb dead?)"; fi
-            echo "::notice::poll budget exhausted (600s) — diagnostics above"
-            tail -n 20 emulator.log || true
-            exit 1
-          fi
-          # Pull the screenshot (root cat primary, run-as fallback).
-          "$ADB" shell "cat /data/user/0/com.famhawaii.ranmobile/files/gpu_selftest.ppm" > gpu_selftest.ppm 2>/dev/null || true
-          if ! grep -q "P6" gpu_selftest.ppm 2>/dev/null; then
-            "$ADB" exec-out run-as com.famhawaii.ranmobile cat files/gpu_selftest.ppm > gpu_selftest.ppm 2>/dev/null || true
-          fi
-          "$ADB" logcat -d > emulator-logcat.txt || true
-          verdict=$(python3 -c "import json;print(json.load(open('gpu_selftest.json'))['verdict'])" 2>/dev/null || echo UNKNOWN)
-          renderer=$(python3 -c "import json;print(json.load(open('gpu_selftest.json')).get('gl',{}).get('renderer',''))" 2>/dev/null || echo "")
-          echo "GPU renderer: $renderer"
-          echo "GPU selftest verdict: $verdict" >> "$GITHUB_STEP_SUMMARY"
-          echo "GPU renderer: $renderer" >> "$GITHUB_STEP_SUMMARY"
-          # Per-test results as ::notice (uncounted; visible without log access).
-          jq -r '.tests[] | "::notice::test \(.name) pass=\(.pass) :: \((.detail // "")[0:220])"' gpu_selftest.json 2>/dev/null || true
-          jq -r 'if .authenticTexture then "::notice::authenticTexture attempted=\(.authenticTexture.attempted) pass=\(.authenticTexture.pass) :: \((.authenticTexture.detail // "")[0:220])" else empty end' gpu_selftest.json 2>/dev/null || true
-          jq -r 'if .authentic then "::notice::authenticCharacter attempted=\(.authentic.attempted) pass=\(.authentic.pass) :: \((.authentic.detail // "")[0:220])" else empty end' gpu_selftest.json 2>/dev/null || true
-          PYV
-          if [ "$verdict" != "PASS" ]; then
-            echo "::error::GPU selftest verdict = $verdict (failing tests listed in the notices above)"
-            exit 1
-          fi
+        ls -l /dev/kvm
 
-      - name: Upload GPU selftest evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-emulator-gpu-selftest
-          path: |
-            gpu_selftest.json
-            gpu_selftest.ppm
-            emulator-logcat.txt
-            emulator.log
+        sudo chmod a+rw /dev/kvm || true
+
+        '
+    - name: Create AVD and boot emulator (SwiftShader GLES3)
+      env:
+        ANDROID_HOME: /usr/local/lib/android/sdk
+        ANDROID_AVD_HOME: /home/runner/.android/avd
+      run: "mkdir -p \"$ANDROID_AVD_HOME\"\nyes | \"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager\" --licenses >/dev/null || true\n\"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager\" \"system-images;android-30;default;x86_64\" >/dev/null\n\"$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager\" create avd -n gpu-test \\\n  -k \"system-images;android-30;default;x86_64\" -d pixel --force\nls -la \"$ANDROID_AVD_HOME\" || true\nnohup \"$ANDROID_HOME/emulator/emulator\" -avd gpu-test \\\n  -no-window -no-audio -no-boot-anim -no-snapshot \\\n  -gpu swiftshader_indirect -accel on \\\n  > emulator.log 2>&1 &\nADB=\"$ANDROID_HOME/platform-tools/adb\"\n# NOTE: 'adb wait-for-device' blocks forever if the emulator never comes\n# up \u2014 poll 'adb devices' (never blocks) with a hard budget instead.\nadb_ok=0\nfor i in $(seq 1 60); do\n  if \"$ADB\" devices 2>/dev/null | grep -qE \"emulator-[0-9]+[[:space:]]+device\"; then\n    adb_ok=1\n    echo \"device online after ~$((i * 5))s\"\n    break\n\
+        \  fi\n  sleep 5\ndone\nif [ \"$adb_ok\" != \"1\" ]; then\n  echo \"::error::emulator device never appeared in adb within 300s\"\n  tail -n 40 emulator.log | while IFS= read -r line; do echo \"::error::$line\"; done || true\n  \"$ADB\" devices -l || true\n  exit 1\nfi\nboot_ok=0\nfor i in $(seq 1 180); do\n  boot=$(\"$ADB\" shell getprop sys.boot_completed 2>/dev/null | tr -d \"\\r\")\n  if [ \"$boot\" = \"1\" ]; then\n    boot_ok=1\n    echo \"emulator booted after ~$((i * 5))s\"\n    break\n  fi\n  sleep 5\ndone\nif [ \"$boot_ok\" != \"1\" ]; then\n  echo \"::error::emulator did not finish booting within 900s\"\n  tail -n 40 emulator.log | while IFS= read -r line; do echo \"::error::$line\"; done || true\n  \"$ADB\" devices -l || true\n  exit 1\nfi\n\"$ADB\" shell getprop ro.build.version.release || true\n# Settle: launches within ~1 min of boot_completed showed a wedged\n# EGL/init state (app stuck before selftest); 30 s lets the guest\n# graphics stack finish coming up.\nsleep\
+        \ 30\n# Take root NOW: 'adb root' restarts adbd (adb is broken for a few\n# seconds) \u2014 doing it minutes before the poll, with a settle + check,\n# lets the verdict be read with a plain root cat (run-as cat returns\n# empty on this API-30 image \u2014 observed in CI).\n\"$ADB\" root >/dev/null 2>&1 || true\n# Wait until adbd is REALLY back in 'device' state (the header line\n# 'List of devices attached' also contains the word 'device' \u2014 match\n# the state column specifically).\nadb_ok=0\nfor i in $(seq 1 12); do\n  if \"$ADB\" devices 2>/dev/null | grep -qE \"emulator-[0-9]+[[:space:]]+device[[:space:]]*$\"; then\n    adb_ok=1\n    break\n  fi\n  sleep 5\ndone\n[ \"$adb_ok\" = \"1\" ] || echo \"::warning::emulator not in device state 60s after adb root\"\n\"$ADB\" shell \"id -u\" 2>/dev/null | tr -d '\\r' || true\n"
+    - name: Install APK and run GPU selftest
+      env:
+        ANDROID_HOME: /usr/local/lib/android/sdk
+      run: "ADB=\"$ANDROID_HOME/platform-tools/adb\"\n# NOTE: GH Actions runs steps under `bash -e` - a failing command aborts the\n# step BEFORE the diagnostics below unless we add `|| true` guards.\ninstall_ok=0\nfor attempt in 1 2; do\n  if timeout 240 \"$ADB\" install -r RANMobile/Android/app/build/outputs/apk/debug/app-debug.apk; then\n    install_ok=1\n    break\n  fi\n  echo \"::warning::adb install attempt $attempt failed - retrying in 15s\"\n  sleep 15\ndone\n[ \"$install_ok\" = \"1\" ] || { echo \"::error::adb install failed or timed out after 2 attempts\"; exit 1; }\necho \"::notice::install completed\"\n\"$ADB\" logcat -G 4M 2>/dev/null || true\n\n# BOUNDED LAUNCH LOOP (deterministic): the app may (a) complete and EXIT\n# within ~2 s (verdict chunks already in logcat, process gone - \"not alive\"\n# is then a SUCCESS signal), (b) run for a while, or (c) die before\n# android_main on a fresh boot (flaky, observed).  Success = verdict chunks\n# visible OR process alive; 3 bounded\
+        \ tries.  All diagnostics emit as\n# ::notice - ::error is capped at 10 per step by GitHub and silently drops\n# everything after, which hid evidence in 4 earlier runs.\nlaunch_ok=0\nfor attempt in 1 2 3; do\n  \"$ADB\" logcat -c 2>/dev/null || true\n  timeout 60 \"$ADB\" shell am start -n com.famhawaii.ranmobile/android.app.NativeActivity --es selftest gpu >/dev/null 2>&1 \\\n    || echo \"::notice::attempt $attempt: am start command failed (retrying)\"\n  ok=0\n  for i in 1 2 3 4; do\n    sleep 5\n    chunks=$(\"$ADB\" logcat -d -s GPUSELFTEST_JSON 2>/dev/null | grep -c \"GPUSELFTEST_JSON: \" || true)\n    if [ \"${chunks:-0}\" -ge 1 ] 2>/dev/null; then\n      echo \"::notice::attempt $attempt: verdict chunks in logcat after ~$((i * 5))s (selftest completed + exited)\"\n      ok=1\n      break\n    fi\n    alive=$(\"$ADB\" shell \"ps -A 2>/dev/null | grep -w com.famhawaii.ranmobile\" 2>/dev/null | head -n 1 | tr -d \"\\r\" || true)\n    if [ -n \"$alive\" ]; then\n      echo \"\
+        ::notice::attempt $attempt: app process alive after ~$((i * 5))s\"\n      ok=1\n      break\n    fi\n  done\n  if [ \"$ok\" = \"1\" ]; then launch_ok=1; break; fi\n  # Per-attempt startup-window dump as ::notice (uncounted).\n  \"$ADB\" logcat -d 2>/dev/null | grep -iE \"ranmobile|start proc.*ranmobile|nativeactivity|linker|DEBUG|FATAL|AndroidRuntime\" | tail -n 15 > appattempt.txt || true\n  while IFS= read -r line; do echo \"::notice::att$attempt|$line\"; done < appattempt.txt || true\n  \"$ADB\" shell \"am force-stop com.famhawaii.ranmobile\" 2>/dev/null || true\ndone\nif [ \"$launch_ok\" != \"1\" ]; then\n  echo \"::error::app never launched (died pre-main or process never started) across 3 bounded attempts\"\n  exit 1\nfi\n\n# Verdict poll: reassemble the GPUSELFTEST_JSON chunks from the logcat\n# buffer (primary; survives the app having exited) or root-cat the file\n# (secondary).  adbd wedges after the app exits (observed twice) but\n# recovers after minutes - NEVER give up\
+        \ early; keep reconnecting; the\n# 600 s timeout is the only bound.  The 4 MB buffer persists on device.\ncat > poll.sh << 'POLL_EOF'\nadb_fail=0\nwhile true; do\n  lc=$(\"$ADB\" logcat -d -s GPUSELFTEST_JSON 2>/dev/null | grep \"GPUSELFTEST_JSON: \" | tr -d '\\r')\n  if [ -n \"$lc\" ]; then\n    spec=$(printf \"%s\\n\" \"$lc\" | sed -E \"s/^.*GPUSELFTEST_JSON: //\" | head -n1 | cut -d\" \" -f1)\n    total=${spec#*/}\n    if [ -n \"$total\" ] && [ \"$total\" -ge 1 ] 2>/dev/null; then\n      json=\"\"\n      ok=1\n      for i in $(seq 1 \"$total\"); do\n        piece=$(printf \"%s\\n\" \"$lc\" | sed -E \"s/^.*GPUSELFTEST_JSON: //\" | grep -E \"^$i/$total \" | head -n1 | cut -d\" \" -f2-)\n        if [ -z \"$piece\" ]; then ok=0; break; fi\n        json=\"$json$piece\"\n      done\n      if [ \"$ok\" = \"1\" ] && printf \"%s\" \"$json\" | grep -q \"verdict\"; then\n        printf \"%s\" \"$json\" > gpu_selftest.json\n        echo \"=== GPU SELFTEST VERDICT (from logcat) ===\"\n   \
+        \     cat gpu_selftest.json\n        exit 0\n      fi\n    fi\n  fi\n  out=$(\"$ADB\" shell \"cat /data/user/0/com.famhawaii.ranmobile/files/gpu_selftest.json 2>/dev/null\" 2>/dev/null | tr -d '\\r')\n  if [ -n \"$out\" ]; then\n    echo \"$out\" > gpu_selftest.json\n    echo \"=== GPU SELFTEST VERDICT (from file) ===\"\n    cat gpu_selftest.json\n    exit 0\n  fi\n  if ! \"$ADB\" get-state >/dev/null 2>&1; then\n    adb_fail=$((adb_fail + 1))\n    if [ $adb_fail -eq 1 ] || [ $((adb_fail % 6)) -eq 0 ]; then\n      echo \"::notice::adb unresponsive (fail $adb_fail) - reconnecting\"\n      \"$ADB\" reconnect offline >/dev/null 2>&1 || true\n    fi\n    if [ $((adb_fail % 12)) -eq 0 ]; then\n      \"$ADB\" kill-server >/dev/null 2>&1 || true\n      sleep 3\n      \"$ADB\" start-server >/dev/null 2>&1 || true\n      \"$ADB\" reconnect offline >/dev/null 2>&1 || true\n    fi\n  else\n    adb_fail=0\n  fi\n  sleep 5\ndone\nPOLL_EOF\nADB=\"$ADB\" timeout 600 bash poll.sh || true\n\nif [\
+        \ ! -f gpu_selftest.json ]; then\n  echo \"::error::verdict never retrieved within 600s (launch saw chunks: the app completed but adb wedged, or the poll failed)\"\n  \"$ADB\" logcat -d -b crash 2>/dev/null | tail -n 25 | while IFS= read -r line; do echo \"::notice::crash|$line\"; done || true\n  \"$ADB\" logcat -d 2>/dev/null | grep -iE \"ranmobile|nativeactivity|linker|DEBUG|FATAL|AndroidRuntime|EGL|selftest|GLES\" | tail -n 50 | while IFS= read -r line; do echo \"::notice::log|$line\"; done || true\n  echo \"::notice::adb state: $(\"$ADB\" get-state 2>&1 | tr -d \"\\r\" || echo unreachable)\"\n  echo \"::notice::GPUSELFTEST_JSON chunks in buffer: $(\"$ADB\" logcat -d -s GPUSELFTEST_JSON 2>/dev/null | grep -c \"GPUSELFTEST_JSON: \" || echo 0)\"\n  fls=$(\"$ADB\" shell \"ls -la /data/user/0/com.famhawaii.ranmobile/files/ 2>&1\" 2>/dev/null | tr -d \"\\r\")\n  if [ -n \"$fls\" ]; then printf \"%s\\n\" \"$fls\" | while IFS= read -r line; do echo \"::notice::files|$line\"; done; else\
+        \ echo \"::notice::files probe returned nothing (adb dead?)\"; fi\n  tail -n 15 emulator.log || true\n  exit 1\nfi\n\n# Pull the screenshot (root cat primary, run-as fallback).\n\"$ADB\" shell \"cat /data/user/0/com.famhawaii.ranmobile/files/gpu_selftest.ppm\" > gpu_selftest.ppm 2>/dev/null || true\nif ! grep -q \"P6\" gpu_selftest.ppm 2>/dev/null; then\n  \"$ADB\" exec-out run-as com.famhawaii.ranmobile cat files/gpu_selftest.ppm > gpu_selftest.ppm 2>/dev/null || true\nfi\n\"$ADB\" logcat -d > emulator-logcat.txt || true\nverdict=$(python3 -c \"import json;print(json.load(open('gpu_selftest.json'))['verdict'])\" 2>/dev/null || echo UNKNOWN)\nrenderer=$(python3 -c \"import json;print(json.load(open('gpu_selftest.json')).get('gl',{}).get('renderer',''))\" 2>/dev/null || echo \"\")\necho \"GPU renderer: $renderer\"\necho \"GPU selftest verdict: $verdict\" >> \"$GITHUB_STEP_SUMMARY\"\necho \"GPU renderer: $renderer\" >> \"$GITHUB_STEP_SUMMARY\"\n# Per-test results as ::notice (uncounted;\
+        \ visible without artifact access).\njq -r '.tests[] | \"::notice::test \\(.name) pass=\\(.pass) :: \\((.detail // \"\")[0:220])\"' gpu_selftest.json 2>/dev/null || true\njq -r 'if .authenticTexture then \"::notice::authenticTexture attempted=\\(.authenticTexture.attempted) pass=\\(.authenticTexture.pass) :: \\((.authenticTexture.detail // \"\")[0:220])\" else empty end' gpu_selftest.json 2>/dev/null || true\njq -r 'if .authentic then \"::notice::authenticCharacter attempted=\\(.authentic.attempted) pass=\\(.authentic.pass) :: \\((.authentic.detail // \"\")[0:220])\" else empty end' gpu_selftest.json 2>/dev/null || true\nif [ \"$verdict\" != \"PASS\" ]; then\n  echo \"::error::GPU selftest verdict = $verdict (failing tests listed in the notices above)\"\n  exit 1\nfi\n"
+    - name: Upload GPU selftest evidence
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-emulator-gpu-selftest
+        path: 'gpu_selftest.json
+
+          gpu_selftest.ppm
+
+          emulator-logcat.txt
+
+          emulator.log
+
+          '
