@@ -259,6 +259,22 @@ std::map<uint32_t, ChfVersionExample> g_chfUnsupportedExamples;
 // The globally smallest unsupported file is dumped in full (chunks).
 std::pair<uint32_t, ChfVersionExample> g_chfSmallest{0, ChfVersionExample{}};
 
+// B20 round 3: same evidence technique for .chf files whose VERSION parses but
+// whose payload fails (trailer-block variants, flag-range rejects).  Keyed by
+// the exact parser error; per reason keep the smallest example (head + tail +
+// full bytes for the globally smallest failed file).
+std::map<std::string, int> g_chfFailCounts;
+struct ChfFailExample {
+    std::string name;
+    size_t size = 0;
+    uint32_t version = 0;
+    std::string hexHead;
+    std::string hexTail;
+    std::vector<uint8_t> full;
+};
+std::map<std::string, ChfFailExample> g_chfFailExamples;
+std::pair<std::string, ChfFailExample> g_chfFailSmallest;
+
 }  // namespace
 
 // Verifies one asset buffer. `path` is only used for reporting (it may be
@@ -278,6 +294,41 @@ Outcome VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& b
             g_b18.chfNames.push_back(path);
         } else {
             ReportOutcome("chf", path, Outcome::Fail, info.error);
+            // B20 round 3: evidence for payload-level failures (the version is
+            // known and admitted, but the layout diverged from the attested
+            // smallest examples).  Same smallest-example technique as the
+            // version census: per reason keep head+tail; the globally smallest
+            // failed file is dumped in full.
+            ++g_chfFailCounts[info.error];
+            {
+                ChfFailExample& ex = g_chfFailExamples[info.error];
+                if (ex.size == 0 || bytes.size() < ex.size) {
+                    ex.name = path;
+                    ex.size = bytes.size();
+                    ex.version = info.version;
+                    auto toHex = [](const uint8_t* d, size_t n) {
+                        static const char* hexd = "0123456789abcdef";
+                        std::string hx;
+                        hx.reserve(n * 2);
+                        for (size_t i = 0; i < n; ++i) {
+                            hx.push_back(hexd[d[i] >> 4]);
+                            hx.push_back(hexd[d[i] & 0xF]);
+                        }
+                        return hx;
+                    };
+                    const size_t headTake = std::min<size_t>(188, bytes.size() > 132 ? bytes.size() - 132 : 0);
+                    ex.hexHead = toHex(bytes.data() + 132, headTake);
+                    const size_t tailTake = std::min<size_t>(160, bytes.size());
+                    ex.hexTail = toHex(bytes.data() + bytes.size() - tailTake, tailTake);
+                    ex.full = bytes;
+                    if (g_chfFailSmallest.second.size == 0 || bytes.size() < g_chfFailSmallest.second.size) {
+                        g_chfFailSmallest = {info.error, ex};
+                    } else {
+                        ex.full.clear();
+                        ex.full.shrink_to_fit();
+                    }
+                }
+            }
             // B20: census of the versions the pack actually ships. `info.version`
             // is recorded by the parser BEFORE the unsupported-version gate, so
             // this is the real on-disk value. For the first example of each
@@ -468,6 +519,28 @@ bool IsCharacterAssetName(const std::string& name) {
 
 bool IsArchiveName(const std::string& name) {
     return EndsWithNoCase(name, ".rcc") || EndsWithNoCase(name, ".zip");
+}
+
+// One full-file dump as 188-byte hex chunk lines (annotation-budget sized).
+void DumpChfFile(const char* tag, uint32_t version, const std::string& name, size_t size,
+                 const std::vector<uint8_t>& full) {
+    std::printf("  %s-file: v0x%04X %s size=%zu\n", tag, version, name.c_str(), size);
+    static const char* hexd = "0123456789abcdef";
+    const size_t chunk = 188;
+    size_t off = 0;
+    int idx = 0;
+    while (off < full.size() && idx < 10) {
+        const size_t n = std::min(chunk, full.size() - off);
+        std::string hx;
+        hx.reserve(n * 2);
+        for (size_t i = 0; i < n; ++i) {
+            hx.push_back(hexd[full[off + i] >> 4]);
+            hx.push_back(hexd[full[off + i] & 0xF]);
+        }
+        std::printf("  %s: %d %s\n", tag, idx, hx.c_str());
+        off += n;
+        ++idx;
+    }
 }
 
 int main(int argc, char** argv) {
@@ -964,25 +1037,28 @@ int main(int argc, char** argv) {
         if (g_chfSmallest.second.size != 0 && !g_chfSmallest.second.full.empty()) {
             // Full dump of the globally smallest unsupported file: 188-byte
             // chunk lines sized for the per-line annotation budget.
-            const auto& ex = g_chfSmallest.second;
-            std::printf("  chf-dump-file: v0x%04X %s size=%zu\n", g_chfSmallest.first,
-                        ex.name.c_str(), ex.size);
-            static const char* hexd = "0123456789abcdef";
-            const size_t chunk = 188;
-            size_t off = 0;
-            int idx = 0;
-            while (off < ex.full.size() && idx < 10) {
-                const size_t n = std::min(chunk, ex.full.size() - off);
-                std::string hx;
-                hx.reserve(n * 2);
-                for (size_t i = 0; i < n; ++i) {
-                    hx.push_back(hexd[ex.full[off + i] >> 4]);
-                    hx.push_back(hexd[ex.full[off + i] & 0xF]);
-                }
-                std::printf("  chf-dump: %d %s\n", idx, hx.c_str());
-                off += n;
-                ++idx;
+            DumpChfFile("chf-dump", g_chfSmallest.first, g_chfSmallest.second.name,
+                        g_chfSmallest.second.size, g_chfSmallest.second.full);
+        }
+    }
+    if (!g_chfFailCounts.empty()) {
+        std::printf("\nchf payload-failure evidence (version admitted, layout diverged):\n");
+        for (const auto& [reason, count] : g_chfFailCounts) {
+            std::printf("  chf-fail: %s x%d\n", reason.c_str(), count);
+        }
+        int tails = 0;
+        for (const auto& [reason, ex] : g_chfFailExamples) {
+            if (ex.size == 0 || reason == g_chfFailSmallest.first) continue;
+            if (tails < 4) {
+                std::printf("  chf-fail-tail: %s | v0x%04X %s size=%zu tail=%s\n", reason.c_str(),
+                            ex.version, ex.name.c_str(), ex.size, ex.hexTail.c_str());
+                ++tails;
             }
+        }
+        if (g_chfFailSmallest.second.size != 0 && !g_chfFailSmallest.second.full.empty()) {
+            DumpChfFile("chf-fail-dump", g_chfFailSmallest.second.version,
+                        g_chfFailSmallest.second.name, g_chfFailSmallest.second.size,
+                        g_chfFailSmallest.second.full);
         }
     }
     if (!g_failureReasons.empty()) {

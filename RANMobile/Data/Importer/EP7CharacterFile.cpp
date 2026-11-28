@@ -18,15 +18,6 @@ bool ReadPieceSlot(ep7byte::Stream& s, std::string& out) {
     return s.ReadString(out, kMaxPieceName);
 }
 
-// Reads one DWORD that the format uses as a boolean flag and requires it to be
-// a clean 0/1 (garbage there means the alignment assumption is wrong — fail
-// cleanly instead of silently mapping to true).
-bool ReadFlag32(ep7byte::Stream& s, uint32_t& out) {
-    if (!s.ReadU32(out)) return false;
-    if (out > 1) return false;
-    return true;
-}
-
 // Phase 3J B20: 0x0103..0x0108 mobile-exported SkinCharData loader.
 //
 // Authentic evidence (EP7 release pack skinobject.rcc; PHASE3J.md §16.9):
@@ -88,13 +79,13 @@ bool LoadVer0103Plus(ep7byte::Stream& s, EP7CharacterFileInfo& info) {
     float height = 0.0f, radius = 0.0f;
     if (rem == 60) {
         // Single DWORD (1) between scale and height in the 0x0104 sample.
-        if (!s.ReadF32(info.scale) || !ReadFlag32(s, flagA) ||
+        if (!s.ReadF32(info.scale) || !s.ReadU32(flagA) ||
             !s.ReadF32(height) || !s.ReadF32(radius)) {
             info.error = "truncated .chf trailer block";
             return false;
         }
     } else if (rem == 64 || rem == 72) {
-        if (!s.ReadF32(info.scale) || !ReadFlag32(s, flagA) || !ReadFlag32(s, flagB) ||
+        if (!s.ReadF32(info.scale) || !s.ReadU32(flagA) || !s.ReadU32(flagB) ||
             !s.ReadF32(height) || !s.ReadF32(radius)) {
             info.error = "truncated .chf trailer block";
             return false;
@@ -103,13 +94,21 @@ bool LoadVer0103Plus(ep7byte::Stream& s, EP7CharacterFileInfo& info) {
         info.error = "unsupported .chf trailer block size (" + std::to_string(rem) + " bytes)";
         return false;
     }
+    if (flagA > 1 || flagB > 1) {
+        info.error = ".chf trailer flag out of range";
+        return false;
+    }
 
     // Bounding box: DWORD 0, DWORD 1, vMax, vMin (all three variants).
     uint32_t boxFlag0 = 0, boxFlag1 = 0;
-    if (!ReadFlag32(s, boxFlag0) || !ReadFlag32(s, boxFlag1) ||
+    if (!s.ReadU32(boxFlag0) || !s.ReadU32(boxFlag1) ||
         !s.ReadF32(info.boundsMax[0]) || !s.ReadF32(info.boundsMax[1]) || !s.ReadF32(info.boundsMax[2]) ||
         !s.ReadF32(info.boundsMin[0]) || !s.ReadF32(info.boundsMin[1]) || !s.ReadF32(info.boundsMin[2])) {
         info.error = "truncated .chf bounding box";
+        return false;
+    }
+    if (boxFlag0 > 1 || boxFlag1 > 1) {
+        info.error = ".chf bbox flag out of range";
         return false;
     }
     info.hasBoundingBox = true;
@@ -121,8 +120,12 @@ bool LoadVer0103Plus(ep7byte::Stream& s, EP7CharacterFileInfo& info) {
     // final three-DWORD run.
     if (rem == 72) {
         uint32_t extra0 = 0, extra1 = 0;
-        if (!ReadFlag32(s, extra0) || !ReadFlag32(s, extra1)) {
+        if (!s.ReadU32(extra0) || !s.ReadU32(extra1)) {
             info.error = "truncated .chf trailer block (extra flags)";
+            return false;
+        }
+        if (extra0 > 1 || extra1 > 1) {
+            info.error = ".chf trailer extra flag out of range";
             return false;
         }
     }
@@ -130,8 +133,12 @@ bool LoadVer0103Plus(ep7byte::Stream& s, EP7CharacterFileInfo& info) {
     // Final run (1, 0, 0) in every authentic sample; read in the 0x0102 field
     // order (hasWorldObj, worldObj, end flag).
     uint32_t worldFlag = 0, worldObjFlag = 0, endFlag = 0;
-    if (!ReadFlag32(s, worldFlag) || !ReadFlag32(s, worldObjFlag) || !ReadFlag32(s, endFlag)) {
+    if (!s.ReadU32(worldFlag) || !s.ReadU32(worldObjFlag) || !s.ReadU32(endFlag)) {
         info.error = "truncated .chf trailer flags";
+        return false;
+    }
+    if (worldFlag > 1 || worldObjFlag > 1 || endFlag > 1) {
+        info.error = ".chf world flag out of range";
         return false;
     }
     info.hasWorldObj = worldFlag != 0;
