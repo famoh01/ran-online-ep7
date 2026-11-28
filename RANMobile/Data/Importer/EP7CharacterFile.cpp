@@ -126,6 +126,7 @@ bool LoadVer0103Plus(ep7byte::Stream& s, EP7CharacterFileInfo& info, uint32_t ve
     // same single constant dword precedes the bounding box.  count == 1 is
     // unattested and intentionally not special-cased (it fails cleanly and
     // surfaces in the census).
+    const size_t boneCountPos = s.Position();
     uint32_t boneCount = 0;
     if (!s.ReadU32(boneCount)) {
         info.error = "truncated .chf bounding box";
@@ -141,7 +142,10 @@ bool LoadVer0103Plus(ep7byte::Stream& s, EP7CharacterFileInfo& info, uint32_t ve
             std::string boneName;
             if (!s.ReadF32(bx) || !s.ReadF32(by) || !s.ReadF32(bz) ||
                 !s.ReadString(boneName, kMaxPieceName)) {
-                info.error = "truncated .chf bone table";
+                // The offset lets the verify tool dump the table region of the
+                // authentic file so the record shape can be decoded from CI.
+                info.error = "truncated .chf bone table (table starts at " +
+                             std::to_string(boneCountPos) + ")";
                 return false;
             }
         }

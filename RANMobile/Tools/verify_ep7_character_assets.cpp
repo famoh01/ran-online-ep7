@@ -41,6 +41,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <cstdio>
+#include <cstdlib>
 #include <map>
 #include <cstring>
 #include <string>
@@ -268,10 +269,18 @@ struct ChfFailExample {
     std::string name;
     size_t size = 0;
     uint32_t version = 0;
+    std::string error;  // full parser error (may carry the table offset)
     std::string hexHead;
     std::string hexTail;
     std::vector<uint8_t> full;
 };
+
+// The bone-table error embeds the table's byte offset so the dump can target
+// the middle of a large file; the census must aggregate over the base reason.
+std::string NormalizeChfReason(const std::string& err) {
+    const size_t cut = err.find(" (table starts at ");
+    return cut == std::string::npos ? err : err.substr(0, cut);
+}
 std::map<std::string, ChfFailExample> g_chfFailExamples;
 std::pair<std::string, ChfFailExample> g_chfFailSmallest;
 
@@ -302,13 +311,15 @@ Outcome VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& b
             // smallest-example technique: per reason keep head+tail; the
             // globally smallest failed file is dumped in full.
             if (info.error.find("unsupported .chf version") == std::string::npos) {
-                ++g_chfFailCounts[info.error];
+                const std::string reason = NormalizeChfReason(info.error);
+                ++g_chfFailCounts[reason];
             {
-                ChfFailExample& ex = g_chfFailExamples[info.error];
+                ChfFailExample& ex = g_chfFailExamples[reason];
                 if (ex.size == 0 || bytes.size() < ex.size) {
                     ex.name = path;
                     ex.size = bytes.size();
                     ex.version = info.version;
+                    ex.error = info.error;
                     auto toHex = [](const uint8_t* d, size_t n) {
                         static const char* hexd = "0123456789abcdef";
                         std::string hx;
@@ -524,13 +535,18 @@ bool IsArchiveName(const std::string& name) {
 
 // One full-file dump as 188-byte hex chunk lines (annotation-budget sized).
 void DumpChfFile(const char* tag, uint32_t version, const std::string& name, size_t size,
-                 const std::vector<uint8_t>& full) {
-    std::printf("  %s-file: v0x%04X %s size=%zu\n", tag, version, name.c_str(), size);
+                 const std::vector<uint8_t>& full, size_t start = 0, int maxChunks = 10) {
+    if (start != 0) {
+        std::printf("  %s-file: v0x%04X %s size=%zu start=%zu\n", tag, version, name.c_str(), size,
+                    start);
+    } else {
+        std::printf("  %s-file: v0x%04X %s size=%zu\n", tag, version, name.c_str(), size);
+    }
     static const char* hexd = "0123456789abcdef";
     const size_t chunk = 188;
-    size_t off = 0;
+    size_t off = start;
     int idx = 0;
-    while (off < full.size() && idx < 10) {
+    while (off < full.size() && idx < maxChunks) {
         const size_t n = std::min(chunk, full.size() - off);
         std::string hx;
         hx.reserve(n * 2);
@@ -1033,7 +1049,7 @@ int main(int argc, char** argv) {
         // whose block parsed but the tail diverged, or whose flag DWORDs are
         // not 0/1.  One file per class, smallest example.
         static const char* const kDumpPriority[] = {
-            "trailing bytes after .chf trailer block",
+            "truncated .chf bone table",
             ".chf world flag out of range",
             ".chf bbox flag out of range",
         };
@@ -1063,8 +1079,21 @@ int main(int argc, char** argv) {
         for (size_t i = 0; i < sizeof(kDumpPriority) / sizeof(kDumpPriority[0]); ++i) {
             auto it = g_chfFailExamples.find(kDumpPriority[i]);
             if (it == g_chfFailExamples.end() || it->second.size == 0 || it->second.full.empty()) continue;
-            DumpChfFile(kDumpTags[i], it->second.version, it->second.name, it->second.size,
-                        it->second.full);
+            // The bone-table class fails mid-file: dump a window around the
+            // table start (reported by the parser) instead of the head.
+            size_t tablePos = 0;
+            const size_t marker = it->second.error.find("(table starts at ");
+            if (marker != std::string::npos) {
+                tablePos = static_cast<size_t>(std::strtoull(it->second.error.c_str() + marker + 17,
+                                                             nullptr, 10));
+            }
+            if (tablePos > 24 && tablePos + 24 < it->second.full.size()) {
+                DumpChfFile(kDumpTags[i], it->second.version, it->second.name, it->second.size,
+                            it->second.full, tablePos - 24, 3);
+            } else {
+                DumpChfFile(kDumpTags[i], it->second.version, it->second.name, it->second.size,
+                            it->second.full);
+            }
         }
     }
     if (!g_chfUnsupportedVersions.empty()) {
