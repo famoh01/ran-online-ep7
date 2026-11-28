@@ -572,3 +572,21 @@ Lifecycle invariants added in B19:
 * **Sampling**: character textures are mipmap-complete and trilinear with `GL_REPEAT`
   (authentic D3D9 default address mode); the font atlas stays LINEAR/no-mips (UI needs exact
   atlas texel access — intentional divergence from the character path).
+
+## 2026-11-28 — B19 live-GLES corrections (mobile runtime)
+
+* **Palette transport**: the 16 KB std140 UBO was replaced by a 1024×1 RGBA32F texture
+  (texel `b*4+i` = column `i` of bone `b`) after live-GLES evidence; the shader fetches
+  columns with `texelFetch(uBonePalette, ivec2(bi*4+i, 0), 0)` — same math, ES-safe
+  transport. Uploads are skipped when the palette bytes are unchanged (subset draws share
+  one per-frame palette).
+* **Capture transport**: transform-feedback capture of `vSkinnedPos`/`vNormal` is unusable on
+  the emulator stack (VAO-scoped TF bindings; `RASTERIZER_DISCARD` captures nothing); the
+  verification harness transports the production vertex shader's skinned outputs through the
+  raster path as 16-bit hi/lo-split RGBA8 into an offscreen RGBA8 FBO (quantization far
+  below the comparison tolerances). The probe's color target binds on texture unit 0 —
+  unit 1 holds the bone palette, and attaching a sampled texture to its own framebuffer
+  (feedback loop) hangs the emulator translator.
+* **Verdict transport**: the selftest emits `GPUSELFTEST_JSON` logcat chunks; CI snapshots
+  the buffer while adb is alive and reassembles the JSON host-side, so device-side adbd
+  wedges cannot lose the verdict.

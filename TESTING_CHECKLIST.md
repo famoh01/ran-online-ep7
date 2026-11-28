@@ -758,3 +758,28 @@ g++ -std=c++17 -Wall -Wextra -Werror \
 - [ ] Authentic-texture CI evidence: the `authentic-verification` job now reports shipped-texture
       decode rates and per-piece texture resolution for the first valid `.chf`; review its log on
       the B18 CI run (adds evidence, does not change the exit-code model).
+
+## 23. Phase 3J B19 — Live GLES3 GPU Verification Harness & CI Validation
+
+- [x] CPU-vs-GPU skinning equality on live GLES3 (SwiftShader emulator): production vertex
+      shader verbatim; skinned pos/normal transported through the raster path as 16-bit
+      hi/lo-split RGBA8 into an offscreen RGBA8 FBO; bind + animated poses compare against
+      `SkinVerticesCPU` within 5e-4/5e-3 — **measured 6.10e-05 / 1.53e-05** (run `46127248810`,
+      verdict PASS). Transform-feedback capture is unusable on this stack (VAO-scoped TF
+      bindings → `GL_INVALID_OPERATION`; `RASTERIZER_DISCARD` → no capture) — documented.
+- [x] Shader compile/link on live GL: `GpuSkinProgramReady` + driver info log embedded in the
+      verdict JSON; `surfaceBits` recorded.
+- [x] Palette transport: 1024×1 RGBA32F texture (std140 UBO replaced — live-GLES correction);
+      the probe samples the palette texture uploaded by the production draw path.
+- [x] Rasterization pixel tests (live): flat / bilinear-center / texel-red / alpha-blend /
+      subset-offset-left / subset-offset-right — 6/6.
+- [x] GPU resource lifecycle on live GL: invalid handle, palette 257, face-range OOB, double
+      release — all rejected safely.
+- [x] Honest authentic classification: `authentic_character_render` = verdict-neutral SKIPPED
+      with the exact parser error (243 × "unsupported .chf version" — documented B11 gap);
+      `authentic_texture_gpu` SKIPPED informational (no textures bundled); no substitutes.
+- [x] CI: emulator job green end-to-end (bundle → APK (x86_64) → AVD API30 boot → selftest →
+      verdict PASS → artifacts); bounded waits everywhere; verdict snapshot-assembled from
+      logcat chunks while adb is alive (device-side adbd wedge cannot lose it).
+- [ ] **NOT TESTED ON DEVICE** — emulator (SwiftShader, software GPU) is not device proof;
+      device evidence still requires a real GLES3 device run.

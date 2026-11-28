@@ -982,3 +982,22 @@ are unchanged. The runtime integration itself is COMPLETE at the engine level on
    rebind. Non-blocking.
 10. **EGL mid-frame context-lost callback** — not separately handled; term/init cycle is the
     supported path (documented).
+
+## 2026-11-28 — Phase 3J B19: outcome update (live GLES3 verdict PASS)
+
+RESOLVED since the B19 entry above: the emulator CI job is green end-to-end (run
+`46127248810`) — AVD-home pin, bounded device/launch/poll waits, snapshot-assembled verdict
+transport (device-side adbd wedges cannot lose the verdict), bundle fast path, single-ABI
+emulator build. Harness corrections validated live: transform-feedback capture is unusable on
+the emulator stack (VAO-scoped TF bindings → `GL_INVALID_OPERATION`; `RASTERIZER_DISCARD` →
+no capture) — replaced by a raster position probe (production vertex shader verbatim, 16-bit
+RGBA8 split, offscreen RGBA8 FBO); the FBO probe initially hung the app because the probe's
+color target was bound on the palette's texture unit while attached to the framebuffer
+(texture feedback loop) — fixed by binding it on unit 0.
+
+STILL OPEN for authentic character rendering (unchanged): **B11 `.chf` version gap** — the
+mobile parser implements 0x0100–0x0102; `SkinObject.rcc` ships later versions (CI-evidenced
+243 × "unsupported .chf version"), so no loadable authentic character exists and
+`authentic_character_render` stays a verdict-neutral SKIP. Implementing 0x0103+ parsing is a
+parser-project prerequisite, out of B19 scope. **Device: NOT TESTED ON DEVICE** (software-GPU
+emulator is not device proof).

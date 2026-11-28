@@ -936,3 +936,47 @@ rendering proof; the emulator harness is.
 `Android/app/build.gradle` (x86_64 ABI), `CMakeLists.txt` (harness in sources),
 `Tests/test_phase3j.cpp` (+25 checks), `Tools/verify_ep7_character_assets.cpp` (--bundle-plan),
 `.github/workflows/build-ranmobile-android.yml` (emulator job).
+
+### 16.8 B19 CI validation — live GLES3 verdict PASS (2026-11-28)
+
+The emulator job (x86_64 AVD, API 30, SwiftShader GLES 3.0) first required a CI fix chain —
+each blocker isolated from the previous run's evidence, never guessed:
+
+1. `834dc2a`/`d084815`/`380a267` — bundle-tool path: 160 MB cache cap exhausted before any
+   `.chf` (metadata files now bypass it); output dir never created; OOB `asset->pieces[slot]`
+   on unloaded assets (243 × "unsupported .chf version" left `pieces` empty) segfaulted the
+   bundle walk; the B18 texture-extraction hook sat behind the `IsCharacterAssetName` filter
+   so `.mtf`/`.dds` never reached the cache.
+2. `826b291`/`a613084` — job budget: bundle fast path (`--bundle-plan` walks metadata +
+   textures only) + single-ABI emulator build (`-PemulatorOnly`) + 75-min cap + bounded
+   device-online poll (`adb wait-for-device` blocks forever on a dead emulator).
+3. `c566790` — `ANDROID_AVD_HOME` pinned: newer `avdmanager` writes
+   `~/.config/.android/avd`, the emulator searches `~/.android/avd`; "Unknown AVD name".
+4. `9c53b43`-era — verdict transport: the app emits `GPUSELFTEST_JSON` logcat chunks; the
+   snapshot is taken while adb is alive and reassembled host-side, so device-side adbd
+   wedges (observed twice) cannot lose the verdict; one bounded relaunch recovery cycle.
+5. `d7512d7`/`ebf34c3` — harness capture redesign: transform feedback is unusable on this
+   stack (the TF-session draw fails with `GL_INVALID_OPERATION` because the production draw
+   path's `glBindVertexArray` clobbers the TF binding; with `GL_RASTERIZER_DISCARD` the
+   translator captures nothing). The §3 CPU-vs-GPU comparison now transports the production
+   vertex shader's `vSkinnedPos`/`vNormal` through the raster path: production VS source
+   verbatim + one appended `gl_PointSize`, FS encodes both as 16-bit hi/lo-split RGBA8
+   (quantization 1.2e-4 / 3.1e-5, far below the 5e-4/5e-3 tolerances), palette sampled from
+   the texture the production draw path uploaded. One `GL_POINTS` draw + one 1×1 readback
+   per probed vertex (≤48 × 3 passes) into an offscreen RGBA8 FBO (ES 3.0 required-
+   renderable; the on-screen surface silently quantized to 5/6-bit-class channels).
+6. `cec1514` — the FBO probe hang: `DrawGpuSkinnedMesh` leaves texture unit 1 active with
+   the palette bound; binding the probe's color target on the still-active unit replaced
+   the palette binding AND attached that texture to the framebuffer, so the probe sampled
+   its own FBO attachment — a texture feedback loop (undefined behavior; the translator
+   hangs on it). The color target now binds on unit 0; unit 1 keeps the palette throughout.
+
+**Final verdict (run `46127248810`, sha `cec1514`): PASS — all 14 tests.** GL renderer
+"Android Emulator OpenGL ES Translator (Google SwiftShader)", GLES 3.0, GLSL ES 3.00,
+`surfaceBits=[8,8,8,0]`. CPU-vs-GPU skinning: bind pose and animated pose both
+`maxPosDiff=6.10e-05`, `maxNrmDiff=1.53e-05` (tol 5e-4/5e-3), 4/4 vertices probed, zero GL
+errors, FBO complete. Rasterization: flat, bilinear-center, texel-red, alpha-blend and both
+subset-offset pixel tests pass. Lifecycle rejection tests pass. `authentic_character_render`
+and `authentic_texture_gpu` are verdict-neutral SKIPPED (§16.6 — documented B11 `.chf` gap;
+nothing fabricated). §3/§4 evidence therefore comes from the production shader path on a
+live GLES3 driver — an emulator with a software rasterizer, **not device proof**.

@@ -1332,3 +1332,18 @@ mesh registry. **Tests:** phase3j 5,846/0 (+25) with ASan/UBSan/LSan; verifier 3
 inspector 13,423/0 ×2; 44-TU engine compile clean. **Device: NOT TESTED ON DEVICE** (emulator
 with software GPU is not device proof). Details: `PHASE3J_CHARACTER_ANIMATION.md` §16,
 `TESTING_CHECKLIST.md` §23, `BLOCKERS.md` B19 update, `ARCHITECTURE.md` B19 section.
+
+## 2026-11-28 — Phase 3J B19 final: live GLES3 verification verdict PASS (`arena/00fd13f9-ran-online-ep7`)
+
+CI run `46127248810` (sha `cec1514`): **emulator GPU selftest verdict PASS — all 14 tests**
+(SwiftShader GLES 3.0, x86_64 AVD). CPU-vs-GPU skinning bind + animated: maxPosDiff 6.10e-05 /
+maxNrmDiff 1.53e-05 (tol 5e-4/5e-3) through the production vertex shader (raster position
+probe into an offscreen RGBA8 FBO; TF capture unusable on this stack — documented in
+`PHASE3J_CHARACTER_ANIMATION.md` §16.8). The path to green required, in order: bundle-tool
+fixes (cache bypass, dir creation, OOB, texture-walk), job-budget (fast bundle walk,
+single-ABI build), `ANDROID_AVD_HOME` pin, bounded waits/launch retries, snapshot-based
+verdict transport (survives adbd wedges), and two harness corrections (FBO probe replacing
+TF; texture-unit fix for the feedback-loop hang). Same run: core-tests ✓, android-arm64 ✓,
+authentic-assets exit-1 (expected diagnostic; B11 `.chf` gap unchanged). **Device: NOT TESTED
+ON DEVICE** — emulator with software GPU is not device proof. PR #7 stays OPEN+Draft; main
+untouched (`47f3c6d`).
