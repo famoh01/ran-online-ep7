@@ -783,3 +783,30 @@ g++ -std=c++17 -Wall -Wextra -Werror \
       logcat chunks while adb is alive (device-side adbd wedge cannot lose it).
 - [ ] **NOT TESTED ON DEVICE** — emulator (SwiftShader, software GPU) is not device proof;
       device evidence still requires a real GLES3 device run.
+
+## 24. Phase 3J B20 — Authentic `.chf` versions 0x0103+ (evidence → parser)
+
+- [x] Evidence channel without asset access: CI census + payload-head annotations
+      (run `46131351370`): 0x0104 x33, 0x0106 x83, 0x0107 x81, 0x0108 x3, 0x0200 x43 (=243);
+      heads prove no leading scale since 0x0103.
+- [x] Tail evidence (run `46133690603`): per-version smallest-example tails + full smallest
+      dump (0x0200 = `default`-typed encrypted class); four authentic files reconstructed
+      byte-exactly (309/311/307/319 B) against the documented layout.
+- [x] Parser: `LoadVer0103Plus` (piece slots → skeleton → anims → size-adaptive trailer
+      block 60/64/72 B), flag-DWORD boolean sanity, version gate 0x0103..0x0108 minus 0x0105;
+      0x0100–0x0102 paths untouched; header doc = field-by-field layout + evidence trail.
+- [x] Byte-exact fixtures: 4 authentic .chf rebuilt (authentic trailer bytes + model front);
+      each must end with the authentic 160-B window (`memcmp` round-trip); exact float bit
+      patterns asserted; slot placement `pieces[1]`/`pieces[8]` asserted.
+- [x] Negative/boundary: 0x0105/0x0109/0x0200 rejected (census-matched error); pieceCount 14
+      rejected; truncation sweep (1–8 B + mid-payload + header-only); flag DWORD 2 rejected at
+      7 offsets; 3-anim/0-anim legal; 0x0103-with-0x0102-layout fails cleanly; 3 authentic
+      fixtures added to the truncation + corruption sweep.
+- [x] Gates: phase3j 7,721/0; ASan+UBSan+LSan clean; verify tool -Werror + synthetic
+      authentic-layout 0x0104-in-.rcc end-to-end PASS; Android-path -D__ANDROID__ -Werror
+      clean (renderer/engine/scene/parser).
+- [ ] CI validation (pending): expect core/arm64/emulator green (regression guard) and the
+      authentic-assets job to report ~200/243 .chf PASS with 43 × UNSUPPORTED (0x0200 only,
+      census annotations); run id + counts to be recorded after the diagnostic run.
+- [ ] Remaining gaps: 0x0200 container (43 files, trees/props); piece `.cps`/`.x`/`.bin`/`.cfg`
+      support for the files these .chf reference (next milestone); device run.

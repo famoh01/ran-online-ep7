@@ -18,6 +18,128 @@ bool ReadPieceSlot(ep7byte::Stream& s, std::string& out) {
     return s.ReadString(out, kMaxPieceName);
 }
 
+// Reads one DWORD that the format uses as a boolean flag and requires it to be
+// a clean 0/1 (garbage there means the alignment assumption is wrong — fail
+// cleanly instead of silently mapping to true).
+bool ReadFlag32(ep7byte::Stream& s, uint32_t& out) {
+    if (!s.ReadU32(out)) return false;
+    if (out > 1) return false;
+    return true;
+}
+
+// Phase 3J B20: 0x0103..0x0108 mobile-exported SkinCharData loader.
+//
+// Authentic evidence (EP7 release pack skinobject.rcc; PHASE3J.md §16.9):
+// CI census of its 243 .chf — 0x0104 x33, 0x0106 x83, 0x0107 x81, 0x0108 x3,
+// 0x0200 x43 — plus byte-exact tail dumps of the four smallest examples
+// (NPC_ark 0x0104/309 B, event_Athena 0x0106/311 B, npc_police_1 0x0107/307 B,
+// NPC_hangar 0x0108/319 B) reconstructed against this layout with exact total
+// size matches.  See EP7CharacterFile.h for the field-by-field layout and the
+// evidence trail.
+bool LoadVer0103Plus(ep7byte::Stream& s, EP7CharacterFileInfo& info) {
+    // Piece slots: same flag + optional length-prefixed name encoding as
+    // 0x0101/0x0102 (proven byte-exact by the payload-head dumps: the version
+    // DWORD is followed directly by the piece count — no leading scale).
+    uint32_t pieceCount = 0;
+    if (!s.ReadU32(pieceCount)) {
+        info.error = "truncated .chf piece count";
+        return false;
+    }
+    if (pieceCount > kEP7PieceSize) {
+        info.error = ".chf piece count exceeds PIECE_SIZE (13)";
+        return false;
+    }
+    for (uint32_t i = 0; i < pieceCount; ++i) {
+        if (!ReadPieceSlot(s, info.pieces[i])) {
+            info.error = "invalid .chf piece entry";
+            return false;
+        }
+    }
+
+    if (!s.ReadString(info.skeleton, kMaxPieceName)) {
+        info.error = "invalid .chf skeleton name";
+        return false;
+    }
+
+    uint32_t animCount = 0;
+    if (!s.ReadU32(animCount)) {
+        info.error = "truncated .chf animation count";
+        return false;
+    }
+    if (animCount > kMaxAnimNames) {
+        info.error = ".chf animation count exceeds sanity limit";
+        return false;
+    }
+    info.animations.reserve(animCount);
+    for (uint32_t i = 0; i < animCount; ++i) {
+        std::string name;
+        if (!s.ReadString(name, kMaxPieceName)) {
+            info.error = "invalid .chf animation name";
+            return false;
+        }
+        info.animations.push_back(std::move(name));
+    }
+
+    // Trailer block.  Its TOTAL byte size selects one of the three variants
+    // observed in the authentic dumps (60 B = 0x0104 sample, 64 B =
+    // 0x0106/0x0107 samples, 72 B = 0x0108 sample); see EP7CharacterFile.h.
+    const size_t rem = s.Remaining();
+    uint32_t flagA = 0, flagB = 0;
+    float height = 0.0f, radius = 0.0f;
+    if (rem == 60) {
+        // Single DWORD (1) between scale and height in the 0x0104 sample.
+        if (!s.ReadF32(info.scale) || !ReadFlag32(s, flagA) ||
+            !s.ReadF32(height) || !s.ReadF32(radius)) {
+            info.error = "truncated .chf trailer block";
+            return false;
+        }
+    } else if (rem == 64 || rem == 72) {
+        if (!s.ReadF32(info.scale) || !ReadFlag32(s, flagA) || !ReadFlag32(s, flagB) ||
+            !s.ReadF32(height) || !s.ReadF32(radius)) {
+            info.error = "truncated .chf trailer block";
+            return false;
+        }
+    } else {
+        info.error = "unsupported .chf trailer block size (" + std::to_string(rem) + " bytes)";
+        return false;
+    }
+
+    // Bounding box: DWORD 0, DWORD 1, vMax, vMin (all three variants).
+    uint32_t boxFlag0 = 0, boxFlag1 = 0;
+    if (!ReadFlag32(s, boxFlag0) || !ReadFlag32(s, boxFlag1) ||
+        !s.ReadF32(info.boundsMax[0]) || !s.ReadF32(info.boundsMax[1]) || !s.ReadF32(info.boundsMax[2]) ||
+        !s.ReadF32(info.boundsMin[0]) || !s.ReadF32(info.boundsMin[1]) || !s.ReadF32(info.boundsMin[2])) {
+        info.error = "truncated .chf bounding box";
+        return false;
+    }
+    info.hasBoundingBox = true;
+    info.hasHeightRadius = true;
+    info.height = height;
+    info.radius = radius;
+
+    // The 0x0108 sample carries two extra booleans immediately before the
+    // final three-DWORD run.
+    if (rem == 72) {
+        uint32_t extra0 = 0, extra1 = 0;
+        if (!ReadFlag32(s, extra0) || !ReadFlag32(s, extra1)) {
+            info.error = "truncated .chf trailer block (extra flags)";
+            return false;
+        }
+    }
+
+    // Final run (1, 0, 0) in every authentic sample; read in the 0x0102 field
+    // order (hasWorldObj, worldObj, end flag).
+    uint32_t worldFlag = 0, worldObjFlag = 0, endFlag = 0;
+    if (!ReadFlag32(s, worldFlag) || !ReadFlag32(s, worldObjFlag) || !ReadFlag32(s, endFlag)) {
+        info.error = "truncated .chf trailer flags";
+        return false;
+    }
+    info.hasWorldObj = worldFlag != 0;
+    info.worldObj = info.hasWorldObj && worldObjFlag != 0;
+
+    return true;
+}
+
 }  // namespace
 
 EP7CharacterFileInfo EP7CharacterFileReader::Parse(const std::vector<uint8_t>& bytes, bool compByteEncoded) {
@@ -210,7 +332,20 @@ EP7CharacterFileInfo EP7CharacterFileReader::ParseStream(ep7byte::Stream& s) {
         return info;
     }
 
-    info.error = "unsupported .chf version (expected 0x0100..0x0102)";
+    // Phase 3J B20: mobile-exported SkinCharData versions.  0x0104/0x0106/
+    // 0x0107/0x0108 are attested by authentic pack files; 0x0103 is admitted
+    // with the same size-adaptive layout (see EP7CharacterFile.h); 0x0105 has
+    // no authentic sample and no known layout and stays unsupported.
+    if (version >= EP7CharacterFileInfo::kVersion103 && version <= EP7CharacterFileInfo::kVersion108 &&
+        version != 0x0105) {
+        if (!LoadVer0103Plus(s, info)) {
+            return info;
+        }
+        info.valid = true;
+        return info;
+    }
+
+    info.error = "unsupported .chf version (expected 0x0100..0x0104 or 0x0106..0x0108)";
     return info;
 }
 

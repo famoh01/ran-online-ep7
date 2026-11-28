@@ -980,3 +980,73 @@ subset-offset pixel tests pass. Lifecycle rejection tests pass. `authentic_chara
 and `authentic_texture_gpu` are verdict-neutral SKIPPED (§16.6 — documented B11 `.chf` gap;
 nothing fabricated). §3/§4 evidence therefore comes from the production shader path on a
 live GLES3 driver — an emulator with a software rasterizer, **not device proof**.
+
+### 16.9 B20 — authentic `.chf` versions 0x0103+ implemented from CI-collected binary evidence (2026-11-28)
+
+**Objective.** The mobile parser accepted only 0x0100–0x0102 while `SkinObject.rcc` ships
+newer versions (B11: 243 × "unsupported .chf version"). Implement 0x0103+ support backed
+only by authentic evidence — no guessed fields, no fabricated offsets.
+
+**Evidence channel.** The sandbox cannot download the release pack (egress blocked), so the
+authentic bytes were collected through CI annotations from the pack CI already downloads:
+
+* Round 1 (run `46131351370`, sha `d364882`) — version census + payload-head dumps
+  (offset 132, ≤188 B, ≤3 size-distinct examples per version):
+  `chf-census: 0x0104 x33; 0x0106 x83; 0x0107 x81; 0x0108 x3; 0x0200 x43` (sum = 243 ✓).
+  Heads prove the newer files carry **no leading scale**: the version DWORD is followed
+  directly by the piece count, then standard `[BOOL present][len+bytes]` piece slots with
+  null-terminated names (`m_face04.cps`, `CUN0503_m.cps`, …).
+* Round 2 (run `46133690603`, sha `c5713f3`) — per-version smallest-example tails
+  (last 160 B) + full dump of the smallest unsupported file. The dump confirmed the
+  0x0200 class is a different container: its 128-B type block reads `default` (not
+  `DxSkinCharData`) and the payload is high-entropy (encrypted), like the documented
+  `EMBYTECRYPT` family.
+
+**Format solved (byte-exact reconstruction, no guessing).** Four smallest examples —
+`NPC_ark.chf` 0x0104/309 B, `event_Athena.chf` 0x0106/311 B, `npc_police_1.chf`
+0x0107/307 B, `NPC_hangar.chf` 0x0108/319 B — were reconstructed in Python against one
+layout with exact total-size matches and identical 160-B tail windows:
+
+```
+[132-B header][version u32]
+[pieceCount u32 (per-file, observed 10..13)]  // no scale field since 0x0103
+repeat: [BOOL present] + [len u32 + name bytes incl NUL]   // present only
+[string skeleton] [animCount u32] repeat: [string anim]
+trailer block, total size selects the variant:
+  60 B (0x0104 sample): scale f32; 1;            h f32; r f32; 0; 1; vMax 3f; vMin 3f; 1; 0; 0
+  64 B (0x0106/07):     scale f32; 0; 1;         h f32; r f32; 0; 1; vMax 3f; vMin 3f; 1; 0; 0
+  72 B (0x0108 sample): scale f32; 0; 1;         h f32; r f32; 0; 1; vMax 3f; vMin 3f; 1; 0; + (1; 0;) + 1; 0; 0
+```
+
+Every sample satisfies `vMax == (radius, height, radius)` / `vMin == (-radius, 0, -radius)`
+(the exporter writes the `SetRadiusHeight`-derived box) and the trailing `(1, 0, 0)` run maps
+naturally to `hasWorldObj=1 / worldObj=0` in the 0x0102 field order. The parser fills the
+fields positionally and sanity-checks the flag DWORDs as booleans only; it does not hard-assert
+the geometry relation. Version policy: **0x0103 admitted** (no authentic sample; the sibling
+`DxSkinPieceContainer` evolution 0x0102→0x0103 only made fixed arrays count-prefixed, which
+SkinCharData already is at 0x0102 — the size-adaptive block covers the 0x0104-observed
+variants), **0x0105 rejected** (shipped by no authentic pack, no known layout), **0x0200
+rejected** (undeciphered container class, 43 files, trees/props — not player-character data).
+
+**Implementation** (`RANMobile/Data/Importer/EP7CharacterFile.{h,cpp}`): `LoadVer0103Plus()`
++ version gate 0x0103..0x0108 minus 0x0105; `ReadFlag32()` boolean sanity; error string now
+`unsupported .chf version (expected 0x0100..0x0104 or 0x0106..0x0108)`; census keying in the
+verify tool unchanged (records `info.version` before the gate). The 0x0100–0x0102 paths are
+byte-for-byte untouched.
+
+**Tests** (phase3j suite, +1,875 checks): four byte-exact authentic fixtures (front rebuilt
+from the parsed model, trailer block = authentic bytes, and each built file must end with the
+authentic 160-B dump window — a `memcmp` round-trip proving front/block join, sizes and slot
+placement `pieces[1]`/`pieces[8]`); field asserts with exact float bit patterns
+(0x423347ae=44.82, 0x413b0a3d=11.69, 0x3f333333=0.7, 0x40a0f5c3=5.03, 0x3fc51eb8=1.54,
+0x3f8ccccd=1.1, 0x4198147b=19.01, 0x40e00000=7, 0x419228f6=18.27); 0x0103 admitted /
+0x0105+0x0109+0x0200 rejected with the census-matched error; pieceCount 14 rejected;
+truncations (1–8 B cuts, mid-payload cuts, header-only); flag DWORD 2 rejected at all seven
+flag positions; 3-anim/0-anim legality; a 0x0103 file laid out like 0x0102 fails cleanly
+(scale bits read as piece count → PIECE_SIZE reject); three authentic fixtures added to the
+truncation + single-byte corruption sweep.
+
+**Gates:** phase3j **7,721/0** (was 5,846); ASan+UBSan+LSan clean (`detect_leaks=1`);
+verify tool `-Werror` clean + end-to-end PASS on an authentic-layout 0x0104 file inside a
+synthetic `.rcc`; Android-path `-D__ANDROID__ -Werror` clean (MobileRenderer, RANMobileEngine,
+EP7CharacterScene, EP7CharacterFile). CI validation of the authentic packs: see §16.10.

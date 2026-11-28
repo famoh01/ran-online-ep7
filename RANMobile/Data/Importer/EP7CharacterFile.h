@@ -30,6 +30,52 @@
 //   * each animation name is a fixed ACF_SZNAME (128) byte buffer,
 //   * the payload ends after the bounding box (no world-obj / height-radius fields).
 //
+// Version 0x0103+ (mobile-exported SkinCharData, Phase 3J B20)
+// ------------------------------------------------------------
+// The authentic EP7 character pack (skinobject.rcc) ships no 0x0100..0x0102
+// .chf at all.  CI census of its 243 .chf (run 46131351370): 0x0104 x33,
+// 0x0106 x83, 0x0107 x81, 0x0108 x3, 0x0200 x43.  Payload-head dumps prove the
+// newer files carry NO leading scale (the version DWORD is followed directly
+// by the piece count), then the same length-prefixed piece slots.  Tail dumps
+// of the four smallest examples (NPC_ark 0x0104/309 B, event_Athena
+// 0x0106/311 B, npc_police_1 0x0107/307 B, NPC_hangar 0x0108/319 B) were
+// reconstructed byte-exactly against this layout:
+//
+//   DWORD  pieceCount                 (per-file, observed 10..13, <= PIECE_SIZE)
+//   repeat pieceCount:
+//       BOOL   present
+//       if present: string pieceName (DWORD len+1 + bytes)   [unchanged encoding]
+//   string skeletonName                  (DWORD len+1 + bytes)
+//   DWORD  animationCount
+//   repeat animationCount: string animationName
+//   trailer block, total size selects the variant (all values LE):
+//       60 B: float scale;      DWORD fA=1;                     // 0x0104 sample
+//             float height; float radius; DWORD 0; DWORD 1;
+//             float vMax[3]; float vMin[3]; DWORD 1; DWORD 0; DWORD 0;
+//       64 B: float scale;      DWORD fA=0; DWORD fB=1;         // 0x0106/0x0107
+//             float height; float radius; DWORD 0; DWORD 1;
+//             float vMax[3]; float vMin[3]; DWORD 1; DWORD 0; DWORD 0;
+//       72 B: as 64 B plus two extra DWORDs (1, 0) immediately before the
+//             final (1, 0, 0) run                               // 0x0108 sample
+//
+//   In every authentic sample height/vMax/vMin satisfy vMax == (radius, height,
+//   radius) and vMin == (-radius, 0, -radius) (the mobile exporter writes the
+//   SetRadiusHeight-derived box), and the trailing DWORD run maps naturally to
+//   hasWorldObj=1 / worldObj=0 in the 0x0102 field order.  The parser fills
+//   these fields positionally and only sanity-checks the flag DWORDs as
+//   booleans (0/1); it does not hard-assert the geometry relation.
+//
+//   0x0105 is shipped by NO authentic pack and has no known layout -> still
+//   unsupported.  0x0103 is admitted with the same size-adaptive block: no
+//   authentic 0x0103 sample exists (the sibling DxSkinPieceContainer evolution
+//   0x0102->0x0103 only made fixed arrays count-prefixed, which SkinCharData
+//   already is at 0x0102), so 0x0103 files are parsed with the 0x0104-observed
+//   variants; a real 0x0103 file with a different trailer size fails cleanly
+//   and surfaces in the verify-tool census.
+//
+//   0x0200 (43 files in skinobject.rcc, type block "default", high-entropy
+//   payload) is a different, still-undeciphered container -> unsupported.
+//
 // The .chf is only an index: the mesh geometry lives in the referenced `.cps` pieces,
 // each of which points at a `.x` skin mesh and a skeleton.  Animation clips are named by
 // the .chf and loaded from the separate animation container (.bin) + .cfg pair.
@@ -60,9 +106,16 @@ inline constexpr uint32_t kEP7MaxPath = 260;
 inline constexpr uint32_t kEP7AnimNameSize = 128;
 
 struct EP7CharacterFileInfo {
-    static constexpr uint32_t kVersion102 = 0x0102;
-    static constexpr uint32_t kVersion101 = 0x0101;
     static constexpr uint32_t kVersion100 = 0x0100;
+    static constexpr uint32_t kVersion101 = 0x0101;
+    static constexpr uint32_t kVersion102 = 0x0102;
+    // Mobile-exported SkinCharData versions (Phase 3J B20).  0x0105 has no
+    // authentic sample and no known layout -> deliberately no constant.
+    static constexpr uint32_t kVersion103 = 0x0103;
+    static constexpr uint32_t kVersion104 = 0x0104;
+    static constexpr uint32_t kVersion106 = 0x0106;
+    static constexpr uint32_t kVersion107 = 0x0107;
+    static constexpr uint32_t kVersion108 = 0x0108;
 
     uint32_t version = 0;
     float scale = 1.0f;

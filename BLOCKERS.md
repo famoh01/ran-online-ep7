@@ -1001,3 +1001,23 @@ mobile parser implements 0x0100–0x0102; `SkinObject.rcc` ships later versions 
 `authentic_character_render` stays a verdict-neutral SKIP. Implementing 0x0103+ parsing is a
 parser-project prerequisite, out of B19 scope. **Device: NOT TESTED ON DEVICE** (software-GPU
 emulator is not device proof).
+
+## B11 status update — 2026-11-28 (B20: `.chf` gap closed for 0x0104/0x0106/0x0107/0x0108; 0x0200 documented)
+
+Evidence (CI annotations, runs `46131351370` + `46133690603`, no asset downloads possible):
+`SkinObject.rcc` .chf population = 0x0104 ×33, 0x0106 ×83, 0x0107 ×81, 0x0108 ×3,
+0x0200 ×43. The four attested versions were reconstructed byte-exactly (NPC_ark 309 B,
+event_Athena 311 B, npc_police_1 307 B, NPC_hangar 319 B) and `EP7CharacterFile` now parses
+them (plus 0x0103 as a documented extrapolation; 0x0105 stays rejected — unshipped, unknown
+layout). Byte-exact fixtures assert the layout via 160-B-window round-trips; phase3j 7,721/0.
+
+**Still unsupported (documented, not a guess):**
+* **0x0200 (43 files)** — a different container: 128-B type block reads `default`, payload is
+  high-entropy (encrypted, same family as the documented `EMBYTECRYPT` classes). No parser for
+  this class exists anywhere in this tree. These files are tree/prop models (`mstree01_mas`,
+  …), not player/NPC characters. Re-opening requires either the mobile crypt algorithm for
+  this class or an authentic sample of the unencrypted layout.
+* **0x0105** — shipped by no authentic pack; layout unknown; rejected rather than guessed.
+* **Downstream assets** — the parsed .chf reference piece `.cps`, skeleton `.X` and animation
+  `.bin`/`.cfg` files; loading authentic characters end-to-end needs those to parse from the
+  same packs (`.cps` versions shipped by the pack are the next evidence question).

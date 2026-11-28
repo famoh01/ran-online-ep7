@@ -1347,3 +1347,17 @@ TF; texture-unit fix for the feedback-loop hang). Same run: core-tests ✓, andr
 authentic-assets exit-1 (expected diagnostic; B11 `.chf` gap unchanged). **Device: NOT TESTED
 ON DEVICE** — emulator with software GPU is not device proof. PR #7 stays OPEN+Draft; main
 untouched (`47f3c6d`).
+
+## 2026-11-28 — Phase 3J B20: authentic `.chf` versions 0x0103+ implemented from CI-collected binary evidence (`arena/00fd13f9-ran-online-ep7`)
+
+The B11 blocker is closed for the player/NPC `.chf` class: CI census annotations gave the
+authentic version population (0x0104 ×33, 0x0106 ×83, 0x0107 ×81, 0x0108 ×3, 0x0200 ×43 =
+243), payload-head and tail dumps let all four attested versions be reconstructed byte-exactly
+(no leading scale since 0x0103; per-file pieceCount 10..13; size-adaptive trailer block
+60/64/72 B ending (1,0,0)/(1,0,1,0,0)), and `EP7CharacterFile` now parses 0x0103–0x0108
+(0x0105 deliberately rejected — no authentic sample, no known layout; 0x0200 = encrypted
+`default`-typed container class, 43 files, trees/props — documented unsupported). Four
+byte-exact authentic fixtures with 160-B-window `memcmp` round-trips + negative/boundary
+matrix; phase3j 7,721/0 (was 5,846), sanitizers clean, Android-path -Werror clean. The 0x0100–
+0x0102 paths are untouched and their tests unchanged. Remaining: 0x0200 container class, the
+piece/mesh/animation assets these .chf reference, and any device run.

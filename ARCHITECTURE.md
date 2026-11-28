@@ -67,7 +67,7 @@ RANMobile/
 │   ├── EP7XFile.{h,cpp}     .x text tokenizer (rejects binary encodings)
 │   ├── EP7Skeleton.{h,cpp}  .x Frame hierarchy -> bones, pose accumulation
 │   ├── EP7SkinPiece.{h,cpp} .cps 0x0104..0x0107
-│   ├── EP7CharacterFile.{h,cpp}  .chf 0x0100..0x0102
+│   ├── EP7CharacterFile.{h,cpp}  .chf 0x0100..0x0102, 0x0103+ mobile (0x0103..0x0108, no 0x0105)
 │   ├── EP7SkinnedMesh.{h,cpp}    Mesh + SkinWeights + materials + CPU skinning
 │   └── EP7Animation.{h,cpp}      .bin 0x0100..0x0102, .cfg 0x0107, player
 ├── Engine/Scene/

@@ -14,6 +14,7 @@
 // PHASE3J_CHARACTER_ANIMATION.md).
 //
 #include <algorithm>
+#include <array>
 #include "../Data/Importer/EP7Animation.h"
 #include "../Data/Importer/EP7ByteFormat.h"
 #include "../Data/Importer/EP7CharacterFile.h"
@@ -1382,6 +1383,349 @@ void TestCharacterFile() {
     J_CHECK(!RANMobile::EP7CharacterFileReader::ParseStream(empty).valid);
     std::vector<uint8_t> truncatedBytes(bytes.begin(), bytes.begin() + 150);
     J_CHECK(!RANMobile::EP7CharacterFileReader::Parse(truncatedBytes, false).valid);
+}
+
+
+// ---------------------------------------------------------------------------
+// B20: mobile-exported .chf versions (0x0103..0x0108).
+//
+// Fixtures replicate the four smallest authentic skinobject.rcc examples
+// byte-exactly.  Trailer blocks are the authentic bytes (CI annotation dumps,
+// run 46133690603); fronts are rebuilt from the parsed model; every built file
+// must END with the authentic 160-byte dump window (round-trip proof that the
+// front and the block join at the right offsets and sizes).
+// ---------------------------------------------------------------------------
+
+uint32_t FloatBitsOf(float f) {
+    uint32_t bits = 0;
+    std::memcpy(&bits, &f, 4);
+    return bits;
+}
+
+std::vector<uint8_t> HexBytes(const char* hex) {
+    auto nibble = [](char c) -> int {
+        if (c >= '0' && c <= '9') return c - '0';
+        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+        return -1;
+    };
+    const size_t n = std::strlen(hex);
+    J_CHECK_MSG(n % 2 == 0, "hex fixture must have even length");
+    std::vector<uint8_t> out;
+    out.reserve(n / 2);
+    for (size_t i = 0; i + 1 < n; i += 2) {
+        const int hi = nibble(hex[i]);
+        const int lo = nibble(hex[i + 1]);
+        J_CHECK_MSG(hi >= 0 && lo >= 0, "hex fixture digit");
+        out.push_back(static_cast<uint8_t>(((hi & 0xF) << 4) | (lo & 0xF)));
+    }
+    return out;
+}
+
+struct ChfV3Fixture {
+    uint32_t version = 0;
+    std::vector<std::pair<bool, std::string>> pieces;
+    const char* skeleton = "";
+    std::vector<std::string> anims;
+    const char* blockHex = "";      // authentic trailer block (60/64/72 bytes)
+    size_t expectedSize = 0;        // authentic total file size
+    const char* windowHex = "";     // authentic last 160 bytes
+    uint32_t scaleBits = 0, heightBits = 0, radiusBits = 0;
+    std::array<uint32_t, 3> vmaxBits{};
+    std::array<uint32_t, 3> vminBits{};
+};
+
+std::vector<uint8_t> BuildChfV3(const ChfV3Fixture& f) {
+    ByteWriter w;
+    w.Raw(std::vector<uint8_t>(132, 0));  // basestream file-type block + fileId
+    w.U32(f.version);
+    w.U32(static_cast<uint32_t>(f.pieces.size()));
+    for (const auto& p : f.pieces) {
+        w.Bool(p.first);
+        if (p.first) w.Str(p.second);
+    }
+    w.Str(f.skeleton);
+    w.U32(static_cast<uint32_t>(f.anims.size()));
+    for (const auto& a : f.anims) w.Str(a);
+    std::vector<uint8_t> block = HexBytes(f.blockHex);
+    w.Data().insert(w.Data().end(), block.begin(), block.end());
+    return w.Data();
+}
+
+void CheckChfV3Authentic(const ChfV3Fixture& f, uint32_t presentSlot) {
+    std::vector<uint8_t> bytes = BuildChfV3(f);
+    J_CHECK_MSG(bytes.size() == f.expectedSize, "rebuilt file size must equal the authentic size");
+    std::vector<uint8_t> window = HexBytes(f.windowHex);
+    J_CHECK(window.size() == 160);
+    J_CHECK(bytes.size() >= window.size());
+    J_CHECK(std::memcmp(bytes.data() + bytes.size() - window.size(), window.data(), window.size()) == 0);
+
+    const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(bytes, false);
+    J_CHECK_MSG(info.valid, info.error);
+    J_CHECK(info.version == f.version);
+    J_CHECK(FloatBitsOf(info.scale) == f.scaleBits);
+    J_CHECK(RANMobile::kEP7PieceSize == 13);
+    for (uint32_t i = 0; i < RANMobile::kEP7PieceSize; ++i) {
+        if (i == presentSlot) {
+            J_CHECK(info.pieces[i] == f.pieces[i].second);
+        } else {
+            J_CHECK(info.pieces[i].empty());
+        }
+    }
+    J_CHECK(info.skeleton == f.skeleton);
+    J_CHECK(info.animations.size() == f.anims.size());
+    for (size_t i = 0; i < f.anims.size(); ++i) J_CHECK(info.animations[i] == f.anims[i]);
+    J_CHECK(info.hasBoundingBox);
+    J_CHECK(info.hasHeightRadius);
+    J_CHECK(FloatBitsOf(info.height) == f.heightBits);
+    J_CHECK(FloatBitsOf(info.radius) == f.radiusBits);
+    for (int k = 0; k < 3; ++k) {
+        J_CHECK(FloatBitsOf(info.boundsMax[k]) == f.vmaxBits[k]);
+        J_CHECK(FloatBitsOf(info.boundsMin[k]) == f.vminBits[k]);
+    }
+    J_CHECK(info.hasWorldObj);
+    J_CHECK(!info.worldObj);
+}
+
+void TestCharacterFileMobileV3() {
+    Section(".chf mobile-exported versions (0x0103+, B20)");
+
+    // NPC_ark.chf (0x0104, 309 B): pieceCount 13, present slot 1, 60 B block.
+    {
+        ChfV3Fixture f;
+        f.version = 0x0104;
+        f.pieces = {{false, ""}, {true, "mob_ark.cps"}};
+        for (int i = 0; i < 11; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_mob_ark.X";
+        f.anims = {"a_mob_ark_stay.x"};
+        f.blockHex =
+            "0000803f01000000ae4733423d0a3b4100000000010000003d0a3b41ae4733423d0a3b413d0a3bc1000000003d0a3bc1010000000000000000000000";
+        f.expectedSize = 309;
+        f.windowHex =
+            "0000006d6f625f61726b2e6370730000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c000000625f6d6f625f61726b2e58000100000011000000615f6d6f625f61726b5f737461792e78000000803f01000000ae4733423d0a3b4100000000010000003d0a3b41ae4733423d0a3b413d0a3bc1000000003d0a3bc1010000000000000000000000";
+        f.scaleBits = 0x3f800000u;
+        f.heightBits = 0x423347aeu;  // 44.82
+        f.radiusBits = 0x413b0a3du;  // 11.69
+        f.vmaxBits = {0x413b0a3du, 0x423347aeu, 0x413b0a3du};
+        f.vminBits = {0xc13b0a3du, 0x00000000u, 0xc13b0a3du};
+        CheckChfV3Authentic(f, 1);
+    }
+
+    // event_Athena.chf (0x0106, 311 B): pieceCount 13, present slot 8, 64 B block.
+    {
+        ChfV3Fixture f;
+        f.version = 0x0106;
+        for (int i = 0; i < 8; ++i) f.pieces.push_back({false, ""});
+        f.pieces.push_back({true, "event_Athena.cps"});
+        for (int i = 0; i < 4; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_Athena.X";
+        f.anims = {"a_athena.x"};
+        f.blockHex =
+            "3333333f0000000001000000c3f5a040b81ec53f0000000001000000b81ec53fc3f5a040b81ec53fb81ec5bf00000000b81ec5bf010000000000000000000000";
+        f.expectedSize = 311;
+        f.windowHex =
+            "00000000000000000000000000000000000000000001000000110000006576656e745f417468656e612e63707300000000000000000000000000000000000b000000625f417468656e612e5800010000000b000000615f617468656e612e78003333333f0000000001000000c3f5a040b81ec53f0000000001000000b81ec53fc3f5a040b81ec53fb81ec5bf00000000b81ec5bf010000000000000000000000";
+        f.scaleBits = 0x3f333333u;  // 0.7
+        f.heightBits = 0x40a0f5c3u;  // 5.03
+        f.radiusBits = 0x3fc51eb8u;  // 1.54
+        f.vmaxBits = {0x3fc51eb8u, 0x40a0f5c3u, 0x3fc51eb8u};
+        f.vminBits = {0xbfc51eb8u, 0x00000000u, 0xbfc51eb8u};
+        CheckChfV3Authentic(f, 8);
+    }
+
+    // npc_police_1.chf (0x0107, 307 B): pieceCount 10, present slot 1, 64 B block.
+    {
+        ChfV3Fixture f;
+        f.version = 0x0107;
+        f.pieces = {{false, ""}, {true, "npc_police.cps"}};
+        for (int i = 0; i < 8; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_npc_police.X";
+        f.anims = {"a_npc_police.cfg"};
+        f.blockHex =
+            "cdcc8c3f00000000010000007b1498410000e04000000000010000000000e0407b1498410000e0400000e0c0000000000000e0c0010000000000000000000000";
+        f.expectedSize = 307;
+        f.windowHex =
+            "000f0000006e70635f706f6c6963652e6370730000000000000000000000000000000000000000000000000000000000000000000f000000625f6e70635f706f6c6963652e58000100000011000000615f6e70635f706f6c6963652e63666700cdcc8c3f00000000010000007b1498410000e04000000000010000000000e0407b1498410000e0400000e0c0000000000000e0c0010000000000000000000000";
+        f.scaleBits = 0x3f8ccccdu;  // 1.1
+        f.heightBits = 0x4198147bu;  // 19.01
+        f.radiusBits = 0x40e00000u;  // 7.0
+        f.vmaxBits = {0x40e00000u, 0x4198147bu, 0x40e00000u};
+        f.vminBits = {0xc0e00000u, 0x00000000u, 0xc0e00000u};
+        CheckChfV3Authentic(f, 1);
+    }
+
+    // NPC_hangar.chf (0x0108, 319 B): pieceCount 11, present slot 1, 72 B block.
+    {
+        ChfV3Fixture f;
+        f.version = 0x0108;
+        f.pieces = {{false, ""}, {true, "NPC_hangar.cps"}};
+        for (int i = 0; i < 9; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_NPC_hangar.X";
+        f.anims = {"a_npc_hangar.cfg"};
+        f.blockHex =
+            "0000803f0000000001000000f62892413d0a3b4100000000010000003d0a3b41f62892413d0a3b413d0a3bc1000000003d0a3bc10100000000000000010000000000000000000000";
+        f.expectedSize = 319;
+        f.windowHex =
+            "6761722e637073000000000000000000000000000000000000000000000000000000000000000000000000000f000000625f4e50435f68616e6761722e58000100000011000000615f6e70635f68616e6761722e636667000000803f0000000001000000f62892413d0a3b4100000000010000003d0a3b41f62892413d0a3b413d0a3bc1000000003d0a3bc10100000000000000010000000000000000000000";
+        f.scaleBits = 0x3f800000u;
+        f.heightBits = 0x419228f6u;  // 18.27
+        f.radiusBits = 0x413b0a3du;  // 11.69
+        f.vmaxBits = {0x413b0a3du, 0x419228f6u, 0x413b0a3du};
+        f.vminBits = {0xc13b0a3du, 0x00000000u, 0xc13b0a3du};
+        CheckChfV3Authentic(f, 1);
+    }
+
+    // 0x0103 is admitted with the size-adaptive layout (no authentic sample
+    // exists; documented extrapolation — EP7CharacterFile.h).
+    {
+        ChfV3Fixture f;
+        f.version = 0x0103;
+        for (int i = 0; i < 13; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_test.X";
+        f.anims = {"a_test.x"};
+        f.blockHex =
+            "3333333f0000000001000000c3f5a040b81ec53f0000000001000000b81ec53fc3f5a040b81ec53fb81ec5bf00000000b81ec5bf010000000000000000000000";
+        const std::vector<uint8_t> bytes = BuildChfV3(f);
+        const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(bytes, false);
+        J_CHECK_MSG(info.valid, info.error);
+        J_CHECK(info.version == 0x0103);
+        J_CHECK(FloatBitsOf(info.scale) == 0x3f333333u);
+    }
+
+    // 0x0105 has no authentic sample and no known layout -> rejected.
+    {
+        ChfV3Fixture f;
+        f.version = 0x0105;
+        for (int i = 0; i < 13; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_test.X";
+        f.anims = {"a_test.x"};
+        f.blockHex =
+            "3333333f0000000001000000c3f5a040b81ec53f0000000001000000b81ec53fc3f5a040b81ec53fb81ec5bf00000000b81ec5bf010000000000000000000000";
+        const RANMobile::EP7CharacterFileInfo info =
+            RANMobile::EP7CharacterFileReader::Parse(BuildChfV3(f), false);
+        J_CHECK(!info.valid);
+        J_CHECK(info.error.find("unsupported .chf version") != std::string::npos);
+    }
+
+    // 0x0109 and 0x0200 stay unsupported (0x0200 is the encrypted "default"
+    // container class; its rejections feed the verify-tool census).
+    for (uint32_t ver : {0x0109u, 0x0200u}) {
+        ChfV3Fixture f;
+        f.version = ver;
+        for (int i = 0; i < 13; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_test.X";
+        f.anims = {"a_test.x"};
+        f.blockHex =
+            "3333333f0000000001000000c3f5a040b81ec53f0000000001000000b81ec53fc3f5a040b81ec53fb81ec5bf00000000b81ec5bf010000000000000000000000";
+        const RANMobile::EP7CharacterFileInfo info =
+            RANMobile::EP7CharacterFileReader::Parse(BuildChfV3(f), false);
+        J_CHECK(!info.valid);
+        J_CHECK(info.error.find("unsupported .chf version") != std::string::npos);
+    }
+
+    // pieceCount 14 must be rejected exactly like the original loader.
+    {
+        ChfV3Fixture f;
+        f.version = 0x0106;
+        for (int i = 0; i < 8; ++i) f.pieces.push_back({false, ""});
+        f.pieces.push_back({true, "event_Athena.cps"});
+        for (int i = 0; i < 5; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_Athena.X";
+        f.anims = {"a_athena.x"};
+        f.blockHex =
+            "3333333f0000000001000000c3f5a040b81ec53f0000000001000000b81ec53fc3f5a040b81ec53fb81ec5bf00000000b81ec5bf010000000000000000000000";
+        const std::vector<uint8_t> bytes = BuildChfV3(f);
+        J_CHECK(bytes.size() == 311 + 4);  // 14 slots + the same 64 B block
+        const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(bytes, false);
+        J_CHECK(!info.valid);
+        J_CHECK(info.error.find("exceeds PIECE_SIZE") != std::string::npos);
+    }
+
+    // Truncations: every shorter build is invalid; the final byte count drives
+    // the trailer-block variant selection, so any 1-byte cut must fail.
+    {
+        ChfV3Fixture f;
+        f.version = 0x0106;
+        for (int i = 0; i < 8; ++i) f.pieces.push_back({false, ""});
+        f.pieces.push_back({true, "event_Athena.cps"});
+        for (int i = 0; i < 4; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_Athena.X";
+        f.anims = {"a_athena.x"};
+        f.blockHex =
+            "3333333f0000000001000000c3f5a040b81ec53f0000000001000000b81ec53fc3f5a040b81ec53fb81ec5bf00000000b81ec5bf010000000000000000000000";
+        const std::vector<uint8_t> full = BuildChfV3(f);
+        J_CHECK(full.size() == 311);
+        for (size_t cut = 1; cut <= 8; ++cut) {
+            const std::vector<uint8_t> shortBytes(full.begin(), full.end() - static_cast<long>(cut));
+            const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(shortBytes, false);
+            J_CHECK_MSG(!info.valid, "truncated trailer must not parse");
+        }
+        // Mid-payload cuts (skeleton / anims / piece string).
+        for (size_t keep : {140u, 150u, 200u, 260u, 300u}) {
+            const std::vector<uint8_t> cutBytes(full.begin(), full.begin() + static_cast<long>(keep));
+            const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(cutBytes, false);
+            J_CHECK(!info.valid);
+        }
+        // Header only: the version read itself is truncated.
+        const std::vector<uint8_t> headerOnly(full.begin(), full.begin() + 132);
+        J_CHECK(!RANMobile::EP7CharacterFileReader::Parse(headerOnly, false).valid);
+    }
+
+    // Flag DWORDs must be clean booleans; garbage rejects the file.
+    {
+        ChfV3Fixture f;
+        f.version = 0x0106;
+        for (int i = 0; i < 8; ++i) f.pieces.push_back({false, ""});
+        f.pieces.push_back({true, "event_Athena.cps"});
+        for (int i = 0; i < 4; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_Athena.X";
+        f.anims = {"a_athena.x"};
+        f.blockHex =
+            "3333333f0000000001000000c3f5a040b81ec53f0000000001000000b81ec53fc3f5a040b81ec53fb81ec5bf00000000b81ec5bf010000000000000000000000";
+        const std::vector<uint8_t> full = BuildChfV3(f);
+        // Block starts at 311-64 = 247: scale@0, flagA@4, flagB@8, h@12, r@16,
+        // boxFlag0@20, boxFlag1@24, vmax@28, vmin@40, trailer@52.
+        for (const size_t off : {251u, 255u, 267u, 271u, 299u, 303u, 307u}) {
+            std::vector<uint8_t> bad = full;
+            bad[off] = 2;
+            const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(bad, false);
+            J_CHECK_MSG(!info.valid, "flag DWORD 2 must reject");
+        }
+    }
+
+    // Multiple animations and zero animations are structurally legal.
+    {
+        ChfV3Fixture f;
+        f.version = 0x0106;
+        for (int i = 0; i < 8; ++i) f.pieces.push_back({false, ""});
+        f.pieces.push_back({true, "event_Athena.cps"});
+        for (int i = 0; i < 4; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_Athena.X";
+        f.anims = {"a_athena.x", "a_athena_walk.x", "a_athena_run.x"};
+        f.blockHex =
+            "3333333f0000000001000000c3f5a040b81ec53f0000000001000000b81ec53fc3f5a040b81ec53fb81ec5bf00000000b81ec5bf010000000000000000000000";
+        const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(BuildChfV3(f), false);
+        J_CHECK_MSG(info.valid, info.error);
+        J_CHECK(info.animations.size() == 3);
+
+        f.anims.clear();
+        const RANMobile::EP7CharacterFileInfo empty = RANMobile::EP7CharacterFileReader::Parse(BuildChfV3(f), false);
+        J_CHECK_MSG(empty.valid, empty.error);
+        J_CHECK(empty.animations.empty());
+    }
+
+    // A 0x0103 file laid out like 0x0102 (leading scale) must fail cleanly:
+    // the parser reads the scale bits as the piece count -> PIECE_SIZE reject.
+    {
+        ByteWriter w;
+        w.Raw(std::vector<uint8_t>(132, 0));
+        w.U32(0x0103);
+        w.F32(1.0f);   // 0x0102-style scale (not part of the 0x0103+ layout)
+        w.U32(1);      // would be read as pieceCount if the layout matched
+        w.Str("p_head.cps");
+        w.Str("m_bone.skt");
+        const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(w.Data(), false);
+        J_CHECK(!info.valid);
+    }
 }
 
 void TestAnimation() {
@@ -3306,6 +3650,40 @@ void TestRobustness() {
     fixtures.emplace_back(skelText.begin(), skelText.end());
     fixtures.emplace_back(meshText.begin(), meshText.end());
     fixtures.push_back(CharacterChf());
+    {
+        ChfV3Fixture f;
+        f.version = 0x0104;
+        f.pieces = {{false, ""}, {true, "mob_ark.cps"}};
+        for (int i = 0; i < 11; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_mob_ark.X";
+        f.anims = {"a_mob_ark_stay.x"};
+        f.blockHex =
+            "0000803f01000000ae4733423d0a3b4100000000010000003d0a3b41ae4733423d0a3b413d0a3bc1000000003d0a3bc1010000000000000000000000";
+        fixtures.push_back(BuildChfV3(f));
+    }
+    {
+        ChfV3Fixture f;
+        f.version = 0x0106;
+        for (int i = 0; i < 8; ++i) f.pieces.push_back({false, ""});
+        f.pieces.push_back({true, "event_Athena.cps"});
+        for (int i = 0; i < 4; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_Athena.X";
+        f.anims = {"a_athena.x"};
+        f.blockHex =
+            "3333333f0000000001000000c3f5a040b81ec53f0000000001000000b81ec53fc3f5a040b81ec53fb81ec5bf00000000b81ec5bf010000000000000000000000";
+        fixtures.push_back(BuildChfV3(f));
+    }
+    {
+        ChfV3Fixture f;
+        f.version = 0x0108;
+        f.pieces = {{false, ""}, {true, "NPC_hangar.cps"}};
+        for (int i = 0; i < 9; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_NPC_hangar.X";
+        f.anims = {"a_npc_hangar.cfg"};
+        f.blockHex =
+            "0000803f0000000001000000f62892413d0a3b4100000000010000003d0a3b41f62892413d0a3b413d0a3bc1000000003d0a3bc10100000000000000010000000000000000000000";
+        fixtures.push_back(BuildChfV3(f));
+    }
     fixtures.push_back(PieceCps(0));
     fixtures.push_back(AnimationBin());
     fixtures.push_back(AnimationBin0100());
@@ -3602,6 +3980,7 @@ int main() {
     TestSkinPieceLegacyVersions();
     TestSkinPieceInfluenceSizeAccounting();
     TestCharacterFile();
+    TestCharacterFileMobileV3();
     TestAnimation();
     TestCharacterScene();
     TestB17RuntimeSemantics();
