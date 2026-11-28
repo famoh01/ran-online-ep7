@@ -344,18 +344,25 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
         // some GLES3 stacks — B19 CI evidence).  The TF-session draw then finds
         // an unchanged palette and skips the upload; the capture still runs the
         // full skinning shader on the PRODUCTION program.
+        // NOTE: no GL_RASTERIZER_DISCARD here — the emulator's GL translator
+        // captures nothing with discard enabled (B19 CI evidence); the
+        // framebuffer content is irrelevant to this comparison, so the capture
+        // draws rasterize harmlessly.
+        while (glGetError() != GL_NO_ERROR) {}
         const bool warmed = renderer.DrawGpuSkinnedMesh(handle, paletteRow.data(),
                                                         static_cast<uint32_t>(palette.size()), 0, white,
                                                         false, 0,
                                                         static_cast<uint32_t>(mesh.faces.size() / 3));
-        glEnable(GL_RASTERIZER_DISCARD);
+        const GLenum errWarm = glGetError();
         glBeginTransformFeedback(GL_TRIANGLES);
+        const GLenum errBegin = glGetError();
         const bool drew = warmed && renderer.DrawGpuSkinnedMesh(handle, paletteRow.data(),
                                                                 static_cast<uint32_t>(palette.size()), 0,
                                                                 white, false, 0,
                                                                 static_cast<uint32_t>(mesh.faces.size() / 3));
+        const GLenum errDraw = glGetError();
         glEndTransformFeedback();
-        glDisable(GL_RASTERIZER_DISCARD);
+        const GLenum errEnd = glGetError();
 
         bool match = drew;
         float maxPosDiff = 0.0f;
@@ -395,9 +402,27 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
         glDeleteBuffers(1, &tfBuffer);
         renderer.ReleaseGpuSkinnedMesh(handle);
 
-        char detail[160];
-        std::snprintf(detail, sizeof(detail), "maxPosDiff=%.2e maxNrmDiff=%.2e (tol 5e-4 / 5e-3)",
-                      maxPosDiff, maxNrmDiff);
+        // First captured entry (draw-order = faces[0]) as capture diagnostics:
+        // zeros mean the capture wrote nothing (driver/TF issue); matching
+        // values mean the capture is correct and any residual diff is real.
+        float f0 = 0.0f, f1 = 0.0f;
+        if (drew) {
+            glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, tfBuffer);
+            const float* probe = static_cast<const float*>(
+                glMapBufferRange(GL_TRANSFORM_FEEDBACK_BUFFER, 0, 6 * sizeof(float), GL_MAP_READ_BIT));
+            if (probe) {
+                f0 = probe[0];
+                f1 = probe[1];
+                glUnmapBuffer(GL_TRANSFORM_FEEDBACK_BUFFER);
+            }
+            glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, 0);
+        }
+        char detail[224];
+        std::snprintf(detail, sizeof(detail),
+                      "maxPosDiff=%.2e maxNrmDiff=%.2e (tol 5e-4/5e-3) warm=%d err=w%xB%dDr%dE%u first=(%.3f,%.3f)",
+                      maxPosDiff, maxNrmDiff, static_cast<int>(warmed),
+                      static_cast<unsigned>(errWarm), static_cast<unsigned>(errBegin),
+                      static_cast<unsigned>(errDraw), static_cast<unsigned>(errEnd), f0, f1);
         tests.Record(label, match, detail);
         return match;
     };
