@@ -1024,6 +1024,31 @@ int main(int argc, char** argv) {
         std::printf("\n(that category is untested against real data — not a pass)   \n");
     }
 
+    // Annotation budget: GitHub keeps the FIRST 10 warnings per step, so the
+    // highest-value evidence is printed FIRST and aggregated onto few lines.
+    if (!g_chfFailCounts.empty()) {
+        std::printf("\nchf payload-failure evidence (version admitted, layout diverged):\n");
+        std::string agg;
+        for (const auto& [reason, count] : g_chfFailCounts) {
+            if (!agg.empty()) agg += ";  ";
+            agg += reason + " x" + std::to_string(count);
+        }
+        std::printf("  chf-fail-census: %s\n", agg.c_str());
+        int tails = 0;
+        for (const auto& [reason, ex] : g_chfFailExamples) {
+            if (ex.size == 0 || reason == g_chfFailSmallest.first) continue;
+            if (tails < 3) {
+                std::printf("  chf-fail-tail: %s | v0x%04X %s size=%zu tail=%s\n", reason.c_str(),
+                            ex.version, ex.name.c_str(), ex.size, ex.hexTail.c_str());
+                ++tails;
+            }
+        }
+        if (g_chfFailSmallest.second.size != 0 && !g_chfFailSmallest.second.full.empty()) {
+            DumpChfFile("chf-fail-dump", g_chfFailSmallest.second.version,
+                        g_chfFailSmallest.second.name, g_chfFailSmallest.second.size,
+                        g_chfFailSmallest.second.full);
+        }
+    }
     if (!g_chfUnsupportedVersions.empty()) {
         std::printf("\nchf version census (real pack data; parser-unsupported versions):\n");
         for (const auto& [ver, count] : g_chfUnsupportedVersions) {
@@ -1039,26 +1064,6 @@ int main(int argc, char** argv) {
             // chunk lines sized for the per-line annotation budget.
             DumpChfFile("chf-dump", g_chfSmallest.first, g_chfSmallest.second.name,
                         g_chfSmallest.second.size, g_chfSmallest.second.full);
-        }
-    }
-    if (!g_chfFailCounts.empty()) {
-        std::printf("\nchf payload-failure evidence (version admitted, layout diverged):\n");
-        for (const auto& [reason, count] : g_chfFailCounts) {
-            std::printf("  chf-fail: %s x%d\n", reason.c_str(), count);
-        }
-        int tails = 0;
-        for (const auto& [reason, ex] : g_chfFailExamples) {
-            if (ex.size == 0 || reason == g_chfFailSmallest.first) continue;
-            if (tails < 4) {
-                std::printf("  chf-fail-tail: %s | v0x%04X %s size=%zu tail=%s\n", reason.c_str(),
-                            ex.version, ex.name.c_str(), ex.size, ex.hexTail.c_str());
-                ++tails;
-            }
-        }
-        if (g_chfFailSmallest.second.size != 0 && !g_chfFailSmallest.second.full.empty()) {
-            DumpChfFile("chf-fail-dump", g_chfFailSmallest.second.version,
-                        g_chfFailSmallest.second.name, g_chfFailSmallest.second.size,
-                        g_chfFailSmallest.second.full);
         }
     }
     if (!g_failureReasons.empty()) {
