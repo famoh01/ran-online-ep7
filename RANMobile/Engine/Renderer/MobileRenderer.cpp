@@ -481,6 +481,8 @@ void MobileRenderer::ReleaseGlResources() {
     m_nextGpuMeshHandle = 1;
 #ifdef __ANDROID__
     if (m_gpuPaletteTex) { glDeleteTextures(1, &m_gpuPaletteTex); m_gpuPaletteTex = 0; }
+    m_gpuPaletteCache.clear();
+    m_gpuPaletteCacheCount = 0;
     if (m_fontAtlasTex) { glDeleteTextures(1, &m_fontAtlasTex); m_fontAtlasTex = 0; }
     if (m_uiVBO) { glDeleteBuffers(1, &m_uiVBO); m_uiVBO = 0; }
     if (m_uiVAO) { glDeleteVertexArrays(1, &m_uiVAO); m_uiVAO = 0; }
@@ -1037,10 +1039,25 @@ bool MobileRenderer::DrawGpuSkinnedMesh(uint32_t handle,
     // stay stale but are unreachable (the streams reference indices < mesh bone
     // count = paletteCount).  texel (b*4+i) = column i of bone b — identical to
     // the std140 mat4 layout this replaced (B19 live-GLES correction).
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, m_gpuPaletteTex);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, static_cast<GLsizei>(paletteCount) * 4, 1,
-                    GL_RGBA, GL_FLOAT, paletteRowMajor);
+    // Skip the upload when the palette bytes are unchanged — subset draws share
+    // one per-frame palette, and an upload inside an active transform-feedback
+    // session is silently dropped by some GLES3 stacks (B19 CI evidence).
+    const bool paletteChanged =
+        m_gpuPaletteCacheCount != paletteCount ||
+        m_gpuPaletteCache.size() != static_cast<size_t>(paletteCount) * 16 ||
+        std::memcmp(m_gpuPaletteCache.data(), paletteRowMajor,
+                    static_cast<size_t>(paletteCount) * 16 * sizeof(float)) != 0;
+    if (paletteChanged) {
+        m_gpuPaletteCache.assign(paletteRowMajor, paletteRowMajor + static_cast<size_t>(paletteCount) * 16);
+        m_gpuPaletteCacheCount = paletteCount;
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, m_gpuPaletteTex);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, static_cast<GLsizei>(paletteCount) * 4, 1,
+                        GL_RGBA, GL_FLOAT, m_gpuPaletteCache.data());
+    } else {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, m_gpuPaletteTex);
+    }
 
     glUseProgram(m_charGpuProgram);
     glUniformMatrix4fv(glGetUniformLocation(m_charGpuProgram, "uVP"), 1, GL_FALSE, m_viewProj);

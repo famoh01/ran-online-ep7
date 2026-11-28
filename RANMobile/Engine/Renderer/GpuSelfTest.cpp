@@ -111,12 +111,16 @@ EP7SkinnedMesh TwoSubsetMesh() {
     EP7SkinnedMesh mesh;
     mesh.valid = true;
     mesh.geometryDecoded = true;
-    mesh.vertexCount = 4;
+    // Two quads side by side: left (x in [-1,0], red subset 0) and right
+    // (x in [0,1], green subset 1).  4 faces total: subset 0 = faces 0-1
+    // (left), subset 1 = faces 2-3 (right).  The original fixture computed the
+    // right quad then discarded it ((void)pos2) — B19 CI caught the right
+    // subset sample drawing nothing (black).
+    mesh.vertexCount = 8;
     mesh.vertexStride = 32;
-    const float pos[4][3] = {{-1.0f, -1.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}};
-    const float pos2[4][3] = {{0.0f, -1.0f, 0.0f}, {1.0f, -1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}};
-    (void)pos2;
-    for (int v = 0; v < 4; ++v) {
+    const float pos[8][3] = {{-1.0f, -1.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f},
+                             {0.0f, -1.0f, 0.0f}, {1.0f, -1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}};
+    for (int v = 0; v < 8; ++v) {
         for (int k = 0; k < 3; ++k) mesh.positions.push_back(pos[v][k]);
         mesh.normals.push_back(0.0f);
         mesh.normals.push_back(0.0f);
@@ -124,17 +128,18 @@ EP7SkinnedMesh TwoSubsetMesh() {
         mesh.texcoords.push_back((pos[v][0] + 1.0f) * 0.5f);
         mesh.texcoords.push_back((pos[v][1] + 1.0f) * 0.5f);
     }
-    mesh.faces = {0, 1, 2, 0, 2, 3};  // 2 triangles, one per subset
+    // Left quad CCW and right quad CCW in GL window space (y up).
+    mesh.faces = {0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7};
     EP7MeshSubset s0;
     s0.materialIndex = 0;
     s0.attributeId = 0;
     s0.faceStart = 0;
-    s0.faceCount = 1;
+    s0.faceCount = 2;
     EP7MeshSubset s1;
     s1.materialIndex = 1;
     s1.attributeId = 1;
-    s1.faceStart = 1;
-    s1.faceCount = 1;
+    s1.faceStart = 2;
+    s1.faceCount = 2;
     mesh.subsets.push_back(s0);
     mesh.subsets.push_back(s1);
     mesh.textures = {"", ""};
@@ -330,12 +335,21 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
             }
         }
         const float white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+        // Warmup draw OUTSIDE the TF session: performs the palette texture
+        // upload (uploads inside an active TF session are silently dropped by
+        // some GLES3 stacks — B19 CI evidence).  The TF-session draw then finds
+        // an unchanged palette and skips the upload; the capture still runs the
+        // full skinning shader on the PRODUCTION program.
+        const bool warmed = renderer.DrawGpuSkinnedMesh(handle, paletteRow.data(),
+                                                        static_cast<uint32_t>(palette.size()), 0, white,
+                                                        false, 0,
+                                                        static_cast<uint32_t>(mesh.faces.size() / 3));
         glEnable(GL_RASTERIZER_DISCARD);
         glBeginTransformFeedback(GL_TRIANGLES);
-        const bool drew = renderer.DrawGpuSkinnedMesh(handle, paletteRow.data(),
-                                                      static_cast<uint32_t>(palette.size()), 0, white,
-                                                      false, 0,
-                                                      static_cast<uint32_t>(mesh.faces.size() / 3));
+        const bool drew = warmed && renderer.DrawGpuSkinnedMesh(handle, paletteRow.data(),
+                                                                static_cast<uint32_t>(palette.size()), 0,
+                                                                white, false, 0,
+                                                                static_cast<uint32_t>(mesh.faces.size() / 3));
         glEndTransformFeedback();
         glDisable(GL_RASTERIZER_DISCARD);
 
@@ -541,7 +555,11 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
             const float alphaRed[4] = {1.0f, 0.0f, 0.0f, 0.5f};
             renderer.DrawGpuSkinnedMesh(handle, paletteRow.data(), 2, 0, alphaRed, true, 0, 2);
             readCenter(W / 2, H / 2, px);
-            checkColor("raster_alpha_blend", px, 0.5f * lit, 0.0f, 0.5f * (1.0f - lit) + 0.5f * 1.0f,
+            // Blend math: dst' = src*srcA + dst*(1-srcA).  src=(lit,0,0,0.5),
+            // dst=(0,0,1): R=0.5*lit, B=0.5*1.0.  (The prior expectation of
+            // 0.5*(1-lit)+0.5 for blue had no shader/source basis — B19 CI
+            // evidence: the GPU returned exactly the correct 0.5 blend.)
+            checkColor("raster_alpha_blend", px, 0.5f * lit, 0.0f, 0.5f * 1.0f,
                        1.0f, 10);
 
             // 4d. subset draw offsets: 2-subset mesh, red left / green right.
@@ -572,8 +590,8 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             const float red[4] = {1.0f, 0.0f, 0.0f, 1.0f};
             const float green[4] = {0.0f, 1.0f, 0.0f, 1.0f};
-            renderer.DrawGpuSkinnedMesh(ssHandle, paletteRow.data(), 2, 0, red, false, 0, 1);
-            renderer.DrawGpuSkinnedMesh(ssHandle, paletteRow.data(), 2, 0, green, false, 1, 1);
+            renderer.DrawGpuSkinnedMesh(ssHandle, paletteRow.data(), 2, 0, red, false, 0, 2);
+            renderer.DrawGpuSkinnedMesh(ssHandle, paletteRow.data(), 2, 0, green, false, 2, 2);
             uint8_t pxl[4];
             readCenter(W / 4, H / 2, pxl);
             checkColor("raster_subset_offset_left", pxl, lit, 0.0f, 0.0f, 1.0f, 6);
@@ -606,20 +624,30 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
         std::vector<float> paletteRow(32, 0.0f);
         const float white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
         renderer.BeginScene3D(MobileCamera{});
-        bool ok = handle != 0 && renderer.GpuMeshCount() == 1;
+        const char* fail = nullptr;
+        if (handle == 0 || renderer.GpuMeshCount() != 1) fail = "upload/count";
         // Invalid handle must fail loudly (never silently).
-        ok = ok && !renderer.DrawGpuSkinnedMesh(handle + 999, paletteRow.data(), 2, 0, white, false, 0, 2);
+        if (!fail && renderer.DrawGpuSkinnedMesh(handle + 999, paletteRow.data(), 2, 0, white, false, 0, 2))
+            fail = "invalid handle accepted";
         // Palette overflow must fail (never approximate).
-        ok = ok && !renderer.DrawGpuSkinnedMesh(handle, paletteRow.data(), 257, 0, white, false, 0, 2);
+        if (!fail && renderer.DrawGpuSkinnedMesh(handle, paletteRow.data(), 257, 0, white, false, 0, 2))
+            fail = "palette 257 accepted";
         // Face-range OOB must fail.
-        ok = ok && !renderer.DrawGpuSkinnedMesh(handle, paletteRow.data(), 2, 0, white, false, 2, 2);
-        // Double release must be safe.
+        if (!fail && renderer.DrawGpuSkinnedMesh(handle, paletteRow.data(), 2, 0, white, false, 2, 2))
+            fail = "face-range OOB accepted";
+        // Double release must be safe: the second release is a no-op — the
+        // count must STAY at the post-first-release value (the original
+        // assertion expected another decrement, contradicting the safe no-op
+        // requirement it was testing; B19 CI caught it).
         renderer.ReleaseGpuSkinnedMesh(handle);
         const uint32_t before = renderer.GpuMeshCount();
         renderer.ReleaseGpuSkinnedMesh(handle);
-        ok = ok && renderer.GpuMeshCount() == before - 1 && renderer.GpuMeshCount() == 0;
+        if (!fail && renderer.GpuMeshCount() != before) fail = "double release not a no-op";
+        if (!fail && renderer.GpuMeshCount() != 0) fail = "mesh count not zero";
+        const bool ok = fail == nullptr;
         tests.Record("gpu_resource_lifecycle", ok,
-                     "invalid handle/palette 257/face-range rejected; double release safe");
+                     ok ? "invalid handle/palette 257/face-range rejected; double release safe"
+                        : fail);
     }
 
     // --------------------------------- 6. authentic data (when assets given)
