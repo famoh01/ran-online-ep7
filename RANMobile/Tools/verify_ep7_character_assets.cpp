@@ -294,12 +294,15 @@ Outcome VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& b
             g_b18.chfNames.push_back(path);
         } else {
             ReportOutcome("chf", path, Outcome::Fail, info.error);
-            // B20 round 3: evidence for payload-level failures (the version is
-            // known and admitted, but the layout diverged from the attested
-            // smallest examples).  Same smallest-example technique as the
-            // version census: per reason keep head+tail; the globally smallest
-            // failed file is dumped in full.
-            ++g_chfFailCounts[info.error];
+            // B20 round 4: evidence for payload-level failures ONLY (the
+            // version is known and admitted, but the layout diverged from the
+            // attested smallest examples — extra sections the four smallest
+            // files do not carry).  Version rejections are handled by the
+            // version census above and must not consume this budget.  Same
+            // smallest-example technique: per reason keep head+tail; the
+            // globally smallest failed file is dumped in full.
+            if (info.error.find("unsupported .chf version") == std::string::npos) {
+                ++g_chfFailCounts[info.error];
             {
                 ChfFailExample& ex = g_chfFailExamples[info.error];
                 if (ex.size == 0 || bytes.size() < ex.size) {
@@ -321,11 +324,12 @@ Outcome VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& b
                     const size_t tailTake = std::min<size_t>(160, bytes.size());
                     ex.hexTail = toHex(bytes.data() + bytes.size() - tailTake, tailTake);
                     ex.full = bytes;
-                    if (g_chfFailSmallest.second.size == 0 || bytes.size() < g_chfFailSmallest.second.size) {
-                        g_chfFailSmallest = {info.error, ex};
-                    } else {
-                        ex.full.clear();
-                        ex.full.shrink_to_fit();
+                        if (g_chfFailSmallest.second.size == 0 || bytes.size() < g_chfFailSmallest.second.size) {
+                            g_chfFailSmallest = {info.error, ex};
+                        } else {
+                            ex.full.clear();
+                            ex.full.shrink_to_fit();
+                        }
                     }
                 }
             }
