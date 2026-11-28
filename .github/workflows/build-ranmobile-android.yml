@@ -532,15 +532,20 @@ jobs:
           amout=$(timeout 60 "$ADB" shell am start -n com.famhawaii.ranmobile/android.app.NativeActivity --es selftest gpu 2>&1 | tr -d '\r') \
             || { echo "::error::am start failed or timed out"; printf '%s\n' "$amout" | while IFS= read -r line; do echo "::error::$line"; done || true; exit 1; }
           printf '%s\n' "$amout" | while IFS= read -r line; do echo "::notice::am: $line"; done || true
+          # adb root restarts adbd — do it BEFORE launching the app and give it time.
+          "$ADB" root >/dev/null 2>&1 || true
+          sleep 3
           echo "::notice::am start completed, polling for verdict"
           sleep 10
           app_pid=$("$ADB" shell "ps -A 2>/dev/null | grep -w com.famhawaii.ranmobile" 2>/dev/null | head -n 1 | tr -d '\r' || true)
           if [ -z "$app_pid" ]; then
             echo "::error::app process not alive 10s after am start"
-            "$ADB" root >/dev/null 2>&1 || true
+            # NOTE: adb root was executed BEFORE am start (it restarts adbd and
+            # breaks logcat for a few seconds — running it here silenced every dump).
             "$ADB" logcat -d -b crash 2>/dev/null | tail -n 25 | while IFS= read -r line; do echo "::error::crash|$line"; done || true
-            "$ADB" logcat -d 2>/dev/null | grep -vE "% user|faults:|^$|getprop|Dumping" | tail -n 45 | while IFS= read -r line; do echo "::error::log|$line"; done || true
-            "$ADB" shell "ls -n /data/tombstones/ 2>/dev/null | tail -n 4" || true
+            "$ADB" logcat -d 2>/dev/null | grep -vE "% user|faults:|^$|getprop|Dumping|GC Profile|jdwp|chatty" | tail -n 45 | while IFS= read -r line; do echo "::error::log|$line"; done || true
+            "$ADB" shell "dmesg 2>/dev/null | grep -iE 'killed process|lowmemory|out of memory' | tail -n 8" || true
+            "$ADB" shell "ls -n /data/tombstones/ 2>/dev/null | tail -n 4" || echo "::error::tombstones listing failed (root?)"
           else
             echo "::notice::app process alive: $app_pid"
           fi
