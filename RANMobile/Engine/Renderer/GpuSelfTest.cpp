@@ -306,12 +306,16 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
 
         // GPU capture via transform feedback on the PRODUCTION program (linked
         // with the vSkinnedPos/vNormal capture set by the renderer).
+        // TF captures one entry PER PROCESSED VERTEX — an indexed draw of
+        // indexCount indices captures indexCount entries (draw order), NOT
+        // vertexCount entries (B19 CI evidence: an undersized buffer makes the
+        // whole capture write nothing and the map reads zeros).
+        const GLsizeiptr capturedVerts = static_cast<GLsizeiptr>(mesh.faces.size());
         const GLuint tfBuffer = [&] {
             GLuint b = 0;
             glGenBuffers(1, &b);
             glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, b);
-            const GLsizeiptr bytes =
-                static_cast<GLsizeiptr>(mesh.vertexCount) * 6 * static_cast<GLsizeiptr>(sizeof(float));
+            const GLsizeiptr bytes = capturedVerts * 6 * static_cast<GLsizeiptr>(sizeof(float));
             glBufferData(GL_TRANSFORM_FEEDBACK_BUFFER, bytes, nullptr, GL_STREAM_READ);
             glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, 0);
             return b;
@@ -360,15 +364,18 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
             glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, tfBuffer);
             const float* captured = static_cast<const float*>(
                 glMapBufferRange(GL_TRANSFORM_FEEDBACK_BUFFER, 0,
-                                 static_cast<GLsizeiptr>(mesh.vertexCount) * 6 * sizeof(float),
+                                 capturedVerts * 6 * static_cast<GLsizeiptr>(sizeof(float)),
                                  GL_MAP_READ_BIT));
             if (captured) {
-                for (uint32_t v = 0; v < mesh.vertexCount; ++v) {
+                // Entry j of the captured stream is the vertex processed j-th —
+                // for an indexed draw that is mesh.faces[j], not vertex j.
+                for (GLsizeiptr j = 0; j < capturedVerts; ++j) {
+                    const uint32_t v = mesh.faces[static_cast<size_t>(j)];
                     for (int k = 0; k < 3; ++k) {
-                        const float gpuPos = captured[static_cast<size_t>(v) * 6 + k];
+                        const float gpuPos = captured[static_cast<size_t>(j) * 6 + k];
                         const float cpu = cpuPos[static_cast<size_t>(v) * 3 + k];
                         maxPosDiff = std::fmax(maxPosDiff, std::fabs(gpuPos - cpu));
-                        const float gpuNrm = captured[static_cast<size_t>(v) * 6 + 3 + k];
+                        const float gpuNrm = captured[static_cast<size_t>(j) * 6 + 3 + k];
                         const float cpuN = cpuNrm[static_cast<size_t>(v) * 3 + k];
                         maxNrmDiff = std::fmax(maxNrmDiff, std::fabs(gpuNrm - cpuN));
                     }
