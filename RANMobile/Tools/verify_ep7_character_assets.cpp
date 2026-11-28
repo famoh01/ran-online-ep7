@@ -321,14 +321,11 @@ Outcome VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& b
                     };
                     const size_t headTake = std::min<size_t>(188, bytes.size() > 132 ? bytes.size() - 132 : 0);
                     ex.hexHead = toHex(bytes.data() + 132, headTake);
-                    const size_t tailTake = std::min<size_t>(160, bytes.size());
+                    const size_t tailTake = std::min<size_t>(128, bytes.size());
                     ex.hexTail = toHex(bytes.data() + bytes.size() - tailTake, tailTake);
                     ex.full = bytes;
                         if (g_chfFailSmallest.second.size == 0 || bytes.size() < g_chfFailSmallest.second.size) {
                             g_chfFailSmallest = {info.error, ex};
-                        } else {
-                            ex.full.clear();
-                            ex.full.shrink_to_fit();
                         }
                     }
                 }
@@ -1031,6 +1028,14 @@ int main(int argc, char** argv) {
     // Annotation budget: GitHub keeps the FIRST 10 warnings per step, so the
     // highest-value evidence is printed FIRST and aggregated onto few lines.
     if (!g_chfFailCounts.empty()) {
+        // Full dumps, prioritized: the 88-byte class is already decoded
+        // (mob_raikan_7 via run 46145908605); the next three classes carry the
+        // unknown extension sections.  One file per class, smallest example.
+        static const char* const kDumpPriority[] = {
+            ".chf trailer flag out of range",
+            "unsupported .chf trailer block size (184 bytes)",
+            "unsupported .chf trailer block size (260 bytes)",
+        };
         std::printf("\nchf payload-failure evidence (version admitted, layout diverged):\n");
         std::string agg;
         for (const auto& [reason, count] : g_chfFailCounts) {
@@ -1040,17 +1045,25 @@ int main(int argc, char** argv) {
         std::printf("  chf-fail-census: %s\n", agg.c_str());
         int tails = 0;
         for (const auto& [reason, ex] : g_chfFailExamples) {
-            if (ex.size == 0 || reason == g_chfFailSmallest.first) continue;
+            bool dumped = false;
+            for (const char* r : kDumpPriority) {
+                if (reason == r) dumped = true;
+            }
+            if (ex.size == 0 || dumped) continue;
             if (tails < 3) {
                 std::printf("  chf-fail-tail: %s | v0x%04X %s size=%zu tail=%s\n", reason.c_str(),
                             ex.version, ex.name.c_str(), ex.size, ex.hexTail.c_str());
                 ++tails;
             }
         }
-        if (g_chfFailSmallest.second.size != 0 && !g_chfFailSmallest.second.full.empty()) {
-            DumpChfFile("chf-fail-dump", g_chfFailSmallest.second.version,
-                        g_chfFailSmallest.second.name, g_chfFailSmallest.second.size,
-                        g_chfFailSmallest.second.full);
+        // Separate tags so the workflow can split the dumps across two steps
+        // (GitHub keeps only the first 10 warning annotations per step).
+        static const char* const kDumpTags[] = {"chf-fail-dump", "chf-fail-dump-b", "chf-fail-dump-c"};
+        for (size_t i = 0; i < sizeof(kDumpPriority) / sizeof(kDumpPriority[0]); ++i) {
+            auto it = g_chfFailExamples.find(kDumpPriority[i]);
+            if (it == g_chfFailExamples.end() || it->second.size == 0 || it->second.full.empty()) continue;
+            DumpChfFile(kDumpTags[i], it->second.version, it->second.name, it->second.size,
+                        it->second.full);
         }
     }
     if (!g_chfUnsupportedVersions.empty()) {
