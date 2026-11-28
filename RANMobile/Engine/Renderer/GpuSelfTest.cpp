@@ -268,11 +268,27 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
         renderer.Initialize(64, 64);
     }
 
-    // ------------------------------- 3. CPU vs GPU skinning (transform feedback)
-    auto tfCompare = [&](const char* label, const EP7SkinnedMesh& mesh,
-                         const std::vector<ep7math::Mat4>& palette) -> bool {
+    // ------------------- 3. CPU vs GPU skinning (raster position probe)
+    // B19 CI evidence (three iterations): transform-feedback capture is
+    // unusable on the emulator's GLES translator.  The TF-session draw fails
+    // with GL_INVALID_OPERATION (errDraw=1282 with clean begin/end) because
+    // the production draw path's glBindVertexArray clobbers the
+    // transform-feedback buffer binding on stacks that scope TF bindings to
+    // the vertex array object; with RASTERIZER_DISCARD enabled the translator
+    // captures nothing at all.  The probe transports the PRODUCTION vertex
+    // shader's skinned outputs through the rasterization path instead (which
+    // this stack demonstrably supports — the section-4 pixel tests pass):
+    // the probe program reuses the production vertex shader VERBATIM (one
+    // appended gl_PointSize statement), and its fragment shader encodes
+    // vSkinnedPos/vNormal into 16-bit-split RGBA8 pixels (quantization
+    // 1.2e-4 for positions in [-4,4] and 3.1e-5 for normals in [-1,1] — both
+    // far below the 5e-4/5e-3 tolerances).  One GL_POINTS draw plus one 1x1
+    // glReadPixels per probed vertex: bounded (<=48 probes x 3 passes),
+    // deterministic, no transform feedback, no extensions.
+    auto probeCompare = [&](const char* label, const EP7SkinnedMesh& mesh,
+                            const std::vector<ep7math::Mat4>& palette) -> bool {
         const EP7GpuSkinStreams streams = BuildGpuSkinStreams(mesh);
-        if (!streams.valid) return false;
+        if (!streams.valid) { tests.Record(label, false, "stream build failed"); return false; }
         // Interleave exactly like EP7CharacterScene::EnsurePieceGpuHandle.
         std::vector<float> interleaved(static_cast<size_t>(mesh.vertexCount) * 16);
         for (uint32_t v = 0; v < mesh.vertexCount; ++v) {
@@ -294,43 +310,21 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
         data.indices = mesh.faces.data();
         data.indexCount = static_cast<uint32_t>(mesh.faces.size());
         const uint32_t handle = renderer.UploadGpuSkinnedMesh(data);
-        if (handle == 0) return false;
+        if (handle == 0) { tests.Record(label, false, "UploadGpuSkinnedMesh failed"); return false; }
 
         // CPU reference (SkinVerticesCPU — same palette semantics as B17).
         std::vector<float> cpuPos;
         std::vector<float> cpuNrm;
         if (!SkinVerticesCPU(mesh, palette, cpuPos, cpuNrm)) {
             renderer.ReleaseGpuSkinnedMesh(handle);
+            tests.Record(label, false, "CPU reference skinning failed");
             return false;
         }
 
-        // GPU capture via transform feedback on the PRODUCTION program (linked
-        // with the vSkinnedPos/vNormal capture set by the renderer).
-        // TF captures one entry PER PROCESSED VERTEX — an indexed draw of
-        // indexCount indices captures indexCount entries (draw order), NOT
-        // vertexCount entries (B19 CI evidence: an undersized buffer makes the
-        // whole capture write nothing and the map reads zeros).
-        const GLsizeiptr capturedVerts = static_cast<GLsizeiptr>(mesh.faces.size());
-        const GLuint tfBuffer = [&] {
-            GLuint b = 0;
-            glGenBuffers(1, &b);
-            glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, b);
-            const GLsizeiptr bytes = capturedVerts * 6 * static_cast<GLsizeiptr>(sizeof(float));
-            glBufferData(GL_TRANSFORM_FEEDBACK_BUFFER, bytes, nullptr, GL_STREAM_READ);
-            glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, 0);
-            return b;
-        }();
-        GLuint tfObj = 0;
-        glGenTransformFeedbacks(1, &tfObj);
-        glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, tfObj);
-        glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, tfBuffer);
-
-        // Identity VP: gl_Position == skinned position (w == 1, affine parity).
-        const float identity[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
-        renderer.BeginScene3D(MobileCamera{});  // must precede draws (sets 3D pass state)
-        renderer.SetViewProjectionOverride(identity);
-
-        // Upload palette (offset*combined, row-major) — the exact draw path.
+        // Upload the palette through the PRODUCTION draw path: DrawGpuSkinnedMesh
+        // populates the shared palette texture and leaves it bound on texture
+        // unit 1; the probe program samples that exact texture, so the palette
+        // transport is validated verbatim (no second upload path).
         std::vector<float> paletteRow;
         paletteRow.reserve(palette.size() * 16);
         for (const auto& m : palette) {
@@ -339,90 +333,239 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
             }
         }
         const float white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-        // Warmup draw OUTSIDE the TF session: performs the palette texture
-        // upload (uploads inside an active TF session are silently dropped by
-        // some GLES3 stacks — B19 CI evidence).  The TF-session draw then finds
-        // an unchanged palette and skips the upload; the capture still runs the
-        // full skinning shader on the PRODUCTION program.
-        // NOTE: no GL_RASTERIZER_DISCARD here — the emulator's GL translator
-        // captures nothing with discard enabled (B19 CI evidence); the
-        // framebuffer content is irrelevant to this comparison, so the capture
-        // draws rasterize harmlessly.
+        renderer.BeginScene3D(MobileCamera{});  // must precede draws (sets 3D pass state)
+        const float identity[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+        renderer.SetViewProjectionOverride(identity);
         while (glGetError() != GL_NO_ERROR) {}
         const bool warmed = renderer.DrawGpuSkinnedMesh(handle, paletteRow.data(),
                                                         static_cast<uint32_t>(palette.size()), 0, white,
                                                         false, 0,
                                                         static_cast<uint32_t>(mesh.faces.size() / 3));
         const GLenum errWarm = glGetError();
-        glBeginTransformFeedback(GL_TRIANGLES);
-        const GLenum errBegin = glGetError();
-        const bool drew = warmed && renderer.DrawGpuSkinnedMesh(handle, paletteRow.data(),
-                                                                static_cast<uint32_t>(palette.size()), 0,
-                                                                white, false, 0,
-                                                                static_cast<uint32_t>(mesh.faces.size() / 3));
-        const GLenum errDraw = glGetError();
-        glEndTransformFeedback();
-        const GLenum errEnd = glGetError();
 
-        bool match = drew;
+        // Probe program: production vertex shader VERBATIM with one appended
+        // gl_PointSize statement (points are not used by production rendering;
+        // this keeps the validated skinning math bit-for-bit the production
+        // shader's), plus an encoding fragment shader.
+        static const char* kProbeFs =
+            "#version 300 es\n"
+            "precision highp float;\n"
+            "in vec3 vSkinnedPos;\n"
+            "in vec3 vNormal;\n"
+            "uniform int uPass;\n"
+            "uniform vec2 uRange0;\n"
+            "uniform vec2 uRange1;\n"
+            "out vec4 FragColor;\n"
+            "vec2 enc16(float v, vec2 range) {\n"
+            "    float t = clamp((v - range.x) / (range.y - range.x), 0.0, 1.0);\n"
+            "    float q = floor(t * 65535.0 + 0.5);\n"
+            "    return vec2(floor(q / 256.0) / 255.0, mod(q, 256.0) / 255.0);\n"
+            "}\n"
+            "void main() {\n"
+            "    float a = uPass == 0 ? vSkinnedPos.x : (uPass == 1 ? vSkinnedPos.z : vNormal.y);\n"
+            "    float b = uPass == 0 ? vSkinnedPos.y : (uPass == 1 ? vNormal.x : vNormal.z);\n"
+            "    vec2 ea = enc16(a, uRange0);\n"
+            "    vec2 eb = enc16(b, uRange1);\n"
+            "    FragColor = vec4(ea.x, ea.y, eb.x, eb.y);\n"
+            "}\n";
+        std::string pvsSrc = MobileRenderer::CharGpuVertexShaderSource();
+        const size_t lastBrace = pvsSrc.rfind('}');
+        std::string probeLog;
+        bool probeLinked = warmed && !pvsSrc.empty() && lastBrace != std::string::npos;
+        GLuint probeProg = 0;
+        if (probeLinked) {
+            pvsSrc.insert(lastBrace, "    gl_PointSize = 1.0;\n");
+            const char* vsPtr = pvsSrc.c_str();
+            probeProg = glCreateProgram();
+            GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+            glShaderSource(vs, 1, &vsPtr, nullptr);
+            glCompileShader(vs);
+            GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+            glShaderSource(fs, 1, &kProbeFs, nullptr);
+            glCompileShader(fs);
+            GLint vsOk = 0;
+            glGetShaderiv(vs, GL_COMPILE_STATUS, &vsOk);
+            GLint fsOk = 0;
+            glGetShaderiv(fs, GL_COMPILE_STATUS, &fsOk);
+            if (vsOk && fsOk) {
+                glAttachShader(probeProg, vs);
+                glAttachShader(probeProg, fs);
+                glLinkProgram(probeProg);
+                GLint linkOk = 0;
+                glGetProgramiv(probeProg, GL_LINK_STATUS, &linkOk);
+                if (!linkOk) {
+                    char buf[320] = {0};
+                    GLsizei n = 0;
+                    glGetProgramInfoLog(probeProg, sizeof(buf) - 1, &n, buf);
+                    probeLog = std::string("probe link: ") + buf;
+                    probeLinked = false;
+                }
+            } else {
+                char buf[320] = {0};
+                GLsizei n = 0;
+                if (!vsOk) {
+                    glGetShaderInfoLog(vs, sizeof(buf) - 1, &n, buf);
+                    probeLog = std::string("probe VS compile: ") + buf;
+                } else {
+                    glGetShaderInfoLog(fs, sizeof(buf) - 1, &n, buf);
+                    probeLog = std::string("probe FS compile: ") + buf;
+                }
+                probeLinked = false;
+            }
+            glDeleteShader(vs);
+            glDeleteShader(fs);
+        }
+        if (!probeLinked) {
+            glDeleteProgram(probeProg);
+            renderer.ReleaseGpuSkinnedMesh(handle);
+            tests.Record(label, false,
+                         probeLog.empty() ? "warmup draw failed; probe program not built"
+                                          : probeLog);
+            return false;
+        }
+
+        // Harness-side VAO over the SAME interleaved stream (the production VS
+        // declares explicit layout(location = 0..4) attribute slots; stride 64
+        // bytes: pos@0, normal@12, uv@24, boneIdx@32, boneWt@48).
+        GLuint probeVbo = 0;
+        GLuint probeVao = 0;
+        glGenBuffers(1, &probeVbo);
+        glBindBuffer(GL_ARRAY_BUFFER, probeVbo);
+        glBufferData(GL_ARRAY_BUFFER,
+                     static_cast<GLsizeiptr>(interleaved.size()) * sizeof(float),
+                     interleaved.data(), GL_STATIC_DRAW);
+        glGenVertexArrays(1, &probeVao);
+        glBindVertexArray(probeVao);
+        glBindBuffer(GL_ARRAY_BUFFER, probeVbo);
+        const GLsizei kStride = 16 * static_cast<GLsizei>(sizeof(float));
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, kStride, reinterpret_cast<const void*>(0));
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, kStride, reinterpret_cast<const void*>(12));
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, kStride, reinterpret_cast<const void*>(24));
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, kStride, reinterpret_cast<const void*>(32));
+        glEnableVertexAttribArray(4);
+        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, kStride, reinterpret_cast<const void*>(48));
+        glBindVertexArray(0);
+
+        // Probe render region: a 256x256 corner of the default EGL surface (the
+        // rasterization path used by the passing pixel tests — no FBO, no
+        // extensions).  Sentinel clear color = pure blue; a decoded value can
+        // never read as blue (blue channel 255 means hi+lo are 0 -> range min
+        // for BOTH components, which the CPU reference never produces for the
+        // fixtures used here).
+        const int W = 256;
+        const int H = 256;
+        renderer.Resize(W, H);
+        glViewport(0, 0, W, H);
+        const GLboolean depthWas = glIsEnabled(GL_DEPTH_TEST);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
+        glDisable(GL_SCISSOR_TEST);
+        glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glUseProgram(probeProg);
+        glUniform1i(glGetUniformLocation(probeProg, "uBonePalette"), 1);
+        // Probe VP: place skinned positions into the safe middle of the clip
+        // volume (NDC x,y = 0.35*pos + 0.30, NDC z = 0.5*pos).  This VP affects
+        // POINT PLACEMENT ONLY — the FS transports vSkinnedPos/vNormal (the
+        // pre-VP skinned outputs), so the comparison is against the raw
+        // production skinning results, not a projected variant.
+        const float probeVP[16] = {0.35f, 0.0f, 0.0f, 0.0f,
+                                   0.0f, 0.35f, 0.0f, 0.0f,
+                                   0.0f, 0.0f, 0.5f, 0.0f,
+                                   0.30f, 0.30f, 0.0f, 1.0f};  // column-major
+        glUniformMatrix4fv(glGetUniformLocation(probeProg, "uVP"), 1, GL_FALSE, probeVP);
+        const GLint passLoc = glGetUniformLocation(probeProg, "uPass");
+        const GLint r0Loc = glGetUniformLocation(probeProg, "uRange0");
+        const GLint r1Loc = glGetUniformLocation(probeProg, "uRange1");
+        auto decode16 = [](uint8_t hi, uint8_t lo, float rMin, float rMax) {
+            const float q = static_cast<float>(hi) * 256.0f + static_cast<float>(lo);
+            return q / 65535.0f * (rMax - rMin) + rMin;
+        };
+        // Probed vertices: up to 48 spread across the mesh; vertices whose probe
+        // point would land within 5% of the clip edge are skipped (documented).
+        const uint32_t vertexCount = mesh.vertexCount;
+        const uint32_t stride = vertexCount / 48 > 1 ? vertexCount / 48 : 1;
         float maxPosDiff = 0.0f;
         float maxNrmDiff = 0.0f;
-        if (drew) {
-            glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, tfBuffer);
-            const float* captured = static_cast<const float*>(
-                glMapBufferRange(GL_TRANSFORM_FEEDBACK_BUFFER, 0,
-                                 capturedVerts * 6 * static_cast<GLsizeiptr>(sizeof(float)),
-                                 GL_MAP_READ_BIT));
-            if (captured) {
-                // Entry j of the captured stream is the vertex processed j-th —
-                // for an indexed draw that is mesh.faces[j], not vertex j.
-                for (GLsizeiptr j = 0; j < capturedVerts; ++j) {
-                    const uint32_t v = mesh.faces[static_cast<size_t>(j)];
-                    for (int k = 0; k < 3; ++k) {
-                        const float gpuPos = captured[static_cast<size_t>(j) * 6 + k];
-                        const float cpu = cpuPos[static_cast<size_t>(v) * 3 + k];
-                        maxPosDiff = std::fmax(maxPosDiff, std::fabs(gpuPos - cpu));
-                        const float gpuNrm = captured[static_cast<size_t>(j) * 6 + 3 + k];
-                        const float cpuN = cpuNrm[static_cast<size_t>(v) * 3 + k];
-                        maxNrmDiff = std::fmax(maxNrmDiff, std::fabs(gpuNrm - cpuN));
-                    }
-                }
-                // Positions: float32 vs float32 (same math, different unit) — 5e-4
-                // absolute is generous against MAD rounding on O(1..16) values.
-                // Normals include per-unit normalize rounding — 5e-3.
-                match = maxPosDiff <= 5e-4f && maxNrmDiff <= 5e-3f;
-                glUnmapBuffer(GL_TRANSFORM_FEEDBACK_BUFFER);
-            } else {
-                match = false;
+        int probed = 0;
+        GLenum errProbe = 0;
+        GLenum errRead = 0;
+        float firstA = 0.0f;
+        float firstB = 0.0f;
+        bool firstSampled = false;
+        for (uint32_t v = 0; v < vertexCount && probed < 48; v += stride) {
+            const float cx = cpuPos[static_cast<size_t>(v) * 3 + 0];
+            const float cy = cpuPos[static_cast<size_t>(v) * 3 + 1];
+            const float cz = cpuPos[static_cast<size_t>(v) * 3 + 2];
+            const float ndcX = 0.35f * cx + 0.30f;
+            const float ndcY = 0.35f * cy + 0.30f;
+            const float ndcZ = 0.5f * cz;
+            if (ndcX < -0.95f || ndcX > 0.95f || ndcY < -0.95f || ndcY > 0.95f ||
+                ndcZ < -0.95f || ndcZ > 0.95f) {
+                continue;
             }
-            glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, 0);
+            const int sx = static_cast<int>((ndcX + 1.0f) * 0.5f * static_cast<float>(W));
+            const int sy = static_cast<int>((ndcY + 1.0f) * 0.5f * static_cast<float>(H));
+            if (sx < 0 || sx >= W || sy < 0 || sy >= H) continue;
+            for (int pass = 0; pass < 3; ++pass) {
+                float rMin0 = -4.0f, rMax0 = 4.0f, rMin1 = -4.0f, rMax1 = 4.0f;
+                if (pass == 1) { rMin1 = -1.0f; rMax1 = 1.0f; }
+                else if (pass == 2) { rMin0 = -1.0f; rMax0 = 1.0f; rMin1 = -1.0f; rMax1 = 1.0f; }
+                glUniform1i(passLoc, pass);
+                glUniform2f(r0Loc, rMin0, rMax0);
+                glUniform2f(r1Loc, rMin1, rMax1);
+                glBindVertexArray(probeVao);
+                glDrawArrays(GL_POINTS, static_cast<GLint>(v), 1);
+                errProbe = glGetError();
+                uint8_t c[4] = {0, 0, 0, 0};
+                glReadPixels(sx, sy, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, c);
+                errRead = glGetError();
+                const float a = decode16(c[0], c[1], rMin0, rMax0);
+                const float b = decode16(c[2], c[3], rMin1, rMax1);
+                if (!firstSampled) {
+                    firstA = a;
+                    firstB = b;
+                    firstSampled = true;
+                }
+                if (pass == 0) {
+                    maxPosDiff = std::fmax(maxPosDiff, std::fabs(a - cx));
+                    maxPosDiff = std::fmax(maxPosDiff, std::fabs(b - cy));
+                } else if (pass == 1) {
+                    maxPosDiff = std::fmax(maxPosDiff, std::fabs(a - cz));
+                    maxNrmDiff = std::fmax(maxNrmDiff,
+                                           std::fabs(b - cpuNrm[static_cast<size_t>(v) * 3 + 0]));
+                } else {
+                    maxNrmDiff = std::fmax(maxNrmDiff,
+                                           std::fabs(a - cpuNrm[static_cast<size_t>(v) * 3 + 1]));
+                    maxNrmDiff = std::fmax(maxNrmDiff,
+                                           std::fabs(b - cpuNrm[static_cast<size_t>(v) * 3 + 2]));
+                }
+            }
+            ++probed;
         }
-        glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0);
-        glDeleteTransformFeedbacks(1, &tfObj);
-        glDeleteBuffers(1, &tfBuffer);
+        if (depthWas == GL_TRUE) glEnable(GL_DEPTH_TEST);
+        glBindVertexArray(0);
+        glDeleteVertexArrays(1, &probeVao);
+        glDeleteBuffers(1, &probeVbo);
+        glDeleteProgram(probeProg);
         renderer.ReleaseGpuSkinnedMesh(handle);
 
-        // First captured entry (draw-order = faces[0]) as capture diagnostics:
-        // zeros mean the capture wrote nothing (driver/TF issue); matching
-        // values mean the capture is correct and any residual diff is real.
-        float f0 = 0.0f, f1 = 0.0f;
-        if (drew) {
-            glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, tfBuffer);
-            const float* probe = static_cast<const float*>(
-                glMapBufferRange(GL_TRANSFORM_FEEDBACK_BUFFER, 0, 6 * sizeof(float), GL_MAP_READ_BIT));
-            if (probe) {
-                f0 = probe[0];
-                f1 = probe[1];
-                glUnmapBuffer(GL_TRANSFORM_FEEDBACK_BUFFER);
-            }
-            glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, 0);
-        }
+        const bool match = warmed && probed > 0 && errProbe == GL_NO_ERROR &&
+                           errRead == GL_NO_ERROR &&
+                           maxPosDiff <= 5e-4f && maxNrmDiff <= 5e-3f;
         char detail[224];
         std::snprintf(detail, sizeof(detail),
-                      "maxPosDiff=%.2e maxNrmDiff=%.2e (tol 5e-4/5e-3) warm=%d err=w%xB%dDr%dE%u first=(%.3f,%.3f)",
-                      maxPosDiff, maxNrmDiff, static_cast<int>(warmed),
-                      static_cast<unsigned>(errWarm), static_cast<unsigned>(errBegin),
-                      static_cast<unsigned>(errDraw), static_cast<unsigned>(errEnd), f0, f1);
+                      "maxPosDiff=%.2e maxNrmDiff=%.2e (tol 5e-4/5e-3) probed=%d/%u warm=%d "
+                      "err=w%uPr%uRd%u first=(%.4f,%.4f)%s",
+                      maxPosDiff, maxNrmDiff, probed, static_cast<unsigned>(vertexCount),
+                      static_cast<int>(warmed), static_cast<unsigned>(errWarm),
+                      static_cast<unsigned>(errProbe), static_cast<unsigned>(errRead),
+                      firstA, firstB, probeLinked ? "" : probeLog.c_str());
         tests.Record(label, match, detail);
         return match;
     };
@@ -440,7 +583,7 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
             skeleton.ResetToRestPose();
             std::vector<ep7math::Mat4> bindPalette;
             BuildBonePalette(mesh, skeleton, bindPalette);
-            tfCompare("cpu_gpu_skinning_bindpose", mesh, bindPalette);
+            probeCompare("cpu_gpu_skinning_bindpose", mesh, bindPalette);
 
             // Animated pose: rotate the child bone 90 deg about Y (manual SQT),
             // then evaluate and compose the palette exactly like the runtime.
@@ -449,7 +592,7 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
             skeleton.UpdateBones(ep7math::Mat4(), 1.0f);
             std::vector<ep7math::Mat4> animPalette;
             BuildBonePalette(mesh, skeleton, animPalette);
-            tfCompare("cpu_gpu_skinning_animated", mesh, animPalette);
+            probeCompare("cpu_gpu_skinning_animated", mesh, animPalette);
         }
     }
 
