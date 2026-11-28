@@ -27,7 +27,7 @@ bool ReadPieceSlot(ep7byte::Stream& s, std::string& out) {
 // NPC_hangar 0x0108/319 B) reconstructed against this layout with exact total
 // size matches.  See EP7CharacterFile.h for the field-by-field layout and the
 // evidence trail.
-bool LoadVer0103Plus(ep7byte::Stream& s, EP7CharacterFileInfo& info) {
+bool LoadVer0103Plus(ep7byte::Stream& s, EP7CharacterFileInfo& info, uint32_t version) {
     // Piece slots: same flag + optional length-prefixed name encoding as
     // 0x0101/0x0102 (proven byte-exact by the payload-head dumps: the version
     // DWORD is followed directly by the piece count — no leading scale).
@@ -71,35 +71,52 @@ bool LoadVer0103Plus(ep7byte::Stream& s, EP7CharacterFileInfo& info) {
         info.animations.push_back(std::move(name));
     }
 
-    // Trailer block.  Its TOTAL byte size selects one of the three variants
-    // observed in the authentic dumps (60 B = 0x0104 sample, 64 B =
-    // 0x0106/0x0107 samples, 72 B = 0x0108 sample); see EP7CharacterFile.h.
-    const size_t rem = s.Remaining();
-    uint32_t flagA = 0, flagB = 0;
+    // Trailer block.  The shape is VALUE-ADAPTIVE, established by byte-exact
+    // reconstruction of nine authentic files (runs 46133690603..46147778604).
+    // Two block shapes attest — both under 0x0104 AND under 0x0106+ (the
+    // exporter varies; m_cos_wing04 vs NPC_ark at 0x0104):
+    //   15 dwords (60 B): [scale f32][Y raw][h f32][r f32]
+    //   16 dwords (64 B): [scale f32][Y raw][X u32][h f32][r f32]
+    //   ... both continue: [0 u32][1 u32][vMax 3f][vMin 3f][t0][t1][more]
+    //   0x0108 additionally carries two flag DWORDs (1, 0) between vMin and
+    //   the [t0 t1 more] run (72-B block).
+    // Y and X are NOT booleans: most files carry 0/1, but the TrickBoomLow
+    // class carries an arbitrary float in the Y slot (12.5f) — read raw,
+    // never validated.  Shape discrimination is value-based: a real height
+    // float never has bit pattern 0 or 1, so when the dword in the X slot is
+    // 0/1 the 16-dword shape applies; a 60-B block (exactly 44 bytes left
+    // after the first four dwords) forces the 15-dword shape.
+    if (!s.ReadF32(info.scale)) {
+        info.error = "truncated .chf trailer block";
+        return false;
+    }
+    uint32_t slotY = 0, slotXorH = 0, slotHOrR = 0;
+    if (!s.ReadU32(slotY) || !s.ReadU32(slotXorH) || !s.ReadU32(slotHOrR)) {
+        info.error = "truncated .chf trailer block";
+        return false;
+    }
+    bool sixteenDword = false;
+    const size_t leftAfterFour = s.Remaining();
+    if (leftAfterFour == 44) {
+        sixteenDword = false;  // exact 60-B block
+    } else if (leftAfterFour >= 48) {
+        sixteenDword = slotXorH == 0 || slotXorH == 1;
+    } else {
+        info.error = "truncated .chf trailer block";
+        return false;
+    }
     float height = 0.0f, radius = 0.0f;
-    if (rem == 60) {
-        // Single DWORD (1) between scale and height in the 0x0104 sample.
-        if (!s.ReadF32(info.scale) || !s.ReadU32(flagA) ||
-            !s.ReadF32(height) || !s.ReadF32(radius)) {
-            info.error = "truncated .chf trailer block";
-            return false;
-        }
-    } else if (rem == 64 || rem == 72) {
-        if (!s.ReadF32(info.scale) || !s.ReadU32(flagA) || !s.ReadU32(flagB) ||
-            !s.ReadF32(height) || !s.ReadF32(radius)) {
+    if (sixteenDword) {
+        std::memcpy(&height, &slotHOrR, sizeof(height));
+        if (!s.ReadF32(radius)) {
             info.error = "truncated .chf trailer block";
             return false;
         }
     } else {
-        info.error = "unsupported .chf trailer block size (" + std::to_string(rem) + " bytes)";
-        return false;
-    }
-    if (flagA > 1 || flagB > 1) {
-        info.error = ".chf trailer flag out of range";
-        return false;
+        std::memcpy(&height, &slotXorH, sizeof(height));
+        std::memcpy(&radius, &slotHOrR, sizeof(radius));
     }
 
-    // Bounding box: DWORD 0, DWORD 1, vMax, vMin (all three variants).
     uint32_t boxFlag0 = 0, boxFlag1 = 0;
     if (!s.ReadU32(boxFlag0) || !s.ReadU32(boxFlag1) ||
         !s.ReadF32(info.boundsMax[0]) || !s.ReadF32(info.boundsMax[1]) || !s.ReadF32(info.boundsMax[2]) ||
@@ -116,33 +133,51 @@ bool LoadVer0103Plus(ep7byte::Stream& s, EP7CharacterFileInfo& info) {
     info.height = height;
     info.radius = radius;
 
-    // The 0x0108 sample carries two extra booleans immediately before the
-    // final three-DWORD run.
-    if (rem == 72) {
+    if (version == EP7CharacterFileInfo::kVersion108) {
+        // 0x0108: two extra flag DWORDs (1, 0) between the box and the run.
         uint32_t extra0 = 0, extra1 = 0;
         if (!s.ReadU32(extra0) || !s.ReadU32(extra1)) {
-            info.error = "truncated .chf trailer block (extra flags)";
+            info.error = "truncated .chf trailer flags";
             return false;
         }
         if (extra0 > 1 || extra1 > 1) {
-            info.error = ".chf trailer extra flag out of range";
+            info.error = ".chf trailer extra out of range";
             return false;
         }
     }
 
-    // Final run (1, 0, 0) in every authentic sample; read in the 0x0102 field
-    // order (hasWorldObj, worldObj, end flag).
-    uint32_t worldFlag = 0, worldObjFlag = 0, endFlag = 0;
-    if (!s.ReadU32(worldFlag) || !s.ReadU32(worldObjFlag) || !s.ReadU32(endFlag)) {
+    // [t0 t1 more]: t0/t1 map to the 0x0102 world-obj booleans ((1, 0) in
+    // every authentic sample); more switches the extension section on.
+    uint32_t worldFlag = 0, worldObjFlag = 0, moreFlag = 0;
+    if (!s.ReadU32(worldFlag) || !s.ReadU32(worldObjFlag) || !s.ReadU32(moreFlag)) {
         info.error = "truncated .chf trailer flags";
         return false;
     }
-    if (worldFlag > 1 || worldObjFlag > 1 || endFlag > 1) {
+    if (worldFlag > 1 || worldObjFlag > 1 || moreFlag > 1) {
         info.error = ".chf world flag out of range";
         return false;
     }
     info.hasWorldObj = worldFlag != 0;
     info.worldObj = info.hasWorldObj && worldObjFlag != 0;
+
+    if (moreFlag == 1) {
+        // Opaque extension section: per-file data the attested smallest
+        // examples do not carry (bone-attach records, prop geometry, minimal
+        // (0,0)/(0,1,256,4,0,0) markers).  Skipped positionally — its content
+        // includes arbitrary floats and DWORDs (256, 4) that must NOT be
+        // flag-validated — and recorded so callers and diagnostics can see
+        // it.  The section runs to EOF.
+        const size_t extBytes = s.Remaining();
+        if (extBytes != 0 && !s.Skip(extBytes)) {
+            info.error = "truncated .chf extension section";
+            return false;
+        }
+        info.hasExtensionSections = extBytes != 0;
+        info.extensionBytes = static_cast<uint32_t>(extBytes);
+    } else if (s.Remaining() != 0) {
+        info.error = "trailing bytes after .chf trailer block";
+        return false;
+    }
 
     return true;
 }
@@ -345,7 +380,7 @@ EP7CharacterFileInfo EP7CharacterFileReader::ParseStream(ep7byte::Stream& s) {
     // no authentic sample and no known layout and stays unsupported.
     if (version >= EP7CharacterFileInfo::kVersion103 && version <= EP7CharacterFileInfo::kVersion108 &&
         version != 0x0105) {
-        if (!LoadVer0103Plus(s, info)) {
+        if (!LoadVer0103Plus(s, info, version)) {
             return info;
         }
         info.valid = true;

@@ -1028,13 +1028,14 @@ int main(int argc, char** argv) {
     // Annotation budget: GitHub keeps the FIRST 10 warnings per step, so the
     // highest-value evidence is printed FIRST and aggregated onto few lines.
     if (!g_chfFailCounts.empty()) {
-        // Full dumps, prioritized: the 88-byte class is already decoded
-        // (mob_raikan_7 via run 46145908605); the next three classes carry the
-        // unknown extension sections.  One file per class, smallest example.
+        // Full dumps, prioritized: the 88/184/260-byte classes are decoded
+        // (runs 46145908605 + 46147778604); what remains unknown are files
+        // whose block parsed but the tail diverged, or whose flag DWORDs are
+        // not 0/1.  One file per class, smallest example.
         static const char* const kDumpPriority[] = {
-            ".chf trailer flag out of range",
-            "unsupported .chf trailer block size (184 bytes)",
-            "unsupported .chf trailer block size (260 bytes)",
+            "trailing bytes after .chf trailer block",
+            ".chf world flag out of range",
+            ".chf bbox flag out of range",
         };
         std::printf("\nchf payload-failure evidence (version admitted, layout diverged):\n");
         std::string agg;

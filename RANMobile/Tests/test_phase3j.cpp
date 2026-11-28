@@ -1574,8 +1574,9 @@ void TestCharacterFileMobileV3() {
         CheckChfV3Authentic(f, 1);
     }
 
-    // 0x0103 is admitted with the size-adaptive layout (no authentic sample
-    // exists; documented extrapolation — EP7CharacterFile.h).
+    // 0x0103 is admitted with the value-adaptive layout (no authentic sample
+    // exists; documented extrapolation — EP7CharacterFile.h).  Uses the
+    // 15-dword (60 B) shape: X slot holds the height float instead.
     {
         ChfV3Fixture f;
         f.version = 0x0103;
@@ -1583,7 +1584,7 @@ void TestCharacterFileMobileV3() {
         f.skeleton = "b_test.X";
         f.anims = {"a_test.x"};
         f.blockHex =
-            "3333333f0000000001000000c3f5a040b81ec53f0000000001000000b81ec53fc3f5a040b81ec53fb81ec5bf00000000b81ec5bf010000000000000000000000";
+            "3333333f00000000c3f5a040b81ec53f0000000001000000b81ec53fc3f5a040b81ec53fb81ec5bf00000000b81ec5bf010000000000000000000000";
         const std::vector<uint8_t> bytes = BuildChfV3(f);
         const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(bytes, false);
         J_CHECK_MSG(info.valid, info.error);
@@ -1682,9 +1683,10 @@ void TestCharacterFileMobileV3() {
         f.blockHex =
             "3333333f0000000001000000c3f5a040b81ec53f0000000001000000b81ec53fc3f5a040b81ec53fb81ec5bf00000000b81ec5bf010000000000000000000000";
         const std::vector<uint8_t> full = BuildChfV3(f);
-        // Block starts at 311-64 = 247: scale@0, flagA@4, flagB@8, h@12, r@16,
-        // boxFlag0@20, boxFlag1@24, vmax@28, vmin@40, trailer@52.
-        for (const size_t off : {251u, 255u, 267u, 271u, 299u, 303u, 307u}) {
+        // Block starts at 311-64 = 247: scale@0, raw Y@4, X@8 (0/1 selects
+        // the shape; a 2 forces the 15-dword misparse -> reject), h@12, r@16,
+        // boxFlag0@20, boxFlag1@24, vmax@28, vmin@40, t0@52, t1@56, more@60.
+        for (const size_t off : {255u, 267u, 271u, 299u, 303u, 307u}) {
             std::vector<uint8_t> bad = full;
             bad[off] = 2;
             const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(bad, false);
@@ -1711,6 +1713,108 @@ void TestCharacterFileMobileV3() {
         const RANMobile::EP7CharacterFileInfo empty = RANMobile::EP7CharacterFileReader::Parse(BuildChfV3(f), false);
         J_CHECK_MSG(empty.valid, empty.error);
         J_CHECK(empty.animations.empty());
+    }
+
+    // B20 round 6 (runs 46145908605 + 46147778604 evidence): the trailer
+    // block shape is value-adaptive and an opaque extension section follows
+    // to EOF when the final [t0 t1 more] run ends with more=1.
+
+    // TrickBoomLow class (0x0107): arbitrary float 12.5f in the raw Y slot;
+    // 16-dword shape with h=25.7 r=3.88; no extension.  Authentic decode.
+    {
+        ChfV3Fixture f;
+        f.version = 0x0107;
+        for (int i = 0; i < 13; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_sum_machine03.X";
+        f.anims = {"a_sum_machine03_run.x"};
+        f.blockHex = "0000004000004841010000009a99cd41ec5178400000000001000000ec5178409a99cd41ec517840ec5178c000000000ec5178c0010000000000000000000000";
+        const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(BuildChfV3(f), false);
+        J_CHECK_MSG(info.valid, info.error);
+        J_CHECK(FloatBitsOf(info.scale) == 0x40000000u);
+        J_CHECK(FloatBitsOf(info.height) == 0x41cd999au);  // 25.7
+        J_CHECK(FloatBitsOf(info.radius) == 0x407851ecu);  // 3.88
+        J_CHECK(!info.hasExtensionSections);
+        J_CHECK(info.extensionBytes == 0);
+    }
+
+    // mob_raikan_7 class (0x0107): standard block + 24-byte opaque extension
+    // (0, 1, 256, 4, 0, 0) — the 256/4 DWORDs prove extension content is NOT
+    // flag-validated.  Authentic decode.
+    {
+        ChfV3Fixture f;
+        f.version = 0x0107;
+        for (int i = 0; i < 13; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_raikan.X";
+        f.anims = {};
+        f.blockHex = "3333333f000000000100000000003c4266661e41000000000100000066661e4100003c4266661e4166661ec10000000066661ec1010000000000000001000000000000000100000000010000040000000000000000000000";
+        const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(BuildChfV3(f), false);
+        J_CHECK_MSG(info.valid, info.error);
+        J_CHECK(info.hasExtensionSections);
+        J_CHECK(info.extensionBytes == 24);
+    }
+
+    // m_cos_wing04 class (0x0104): the 16-dword shape ALSO attests at 0x0104
+    // (value-adaptive discrimination), with a bone-attach extension section.
+    // Two synthetic 40-byte records: [3 floats][0][16-byte bone name]
+    // [strlen][15] — the attested record shape.
+    {
+        ChfV3Fixture f;
+        f.version = 0x0104;
+        for (int i = 0; i < 13; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_m.X";
+        f.anims = {"a_m_00_stay.x"};
+        f.blockHex = "3333333f000000000100000000003c4266661e41000000000100000066661e4100003c4266661e4166661ec10000000066661ec10100000000000000010000009a99993f3333733f0000803f0000000042697030315f4c5f54686967680000000f0000000f000000cdcc8c3f3333733f0000803f0000000042697030315f525f43616c66000000000f0000000f000000";
+        const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(BuildChfV3(f), false);
+        J_CHECK_MSG(info.valid, info.error);
+        J_CHECK(info.hasExtensionSections);
+        J_CHECK(info.extensionBytes == 80);  // 2 x 40-byte bone-attach records
+        J_CHECK(FloatBitsOf(info.height) == 0x423c0000u);  // 47
+        J_CHECK(FloatBitsOf(info.radius) == 0x411e6666u);  // 9.9
+    }
+
+    // GBOX02 class (0x0107): 120-byte prop-geometry extension full of floats
+    // and negative ones — still opaque, still valid.  Authentic decode head.
+    {
+        ChfV3Fixture f;
+        f.version = 0x0107;
+        for (int i = 0; i < 13; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_gbox.X";
+        f.anims = {"a_gbox_stay.cfg"};
+        f.blockHex = "0000404000000000010000000000a0410000e04000000000010000000000e0400000a0410000e0400000e0c0000000000000e0c0010000000000000001000000000000000100000000010000040000000000000001000000000100005400000000000000020000000000000000000000ffffffff000000000000000001000000040000000100000000000000ffffffffffffffff00000000ffffffff010000000000000001000000ffffffff000000000100000000000000";
+        const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(BuildChfV3(f), false);
+        J_CHECK_MSG(info.valid, info.error);
+        J_CHECK(info.hasExtensionSections);
+        J_CHECK(info.extensionBytes == 120);
+        J_CHECK(FloatBitsOf(info.height) == 0x41a00000u);  // 20
+        J_CHECK(FloatBitsOf(info.radius) == 0x40e00000u);  // 7
+    }
+
+    // 15-dword (60 B) shape with more=1: extension follows even there.
+    {
+        ChfV3Fixture f;
+        f.version = 0x0104;
+        for (int i = 0; i < 13; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_test.X";
+        f.anims = {"a_test.x"};
+        f.blockHex = "3333333f00000000c3f5a040c1cac13f0000000001000000c1cac13fc3f5a040c1cac13fc1cac1bf00000000c1cac1bf0100000000000000010000000000000000000000";
+        const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(BuildChfV3(f), false);
+        J_CHECK_MSG(info.valid, info.error);
+        J_CHECK(info.hasExtensionSections);
+        J_CHECK(info.extensionBytes == 8);
+    }
+
+    // 0x0100-... stray bytes after a more=0 block are a hard error, not
+    // silently tolerated (the extension must be switched on by more=1).
+    {
+        ChfV3Fixture f;
+        f.version = 0x0107;
+        for (int i = 0; i < 13; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_test.X";
+        f.anims = {"a_test.x"};
+        f.blockHex = "0000004000004841010000009a99cd41ec5178400000000001000000ec5178409a99cd41ec517840ec5178c000000000ec5178c0010000000000000000000000deadbeef";
+        const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(BuildChfV3(f), false);
+        J_CHECK_MSG(!info.valid, "stray bytes after more=0 must reject");
+        J_CHECK(info.error.find("trailing bytes after .chf trailer block") != std::string::npos);
     }
 
     // A 0x0103 file laid out like 0x0102 (leading scale) must fail cleanly:

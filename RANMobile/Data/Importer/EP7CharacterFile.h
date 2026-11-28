@@ -52,26 +52,37 @@
 //       60 B: float scale;      DWORD fA=1;                     // 0x0104 sample
 //             float height; float radius; DWORD 0; DWORD 1;
 //             float vMax[3]; float vMin[3]; DWORD 1; DWORD 0; DWORD 0;
-//       64 B: float scale;      DWORD fA=0; DWORD fB=1;         // 0x0106/0x0107
-//             float height; float radius; DWORD 0; DWORD 1;
-//             float vMax[3]; float vMin[3]; DWORD 1; DWORD 0; DWORD 0;
-//       72 B: as 64 B plus two extra DWORDs (1, 0) immediately before the
-//             final (1, 0, 0) run                               // 0x0108 sample
+//   The block shape is VALUE-ADAPTIVE (runs 46133690603..46147778604; both
+//   shapes attest under 0x0104 AND 0x0106+ — m_cos_wing04 vs NPC_ark):
+//     15 dwords (60 B): scale f32; DWORD Y; height f32; radius f32;
+//                       DWORD 0; DWORD 1; vMax[3]; vMin[3];
+//                       DWORD t0=1; DWORD t1=0; DWORD more=0
+//     16 dwords (64 B): as 60 B plus DWORD X immediately after Y
+//     0x0108: two extra flag DWORDs (1, 0) between vMin and the final run
+//   (72 B).  Y/X are raw (the TrickBoomLow class carries an arbitrary float
+//   12.5f in Y); the shape is picked by value: X-slot dword 0/1 selects the
+//   16-dword shape (a real height float never has bit pattern 0 or 1), an
+//   exact 60-B block forces the 15-dword shape.
+//   The trailing [t0 t1 more] run maps naturally to hasWorldObj=1 /
+//   worldObj=0 in the 0x0102 field order, and more switches an opaque
+//   extension section on that runs to EOF (attested sizes: 8 B and 24 B
+//   minimal (0,0) markers, 120 B prop-geometry block in GBOX02, 200 B = 5 x
+//   40 B bone-attach records [3 floats][0][16-byte bone name][strlen][15] in
+//   m_cos_wing04).  The parser skips it positionally and records its size.
 //
 //   In every authentic sample height/vMax/vMin satisfy vMax == (radius, height,
 //   radius) and vMin == (-radius, 0, -radius) (the mobile exporter writes the
-//   SetRadiusHeight-derived box), and the trailing DWORD run maps naturally to
-//   hasWorldObj=1 / worldObj=0 in the 0x0102 field order.  The parser fills
-//   these fields positionally and only sanity-checks the flag DWORDs as
-//   booleans (0/1); it does not hard-assert the geometry relation.
+//   SetRadiusHeight-derived box).  The parser fills these fields positionally
+//   and only sanity-checks the flag DWORDs as booleans (0/1); it does not
+//   hard-assert the geometry relation.
 //
 //   0x0105 is shipped by NO authentic pack and has no known layout -> still
-//   unsupported.  0x0103 is admitted with the same size-adaptive block: no
-//   authentic 0x0103 sample exists (the sibling DxSkinPieceContainer evolution
-//   0x0102->0x0103 only made fixed arrays count-prefixed, which SkinCharData
-//   already is at 0x0102), so 0x0103 files are parsed with the 0x0104-observed
-//   variants; a real 0x0103 file with a different trailer size fails cleanly
-//   and surfaces in the verify-tool census.
+//   unsupported.  0x0103 is admitted with the same value-adaptive block:
+//   no authentic 0x0103 sample exists (the sibling DxSkinPieceContainer
+//   evolution 0x0102->0x0103 only made fixed arrays count-prefixed, which
+//   SkinCharData already is at 0x0102), so 0x0103 files are parsed with the
+//   0x0104-observed shape; a real 0x0103 file that diverges fails cleanly and
+//   surfaces in the verify-tool census.
 //
 //   0x0200 (43 files in skinobject.rcc, type block "default", high-entropy
 //   payload) is a different, still-undeciphered container -> unsupported.
@@ -132,6 +143,8 @@ struct EP7CharacterFileInfo {
     float boundsMin[3] = {-7.0f, 0.0f, -7.0f};
     bool hasWorldObj = false;
     bool worldObj = false;
+    bool hasExtensionSections = false;  // 0x0103+: opaque tail after more==1
+    uint32_t extensionBytes = 0;        // size of that tail (skipped, not interpreted)
     bool hasHeightRadius = false;
     float height = 20.0f;   // default m_fHeight
     float radius = 7.0f;    // default m_fRadius
