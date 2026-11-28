@@ -58,10 +58,15 @@ jobs:
           set -e
           git config user.name "arena-agent"
           git config user.email "arena-agent@users.noreply.github.com"
+          echo "::notice title=fetch checkout::$GITHUB_REF at $(git rev-parse --short HEAD); files: $(find reference -type f 2>/dev/null | wc -l)"
           git add reference/
           if git diff --cached --quiet; then
             echo "no reference changes"
             exit 0
           fi
           git commit -m "Phase 3J B21: fetch DxAttBone reference source (LFS, complete-files repo)"
-          git push origin HEAD:${{ github.ref_name }}
+          if ! PUSH_OUT=$(git push origin HEAD:${{ github.ref_name }} 2>&1); then
+            echo "::error title=fetch push denied::${PUSH_OUT}" | head -4
+            exit 1
+          fi
+          echo "::notice title=fetch pushed::reference source committed"

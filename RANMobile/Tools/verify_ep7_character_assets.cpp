@@ -1135,8 +1135,8 @@ int main(int argc, char** argv) {
     }
 
     // B21 downstream evidence: aggregated FIRST (highest value per line).
-    // .cps version rejects: one census line + the smallest example per
-    // version, head at offset 0 (type block + version area, 96 B).
+    // .cps version rejects: one census line + targeted dumps per version
+    // (full for small files, head/tail otherwise).
     if (!g_cpsUnsupportedVersions.empty()) {
         std::printf("\ncps version census (raw on-disk versions the parser rejects):\n");
         std::string agg;
@@ -1149,14 +1149,19 @@ int main(int argc, char** argv) {
         std::printf("  cps-census: %s\n", agg.c_str());
         int heads = 0;
         for (const auto& [ver, ex] : g_cpsUnsupportedExamples) {
-            if (heads >= 3) break;
+            if (heads >= 4) break;
+            if (ex.version == 0x0200) continue;  // documented encrypted class
             std::printf("  cps-ex: v0x%04X %s size=%zu head=%s tail=%s\n", ver, ex.name.c_str(),
                         ex.size, ex.hexHead.c_str(), ex.hexTail.c_str());
             ++heads;
         }
-        if (!g_cpsSmallest.second.full.empty()) {
-            DumpChfFile("cps-dump", g_cpsSmallest.first, g_cpsSmallest.second.name,
-                        g_cpsSmallest.second.size, g_cpsSmallest.second.full);
+        // Full dumps of the smallest example per version (the layout deltas
+        // are derived from complete small files; skip the 0x0200 class).
+        for (const auto& [ver, ex] : g_cpsUnsupportedExamples) {
+            if (ver == 0x0200 || ex.full.empty()) continue;
+            if (ex.size <= 800) {
+                DumpChfFile("cps-dump", ver, ex.name, ex.size, ex.full);
+            }
         }
     }
     // .skt/.abf skeleton failures: reason census + smallest example per
@@ -1176,7 +1181,7 @@ int main(int argc, char** argv) {
                         ex.name.c_str(), ex.size, ex.hexHead.c_str(), ex.hexTail.c_str());
             ++heads;
         }
-        if (!g_skelSmallest.second.full.empty() && g_skelSmallest.second.size <= 4096) {
+        if (!g_skelSmallest.second.full.empty() && g_skelSmallest.second.size <= 800) {
             DumpChfFile("skel-dump", 0, g_skelSmallest.second.name, g_skelSmallest.second.size,
                         g_skelSmallest.second.full);
         }
@@ -1198,6 +1203,30 @@ int main(int argc, char** argv) {
             std::printf("  bin-ex: v0x%08X %s size=%zu head=%s tail=%s\n", ver, ex.name.c_str(),
                         ex.size, ex.hexHead.c_str(), ex.hexTail.c_str());
             ++heads;
+        }
+        if (!g_binSmallest.second.full.empty()) {
+            const DownstreamExample& ex = g_binSmallest.second;
+            auto toHex = [](const uint8_t* d, size_t n) {
+                static const char* hexd = "0123456789abcdef";
+                std::string hx;
+                hx.reserve(n * 2);
+                for (size_t i = 0; i < n; ++i) {
+                    hx.push_back(hexd[d[i] >> 4]);
+                    hx.push_back(hexd[d[i] & 0xF]);
+                }
+                return hx;
+            };
+            const size_t headTake = std::min<size_t>(512, ex.full.size());
+            const size_t tailTake = std::min<size_t>(256, ex.full.size());
+            std::string headHex = toHex(ex.full.data(), headTake);
+            std::string tailHex = toHex(ex.full.data() + ex.full.size() - tailTake, tailTake);
+            // split long hex onto continuation lines (annotation-safe)
+            for (size_t i = 0; i < headHex.size(); i += 440) {
+                std::printf("  bin-w: h %s\n", headHex.substr(i, 440).c_str());
+            }
+            for (size_t i = 0; i < tailHex.size(); i += 440) {
+                std::printf("  bin-w: t %s\n", tailHex.substr(i, 440).c_str());
+            }
         }
     }
     // Annotation budget: evidence beyond this point is legacy chf data (fully
