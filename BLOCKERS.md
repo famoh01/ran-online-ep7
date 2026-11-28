@@ -1010,6 +1010,13 @@ Evidence (CI annotations, runs `46131351370` + `46133690603`, no asset downloads
 event_Athena 311 B, npc_police_1 307 B, NPC_hangar 319 B) and `EP7CharacterFile` now parses
 them (plus 0x0103 as a documented extrapolation; 0x0105 stays rejected — unshipped, unknown
 layout). Byte-exact fixtures assert the layout via 160-B-window round-trips; phase3j 7,721/0.
+  Rounds 2b-6 (runs 46141210307..46147778604, commit efde0c0) fully decoded the trailer: the
+  block shape is value-adaptive (60-B and 64-B variants both attest at 0x0104 and 0x0106+; the
+  leading dwords are raw values — an arbitrary 12.5f float attests there), 0x0108 adds two flag
+  DWORDs, and [t0 t1 more=1] switches an opaque extension section running to EOF (8/24-byte
+  markers, 120-byte prop geometry, 40-byte bone-attach records), skipped positionally and
+  recorded. phase3j 8,362/0. The round-6 CI census will show whether any admitted-version .chf
+  class remains unknown.
 
 **Still unsupported (documented, not a guess):**
 * **0x0200 (43 files)** — a different container: 128-B type block reads `default`, payload is

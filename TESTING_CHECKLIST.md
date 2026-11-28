@@ -805,8 +805,28 @@ g++ -std=c++17 -Wall -Wextra -Werror \
 - [x] Gates: phase3j 7,721/0; ASan+UBSan+LSan clean; verify tool -Werror + synthetic
       authentic-layout 0x0104-in-.rcc end-to-end PASS; Android-path -D__ANDROID__ -Werror
       clean (renderer/engine/scene/parser).
-- [ ] CI validation (pending): expect core/arm64/emulator green (regression guard) and the
-      authentic-assets job to report ~200/243 .chf PASS with 43 × UNSUPPORTED (0x0200 only,
-      census annotations); run id + counts to be recorded after the diagnostic run.
-- [ ] Remaining gaps: 0x0200 container (43 files, trees/props); piece `.cps`/`.x`/`.bin`/`.cfg`
-      support for the files these .chf reference (next milestone); device run.
+- [x] CI validation round 1 (run `46138779929`): core/arm64/emulator green; authentic-assets
+      verdict 8260/3400 with census `0x0200 x43` as the only remaining version class — 50
+      admitted-version .chf still failed in rem-size classes (88 x32, 184 x2, 260 x6, 290 x1,
+      312 x1, 454 x2, 462 x1, 478 x1) + 4 x flag-range (runs `46141210307`, `46143484256`).
+- [x] Evidence-channel hardening: single-line aggregated census, budget-ordered annotations,
+      dumps split across two `if: always()` steps (GitHub keeps only the first 10 warning
+      annotations per step — confirmed empirically); fail-evidence filter excludes version
+      rejections (a round-3 dump was wasted on a 0x0200 file).
+- [x] Full-file dumps decode the classes (runs `46145908605`, `46147778604`): TrickBoomLow
+      (arbitrary float 12.5f in the raw Y slot — flag-range rejects mislabeled), mob_raikan_7
+      (24-B extension section), GBOX02 (120-B prop-geometry extension), m_cos_wing04
+      (16-dword block shape attests at 0x0104 + 5 x 40-B bone-attach records).
+- [x] Round 6 parser (commit `efde0c0`): value-adaptive block (X-slot dword 0/1 selects the
+      16-dword shape; exact 60-B block forces 15 dwords; Y/X never validated), 0x0108 extra
+      flag DWORDs, opaque extension section skipped positionally and recorded
+      (hasExtensionSections/extensionBytes), stray bytes after more=0 rejected.
+- [x] Round 6 gates: phase3j 8,362/0 (was 7,721); ASan+UBSan+LSan clean; verify tool -Werror;
+      synthetic negative fixtures unchanged; authentic-layout 0x0104-in-.rcc PASS.
+- [ ] CI validation round 6 (pending): expect the admitted-version .chf failures to collapse
+      to the truly-unknown classes (the dump priority now targets `trailing bytes after .chf
+      trailer block` / world-flag / bbox-flag rejects); run id + census to be recorded here
+      after the diagnostic run.
+- [ ] Remaining gaps: 0x0200 container (43 files, trees/props); whatever the round-6 census
+      still lists; piece `.cps`/`.x`/`.bin`/`.cfg` support for the files these .chf reference
+      (next milestone); device run.

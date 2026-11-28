@@ -1361,3 +1361,22 @@ byte-exact authentic fixtures with 160-B-window `memcmp` round-trips + negative/
 matrix; phase3j 7,721/0 (was 5,846), sanitizers clean, Android-path -Werror clean. The 0x0100–
 0x0102 paths are untouched and their tests unchanged. Remaining: 0x0200 container class, the
 piece/mesh/animation assets these .chf reference, and any device run.
+
+
+## 2026-11-27 — Phase 3J B20 rounds 2b–6: the 0x0103+ `.chf` trailer fully decoded (`arena/00fd13f9-ran-online-ep7`)
+
+Six evidence rounds turned the first-cut parser into a byte-exact one. The CI evidence channel
+was hardened against GitHub's 10-warnings-per-step cap (aggregated single-line census,
+budget-ordered annotations, dumps split across two `if: always()` steps). Full-file dumps of the
+failure classes proved: the dword after the block scale is an arbitrary float (12.5f — the four
+"flag out of range" rejects were mislabeled), the 60-B and 64-B block shapes BOTH attest at
+0x0104 and 0x0106+ (value-adaptive discrimination: an X-slot dword of 0/1 selects the 16-dword
+shape), 0x0108 adds two flag DWORDs between the box and the trailing run, and `[t0 t1 more]`
+ends the block with more=1 switching an opaque extension section that runs to EOF — 8/24-byte
+minimal markers, 120-byte prop geometry (GBOX02), 5 x 40-byte bone-attach records
+(m_cos_wing04: [3 floats][0][16-byte name][strlen][15]). `LoadVer0103Plus` rewritten; the
+extension is skipped positionally (its 256/4 DWORDs and floats must not be flag-validated) and
+recorded. Stray bytes after a more=0 block are a hard error. phase3j 7,721 -> 8,362/0,
+sanitizers clean, verify tool -Werror clean. Remaining: 0x0200 container class (43 files),
+the post-decode census for anything still unknown, downstream piece/skeleton/animation assets,
+device run.

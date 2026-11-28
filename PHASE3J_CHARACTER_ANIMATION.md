@@ -1050,3 +1050,69 @@ truncation + single-byte corruption sweep.
 verify tool `-Werror` clean + end-to-end PASS on an authentic-layout 0x0104 file inside a
 synthetic `.rcc`; Android-path `-D__ANDROID__ -Werror` clean (MobileRenderer, RANMobileEngine,
 EP7CharacterScene, EP7CharacterFile). CI validation of the authentic packs: see §16.10.
+
+
+### 16.10 B20 rounds 2b–6 — 0x0103+ trailer fully decoded; value-adaptive block; opaque extension sections (2026-11-27..28)
+
+**Why the rounds continued.** §16.9 shipped the first parser from four reconstructed files, but
+the authentic-assets CI run (`46138779929`, verdict 8260/3400) showed the remaining admitted-version
+failures concentrate in larger files: after the flag-split fix (`82e74b8`), the payload-failure
+census (run `46141210307`) counted 50 failing `.chf` in rem-size classes — 88 ×32, 184 ×2, 260 ×6,
+290 ×1, 312 ×1, 454 ×2, 462 ×1, 478 ×1 — plus 4 × "trailer flag out of range" (rem = bytes left
+after the reconstructed front).
+
+**Evidence-channel hardening.** GitHub keeps only the first 10 warning annotations per step
+(confirmed empirically when round 3's tails were silently dropped): the census moved onto one
+aggregated line, evidence is emitted FIRST in budget order (fail census → per-class tails → full
+dump → version census), and dumps are split across two `if: always()` steps with separate tags
+(`chf-fail-dump`, `-b`, `-c`).
+
+**Rounds 3b/4 dumps (runs `46143484256`, `46145908605`).** A round-3 dump was wasted on a 0x0200
+file because version rejections were recorded as payload failures — fixed by filtering. The
+smallest admitted-version failure, `mob_raikan_7.chf` (0x0107, 312 B), arrived complete: front
+ends at 224, standard 64-B block, then a **24-byte extension section** `(0, 1, 256, 4, 0, 0)`.
+
+**Round 5 per-class dumps (run `46147778604`).** Three complete files:
+
+* `TrickBoomLow.chf` (0x0107, 511 B): the dword after the scale is an **arbitrary float
+  (12.5f)**, not a flag — the four "flag out of range" rejects were mislabeled; both leading
+  dwords are raw values.
+* `GBOX02.chf` (0x0107, 414 B): standard 64-B block + **120-byte prop-geometry extension**
+  (arbitrary floats, -1.0f, counts 84/2/4, dword 256).
+* `m_cos_wing04.chf` (0x0104, 3955 B, first 1128 B): the 16-dword block shape attests **at
+  0x0104** (the 60-B shape is not version-exclusive); its extension is **5 × 40-byte
+  bone-attach records** `[3 floats][0 u32][16-byte bone name][strlen][15]`
+  (`Bip01_L_Thigh`, `Bip01_R_Calf`, `Bip01_L_Calf`, …).
+
+**Final format (round 6, commit `efde0c0`).**
+
+```
+block shapes (value-adaptive — both attest under 0x0104 AND 0x0106+):
+  15 dwords (60 B): [scale f32][Y raw][h f32][r f32][0][1][vMax 3f][vMin 3f][t0 t1 more]
+  16 dwords (64 B): as 60 B plus [X raw] between Y and h
+  0x0108 (72 B):    as 64 B plus two flag DWORDs (1, 0) between vMin and the run
+discrimination: X-slot dword 0/1 selects the 16-dword shape (a real height float never
+has bit pattern 0/1); an exact 60-B block forces the 15-dword shape.  Y/X are never
+validated (12.5f attests in Y).
+[t0 t1 more]: t0/t1 map to the world-obj booleans (1, 0 attested); more=1 switches an
+OPAQUE EXTENSION SECTION running to EOF: 8 B / 24 B minimal markers, 120 B prop
+geometry, 200 B = 5 x 40 B bone-attach records.  Skipped positionally — the content
+includes 256/4 DWORDs and arbitrary floats that must NOT be flag-validated — and
+recorded (hasExtensionSections / extensionBytes).
+```
+
+`LoadVer0103Plus()` was rewritten around this; stray bytes after a more=0 block are a hard
+error (the extension must be switched on by more=1).
+
+**Tests** (+641 → **8,362**): TrickBoom raw-Y fixture (h=25.7 / r=3.88 exact bit patterns);
+24-B ext fixture proving the 256/4 DWORDs are not flag-validated; 2 × 40-B bone-record fixture
+(ext=80); 120-B GBOX ext fixture (ext=120, h=20 / r=7); 15-dword + ext fixture; trailing-bytes
+reject; flag-garbage offsets updated for raw Y/X; the 0x0103 fixture moved to the 15-dword shape.
+
+**Verify tool:** dump priority repointed to the post-decode unknown classes (`trailing bytes
+after .chf trailer block`, `.chf world flag out of range`, `.chf bbox flag out of range`);
+tails capped at 128 B (annotation message limit).
+
+**Gates:** phase3j **8,362/0**; ASan+UBSan+LSan clean; verify tool `-Werror` clean; synthetic
+negative fixtures reject with unchanged reasons; authentic-layout 0x0104-in-.rcc end-to-end
+PASS. CI validation: TESTING_CHECKLIST §24.
