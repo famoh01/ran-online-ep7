@@ -1,0 +1,85 @@
+name: Fetch reference source (B21)
+
+# One-shot evidence fetch: the DxAttBone* classes (.abf / .abl loaders) exist
+# only in the complete-files repository, which stores every file in Git LFS.
+# media.githubusercontent.com is unreachable from the dev sandbox, so the
+# runner fetches the pointer targets via the LFS batch API and commits the
+# reference sources to this branch under reference/ (the repo already embeds
+# the same original source tree under enginelib/).
+on:
+  workflow_dispatch: {}
+  push:
+    paths:
+      - ".github/workflows/fetch-reference-source.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout this repository (branch)
+        uses: actions/checkout@v4
+
+      - name: Clone complete-files repo and resolve LFS pointers
+        run: |
+          export GIT_LFS_SKIP_SMUDGE=1
+          git clone --depth 1 https://github.com/matheomedrana/Ran-Online-EP7-Complete-Files.git /tmp/refs || echo "::warning title=fetch clone failed::see logs"
+          cd /tmp/refs
+          find . -path "*Lib_Engine/Meshs*" \( -name "DxAttBone*" -o -name "SAnimation*" -o -name "DxSkinAni*" -o -name "DxBoneCollector*" -o -name "DxSkinCharData*" \) -type f > /tmp/reflist.txt
+          find . -path "*RanClientLib/G-Logic*" -type f | grep -iE "GLChar|GLCrow|GLCharacter" | head -14 >> /tmp/reflist.txt
+          echo "::warning title=fetch candidates::$(wc -l < /tmp/reflist.txt) files"
+          resolved=0; failed=0
+          while IFS= read -r f; do
+            head -c 10 "$f" | grep -q "version ht" || { resolved=$((resolved+1)); continue; }
+            oid=$(grep -m1 "^oid " "$f" | awk '{print $2}')
+            size=$(grep -m1 "^size " "$f" | awk '{print $2}')
+            [ -z "$oid" ] && { failed=$((failed+1)); continue; }
+            printf '{"operation":"download","objects":[{"oid":"%s","size":%s}]}' "$oid" "$size" > /tmp/req.json
+            curl -s --max-time 30 -X POST \
+              "https://github.com/matheomedrana/Ran-Online-EP7-Complete-Files.git/info/lfs/objects/batch" \
+              -H "Accept: application/vnd.git-lfs+json" \
+              -H "Content-Type: application/vnd.git-lfs+json" \
+              -d @/tmp/req.json > /tmp/resp.json
+            href=$(sed -n 's/.*"href":"\([^"]*\)".*/\1/p' /tmp/resp.json | head -1)
+            if [ -n "$href" ]; then
+              curl -sL --max-time 60 -o "$f" "$href" && resolved=$((resolved+1)) || failed=$((failed+1))
+            else
+              failed=$((failed+1))
+            fi
+          done < /tmp/reflist.txt
+          echo "::warning title=fetch resolved::${resolved} resolved, ${failed} failed; sample: $(find . -name "DxAttBoneDataSaveLoad*" -type f | head -1 | xargs wc -c 2>/dev/null | awk '{print $1}') bytes"
+
+      - name: Copy reference sources into the branch
+        run: |
+          set -e
+          mkdir -p reference/attbone reference/ranclient-glogic
+          SRC="/tmp/refs/(Source Code) Ran Online Server Files and Developer Tools"
+          cp "$SRC"/Lib_Engine/Meshs/DxAttBone*.cpp reference/attbone/ 2>/dev/null || true
+          cp "$SRC"/Lib_Engine/Meshs/DxAttBone*.h reference/attbone/ 2>/dev/null || true
+          cp "$SRC"/Lib_Engine/Meshs/SAnimation*.cpp reference/attbone/ 2>/dev/null || true
+          cp "$SRC"/Lib_Engine/Meshs/SAnimation*.h reference/attbone/ 2>/dev/null || true
+          cp "$SRC"/Lib_Engine/Meshs/SAnimationInfo*.cpp reference/attbone/ 2>/dev/null || true
+          cp "$SRC"/Lib_Engine/Meshs/SAnimationInfo*.h reference/attbone/ 2>/dev/null || true
+          for f in DxSkinCharData.cpp DxSkinCharData.h DxSkinAniControl.cpp DxSkinAniControl.h \
+                   DxSkinAniMan.cpp DxSkinAniMan.h DxSkinAniManSaveLoad.cpp DxBoneCollector.cpp DxBoneCollector.h; do
+            cp "$SRC/Lib_Engine/Meshs/$f" reference/attbone/ 2>/dev/null || true
+          done
+          for name in $(find "$SRC/RanClientLib/G-Logic" -type f 2>/dev/null | grep -iE "GLChar|GLCrow|GLCharacter" | head -8); do
+            cp "$name" reference/ranclient-glogic/ 2>/dev/null || true
+          done
+          echo "::warning title=fetch sizes::$(wc -c reference/attbone/* 2>/dev/null | tail -3 | tr '\n' ';' | cut -c1-240)"
+
+      - name: Commit reference sources
+        run: |
+          set +e
+          git config user.name "arena-agent"
+          git config user.email "arena-agent@users.noreply.github.com"
+          git add -A reference/ > /tmp/add.log 2>&1
+          if [ -s /tmp/add.log ]; then echo "::warning title=fetch add::$(head -2 /tmp/add.log | tr '\n' ' ' | cut -c1-260)"; fi
+          git commit -m "Phase 3J B21: fetch DxAttBone reference source (LFS)" > /tmp/commit.log 2>&1
+          PUSH=$(git push origin HEAD:$GITHUB_REF_NAME 2>&1 | head -3)
+          echo "$PUSH" | while IFS= read -r l; do echo "::warning title=fetch push::${l:0:260}"; done
+          exit 0

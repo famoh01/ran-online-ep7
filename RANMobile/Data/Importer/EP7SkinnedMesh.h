@@ -141,4 +141,33 @@ bool SkinVerticesCPU(const EP7SkinnedMesh& mesh,
                      std::vector<float>& outPositions,
                      std::vector<float>& outNormals);
 
+// ---------------------------------------------------------------------------
+// B18: per-vertex GPU skinning streams.
+//
+// The authentic GPU skinning path (DxSkinMesh9::m_SkinningMethod = D3DINDEXEDHLSLVS,
+// DxSkinMesh9.cpp:18) binds per-vertex 4 float blend weights + 4 float blend
+// indices (DxSkinMesh9_HLSL.cpp:95-106: BLENDWEIGHT FLOAT4 at offset 44,
+// BLENDINDICES FLOAT4 at offset 60).  D3DX derives those streams from the
+// per-bone SkinWeights lists when it converts a mesh to indexed blending; the
+// mobile equivalent builds them from EP7SkinnedMesh::bones with the exact
+// influence-construction rules the B16-verified CPU path uses (bone-list order,
+// 4-influence cap, out-of-range vertex references skipped).
+//
+// Semantics that the GPU vertex shader must reproduce (skin_gpu.glsl parity with
+// SkinVerticesCPU):
+//   * weighted sum of per-influence TransformCoord (row-vector, w-divide),
+//   * weighted sum of per-influence TransformNormal (translation dropped),
+//   * weight-sum renormalization when |sum - 1| > 1e-4,
+//   * empty influence list -> bind-position passthrough (encoded as all-zero
+//     weights; the shader detects the zero sum and passes the bind vertex).
+// ---------------------------------------------------------------------------
+struct EP7GpuSkinStreams {
+    std::vector<float> boneIndices;   // 4 per vertex, piece bone-list index
+    std::vector<float> boneWeights;   // 4 per vertex, raw file weights
+    uint32_t vertexCount = 0;
+    bool valid = false;               // false: mesh has no decodable geometry
+};
+
+EP7GpuSkinStreams BuildGpuSkinStreams(const EP7SkinnedMesh& mesh);
+
 }  // namespace RANMobile

@@ -623,4 +623,46 @@ bool SkinVerticesCPU(const EP7SkinnedMesh& mesh,
     return true;
 }
 
+EP7GpuSkinStreams BuildGpuSkinStreams(const EP7SkinnedMesh& mesh) {
+    EP7GpuSkinStreams out;
+    if (!mesh.valid || !mesh.geometryDecoded || mesh.vertexCount == 0) return out;
+    if (mesh.positions.size() < static_cast<size_t>(mesh.vertexCount) * 3) return out;
+
+    out.vertexCount = mesh.vertexCount;
+    out.boneIndices.assign(static_cast<size_t>(mesh.vertexCount) * 4, 0.0f);
+    out.boneWeights.assign(static_cast<size_t>(mesh.vertexCount) * 4, 0.0f);
+
+    // Identical influence construction to SkinVerticesCPU (bone-list order, 4-influence
+    // cap = the HLSL FLOAT4 bind, OOB vertex references skipped).
+    struct Influence {
+        int32_t bone = -1;
+        float weight = 0.0f;
+    };
+    std::vector<std::vector<Influence>> perVertex(mesh.vertexCount);
+    for (size_t b = 0; b < mesh.bones.size(); ++b) {
+        const auto& bone = mesh.bones[b];
+        for (size_t k = 0; k < bone.vertices.size(); ++k) {
+            const uint32_t v = bone.vertices[k];
+            if (v >= mesh.vertexCount) continue;
+            auto& list = perVertex[v];
+            if (list.size() >= mesh.MaxInfluencesPerVertex()) continue;
+            list.push_back({static_cast<int32_t>(b), bone.weights[k]});
+        }
+    }
+
+    for (uint32_t v = 0; v < mesh.vertexCount; ++v) {
+        const auto& list = perVertex[v];
+        for (size_t i = 0; i < list.size() && i < 4; ++i) {
+            out.boneIndices[static_cast<size_t>(v) * 4 + i] = static_cast<float>(list[i].bone);
+            out.boneWeights[static_cast<size_t>(v) * 4 + i] = list[i].weight;
+        }
+        // Vertices with no influences keep all-zero weights: the GPU shader (and any
+        // consumer) treats a zero weight sum as "no skinning" and passes the bind
+        // vertex through, exactly like SkinVerticesCPU's empty-list branch.
+    }
+
+    out.valid = true;
+    return out;
+}
+
 }  // namespace RANMobile

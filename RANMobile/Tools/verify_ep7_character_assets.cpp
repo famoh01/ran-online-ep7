@@ -38,7 +38,10 @@
 //
 #include <algorithm>
 #include <cctype>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <cstdio>
+#include <cstdlib>
 #include <map>
 #include <cstring>
 #include <string>
@@ -50,6 +53,8 @@
 #include "../Data/Importer/EP7Skeleton.h"
 #include "../Data/Importer/EP7SkinPiece.h"
 #include "../Data/Importer/EP7SkinnedMesh.h"
+#include "../Data/Importer/EP7TextureDecoder.h"
+#include "../Engine/Scene/EP7CharacterScene.h"
 
 namespace {
 
@@ -121,6 +126,7 @@ struct Counters {
     uint32_t cpsTotal = 0, cpsOk = 0;
     uint32_t xTotal = 0, xSkeletonOk = 0, xMeshOk = 0;
     uint32_t binTotal = 0, binOk = 0, binUnsupported = 0;
+    uint32_t binInvalidHeader = 0, binUnrecognizedType = 0, binParserRejected = 0;
     uint32_t cfgTotal = 0, cfgOk = 0, cfgUnsupported = 0;
     uint32_t extractFailures = 0;
     uint32_t packOk = 0, packFailed = 0;   // entries inside .rcc/.zip (engine-authoritative)
@@ -155,6 +161,182 @@ void ReportOutcome(const char* kind, const std::string& path, Outcome outcome,
     if (outcome == Outcome::Unsupported) ++g_unsupportedReasons[std::string(kind) + ": " + ReasonKey(detail)];
 }
 
+// ---------------------------------------------------------------------------
+// B18: entry cache + texture evidence.  Additive only — the B11-B17 outcome model
+// above is untouched.  Pack entries of character-relevant formats (and shipped
+// textures) are cached so the B18 deep-dive can load ONE authentic character and
+// resolve its .cps material texture names the way TextureManager does.
+// ---------------------------------------------------------------------------
+struct B18Evidence {
+    std::map<std::string, std::vector<uint8_t>> entries;   // lowercase entry name -> bytes
+    size_t cacheBytes = 0;
+    bool cacheFull = false;
+    uint32_t mtfTotal = 0, mtfDecryptOk = 0, mtfDecodeOk = 0;
+    uint32_t ddsTotal = 0, ddsOk = 0;
+    std::vector<std::string> chfNames;                     // for the deep-dive pick
+    static constexpr size_t kCacheCap = 160u * 1024 * 1024;
+};
+B18Evidence g_b18;
+
+void B18RememberEntry(const std::string& name, const std::vector<uint8_t>& bytes) {
+    // B19 fix: small character-data files (.chf/.cps/.x/.abf/.bin/.cfg) are always
+    // cached regardless of the cap — SkinObject.rcc's big textures exhausted the
+    // 160 MB budget before the first .chf was seen, leaving the bundle-plan and
+    // deep-dive without a character.  The cap now only throttles bulk textures.
+    const bool smallMeta = EndsWithNoCase(name, ".chf") || EndsWithNoCase(name, ".cps") ||
+                           EndsWithNoCase(name, ".x") || EndsWithNoCase(name, ".abf") ||
+                           EndsWithNoCase(name, ".bin") || EndsWithNoCase(name, ".cfg");
+    if (!smallMeta) {
+        if (g_b18.cacheFull) return;
+        if (g_b18.cacheBytes + bytes.size() > B18Evidence::kCacheCap) {
+            g_b18.cacheFull = true;
+            return;
+        }
+    }
+    std::string lower;
+    lower.reserve(name.size());
+    for (char c : name) lower.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+    const size_t slash = lower.find_last_of('/');
+    if (slash != std::string::npos) lower = lower.substr(slash + 1);
+    if (g_b18.entries.find(lower) != g_b18.entries.end()) return;
+    g_b18.entries[lower] = bytes;
+    g_b18.cacheBytes += bytes.size();
+}
+
+bool B18Resolve(const std::string& name, std::vector<uint8_t>& out) {
+    std::string lower;
+    lower.reserve(name.size());
+    for (char c : name) lower.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+    const auto it = g_b18.entries.find(lower);
+    if (it == g_b18.entries.end()) return false;
+    out = it->second;
+    return true;
+}
+
+// Decrypt+decode one texture buffer using the CMemoryTexture naming rules.
+bool B18DecodeTexture(const std::string& name, const std::vector<uint8_t>& bytes,
+                      uint32_t& outW, uint32_t& outH, std::string& outFmt) {
+    std::vector<uint8_t> raw;
+    int fileType = -1;
+    if (EndsWithNoCase(name, ".mtf")) {
+        if (!RANMobile::EP7TextureDecoder::DecryptMTF(bytes, raw, fileType)) return false;
+    } else {
+        raw = bytes;
+    }
+    RANMobile::DecodedTexture tex;
+    if (raw.size() >= 4 && std::memcmp(raw.data(), "DDS ", 4) == 0) {
+        outFmt = "dds";
+        tex = RANMobile::EP7TextureDecoder::DecodeDDS(raw);
+    } else if (fileType == 1) {
+        outFmt = "tga(mtf)";
+        tex = RANMobile::EP7TextureDecoder::DecodeTGA(raw);
+    } else {
+        outFmt = "tga";
+        tex = RANMobile::EP7TextureDecoder::DecodeTGA(raw);
+        if (!tex.valid) {
+            outFmt = "dds?";
+            tex = RANMobile::EP7TextureDecoder::DecodeDDS(raw);
+        }
+    }
+    if (!tex.valid) return false;
+    outW = tex.width;
+    outH = tex.height;
+    return true;
+}
+
+// B20: unsupported-version census (see VerifySingleAsset .chf branch).
+struct ChfVersionExample {
+    std::string name;
+    size_t size = 0;
+    std::string hexHead;  // payload head from file offset 132, hex
+    std::string hexTail;  // last 160 file bytes, hex
+    std::vector<uint8_t> full;  // kept only for the globally smallest example
+};
+std::map<uint32_t, int> g_chfUnsupportedVersions;
+// One SMALLEST example per version: the tail (vs the head) reveals what
+// follows the piece slots -- fixed-width skeleton buffer (0x0100-style) vs
+// length-prefixed (0x0101-style), anim section, and any new trailing fields.
+std::map<uint32_t, ChfVersionExample> g_chfUnsupportedExamples;
+// The globally smallest unsupported file is dumped in full (chunks).
+std::pair<uint32_t, ChfVersionExample> g_chfSmallest{0, ChfVersionExample{}};
+
+// B20 round 3: same evidence technique for .chf files whose VERSION parses but
+// whose payload fails (trailer-block variants, flag-range rejects).  Keyed by
+// the exact parser error; per reason keep the smallest example (head + tail +
+// full bytes for the globally smallest failed file).
+std::map<std::string, int> g_chfFailCounts;
+struct ChfFailExample {
+    std::string name;
+    size_t size = 0;
+    uint32_t version = 0;
+    std::string error;  // full parser error (may carry the table offset)
+    std::string hexHead;
+    std::string hexTail;
+    std::vector<uint8_t> full;
+};
+
+// The bone-table error embeds the table's byte offset so the dump can target
+// the middle of a large file; the census must aggregate over the base reason.
+std::string NormalizeChfReason(const std::string& err) {
+    const size_t cut = err.find(" (table starts at ");
+    return cut == std::string::npos ? err : err.substr(0, cut);
+}
+std::map<std::string, ChfFailExample> g_chfFailExamples;
+std::pair<std::string, ChfFailExample> g_chfFailSmallest;
+
+// B21: same evidence technique for the three downstream-asset classes the
+// census flags -- version-rejected .cps (info.fileVersion recorded pre-gate),
+// failing .skt/.abf skeletons, and the 0x00000200 .bin container class.
+struct DownstreamExample {
+    std::string name;
+    size_t size = 0;
+    uint32_t version = 0;
+    std::string error;
+    std::string hexHead;   // first bytes (type block + version area)
+    std::string hexTail;   // last bytes (trailing structure)
+    std::vector<uint8_t> full;  // kept for the globally smallest example only
+};
+std::map<uint32_t, int> g_cpsUnsupportedVersions;
+std::map<uint32_t, DownstreamExample> g_cpsUnsupportedExamples;
+std::pair<uint32_t, DownstreamExample> g_cpsSmallest{0, DownstreamExample{}};
+std::map<std::string, int> g_skelFailReasons;
+std::map<std::string, DownstreamExample> g_skelFailExamples;
+std::pair<std::string, DownstreamExample> g_skelSmallest{"", DownstreamExample{}};
+std::map<uint32_t, int> g_binUnsupportedVersions;
+std::map<uint32_t, DownstreamExample> g_binUnsupportedExamples;
+std::pair<uint32_t, DownstreamExample> g_binSmallest{0, DownstreamExample{}};
+
+void RecordDownstreamExample(std::map<uint32_t, DownstreamExample>& byKey,
+                             std::pair<uint32_t, DownstreamExample>& smallest,
+                             uint32_t key, const std::string& path,
+                             const std::vector<uint8_t>& bytes, const std::string& error) {
+    DownstreamExample& ex = byKey[key];
+    if (ex.size == 0 || bytes.size() < ex.size) {
+        ex.name = path;
+        ex.size = bytes.size();
+        ex.version = key;
+        ex.error = error;
+        auto toHex = [](const uint8_t* d, size_t n) {
+            static const char* hexd = "0123456789abcdef";
+            std::string hx;
+            hx.reserve(n * 2);
+            for (size_t i = 0; i < n; ++i) {
+                hx.push_back(hexd[d[i] >> 4]);
+                hx.push_back(hexd[d[i] & 0xF]);
+            }
+            return hx;
+        };
+        const size_t headTake = std::min<size_t>(256, bytes.size());
+        ex.hexHead = toHex(bytes.data(), headTake);
+        const size_t tailTake = std::min<size_t>(96, bytes.size());
+        ex.hexTail = toHex(bytes.data() + bytes.size() - tailTake, tailTake);
+        ex.full = bytes;  // smallest example per key: dumped by the summary
+        if (smallest.first == key || smallest.second.size == 0 || bytes.size() < smallest.second.size) {
+            smallest = {key, ex};
+        }
+    }
+}
+
 }  // namespace
 
 // Verifies one asset buffer. `path` is only used for reporting (it may be
@@ -171,8 +353,90 @@ Outcome VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& b
             std::snprintf(detail, sizeof(detail), "v0x%04X pieces=%u skeleton=%s anims=%zu", info.version,
                           info.PieceCount(), info.skeleton.c_str(), info.animations.size());
             ReportOutcome("chf", path, Outcome::Pass, detail);
+            g_b18.chfNames.push_back(path);
         } else {
             ReportOutcome("chf", path, Outcome::Fail, info.error);
+            // B20 round 4: evidence for payload-level failures ONLY (the
+            // version is known and admitted, but the layout diverged from the
+            // attested smallest examples — extra sections the four smallest
+            // files do not carry).  Version rejections are handled by the
+            // version census above and must not consume this budget.  Same
+            // smallest-example technique: per reason keep head+tail; the
+            // globally smallest failed file is dumped in full.
+            if (info.error.find("unsupported .chf version") == std::string::npos) {
+                const std::string reason = NormalizeChfReason(info.error);
+                ++g_chfFailCounts[reason];
+            {
+                ChfFailExample& ex = g_chfFailExamples[reason];
+                if (ex.size == 0 || bytes.size() < ex.size) {
+                    ex.name = path;
+                    ex.size = bytes.size();
+                    ex.version = info.version;
+                    ex.error = info.error;
+                    auto toHex = [](const uint8_t* d, size_t n) {
+                        static const char* hexd = "0123456789abcdef";
+                        std::string hx;
+                        hx.reserve(n * 2);
+                        for (size_t i = 0; i < n; ++i) {
+                            hx.push_back(hexd[d[i] >> 4]);
+                            hx.push_back(hexd[d[i] & 0xF]);
+                        }
+                        return hx;
+                    };
+                    const size_t headTake = std::min<size_t>(188, bytes.size() > 132 ? bytes.size() - 132 : 0);
+                    ex.hexHead = toHex(bytes.data() + 132, headTake);
+                    const size_t tailTake = std::min<size_t>(128, bytes.size());
+                    ex.hexTail = toHex(bytes.data() + bytes.size() - tailTake, tailTake);
+                    ex.full = bytes;
+                        if (g_chfFailSmallest.second.size == 0 || bytes.size() < g_chfFailSmallest.second.size) {
+                            g_chfFailSmallest = {info.error, ex};
+                        }
+                    }
+                }
+            }
+            // B20: census of the versions the pack actually ships. `info.version`
+            // is recorded by the parser BEFORE the unsupported-version gate, so
+            // this is the real on-disk value. For the first example of each
+            // distinct version, keep name + size + a hex dump of the payload
+            // head (version DWORD + the first 72 payload bytes at file offset
+            // 132) -- the layout evidence needed to extend the parser without
+            // guessing. Bytes are raw pack-entry bytes (this pack stores entries
+            // unencoded; every working format classification proves that).
+            if (info.error.find("unsupported .chf version") != std::string::npos) {
+                ++g_chfUnsupportedVersions[info.version];
+                auto& ex = g_chfUnsupportedExamples[info.version];
+                if (ex.size == 0 || bytes.size() < ex.size) {
+                    ex.name = path;
+                    ex.size = bytes.size();
+                    ex.full = bytes;  // replaced by smaller examples; freed on swap-out
+                    auto toHex = [](const uint8_t* d, size_t n) {
+                        static const char* hexd = "0123456789abcdef";
+                        std::string hx;
+                        hx.reserve(n * 2);
+                        for (size_t i = 0; i < n; ++i) {
+                            hx.push_back(hexd[d[i] >> 4]);
+                            hx.push_back(hexd[d[i] & 0xF]);
+                        }
+                        return hx;
+                    };
+                    // Head: payload from file offset 132 (version DWORD + first
+                    // 188 payload bytes) -- aligns an unknown version's leading
+                    // fields against the known 0x0100-0x0102 templates.
+                    const size_t take = std::min<size_t>(188, bytes.size() > 132 ? bytes.size() - 132 : 0);
+                    ex.hexHead = toHex(bytes.data() + 132, take);
+                    // Tail: the LAST 160 bytes of the file -- reveals the section
+                    // order after the piece slots (skeleton/anims/bbox) and any
+                    // fields the newer versions append.
+                    const size_t tailTake = std::min<size_t>(160, bytes.size());
+                    ex.hexTail = toHex(bytes.data() + bytes.size() - tailTake, tailTake);
+                    if (g_chfSmallest.second.size == 0 || bytes.size() < g_chfSmallest.second.size) {
+                        g_chfSmallest = {info.version, ex};
+                    } else {
+                        ex.full.clear();
+                        ex.full.shrink_to_fit();
+                    }
+                }
+            }
         }
         return info.valid ? Outcome::Pass : Outcome::Fail;
     }
@@ -188,6 +452,13 @@ Outcome VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& b
                           info.skeletonFile.c_str(), info.materials.size(), info.traces.size());
             ReportOutcome("cps", path, Outcome::Pass, detail);
         } else {
+            // B21: version-rejected .cps feed the downstream census (the raw
+            // on-disk version is recorded pre-gate by the parser).
+            if (info.error.find("unsupported .cps version") == 0) {
+                RecordDownstreamExample(g_cpsUnsupportedExamples, g_cpsSmallest, info.fileVersion,
+                                        path, bytes, info.error);
+                ++g_cpsUnsupportedVersions[info.fileVersion];
+            }
             ReportOutcome("cps", path, Outcome::Fail, info.error);
         }
         return info.valid ? Outcome::Pass : Outcome::Fail;
@@ -203,6 +474,35 @@ Outcome VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& b
             std::snprintf(detail, sizeof(detail), "bones=%zu", skeleton.BoneCount());
             ReportOutcome("skeleton", path, Outcome::Pass, detail);
         } else {
+            // B21: the failure census keys on the base reason; heads show
+            // whether the payload is text .x, binary .x, or another container.
+            const size_t cut = skeleton.Error().find(":");
+            const std::string reason = cut == std::string::npos ? skeleton.Error() : skeleton.Error().substr(0, cut);
+            ++g_skelFailReasons[reason];
+            DownstreamExample& ex = g_skelFailExamples[reason];
+            if (ex.size == 0 || bytes.size() < ex.size) {
+                ex.name = path;
+                ex.size = bytes.size();
+                ex.error = skeleton.Error();
+                auto toHex = [](const uint8_t* d, size_t n) {
+                    static const char* hexd = "0123456789abcdef";
+                    std::string hx;
+                    hx.reserve(n * 2);
+                    for (size_t i = 0; i < n; ++i) {
+                        hx.push_back(hexd[d[i] >> 4]);
+                        hx.push_back(hexd[d[i] & 0xF]);
+                    }
+                    return hx;
+                };
+                const size_t headTake = std::min<size_t>(256, bytes.size());
+                ex.hexHead = toHex(bytes.data(), headTake);
+                const size_t tailTake = std::min<size_t>(96, bytes.size());
+                ex.hexTail = toHex(bytes.data() + bytes.size() - tailTake, tailTake);
+                ex.full = bytes;  // full dump for small files (<= 800 B)
+                if (g_skelSmallest.second.size == 0 || bytes.size() < g_skelSmallest.second.size) {
+                    g_skelSmallest = {reason, ex};
+                }
+            }
             ReportOutcome("skeleton", path, Outcome::Fail, skeleton.Error());
         }
         return ok ? Outcome::Pass : Outcome::Fail;
@@ -239,38 +539,59 @@ Outcome VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& b
 
     if (EndsWithNoCase(ext, ".bin")) {
         ++counters.binTotal;
-        // A .bin that begins with printable ASCII is not an EP7 basestream container at all
-        // (the client's own containers start with a small version DWORD). Name the magic so
-        // an unknown format is self-explanatory rather than just "unsupported version".
-        if (bytes.size() >= 4 && std::isprint(bytes[0]) && std::isprint(bytes[1]) &&
-            std::isprint(bytes[2]) && std::isprint(bytes[3])) {
-            char magic[5] = {static_cast<char>(bytes[0]), static_cast<char>(bytes[1]),
-                             static_cast<char>(bytes[2]), static_cast<char>(bytes[3]), 0};
-            char detail[192];
-            std::snprintf(detail, sizeof(detail),
-                          "not an EP7 basestream container — starts with magic '%s' (0x%02X%02X%02X%02X); "
-                          "the engine only loads SAnimContainer basestreams from Animation.rcc",
-                          magic, bytes[0], bytes[1], bytes[2], bytes[3]);
-            // A recognisable-but-undocumented container. This is B11 territory: the bytes
-            // are real, the format has no definition in this repository. Counting it as a
-            // FAILURE would report a missing format as a broken parser; counting it as a
-            // PASS would be a lie. It is UNSUPPORTED.
-            ReportOutcome("bin", path, Outcome::Unsupported, detail);
-            return Outcome::Unsupported;
+        // SAnimation.cpp:22,1573-1617: SetFileType("AnimContainer", VERSION).
+        // SerialFile.cpp:57-65: 128 type bytes, then the LE version DWORD.
+        // Printable ASCII is expected here, not evidence of an unsupported format.
+        // Validate identity here: ParseContainer reads but does not validate the type.
+        // Bytes after the NUL in the 128-byte field need not be zero (StringCchCopy).
+        constexpr char type[] = "AnimContainer";
+        std::string fingerprint;
+        for (size_t i = 0; i < std::min<size_t>(bytes.size(), 16); ++i) {
+            char hex[4];
+            std::snprintf(hex, sizeof(hex), "%02X", bytes[i]);
+            fingerprint += hex;
         }
-        // Try with the basestream header first (CSerialFile writes one), then without.
-        RANMobile::EP7AnimClip clip = RANMobile::EP7AnimationReader::ParseContainer(bytes, true, false);
-        if (!clip.valid) clip = RANMobile::EP7AnimationReader::ParseContainer(bytes, false, false);
+        const std::string diagnostic = " — prefix16=" + fingerprint +
+                                       " size=" + std::to_string(bytes.size());
+        if (bytes.size() < RANMobile::ep7byte::Stream::kHeaderSize) {
+            ++counters.binInvalidHeader;
+            ReportOutcome("bin", path, Outcome::Fail, "invalid/truncated container header" + diagnostic);
+            return Outcome::Fail;
+        }
+        if (std::memcmp(bytes.data(), type, sizeof(type)) != 0) {
+            ++counters.binUnrecognizedType;
+            // Could be foreign data, corruption, or an undocumented encoding. The bytes
+            // alone do not prove which; never invent an unsupported container version.
+            ReportOutcome("bin", path, Outcome::Fail, "unrecognized container type (foreign or damaged)" + diagnostic);
+            return Outcome::Fail;
+        }
+        // No headerless retry: it can mask a recognized header's real version/error.
+        const RANMobile::EP7AnimClip clip =
+            RANMobile::EP7AnimationReader::ParseContainer(bytes, true, false);
         if (clip.valid) {
             ++counters.binOk;
             char detail[256];
             std::snprintf(detail, sizeof(detail), "v0x%04X mainTracks=%zu upBodyTracks=%zu maxKeyTime=%u",
                           clip.version, clip.mainTracks.size(), clip.upBodyTracks.size(), clip.MaxKeyTime());
             ReportOutcome("bin", path, Outcome::Pass, detail);
-        } else {
-            ReportOutcome("bin", path, Outcome::Fail, clip.error);
+            return Outcome::Pass;
         }
-        return clip.valid ? Outcome::Pass : Outcome::Fail;
+        // Use the parser's explicit version rejection, not a guessed byte signature.
+        if (clip.error.rfind("unsupported animation container version ", 0) == 0) {
+            ++counters.binUnsupported;
+            // B21: dump the type block + version area of the smallest example
+            // per version so the real container can be identified.
+            RecordDownstreamExample(g_binUnsupportedExamples, g_binSmallest, clip.version, path,
+                                    bytes, clip.error);
+            ++g_binUnsupportedVersions[clip.version];
+            ReportOutcome("bin", path, Outcome::Unsupported, clip.error + diagnostic);
+            return Outcome::Unsupported;
+        }
+        ++counters.binParserRejected;
+        // A rejected payload may be malformed OR expose a reader defect. Do not claim
+        // to distinguish those without further evidence. Preserve the actual error.
+        ReportOutcome("bin", path, Outcome::Fail, "recognized container parser rejection: " + clip.error + diagnostic);
+        return Outcome::Fail;
     }
 
     if (EndsWithNoCase(ext, ".cfg")) {
@@ -306,6 +627,33 @@ bool IsArchiveName(const std::string& name) {
     return EndsWithNoCase(name, ".rcc") || EndsWithNoCase(name, ".zip");
 }
 
+// One full-file dump as 188-byte hex chunk lines (annotation-budget sized).
+void DumpChfFile(const char* tag, uint32_t version, const std::string& name, size_t size,
+                 const std::vector<uint8_t>& full, size_t start = 0, int maxChunks = 10) {
+    if (start != 0) {
+        std::printf("  %s-file: v0x%04X %s size=%zu start=%zu\n", tag, version, name.c_str(), size,
+                    start);
+    } else {
+        std::printf("  %s-file: v0x%04X %s size=%zu\n", tag, version, name.c_str(), size);
+    }
+    static const char* hexd = "0123456789abcdef";
+    const size_t chunk = 188;
+    size_t off = start;
+    int idx = 0;
+    while (off < full.size() && idx < maxChunks) {
+        const size_t n = std::min(chunk, full.size() - off);
+        std::string hx;
+        hx.reserve(n * 2);
+        for (size_t i = 0; i < n; ++i) {
+            hx.push_back(hexd[full[off + i] >> 4]);
+            hx.push_back(hexd[full[off + i] & 0xF]);
+        }
+        std::printf("  %s: %d %s\n", tag, idx, hx.c_str());
+        off += n;
+        ++idx;
+    }
+}
+
 int main(int argc, char** argv) {
     if (argc < 2) {
         std::fprintf(stderr,
@@ -317,9 +665,16 @@ int main(int argc, char** argv) {
 
     const std::string root = argv[1];
     size_t maxFiles = 20000;
+    std::string bundleDir;
+    std::string bundleChf;
+    bool bundleQuick = false;
     for (int i = 2; i < argc; ++i) {
         if (std::strcmp(argv[i], "--max-files") == 0 && i + 1 < argc) {
             maxFiles = static_cast<size_t>(std::strtoul(argv[++i], nullptr, 10));
+        } else if (std::strcmp(argv[i], "--bundle-plan") == 0 && i + 2 < argc) {
+            bundleDir = argv[++i];
+            bundleChf = argv[++i];
+            bundleQuick = true;
         }
     }
 
@@ -377,6 +732,8 @@ int main(int argc, char** argv) {
         }
     }
 
+    const Counters looseSnapshot = counters;
+
     // The authentic assets live inside these packs (GLOGIC::InitFile).
     for (const auto& archivePath : archives) {
         std::printf("\n--- archive %s\n", archivePath.c_str());
@@ -393,13 +750,49 @@ int main(int argc, char** argv) {
 
         size_t checked = 0;
         for (const auto& entry : archive.Entries()) {
-            if (!IsCharacterAssetName(entry.name)) continue;
+            // B19 FIX: shipped textures (.mtf/.dds) must be extracted and cached too —
+            // they sit OUTSIDE the character-asset name filter.  The B18 hook lived
+            // after the filter, so texture evidence and the texture cache stayed empty.
+            const bool isTexture = EndsWithNoCase(entry.name, ".mtf") || EndsWithNoCase(entry.name, ".dds");
+            if (!isTexture && !IsCharacterAssetName(entry.name)) continue;
+            if (bundleQuick) {
+                // Bundle mode walks metadata only: extract what the bundle can use
+                // (textures + chf, which drive the selection) and skip full
+                // classification — the diagnostic job runs it separately.
+                if (!isTexture && !EndsWithNoCase(entry.name, ".chf")) continue;
+                std::vector<uint8_t> bytes;
+                if (!archive.Extract(entry, bytes)) continue;
+                if (isTexture) {
+                    ++g_b18.mtfTotal;
+                    std::vector<uint8_t> raw;
+                    int fileType = -1;
+                    if (RANMobile::EP7TextureDecoder::DecryptMTF(bytes, raw, fileType)) {
+                        ++g_b18.mtfDecryptOk;
+                        uint32_t tw = 0;
+                        uint32_t th = 0;
+                        std::string fmt;
+                        if (B18DecodeTexture(entry.name, bytes, tw, th, fmt)) ++g_b18.mtfDecodeOk;
+                    }
+                }
+                B18RememberEntry(entry.name, bytes);
+                continue;
+            }
             if (checked >= maxFiles) break;
             ++checked;
 
             const std::string label = archivePath + ":" + entry.name;
             std::vector<uint8_t> entryBytes;
             if (!archive.Extract(entry, entryBytes)) {
+                if (isTexture) {
+                    // Textures are outside the outcome model: an unextractable texture
+                    // is logged and skipped, never counted as a pack failure.
+                    char detail[256];
+                    std::snprintf(detail, sizeof(detail),
+                                  "could not extract texture (method=%u flags=0x%04X csize=%u usize=%u)",
+                                  entry.method, entry.flags, entry.compressedSize, entry.uncompressedSize);
+                    ReportOutcome("extract", label, Outcome::Fail, detail);
+                    continue;
+                }
                 // Report the method/flag/size triple: if the shipped packs ever use zip64,
                 // AES or a method other than stored/deflate, this line says so instead of
                 // leaving a mystery.
@@ -416,6 +809,32 @@ int main(int argc, char** argv) {
                 ++counters.packFailed;
                 continue;
             }
+            // B18: shipped textures (.mtf/.dds) are classified additively — they are
+            // not part of the B11-B17 character-entry outcome model, but the evidence
+            // (decrypt/decode rates) and the bytes are kept for the deep-dive below.
+            if (isTexture) {
+                if (EndsWithNoCase(entry.name, ".mtf")) {
+                    ++g_b18.mtfTotal;
+                    std::vector<uint8_t> raw;
+                    int fileType = -1;
+                    if (RANMobile::EP7TextureDecoder::DecryptMTF(entryBytes, raw, fileType)) {
+                        ++g_b18.mtfDecryptOk;
+                        uint32_t tw = 0;
+                        uint32_t th = 0;
+                        std::string fmt;
+                        if (B18DecodeTexture(entry.name, entryBytes, tw, th, fmt)) ++g_b18.mtfDecodeOk;
+                    }
+                } else {
+                    ++g_b18.ddsTotal;
+                    uint32_t tw = 0;
+                    uint32_t th = 0;
+                    std::string fmt;
+                    if (B18DecodeTexture(entry.name, entryBytes, tw, th, fmt)) ++g_b18.ddsOk;
+                }
+                B18RememberEntry(entry.name, entryBytes);
+                continue;
+            }
+            B18RememberEntry(entry.name, entryBytes);
             switch (VerifySingleAsset(label, entryBytes, counters)) {
                 case Outcome::Pass: ++counters.packOk; break;
                 case Outcome::Fail: ++counters.packFailed; break;
@@ -425,6 +844,255 @@ int main(int argc, char** argv) {
         if (checked == 0) std::printf("     (no character assets inside)\n");
     }
 
+    // ---------------------------------------------------------------------------
+    // B19 bundle-plan: write ONE authentic character's dependency set (chf + cps +
+    // x + textures, exactly what the loader/resolver requested) to a directory for
+    // APK bundling.  Runs only when --bundle-plan is given; exit code is unchanged
+    // (a bundle failure is printed, not turned into a verdict change).
+    // ---------------------------------------------------------------------------
+    if (!bundleDir.empty()) {
+        // Create the output directory (best effort — CI pre-creates it too).
+#ifdef _WIN32
+        std::system(("mkdir " + bundleDir).c_str());
+#else
+        mkdir(bundleDir.c_str(), 0777);
+#endif
+        std::string chfName;
+        for (const auto& kv : g_b18.entries) {
+            if (!EndsWithNoCase(kv.first, ".chf")) continue;
+            if (kv.first.find(bundleChf) == std::string::npos) continue;
+            chfName = kv.first;
+            break;
+        }
+        if (chfName.empty()) {
+            std::printf("\nbundle-plan: no .chf matching '%s' found in packs (cached entries: "
+                        "%zu, cacheBytes: %zu, cacheFull: %d)\n",
+                        bundleChf.c_str(), g_b18.entries.size(), g_b18.cacheBytes,
+                        g_b18.cacheFull ? 1 : 0);
+        } else {
+            std::map<std::string, std::vector<uint8_t>> written;
+            std::vector<std::string> requestedOrder;
+            std::pair<std::map<std::string, std::vector<uint8_t>>*, std::vector<std::string>*>
+                bundleCtx{&written, &requestedOrder};
+            RANMobile::EP7CharacterLoader loader;
+            loader.SetResolver([](void* ud, const std::string& name, std::vector<uint8_t>& out) {
+                auto* ctx = static_cast<std::pair<std::map<std::string, std::vector<uint8_t>>*,
+                                                  std::vector<std::string>*>*>(ud);
+                if (B18Resolve(name, out)) {
+                    (*ctx->first)[name] = out;
+                    ctx->second->push_back(name);
+                    return true;
+                }
+                ctx->second->push_back(name);
+                return false;
+            }, &bundleCtx);
+            std::vector<uint8_t> chfBytes;
+            if (B18Resolve(chfName, chfBytes)) {
+                written[chfName] = chfBytes;
+                requestedOrder.push_back(chfName);
+                const RANMobile::EP7CharacterScene::AssetPtr asset =
+                    std::make_shared<RANMobile::EP7CharacterAsset>(
+                        loader.LoadCharacter(chfBytes, false));
+                std::printf("bundle-plan: chf '%s' loaded=%d pieces=%u\n", chfName.c_str(),
+                            asset->loaded ? 1 : 0, asset->pieceCount);
+                // Texture names via the production ladder (cps materials + .x subsets).
+                // B19 FIX: pieces is EMPTY when the .chf did not load (e.g. the
+                // documented unsupported-version gap) — indexing it without the
+                // loaded check was an out-of-bounds read (segfault).
+                for (uint32_t slot = 0;
+                     asset->loaded && slot < RANMobile::kEP7PieceSize; ++slot) {
+                    const RANMobile::EP7CharacterPiece& piece = asset->pieces[slot];
+                    if (!piece.loaded) continue;
+                    std::map<std::string, int> names;
+                    for (const auto& mat : piece.info.materials) {
+                        if (!mat.texture.empty()) names[mat.texture] = 1;
+                    }
+                    for (const auto& subset : piece.mesh.subsets) {
+                        if (!subset.texture.empty()) names[subset.texture] = 2;
+                    }
+                    for (const auto& kv : names) {
+                        std::vector<uint8_t> bytes;
+                        std::string hit;
+                        const std::string& n = kv.first;
+                        if (B18Resolve(n, bytes)) hit = n;
+                        const size_t dot = n.find_last_of('.');
+                        if (hit.empty() && dot != std::string::npos &&
+                            B18Resolve(n.substr(0, dot) + ".mtf", bytes)) {
+                            hit = n.substr(0, dot) + ".mtf";
+                        }
+                        if (hit.empty() && B18Resolve(n + ".mtf", bytes)) hit = n + ".mtf";
+                        if (!hit.empty() && written.find(hit) == written.end()) {
+                            written[hit] = bytes;
+                            requestedOrder.push_back(hit);
+                        }
+                    }
+                }
+                // B19: the SkinObject.rcc .chf population is of parser-unsupported
+                // versions (documented B11 gap), so a loadable character normally does
+                // not exist and the loader records no material texture names.  Bundle
+                // the three smallest shipped textures anyway so the emulator harness
+                // can render ORIGINAL client texture bytes through the GPU pipeline.
+                {
+                    std::vector<std::pair<size_t, std::string>> texSizes;
+                    for (const auto& kv : g_b18.entries) {
+                        if (!EndsWithNoCase(kv.first, ".mtf") && !EndsWithNoCase(kv.first, ".dds")) continue;
+                        texSizes.emplace_back(kv.second.size(), kv.first);
+                    }
+                    std::sort(texSizes.begin(), texSizes.end());
+                    for (size_t k = 0; k < texSizes.size() && k < 3; ++k) {
+                        if (written.find(texSizes[k].second) != written.end()) continue;
+                        std::vector<uint8_t> bytes;
+                        if (B18Resolve(texSizes[k].second, bytes)) {
+                            written[texSizes[k].second] = bytes;
+                            requestedOrder.push_back(texSizes[k].second);
+                        }
+                    }
+                }
+                std::sort(requestedOrder.begin(), requestedOrder.end());
+                requestedOrder.erase(std::unique(requestedOrder.begin(), requestedOrder.end()),
+                                     requestedOrder.end());
+                size_t totalBytes = 0;
+                bool allWritten = true;
+                for (const auto& name : requestedOrder) {
+                    const auto it = written.find(name);
+                    if (it == written.end()) continue;
+                    const std::string path = bundleDir + "/" + name;
+                    std::FILE* f = std::fopen(path.c_str(), "wb");
+                    if (!f) {
+                        allWritten = false;
+                        continue;
+                    }
+                    std::fwrite(it->second.data(), 1, it->second.size(), f);
+                    std::fclose(f);
+                    totalBytes += it->second.size();
+                }
+                std::FILE* manifest = std::fopen((bundleDir + "/manifest.txt").c_str(), "wb");
+                if (manifest) {
+                    for (const auto& name : requestedOrder) std::fprintf(manifest, "%s\n", name.c_str());
+                    std::fclose(manifest);
+                }
+                std::printf("bundle-plan: %zu files, %zu bytes -> %s (allWritten=%d)\n",
+                            requestedOrder.size(), totalBytes, bundleDir.c_str(),
+                            allWritten ? 1 : 0);
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+    // B18 evidence: load the FIRST valid .chf through the full character loader and
+    // report the GPU skinning/texture pipeline inputs built from that authentic data.
+    // Additive, informational: the B11-B17 outcome model above is untouched, but the
+    // numbers come only from authentic pack entries (no synthetic fixtures involved).
+    // ---------------------------------------------------------------------------
+    {
+        std::string chfName;
+        for (const auto& kv : g_b18.entries) {
+            if (EndsWithNoCase(kv.first, ".chf")) {
+                chfName = kv.first;
+                break;
+            }
+        }
+        std::printf("\n=== B18 GPU skinning / texture evidence ===\n");
+        std::printf("pack texture entries: %u .mtf (%u decrypt ok, %u decoded), %u .dds (%u decoded)\n",
+                    g_b18.mtfTotal, g_b18.mtfDecryptOk, g_b18.mtfDecodeOk, g_b18.ddsTotal, g_b18.ddsOk);
+        if (chfName.empty()) {
+            std::printf("no valid .chf entry cached; character deep-dive skipped\n");
+        } else {
+            RANMobile::EP7CharacterLoader loader;
+            loader.SetResolver([](void*, const std::string& name, std::vector<uint8_t>& out) {
+                return B18Resolve(name, out);
+            }, nullptr);
+            std::vector<uint8_t> chfBytes;
+            if (!B18Resolve(chfName, chfBytes)) {
+                std::printf("deep-dive: chf bytes unavailable\n");
+            } else {
+                const RANMobile::EP7CharacterScene::AssetPtr asset =
+                    std::make_shared<RANMobile::EP7CharacterAsset>(
+                        loader.LoadCharacter(chfBytes, false));
+                std::printf("deep-dive character: %s loaded=%d pieces=%u anims=%zu skeleton=%s\n",
+                            chfName.c_str(), asset->loaded ? 1 : 0, asset->pieceCount,
+                            asset->clips.size(), asset->file.skeleton.c_str());
+                if (asset->loaded) {
+                    RANMobile::EP7Skeleton skel = *asset->skeleton;
+                    for (uint32_t slot = 0; slot < RANMobile::kEP7PieceSize; ++slot) {
+                        const RANMobile::EP7CharacterPiece& piece = asset->pieces[slot];
+                        if (!piece.loaded) continue;
+                        // GPU skinning streams (DxSkinMesh9_HLSL BLENDWEIGHT/BLENDINDICES parity).
+                        uint32_t influenced = 0;
+                        uint32_t maxInfl = 0;
+                        if (piece.gpuStreams.valid) {
+                            for (uint32_t v = 0; v < piece.gpuStreams.vertexCount; ++v) {
+                                uint32_t count = 0;
+                                for (int i = 0; i < 4; ++i) {
+                                    if (piece.gpuStreams.boneWeights[static_cast<size_t>(v) * 4 + i] > 0.0f) ++count;
+                                }
+                                if (count > 0) ++influenced;
+                                if (count > maxInfl) maxInfl = count;
+                            }
+                        }
+                        std::printf("piece[%u] %s: verts=%u tris=%zu skinBones=%zu gpuStreams=%s "
+                                    "influenced=%u/%u maxInfl=%u palette=%zu\n",
+                                    slot, piece.info.xFileName.c_str(), piece.mesh.vertexCount,
+                                    piece.mesh.faces.size() / 3, piece.mesh.bones.size(),
+                                    piece.gpuStreams.valid ? "valid" : "INVALID",
+                                    influenced, piece.mesh.vertexCount, maxInfl,
+                                    piece.mesh.bones.size());
+                        // Palette composition at rest (offset * combined, DxSkinMesh9_CPU.cpp:625 parity).
+                        std::vector<RANMobile::ep7math::Mat4> palette;
+                        RANMobile::BuildBonePalette(piece.mesh, skel, palette);
+                        if (palette.size() != piece.mesh.bones.size()) {
+                            std::printf("  [B18-FAIL] palette size %zu != skin bone count %zu\n",
+                                        palette.size(), piece.mesh.bones.size());
+                        }
+                        // Texture resolution: .cps material names first (SMATERIAL_PIECE::LoadTexture
+                        // parity), then the .x MeshMaterialList names, through the ladder.
+                        std::map<std::string, int> names;
+                        for (const auto& mat : piece.info.materials) {
+                            if (!mat.texture.empty()) names[mat.texture] = 1;
+                        }
+                        for (const auto& subset : piece.mesh.subsets) {
+                            if (!subset.texture.empty() && names.find(subset.texture) == names.end()) {
+                                names[subset.texture] = 2;
+                            }
+                        }
+                        for (const auto& kv : names) {
+                            std::vector<uint8_t> texBytes;
+                            std::string hit;
+                            const std::string& n = kv.first;
+                            if (B18Resolve(n, texBytes)) hit = n;
+                            const size_t dot = n.find_last_of('.');
+                            if (hit.empty() && dot != std::string::npos &&
+                                B18Resolve(n.substr(0, dot) + ".mtf", texBytes)) {
+                                hit = n.substr(0, dot) + ".mtf";
+                            }
+                            if (hit.empty() && B18Resolve(n + ".mtf", texBytes)) hit = n + ".mtf";
+                            if (hit.empty()) {
+                                std::printf("  texture '%s' (cps=%d): NOT RESOLVED from packs\n",
+                                            kv.first.c_str(), kv.second);
+                            } else {
+                                uint32_t tw = 0;
+                                uint32_t th = 0;
+                                std::string fmt;
+                                if (B18DecodeTexture(hit, texBytes, tw, th, fmt)) {
+                                    std::printf("  texture '%s' (cps=%d) -> '%s' [%s] %ux%u\n",
+                                                kv.first.c_str(), kv.second, hit.c_str(),
+                                                fmt.c_str(), tw, th);
+                                } else {
+                                    std::printf("  texture '%s' (cps=%d) -> '%s' DECODE FAILED\n",
+                                                kv.first.c_str(), kv.second, hit.c_str());
+                                }
+                            }
+                        }
+                        if (names.empty()) {
+                            std::printf("  (no material texture names recorded)\n");
+                        }
+                    }
+                }
+            }
+        }
+        std::printf("(B18 evidence is informational; the verdict below is the B11-B16 outcome model)\n");
+    }
+
     std::printf("\n=== SUMMARY (verified against authentic files only) ===\n");
     std::printf("chf  : %u ok / %u\n", counters.chfOk, counters.chfTotal);
     std::printf("cps  : %u ok / %u\n", counters.cpsOk, counters.cpsTotal);
@@ -432,6 +1100,17 @@ int main(int argc, char** argv) {
                 counters.xSkeletonOk + counters.xMeshOk, counters.xTotal);
     std::printf("bin  : %u ok / %u (%u unsupported format)\n", counters.binOk, counters.binTotal,
                 counters.binUnsupported);
+    auto printBins = [](const char* scope, const Counters& end, const Counters& start) {
+        std::printf("bin classifications (%s): %u parsed, %u unsupported-version, %u invalid-header, "
+                    "%u unrecognized-type, %u parser-rejected; total=%u\n", scope,
+                    end.binOk - start.binOk, end.binUnsupported - start.binUnsupported,
+                    end.binInvalidHeader - start.binInvalidHeader,
+                    end.binUnrecognizedType - start.binUnrecognizedType,
+                    end.binParserRejected - start.binParserRejected, end.binTotal - start.binTotal);
+    };
+    printBins("all", counters, Counters{});
+    printBins("loose", looseSnapshot, Counters{});
+    printBins("pack", counters, looseSnapshot);
     std::printf("cfg  : %u ok / %u (%u unsupported version)\n", counters.cfgOk, counters.cfgTotal,
                 counters.cfgUnsupported);
     std::printf("extract failures (could not decompress/decrypt): %u\n", counters.extractFailures);
@@ -456,6 +1135,178 @@ int main(int argc, char** argv) {
         std::printf("\n(that category is untested against real data — not a pass)   \n");
     }
 
+    // B21 downstream evidence: aggregated FIRST (highest value per line).
+    // .cps version rejects: one census line + targeted dumps per version
+    // (full for small files, head/tail otherwise).
+    if (!g_cpsUnsupportedVersions.empty()) {
+        std::printf("\ncps version census (raw on-disk versions the parser rejects):\n");
+        std::string agg;
+        for (const auto& [ver, count] : g_cpsUnsupportedVersions) {
+            if (!agg.empty()) agg += ";  ";
+            char piece[64];
+            std::snprintf(piece, sizeof(piece), "0x%04X x%d", ver, count);
+            agg += piece;
+        }
+        std::printf("  cps-census: %s\n", agg.c_str());
+        int heads = 0;
+        for (const auto& [ver, ex] : g_cpsUnsupportedExamples) {
+            if (heads >= 4) break;
+            if (ex.version == 0x0200) continue;  // documented encrypted class
+            std::printf("  cps-ex: v0x%04X %s size=%zu head=%s tail=%s\n", ver, ex.name.c_str(),
+                        ex.size, ex.hexHead.c_str(), ex.hexTail.c_str());
+            ++heads;
+        }
+        // Full dumps of the smallest example per version (the layout deltas
+        // are derived from complete small files; skip the 0x0200 class).
+        // Two tags keep the annotation steps under the per-step cap:
+        //   cps-dump   -- versions <= 0x0109 (smallest, <= 800 B)
+        //   cps-dump-b -- versions 0x0110+ (<= 1500 B, emitted in a third step)
+        for (const auto& [ver, ex] : g_cpsUnsupportedExamples) {
+            if (ver == 0x0200 || ex.full.empty()) continue;
+            if (ex.size <= 800) {
+                DumpChfFile("cps-dump", ver, ex.name, ex.size, ex.full);
+            } else if (ex.size <= 1500) {
+                DumpChfFile("cps-dump-b", ver, ex.name, ex.size, ex.full);
+            }
+        }
+    }
+    // .skt/.abf skeleton failures: reason census + smallest example per
+    // reason (head at offset 0: the 128-B type block + version).
+    if (!g_skelFailReasons.empty()) {
+        std::printf("\nskeleton failure census:\n");
+        std::string agg;
+        for (const auto& [reason, count] : g_skelFailReasons) {
+            if (!agg.empty()) agg += ";  ";
+            agg += reason + " x" + std::to_string(count);
+        }
+        std::printf("  skel-census: %s\n", agg.c_str());
+        int heads = 0;
+        for (const auto& [reason, ex] : g_skelFailExamples) {
+            if (heads >= 3) break;
+            std::printf("  skel-ex: %s | %s size=%zu head=%s tail=%s\n", reason.c_str(),
+                        ex.name.c_str(), ex.size, ex.hexHead.c_str(), ex.hexTail.c_str());
+            ++heads;
+        }
+        if (!g_skelSmallest.second.full.empty() && g_skelSmallest.second.size <= 800) {
+            DumpChfFile("skel-dump", 0, g_skelSmallest.second.name, g_skelSmallest.second.size,
+                        g_skelSmallest.second.full);
+        }
+    }
+    // .bin unsupported versions: one census line + type-block heads.
+    if (!g_binUnsupportedVersions.empty()) {
+        std::printf("\nbin version census (unsupported containers):\n");
+        std::string agg;
+        for (const auto& [ver, count] : g_binUnsupportedVersions) {
+            if (!agg.empty()) agg += ";  ";
+            char piece[64];
+            std::snprintf(piece, sizeof(piece), "0x%08X x%d", ver, count);
+            agg += piece;
+        }
+        std::printf("  bin-census: %s\n", agg.c_str());
+        int heads = 0;
+        for (const auto& [ver, ex] : g_binUnsupportedExamples) {
+            if (heads >= 3) break;
+            std::printf("  bin-ex: v0x%08X %s size=%zu head=%s tail=%s\n", ver, ex.name.c_str(),
+                        ex.size, ex.hexHead.c_str(), ex.hexTail.c_str());
+            ++heads;
+        }
+        if (!g_binSmallest.second.full.empty()) {
+            const DownstreamExample& ex = g_binSmallest.second;
+            auto toHex = [](const uint8_t* d, size_t n) {
+                static const char* hexd = "0123456789abcdef";
+                std::string hx;
+                hx.reserve(n * 2);
+                for (size_t i = 0; i < n; ++i) {
+                    hx.push_back(hexd[d[i] >> 4]);
+                    hx.push_back(hexd[d[i] & 0xF]);
+                }
+                return hx;
+            };
+            const size_t headTake = std::min<size_t>(512, ex.full.size());
+            const size_t tailTake = std::min<size_t>(256, ex.full.size());
+            std::string headHex = toHex(ex.full.data(), headTake);
+            std::string tailHex = toHex(ex.full.data() + ex.full.size() - tailTake, tailTake);
+            // split long hex onto continuation lines (annotation-safe)
+            for (size_t i = 0; i < headHex.size(); i += 440) {
+                std::printf("  bin-w: h %s\n", headHex.substr(i, 440).c_str());
+            }
+            for (size_t i = 0; i < tailHex.size(); i += 440) {
+                std::printf("  bin-w: t %s\n", tailHex.substr(i, 440).c_str());
+            }
+        }
+    }
+    // Annotation budget: evidence beyond this point is legacy chf data (fully
+    // decoded in B20; dumps kept in the follow-up annotation step only).
+    if (!g_chfFailCounts.empty()) {
+        // Full dumps, prioritized: the 88/184/260-byte classes are decoded
+        // (runs 46145908605 + 46147778604); what remains unknown are files
+        // whose block parsed but the tail diverged, or whose flag DWORDs are
+        // not 0/1.  One file per class, smallest example.
+        static const char* const kDumpPriority[] = {
+            "truncated .chf bone table",
+            ".chf world flag out of range",
+            ".chf bbox flag out of range",
+        };
+        std::printf("\nchf payload-failure evidence (version admitted, layout diverged):\n");
+        std::string agg;
+        for (const auto& [reason, count] : g_chfFailCounts) {
+            if (!agg.empty()) agg += ";  ";
+            agg += reason + " x" + std::to_string(count);
+        }
+        std::printf("  chf-fail-census: %s\n", agg.c_str());
+        int tails = 0;
+        for (const auto& [reason, ex] : g_chfFailExamples) {
+            bool dumped = false;
+            for (const char* r : kDumpPriority) {
+                if (reason == r) dumped = true;
+            }
+            if (ex.size == 0 || dumped) continue;
+            if (tails < 3) {
+                std::printf("  chf-fail-tail: %s | v0x%04X %s size=%zu tail=%s\n", reason.c_str(),
+                            ex.version, ex.name.c_str(), ex.size, ex.hexTail.c_str());
+                ++tails;
+            }
+        }
+        // Separate tags so the workflow can split the dumps across two steps
+        // (GitHub keeps only the first 10 warning annotations per step).
+        static const char* const kDumpTags[] = {"chf-fail-dump", "chf-fail-dump-b", "chf-fail-dump-c"};
+        for (size_t i = 0; i < sizeof(kDumpPriority) / sizeof(kDumpPriority[0]); ++i) {
+            auto it = g_chfFailExamples.find(kDumpPriority[i]);
+            if (it == g_chfFailExamples.end() || it->second.size == 0 || it->second.full.empty()) continue;
+            // The bone-table class fails mid-file: dump a window around the
+            // table start (reported by the parser) instead of the head.
+            size_t tablePos = 0;
+            const size_t marker = it->second.error.find("(table starts at ");
+            if (marker != std::string::npos) {
+                tablePos = static_cast<size_t>(std::strtoull(it->second.error.c_str() + marker + 17,
+                                                             nullptr, 10));
+            }
+            if (tablePos > 24 && tablePos + 24 < it->second.full.size()) {
+                DumpChfFile(kDumpTags[i], it->second.version, it->second.name, it->second.size,
+                            it->second.full, tablePos - 24, 3);
+            } else {
+                DumpChfFile(kDumpTags[i], it->second.version, it->second.name, it->second.size,
+                            it->second.full);
+            }
+        }
+    }
+    if (!g_chfUnsupportedVersions.empty()) {
+        std::printf("\nchf version census (real pack data; parser-unsupported versions):\n");
+        for (const auto& [ver, count] : g_chfUnsupportedVersions) {
+            std::printf("  chf-census: 0x%04X x%d\n", ver, count);
+        }
+        for (const auto& [ver, ex] : g_chfUnsupportedExamples) {
+            std::printf("  chf-tail: v0x%04X %s size=%zu tail=%s\n", ver, ex.name.c_str(),
+                        ex.size, ex.hexTail.c_str());
+            std::printf("  chf-hex: v0x%04X %s\n", ver, ex.hexHead.c_str());
+        }
+        if (g_chfSmallest.second.size != 0 && !g_chfSmallest.second.full.empty()) {
+            // Full dump of the globally smallest unsupported file: 188-byte
+            // chunk lines sized for the per-line annotation budget.
+            DumpChfFile("chf-dump", g_chfSmallest.first, g_chfSmallest.second.name,
+                        g_chfSmallest.second.size, g_chfSmallest.second.full);
+        }
+    }
     if (!g_failureReasons.empty()) {
         std::printf("\nfailure reasons (aggregated, so none are lost to log/annotation caps):\n");
         for (const auto& [reason, count] : g_failureReasons) {

@@ -1,4 +1,5 @@
 #include "MobileRenderer.h"
+#include "../Camera/MobileCamera.h"
 #include "../Core/Logger.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -12,6 +13,16 @@
 #endif
 
 namespace RANMobile {
+
+// B18: per-uploaded-mesh GL state (also carries the counts DrawGpuSkinnedMesh
+// validates against, so headless builds exercise the same validation path).
+struct GpuMeshGlState {
+    uint32_t vao = 0;
+    uint32_t vbo = 0;
+    uint32_t ebo = 0;
+    uint32_t vertexCount = 0;
+    uint32_t indexCount = 0;
+};
 
 static constexpr int kAtlasSize = 1024;
 static constexpr float kBaseFontPx = 28.0f;
@@ -50,6 +61,23 @@ void main() {
 }
 )";
 
+// B19: last shader compile/link info log for the GPU skin program — surfaced
+// through GpuSkinProgramLog() so the self-test verdict JSON carries the exact
+// driver error (the CI evidence channel cannot read device logcat off-box).
+static std::string g_gpuSkinProgramLog;
+
+const std::string& MobileRenderer::GpuSkinProgramLog() {
+    return g_gpuSkinProgramLog;
+}
+
+static std::string SanitizeLogLine(const char* log) {
+    std::string s(log ? log : "");
+    for (char& c : s) {
+        if (c == '\n' || c == '\r' || c == '\t') c = ' ';
+    }
+    return s;
+}
+
 static GLuint CompileShader(GLenum type, const char* src) {
     GLuint shader = glCreateShader(type);
     glShaderSource(shader, 1, &src, nullptr);
@@ -59,11 +87,159 @@ static GLuint CompileShader(GLenum type, const char* src) {
     if (!ok) {
         char log[512];
         glGetShaderInfoLog(shader, sizeof(log), nullptr, log);
+        g_gpuSkinProgramLog = SanitizeLogLine(log);
         Logger::Error("MobileRenderer", std::string("Shader compile error: ") + log);
         glDeleteShader(shader);
         return 0;
     }
     return shader;
+}
+
+// ---------------------------------------------------------------------------
+// B17: 3D character pass shaders.  The CPU pose path (EP7CharacterScene ->
+// DxSkinMesh9_CPU-equivalent skinning) already outputs world-space positions and
+// normals, so the vertex stage only applies the camera view-projection — the same
+// D3DTS_WORLD=Identity convention DxSkinMesh9_CPU uses (its skinned vertices are
+// produced in world space and the world transform is identity).
+// ---------------------------------------------------------------------------
+static const char* kCharVertexShader = R"(#version 300 es
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in vec3 aNormal;
+layout(location = 2) in vec2 aUV;
+uniform mat4 uVP;
+out vec3 vNormal;
+out vec2 vUV;
+out vec3 vSkinnedPos;  // B19: transform-feedback capture point (CPU/GPU skinning comparison)
+void main() {
+    gl_Position = uVP * vec4(aPos, 1.0);
+    vNormal = aNormal;
+    vUV = aUV;
+}
+)";
+
+static const char* kCharFragmentShader = R"(#version 300 es
+precision mediump float;
+uniform vec4 uColor;
+uniform int uUseTexture;
+uniform sampler2D uTex;
+in vec3 vNormal;
+in vec2 vUV;
+out vec4 FragColor;
+void main() {
+    // Authentic fixed key light: DxSkinMesh9_HLSL.cpp:179-181 sets
+    // lhtDir = normalize(vec4(0,1,-1,0)) for every skinned draw (B18 aligns the
+    // B17 placeholder light with the authentic value; ambient floor unchanged).
+    vec3 lightDir = normalize(vec3(0.0, 1.0, -1.0));
+    float ndl = max(dot(normalize(vNormal), lightDir), 0.0);
+    vec3 lit = uColor.rgb * (0.35 + 0.65 * ndl);
+    if (uUseTexture == 1) {
+        lit *= texture(uTex, vUV).rgb;
+    }
+    FragColor = vec4(lit, uColor.a);
+}
+)";
+
+// ---------------------------------------------------------------------------
+// B18: GPU skinning program (authentic D3DINDEXEDHLSLVS convention).
+//
+// Vertex streams = the authentic HLSL declaration (DxSkinMesh9_HLSL.cpp:95-106:
+// POSITION/NORMAL/TEXCOORD/TANGENT + BLENDWEIGHT FLOAT4 + BLENDINDICES FLOAT4;
+// the tangent stream is not consumed yet — effects that need it are out of scope).
+// Palette = std140 uniform block fed per draw from the shared UBO, entries =
+// offsetMatrix * boneCombined (DxSkinMesh9_HLSL.cpp:220-229 "mWorldMatrixArray"
+// parity; BuildBonePalette already computes exactly this).
+//
+// Row-major storage in a column-major mat4 preserves the original v*M row-vector
+// semantics: GLSL M_glsl[c][r] = m[c][r] makes M_glsl*v == v*m (verified against
+// TransformCoord/TransformNormal in EP7Math.h).
+//
+// The shader reproduces SkinVerticesCPU exactly: per-influence position transform
+// with w-divide (TransformCoord), translation-dropped normals (TransformNormal via
+// mat3), |sum-1|>1e-4 weight renormalization, zero-weight-sum -> bind passthrough,
+// final normal normalization.
+// ---------------------------------------------------------------------------
+// B19 live-GLES correction: the emulator's GL translator demotes std140 UBO
+// arrays to default uniform arrays (driver: "Vertex shader active uniforms
+// exceed GL_MAX_VERTEX_UNIFORM_VECTORS (256)") so a 256-mat4 palette can never
+// fit.  Transport the palette as a 1024x1 RGBA32F texture instead: texel
+// x = bone*4+i holds column i of bone b's mat4, which reproduces the std140
+// memory layout (column-major, 16 floats per entry) bit-identically; texelFetch
+// supports dynamic indexing on every GLES3 stack.
+static const char* kCharGpuVertexShader = R"(#version 300 es
+precision highp float;
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in vec3 aNormal;
+layout(location = 2) in vec2 aUV;
+layout(location = 3) in vec4 aBoneIdx;
+layout(location = 4) in vec4 aBoneWt;
+uniform highp sampler2D uBonePalette;   // 1024x1 RGBA32F: column texels
+uniform mat4 uVP;
+out vec3 vNormal;
+out vec2 vUV;
+out vec3 vSkinnedPos;  // B19: transform-feedback capture point (CPU/GPU skinning comparison)
+void main() {
+    vec4 acc = vec4(0.0);
+    vec3 nAcc = vec3(0.0);
+    float wSum = 0.0;
+    for (int i = 0; i < 4; ++i) {
+        float w = aBoneWt[i];
+        if (w <= 0.0) continue;
+        int bi = int(aBoneIdx[i] + 0.5);
+        mat4 m = mat4(
+            texelFetch(uBonePalette, ivec2(bi * 4 + 0, 0), 0),
+            texelFetch(uBonePalette, ivec2(bi * 4 + 1, 0), 0),
+            texelFetch(uBonePalette, ivec2(bi * 4 + 2, 0), 0),
+            texelFetch(uBonePalette, ivec2(bi * 4 + 3, 0), 0));
+        vec4 tp = m * vec4(aPos, 1.0);
+        tp.xyz /= tp.w;                       // TransformCoord parity (affine: w==1)
+        acc += w * tp;
+        nAcc += w * (mat3(m) * aNormal);      // TransformNormal parity
+        wSum += w;
+    }
+    vec3 pos;
+    vec3 nrm;
+    if (wSum <= 1e-6) {
+        pos = aPos;                           // empty influence list: bind passthrough
+        nrm = aNormal;
+    } else {
+        if (abs(wSum - 1.0) > 1e-4) {
+            acc.xyz /= wSum;                  // SkinVerticesCPU renormalization parity
+            nAcc /= wSum;
+        }
+        pos = acc.xyz;
+        nrm = normalize(nAcc);
+    }
+    gl_Position = uVP * vec4(pos, 1.0);
+    vNormal = nrm;
+    vUV = aUV;
+    vSkinnedPos = pos;
+}
+)";
+
+static const char* kCharGpuFragmentShader = R"(#version 300 es
+precision mediump float;
+uniform vec4 uColor;
+uniform int uUseTexture;
+uniform sampler2D uTex;
+in vec3 vNormal;
+in vec2 vUV;
+out vec4 FragColor;
+void main() {
+    vec3 lightDir = normalize(vec3(0.0, 1.0, -1.0));  // authentic lhtDir
+    float ndl = max(dot(normalize(vNormal), lightDir), 0.0);
+    vec3 lit = uColor.rgb * (0.35 + 0.65 * ndl);
+    if (uUseTexture == 1) {
+        lit *= texture(uTex, vUV).rgb;
+    }
+    FragColor = vec4(lit, uColor.a);
+}
+)";
+#endif
+
+#ifndef __ANDROID__
+const std::string& MobileRenderer::GpuSkinProgramLog() {
+    static const std::string kEmpty;
+    return kEmpty;
 }
 #endif
 
@@ -177,6 +353,87 @@ bool MobileRenderer::Initialize(int width, int height) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    // B17: 3D character pass program + buffers (dynamic VBO/EBO, grown on demand).
+    GLuint cvs = CompileShader(GL_VERTEX_SHADER, kCharVertexShader);
+    GLuint cfs = CompileShader(GL_FRAGMENT_SHADER, kCharFragmentShader);
+    if (cvs && cfs) {
+        m_charProgram = glCreateProgram();
+        glAttachShader(m_charProgram, cvs);
+        glAttachShader(m_charProgram, cfs);
+        glLinkProgram(m_charProgram);
+        glDeleteShader(cvs);
+        glDeleteShader(cfs);
+        m_uVPLoc = glGetUniformLocation(m_charProgram, "uVP");
+        m_uColorLoc3D = glGetUniformLocation(m_charProgram, "uColor");
+        m_uUseTexLoc3D = glGetUniformLocation(m_charProgram, "uUseTexture");
+        m_uTexLoc3D = glGetUniformLocation(m_charProgram, "uTex");
+    }
+    glGenVertexArrays(1, &m_charVAO);
+    glGenBuffers(1, &m_charVBO);
+    glGenBuffers(1, &m_charEBO);
+    glBindVertexArray(m_charVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_charVBO);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(0));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(6 * sizeof(float)));
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_charEBO);
+    glBindVertexArray(0);
+
+    // B18: GPU skinning program + shared palette uniform block.  256 mat4 entries
+    // (kMaxGpuBones) = 16 KB, the ES 3.0 minimum guaranteed MAX_UNIFORM_BLOCK_SIZE;
+    // devices below that minimum are logged and GPU-skinned draws fail loudly.
+    GLuint gvs = CompileShader(GL_VERTEX_SHADER, kCharGpuVertexShader);
+    GLuint gfs = CompileShader(GL_FRAGMENT_SHADER, kCharGpuFragmentShader);
+    if (gvs && gfs) {
+        m_charGpuProgram = glCreateProgram();
+        glAttachShader(m_charGpuProgram, gvs);
+        glAttachShader(m_charGpuProgram, gfs);
+        // B19: declare the transform-feedback capture set BEFORE linking so the
+        // self-test captures skinned positions/normals from this exact program.
+        // Inert for normal rendering (TF objects are bound only during capture).
+        static const char* tfVaryings[] = { "vSkinnedPos", "vNormal" };
+        glTransformFeedbackVaryings(m_charGpuProgram, 2, tfVaryings, GL_INTERLEAVED_ATTRIBS);
+        glLinkProgram(m_charGpuProgram);
+        glDeleteShader(gvs);
+        glDeleteShader(gfs);
+        GLint linked = 0;
+        glGetProgramiv(m_charGpuProgram, GL_LINK_STATUS, &linked);
+        if (!linked) {
+            char log[512];
+            glGetProgramInfoLog(m_charGpuProgram, sizeof(log), nullptr, log);
+            g_gpuSkinProgramLog = SanitizeLogLine(log);
+            Logger::Error("MobileRenderer", std::string("GPU skin program link error: ") + log);
+            glDeleteProgram(m_charGpuProgram);
+            m_charGpuProgram = 0;
+        }
+    }
+    if (m_charGpuProgram) {
+        // Palette texture: 1024x1 RGBA32F (kMaxGpuBones*4 column texels).
+        GLint maxTextureSize = 0;
+        glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+        if (maxTextureSize < static_cast<GLint>(kMaxGpuBones * 4)) {
+            Logger::Error("MobileRenderer", "GL_MAX_TEXTURE_SIZE (" + std::to_string(maxTextureSize) +
+                          ") below the 1024-texel palette requirement; GPU skinning will be skipped");
+        }
+        glGenTextures(1, &m_gpuPaletteTex);
+        glBindTexture(GL_TEXTURE_2D, m_gpuPaletteTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, static_cast<GLsizei>(kMaxGpuBones * 4), 1, 0,
+                     GL_RGBA, GL_FLOAT, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glUseProgram(m_charGpuProgram);
+        glUniform1i(glGetUniformLocation(m_charGpuProgram, "uBonePalette"), 1);
+        glUseProgram(0);
+        Logger::Info("MobileRenderer", "GPU skinning program ready (palette " +
+                     std::to_string(kMaxGpuBones) + " bones as 1024x1 RGBA32F texture, unit 1)");
+    }
 #endif
 
     m_initialized = true;
@@ -196,15 +453,57 @@ void MobileRenderer::Resize(int width, int height) {
 }
 
 void MobileRenderer::Shutdown() {
+    ReleaseGlResources();
+    m_glyphCache.clear();
+    m_scene3DActive = false;
+    m_initialized = false;
+}
+
+// B19: full GL resource release.  Runs on every build: on Android the GL objects
+// are deleted against the current (still-live) context; headless builds only
+// free the registry heap (B19 leak fix — Shutdown previously left unreleased
+// GpuMeshGlState objects alive outside __ANDROID__).  The renderer stays
+// reusable: Initialize() rebuilds everything.
+void MobileRenderer::ReleaseGlResources() {
+    for (auto& kv : m_gpuMeshes) {
+        GpuMeshGlState* state = static_cast<GpuMeshGlState*>(kv.second);
+        if (state) {
 #ifdef __ANDROID__
+            if (state->ebo) glDeleteBuffers(1, &state->ebo);
+            if (state->vbo) glDeleteBuffers(1, &state->vbo);
+            if (state->vao) glDeleteVertexArrays(1, &state->vao);
+#endif
+            delete state;
+        }
+    }
+    m_gpuMeshes.clear();
+    m_gpuMeshCount = 0;
+    m_nextGpuMeshHandle = 1;
+#ifdef __ANDROID__
+    if (m_gpuPaletteTex) { glDeleteTextures(1, &m_gpuPaletteTex); m_gpuPaletteTex = 0; }
+    m_gpuPaletteCache.clear();
+    m_gpuPaletteCacheCount = 0;
     if (m_fontAtlasTex) { glDeleteTextures(1, &m_fontAtlasTex); m_fontAtlasTex = 0; }
     if (m_uiVBO) { glDeleteBuffers(1, &m_uiVBO); m_uiVBO = 0; }
     if (m_uiVAO) { glDeleteVertexArrays(1, &m_uiVAO); m_uiVAO = 0; }
     if (m_uiProgram) { glDeleteProgram(m_uiProgram); m_uiProgram = 0; }
+    if (m_charEBO) { glDeleteBuffers(1, &m_charEBO); m_charEBO = 0; }
+    if (m_charVBO) { glDeleteBuffers(1, &m_charVBO); m_charVBO = 0; }
+    if (m_charVAO) { glDeleteVertexArrays(1, &m_charVAO); m_charVAO = 0; }
+    if (m_charProgram) { glDeleteProgram(m_charProgram); m_charProgram = 0; }
+    if (m_charGpuProgram) { glDeleteProgram(m_charGpuProgram); m_charGpuProgram = 0; }
 #endif
-    m_glyphCache.clear();
-    m_initialized = false;
 }
+
+#ifdef __ANDROID__
+// B19 self-test accessors: the harness inspects the SAME shader source the
+// driver compiled, so the verified math is literally the shipped math.
+const char* MobileRenderer::CharGpuVertexShaderSource() { return kCharGpuVertexShader; }
+const char* MobileRenderer::CharGpuFragmentShaderSource() { return kCharGpuFragmentShader; }
+#else
+const char* MobileRenderer::CharGpuVertexShaderSource() { return nullptr; }
+const char* MobileRenderer::CharGpuFragmentShaderSource() { return nullptr; }
+#endif
 
 void MobileRenderer::BeginFrame() {
     m_stats = RenderStats{};
@@ -403,16 +702,31 @@ uint32_t MobileRenderer::UploadRGBA8Texture(uint32_t width, uint32_t height, con
     glGenTextures(1, &texId);
     if (texId == 0) return 0;
     glBindTexture(GL_TEXTURE_2D, texId);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    // B19: authentic sampling state.  The original engine requests a full mip
+    // chain (D3DXCreateTextureFromFileEx, MipLevels=D3DX_DEFAULT, MipFilter=BOX,
+    // TextureManager.cpp:212-217) and sets MINFILTER=MIPFILTER=LINEAR for skin
+    // draws (DxSkinMesh9_HLSL.cpp:324-325) with the D3D9 default WRAP address
+    // mode.  GLES3 supports REPEAT + mipmaps on NPOT textures, so reproduce it.
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, static_cast<GLsizei>(width), static_cast<GLsizei>(height),
                  0, GL_RGBA, GL_UNSIGNED_BYTE, rgba8);
+    glGenerateMipmap(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
     return static_cast<uint32_t>(texId);
 #else
     return 1; // Non-Android headless test stub
+#endif
+}
+
+void MobileRenderer::SetViewProjectionOverride(const float colMajor[16]) {
+#ifdef __ANDROID__
+    if (!colMajor) return;
+    for (int i = 0; i < 16; ++i) m_viewProj[i] = colMajor[i];
+#else
+    (void)colMajor;
 #endif
 }
 
@@ -422,6 +736,355 @@ void MobileRenderer::DeleteTexture(uint32_t texId) {
     GLuint id = static_cast<GLuint>(texId);
     glDeleteTextures(1, &id);
 #endif
+}
+
+// ---------------------------------------------------------------------------
+// B17: 3D character pass (see MobileRenderer.h).
+// Camera math uses GL column-major matrices (transpose of the D3D row-vector
+// convention the animation pipeline uses); EP7Math stays render-agnostic.
+// ---------------------------------------------------------------------------
+namespace {
+
+struct GlMat4 {
+    float m[16] = {0};
+    GlMat4() { m[0] = m[5] = m[10] = m[15] = 1.0f; }
+    float& operator[](size_t i) { return m[i]; }
+    const float& operator[](size_t i) const { return m[i]; }
+};
+
+GlMat4 GlPerspective(float fovYRadians, float aspect, float nearZ, float farZ) {
+    GlMat4 out;
+    const float f = 1.0f / std::tan(fovYRadians * 0.5f);
+    out[0] = f / aspect;
+    out[5] = f;
+    out[10] = (farZ + nearZ) / (nearZ - farZ);
+    out[11] = -1.0f;
+    out[14] = (2.0f * farZ * nearZ) / (nearZ - farZ);
+    out[15] = 0.0f;
+    return out;
+}
+
+void GlNormalize(float* v) {
+    const float len = std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+    if (len <= 1e-9f) return;
+    v[0] /= len;
+    v[1] /= len;
+    v[2] /= len;
+}
+
+GlMat4 GlLookAt(const float* eye, const float* center, const float* up) {
+    float f[3] = {center[0] - eye[0], center[1] - eye[1], center[2] - eye[2]};
+    GlNormalize(f);
+    float s[3] = {
+        f[1] * up[2] - f[2] * up[1],
+        f[2] * up[0] - f[0] * up[2],
+        f[0] * up[1] - f[1] * up[0]
+    };
+    GlNormalize(s);
+    float u[3] = {
+        s[1] * f[2] - s[2] * f[1],
+        s[2] * f[0] - s[0] * f[2],
+        s[0] * f[1] - s[1] * f[0]
+    };
+    GlMat4 out;
+    out[0] = s[0];  out[4] = s[1];  out[8]  = s[2];
+    out[1] = u[0];  out[5] = u[1];  out[9]  = u[2];
+    out[2] = -f[0]; out[6] = -f[1]; out[10] = -f[2];
+    out[12] = -(s[0] * eye[0] + s[1] * eye[1] + s[2] * eye[2]);
+    out[13] = -(u[0] * eye[0] + u[1] * eye[1] + u[2] * eye[2]);
+    out[14] = (f[0] * eye[0] + f[1] * eye[1] + f[2] * eye[2]);
+    return out;
+}
+
+GlMat4 GlMultiply(const GlMat4& a, const GlMat4& b) {
+    GlMat4 out;
+    for (int c = 0; c < 4; ++c) {
+        for (int r = 0; r < 4; ++r) {
+            float sum = 0.0f;
+            for (int k = 0; k < 4; ++k) {
+                sum += a.m[k * 4 + r] * b.m[c * 4 + k];
+            }
+            out.m[c * 4 + r] = sum;
+        }
+    }
+    return out;
+}
+
+}  // namespace
+
+bool MobileRenderer::BeginScene3D(const MobileCamera& camera) {
+    // Orbit eye position from the MobileCamera state (MobileCamera::Update semantics:
+    // yaw/pitch in degrees, distance back from the target).
+    const float yawRad = camera.GetYaw() * 3.14159265358979323846f / 180.0f;
+    const float pitchRad = camera.GetPitch() * 3.14159265358979323846f / 180.0f;
+    float target[3] = {0.0f, 10.0f, 0.0f};  // ~waist height of the authentic bounds box
+
+    float eye[3] = {
+        target[0] + camera.GetDistance() * std::cos(pitchRad) * std::sin(yawRad),
+        target[1] + camera.GetDistance() * std::sin(pitchRad),
+        target[2] + camera.GetDistance() * std::cos(pitchRad) * std::cos(yawRad)
+    };
+    const float up[3] = {0.0f, 1.0f, 0.0f};
+
+    const float aspect = (m_height > 0) ? static_cast<float>(m_width) / static_cast<float>(m_height) : 1.0f;
+    const float farZ = (m_settings.viewDistance > 0.0f) ? m_settings.viewDistance * 4.0f : 500.0f;
+    const GlMat4 proj = GlPerspective(45.0f * 3.14159265358979323846f / 180.0f, aspect, 0.1f, farZ);
+    const GlMat4 view = GlLookAt(eye, target, up);
+    const GlMat4 vp = GlMultiply(proj, view);
+
+    m_scene3DActive = true;
+#ifdef __ANDROID__
+    if (m_initialized && m_charProgram) {
+        for (int i = 0; i < 16; ++i) m_viewProj[i] = vp.m[i];
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+        glDisable(GL_BLEND);
+        glUseProgram(m_charProgram);
+        glUniformMatrix4fv(m_uVPLoc, 1, GL_FALSE, m_viewProj);
+        glUniform4f(m_uColorLoc3D, 0.75f, 0.75f, 0.75f, 1.0f);
+        glUniform1i(m_uUseTexLoc3D, 0);
+        glUniform1i(m_uTexLoc3D, 0);
+        return true;
+    }
+#else
+    (void)vp;
+#endif
+    return m_scene3DActive;
+}
+
+void MobileRenderer::EndScene3D() {
+    m_scene3DActive = false;
+#ifdef __ANDROID__
+    if (m_initialized) {
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glUseProgram(m_uiProgram);
+    }
+#endif
+}
+
+bool MobileRenderer::DrawSkinnedMesh(const SkinnedDrawInput& input) {
+    if (!m_scene3DActive) return false;
+    if (!input.positions || !input.indices || input.vertexCount == 0 || input.indexCount == 0) return false;
+    if (input.indexCount % 3 != 0) return false;
+
+    m_stats.drawCalls++;
+    m_stats.triangles += input.indexCount / 3;
+
+#ifdef __ANDROID__
+    if (!m_initialized || !m_charProgram) return false;
+
+    // Interleave position + normal + uv into the dynamic VBO (grown on demand).
+    const bool hasUV = input.texcoords != nullptr;
+    const size_t strideFloats = 8;
+    const size_t needed = static_cast<size_t>(input.vertexCount) * strideFloats * sizeof(float);
+    if (needed > m_charVBOBytes) {
+        m_charVBOBytes = needed + needed / 2;  // grow geometrically, no per-frame realloc
+        glBindBuffer(GL_ARRAY_BUFFER, m_charVBO);
+        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(m_charVBOBytes), nullptr, GL_DYNAMIC_DRAW);
+    }
+    std::vector<float> staging(static_cast<size_t>(input.vertexCount) * strideFloats);
+    for (uint32_t v = 0; v < input.vertexCount; ++v) {
+        float* dst = staging.data() + static_cast<size_t>(v) * strideFloats;
+        dst[0] = input.positions[v * 3 + 0];
+        dst[1] = input.positions[v * 3 + 1];
+        dst[2] = input.positions[v * 3 + 2];
+        dst[3] = input.normals ? input.normals[v * 3 + 0] : 0.0f;
+        dst[4] = input.normals ? input.normals[v * 3 + 1] : 1.0f;
+        dst[5] = input.normals ? input.normals[v * 3 + 2] : 0.0f;
+        dst[6] = hasUV ? input.texcoords[v * 2 + 0] : 0.0f;
+        dst[7] = hasUV ? input.texcoords[v * 2 + 1] : 0.0f;
+    }
+    const size_t eboNeeded = static_cast<size_t>(input.indexCount) * sizeof(uint32_t);
+    if (eboNeeded > m_charEBOBytes) {
+        m_charEBOBytes = eboNeeded + eboNeeded / 2;
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_charEBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(m_charEBOBytes), nullptr, GL_DYNAMIC_DRAW);
+    }
+
+    glBindVertexArray(m_charVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_charVBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(needed), staging.data());
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_charEBO);
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(eboNeeded), input.indices);
+
+    glUseProgram(m_charProgram);
+    glUniformMatrix4fv(m_uVPLoc, 1, GL_FALSE, m_viewProj);
+    glUniform4f(m_uColorLoc3D, input.colorR, input.colorG, input.colorB, input.colorA);
+    if (input.textureId != 0) {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, input.textureId);
+        glUniform1i(m_uTexLoc3D, 0);
+        glUniform1i(m_uUseTexLoc3D, 1);
+    } else {
+        glUniform1i(m_uUseTexLoc3D, 0);
+    }
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(input.indexCount), GL_UNSIGNED_INT, nullptr);
+    glBindVertexArray(0);
+#endif
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// B18: GPU skinned mesh upload/draw/release (authentic D3DINDEXEDHLSLVS parity).
+// ---------------------------------------------------------------------------
+
+uint32_t MobileRenderer::UploadGpuSkinnedMesh(const GpuSkinnedMeshData& data) {
+    if (!data.interleaved || !data.indices || data.vertexCount == 0 || data.indexCount == 0) return 0;
+    if (data.indexCount % 3 != 0) return 0;
+
+    auto* state = new GpuMeshGlState();
+    state->vertexCount = data.vertexCount;
+    state->indexCount = data.indexCount;
+
+#ifdef __ANDROID__
+    if (m_initialized) {
+        const GLsizeiptr vboBytes = static_cast<GLsizeiptr>(data.vertexCount) * 16 * sizeof(float);
+        const GLsizeiptr eboBytes = static_cast<GLsizeiptr>(data.indexCount) * sizeof(uint32_t);
+        glGenVertexArrays(1, &state->vao);
+        glGenBuffers(1, &state->vbo);
+        glGenBuffers(1, &state->ebo);
+        glBindVertexArray(state->vao);
+        glBindBuffer(GL_ARRAY_BUFFER, state->vbo);
+        glBufferData(GL_ARRAY_BUFFER, vboBytes, data.interleaved, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 16 * sizeof(float), reinterpret_cast<void*>(0));
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 16 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 16 * sizeof(float), reinterpret_cast<void*>(6 * sizeof(float)));
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float), reinterpret_cast<void*>(8 * sizeof(float)));
+        glEnableVertexAttribArray(4);
+        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float), reinterpret_cast<void*>(12 * sizeof(float)));
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, state->ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboBytes, data.indices, GL_STATIC_DRAW);
+        glBindVertexArray(0);
+    }
+#endif
+
+    const uint32_t handle = m_nextGpuMeshHandle++;
+    m_gpuMeshes[handle] = state;
+    ++m_gpuMeshCount;
+    return handle;
+}
+
+void MobileRenderer::ReleaseGpuSkinnedMesh(uint32_t handle) {
+    auto it = m_gpuMeshes.find(handle);
+    if (it == m_gpuMeshes.end()) return;
+    auto* state = static_cast<GpuMeshGlState*>(it->second);
+#ifdef __ANDROID__
+    if (m_initialized && state) {
+        if (state->ebo) glDeleteBuffers(1, &state->ebo);
+        if (state->vbo) glDeleteBuffers(1, &state->vbo);
+        if (state->vao) glDeleteVertexArrays(1, &state->vao);
+    }
+#endif
+    delete state;
+    m_gpuMeshes.erase(it);
+    if (m_gpuMeshCount > 0) --m_gpuMeshCount;
+}
+
+bool MobileRenderer::DrawGpuSkinnedMesh(uint32_t handle,
+                                        const float* paletteRowMajor,
+                                        uint32_t paletteCount,
+                                        uint32_t textureId,
+                                        const float color[4],
+                                        bool alphaBlend,
+                                        uint32_t faceStart,
+                                        uint32_t faceCount) {
+    if (!m_scene3DActive) return false;
+    auto it = m_gpuMeshes.find(handle);
+    if (it == m_gpuMeshes.end() || !it->second) {
+        Logger::Error("MobileRenderer", "DrawGpuSkinnedMesh: unknown mesh handle");
+        ++m_gpuDrawFailures;
+        return false;
+    }
+    auto* state = static_cast<GpuMeshGlState*>(it->second);
+    if (!paletteRowMajor || paletteCount == 0 || paletteCount > kMaxGpuBones) {
+        Logger::Error("MobileRenderer", "DrawGpuSkinnedMesh: palette overflow/invalid (count " +
+                      std::to_string(paletteCount) + ", max " + std::to_string(kMaxGpuBones) + ")");
+        ++m_gpuDrawFailures;
+        return false;
+    }
+    const uint64_t firstIndex = static_cast<uint64_t>(faceStart) * 3;
+    const uint64_t drawIndices = static_cast<uint64_t>(faceCount) * 3;
+    if (firstIndex + drawIndices > state->indexCount) {
+        Logger::Error("MobileRenderer", "DrawGpuSkinnedMesh: face range out of bounds (start " +
+                      std::to_string(faceStart) + ", count " + std::to_string(faceCount) +
+                      ", mesh indices " + std::to_string(state->indexCount) + ")");
+        ++m_gpuDrawFailures;
+        return false;
+    }
+
+    ++m_gpuDrawCount;
+    m_stats.drawCalls++;
+    m_stats.triangles += faceCount;
+
+#ifndef __ANDROID__
+    (void)textureId;
+    (void)color;
+    (void)alphaBlend;
+    return true;
+#else
+    if (!m_initialized || !m_charGpuProgram) return false;
+
+    // Palette upload (offset*combined, row-major — DxSkinMesh9_HLSL.cpp:220-229
+    // "mWorldMatrixArray" parity) into the shared 1024x1 RGBA32F palette
+    // texture; only the live entries are written, entries beyond paletteCount
+    // stay stale but are unreachable (the streams reference indices < mesh bone
+    // count = paletteCount).  texel (b*4+i) = column i of bone b — identical to
+    // the std140 mat4 layout this replaced (B19 live-GLES correction).
+    // Skip the upload when the palette bytes are unchanged — subset draws share
+    // one per-frame palette, and an upload inside an active transform-feedback
+    // session is silently dropped by some GLES3 stacks (B19 CI evidence).
+    const bool paletteChanged =
+        m_gpuPaletteCacheCount != paletteCount ||
+        m_gpuPaletteCache.size() != static_cast<size_t>(paletteCount) * 16 ||
+        std::memcmp(m_gpuPaletteCache.data(), paletteRowMajor,
+                    static_cast<size_t>(paletteCount) * 16 * sizeof(float)) != 0;
+    if (paletteChanged) {
+        m_gpuPaletteCache.assign(paletteRowMajor, paletteRowMajor + static_cast<size_t>(paletteCount) * 16);
+        m_gpuPaletteCacheCount = paletteCount;
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, m_gpuPaletteTex);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, static_cast<GLsizei>(paletteCount) * 4, 1,
+                        GL_RGBA, GL_FLOAT, m_gpuPaletteCache.data());
+    } else {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, m_gpuPaletteTex);
+    }
+
+    glUseProgram(m_charGpuProgram);
+    glUniformMatrix4fv(glGetUniformLocation(m_charGpuProgram, "uVP"), 1, GL_FALSE, m_viewProj);
+    glUniform4f(glGetUniformLocation(m_charGpuProgram, "uColor"),
+                color ? color[0] : 0.75f, color ? color[1] : 0.75f,
+                color ? color[2] : 0.75f, color ? color[3] : 1.0f);
+    if (textureId != 0) {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureId);
+        glUniform1i(glGetUniformLocation(m_charGpuProgram, "uTex"), 0);
+        glUniform1i(glGetUniformLocation(m_charGpuProgram, "uUseTexture"), 1);
+    } else {
+        glUniform1i(glGetUniformLocation(m_charGpuProgram, "uUseTexture"), 0);
+    }
+    if (alphaBlend) {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    } else {
+        glDisable(GL_BLEND);
+    }
+    glBindVertexArray(state->vao);
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(drawIndices), GL_UNSIGNED_INT,
+                   reinterpret_cast<const void*>(firstIndex * sizeof(uint32_t)));
+    glBindVertexArray(0);
+    if (alphaBlend) glDisable(GL_BLEND);
+#endif
+    return true;
 }
 
 } // namespace RANMobile

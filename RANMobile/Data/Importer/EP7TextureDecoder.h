@@ -23,6 +23,12 @@ public:
 
     // Decodes .dds (DXT1, DXT3, DXT5, uncompressed RGBA8/BGRA8) into RGBA8
     static DecodedTexture DecodeDDS(const std::vector<uint8_t>& ddsData);
+
+    // B18: decodes .tga (the TEXTURE_TGA branch of the .mtf container,
+    // MemoryTexture.cpp EncryptTexture). Supported: uncompressed type 2 / RLE type 10
+    // in 24-bit BGR and 32-bit BGRA, uncompressed colour-mapped type 1 and greyscale
+    // type 3; origin bit honoured. Anything else returns invalid (never guessed).
+    static DecodedTexture DecodeTGA(const std::vector<uint8_t>& tgaData);
 };
 
 } // namespace RANMobile

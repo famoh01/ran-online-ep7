@@ -8,11 +8,13 @@ set(RANMOBILE_SOURCES
     Engine/Core/Logger.cpp
     Engine/Core/RANMobileEngine.cpp
     Engine/Renderer/MobileRenderer.cpp
+    Engine/Renderer/GpuSelfTest.cpp
     Engine/Resource/ResourceManager.cpp
     Engine/Touch/TouchSystem.cpp
     Engine/Camera/MobileCamera.cpp
     Engine/Scene/EP7CharacterScene.cpp
     Engine/Animation/AnimationManager.cpp
+    Engine/Animation/EP7SkinAniControl.cpp
     Engine/Audio/AudioManager.cpp
     Engine/Network/NetworkClient.cpp
     Data/Validator/DataValidator.cpp

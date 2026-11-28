@@ -8,6 +8,10 @@
 #include "../../Data/Loader/GameDataLoader.h"
 #include "../../UI/Login/LoginScreen.h"
 #include "../../UI/HUD/MobileHUD.h"
+#include "../Scene/EP7CharacterScene.h"
+#include "../../Data/Importer/EP7SkinPiece.h"
+
+#include <cmath>
 
 RANMobileEngine::RANMobileEngine() = default;
 RANMobileEngine::~RANMobileEngine() {
@@ -31,11 +35,16 @@ bool RANMobileEngine::Initialize() {
     m_gameDataLoader = std::make_unique<RANMobile::GameDataLoader>();
     m_loginScreen = std::make_unique<LoginScreen>();
     m_mobileHUD = std::make_unique<RANMobile::MobileHUD>();
+    m_characterScene = std::make_unique<RANMobile::EP7CharacterScene>();
 
     if (!m_renderer->Initialize(1280, 720)) {
         RANMobile::Logger::Error("RANMobileEngine", "Failed to initialize MobileRenderer");
         return false;
     }
+
+    // B18: the character scene draws through this renderer (GPU skinned meshes +
+    // decoded textures are scene-scoped caches released at Clear/Shutdown).
+    m_characterScene->SetRenderer(m_renderer.get());
 
     m_loginScreen->Initialize(m_networkClient.get());
     m_mobileHUD->Initialize(1280.0f, 720.0f);
@@ -66,6 +75,16 @@ void RANMobileEngine::Update(float deltaTime) {
     if (!m_initialized || !m_running) {
         return;
     }
+    // B17 mobile-runtime clock hardening (documented): the original PC FrameMove
+    // trusted fElapsedTime from the D3D loop and never clamped it. On Android the
+    // wall clock can jump across app pause/resume or a blocked frame, which would
+    // teleport animation poses (fTime leaps by whole clip lengths). Negative and
+    // non-finite deltas are dropped; anything above 250 ms advances at most 250 ms.
+    if (!std::isfinite(deltaTime) || deltaTime <= 0.0f) {
+        deltaTime = 0.0f;
+    } else if (deltaTime > 0.25f) {
+        deltaTime = 0.25f;
+    }
     m_totalTime += deltaTime;
     m_frameCount++;
 
@@ -78,6 +97,9 @@ void RANMobileEngine::Update(float deltaTime) {
     if (m_networkClient) {
         m_networkClient->Poll(deltaTime);
     }
+    if (m_screenState == EngineScreenState::CharacterPreview && m_characterScene && m_camera) {
+        m_characterScene->Update(deltaTime);
+    }
 }
 
 void RANMobileEngine::Render() {
@@ -85,7 +107,98 @@ void RANMobileEngine::Render() {
         return;
     }
     m_renderer->BeginFrame();
-    if (m_screenState == EngineScreenState::Login && m_loginScreen) {
+    if (m_screenState == EngineScreenState::CharacterPreview && m_characterScene && m_camera) {
+        // B17: authentic character pass — evaluated poses are submitted before the UI
+        // so HUD/overlays always draw on top (BeginScene3D enables depth + culling,
+        // EndScene3D restores the UI state).
+        if (m_renderer->BeginScene3D(*m_camera)) {
+            for (const auto& instance : m_characterScene->Instances()) {
+                if (!instance->visible || !instance->poseValid || !instance->inFrustum) continue;
+                const size_t vertexCount = instance->skinnedPositions.size() / 3;
+
+                // ------------------------------------------------------------------
+                // B18 GPU skinned path (authentic D3DINDEXEDHLSLVS parity): static
+                // per-piece vertex/index buffers + the per-frame bone palette
+                // (offset*combined, DxSkinMesh9_HLSL.cpp:220-229 parity) + per-subset
+                // texture binding (SMATERIAL_PIECE::LoadTexture parity).  Pieces the
+                // GPU path cannot represent (no decodable geometry, palette overflow,
+                // invalid face ranges) fall back to the B17 CPU-evaluated path —
+                // geometry is never substituted or fabricated.
+                // ------------------------------------------------------------------
+                bool submitted = false;
+                if (instance->asset) {
+                    for (uint32_t slot = 0; slot < RANMobile::kEP7PieceSize; ++slot) {
+                        const auto& piece = instance->asset->pieces[slot];
+                        if (!piece.loaded || piece.mesh.faces.empty()) continue;
+
+                        const uint32_t gpuHandle = m_characterScene->EnsurePieceGpuHandle(instance->asset, slot);
+                        const float* palette = nullptr;
+                        uint32_t paletteCount = 0;
+                        const bool havePalette = m_characterScene->GetPiecePalette(*instance, slot, &palette, &paletteCount);
+                        // B19 §5: validate subset/material mapping before drawing
+                        // (face ranges + AttribId bounds).  A mismatch is reported and
+                        // the piece falls back to the CPU path — never guessed.
+                        RANMobile::EP7CharacterScene::EP7SubsetValidation subsetValidation;
+                        const bool subsetsValid = m_characterScene->ValidatePieceSubsets(
+                            instance->asset, slot, &subsetValidation);
+                        if (!subsetsValid && !piece.mesh.subsets.empty()) {
+                            RANMobile::Logger::Warn("RANMobileEngine",
+                                "subset validation failed for piece slot " + std::to_string(slot) +
+                                ": " + subsetValidation.detail + " — using CPU path");
+                        }
+                        if (gpuHandle != 0 && havePalette && (subsetsValid || piece.mesh.subsets.empty())) {
+                            const auto& subsets = piece.mesh.subsets;
+                            if (!subsets.empty()) {
+                                for (uint32_t s = 0; s < subsets.size(); ++s) {
+                                    if (subsets[s].faceCount == 0) continue;
+                                    const uint32_t texId = m_characterScene->GetPieceTextureId(instance->asset, slot, s);
+                                    // cps FLAG_ALPHATEXTURE = 0x0001 (SMATERIAL_PIECE) drives
+                                    // per-subset alpha blending; the material is selected by
+                                    // the subset's AttribId (DxSkinMesh9_CPU.cpp:584-587), so
+                                    // out-of-order/shared materials still get the right flag.
+                                    bool alphaBlend = false;
+                                    if (subsets[s].materialIndex < piece.info.materials.size()) {
+                                        alphaBlend = (piece.info.materials[subsets[s].materialIndex].flags & 0x0001u) != 0;
+                                    }
+                                    const float texColor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+                                    const float flatColor[4] = {0.75f, 0.75f, 0.75f, 1.0f};
+                                    submitted = m_renderer->DrawGpuSkinnedMesh(
+                                        gpuHandle, palette, paletteCount, texId,
+                                        texId != 0 ? texColor : flatColor, alphaBlend,
+                                        subsets[s].faceStart, subsets[s].faceCount) || submitted;
+                                }
+                            } else {
+                                const float flatColor[4] = {0.75f, 0.75f, 0.75f, 1.0f};
+                                submitted = m_renderer->DrawGpuSkinnedMesh(
+                                    gpuHandle, palette, paletteCount, 0, flatColor, false,
+                                    0, static_cast<uint32_t>(piece.mesh.faces.size() / 3)) || submitted;
+                            }
+                            continue;
+                        }
+
+                        // B17 CPU-evaluated fallback: skinned positions/normals are
+                        // concatenated in piece order, so every submission advances the
+                        // base pointer by the piece's vertex offset — piece.mesh.faces
+                        // indexes piece-local vertices. A piece that fails the bounds
+                        // check is skipped; geometry is never substituted or fabricated.
+                        if (vertexCount == 0) continue;
+                        const uint32_t offset = instance->pieceVertexOffsets[slot];
+                        if (static_cast<size_t>(offset) + piece.mesh.vertexCount > vertexCount) continue;
+                        RANMobile::SkinnedDrawInput pieceInput;
+                        pieceInput.positions = instance->skinnedPositions.data() + static_cast<size_t>(offset) * 3;
+                        pieceInput.normals = instance->skinnedNormals.data() + static_cast<size_t>(offset) * 3;
+                        pieceInput.vertexCount = piece.mesh.vertexCount;
+                        pieceInput.indices = piece.mesh.faces.data();
+                        pieceInput.indexCount = static_cast<uint32_t>(piece.mesh.faces.size());
+                        pieceInput.textureId = 0;
+                        submitted = m_renderer->DrawSkinnedMesh(pieceInput) || submitted;
+                    }
+                }
+                (void)submitted;
+            }
+        }
+        m_renderer->EndScene3D();
+    } else if (m_screenState == EngineScreenState::Login && m_loginScreen) {
         m_loginScreen->Draw(m_renderer.get());
     } else if (m_screenState == EngineScreenState::InGame && m_mobileHUD) {
         m_mobileHUD->Draw(m_renderer.get());
@@ -100,6 +213,10 @@ void RANMobileEngine::Resize(int width, int height) {
 }
 
 void RANMobileEngine::Pause() {
+    // B17: pause stops the update loop only; all animation state lives in RAM
+    // (controls, clocks, skeletons), so resume continues the pose exactly where it
+    // stopped. The post-resume wall-clock jump is absorbed by the delta clamp in
+    // Update() — no animation state is rebuilt or reset on resume.
     m_running = false;
 }
 
@@ -130,6 +247,37 @@ void RANMobileEngine::OnTextInput(const std::string& utf8) {
 
 void RANMobileEngine::OnBackspace() {
     if (m_loginScreen) m_loginScreen->HandleBackspace();
+}
+
+void RANMobileEngine::OnGpuContextLost() {
+    if (!m_initialized) return;
+    RANMobile::Logger::Info("RANMobileEngine", "GPU context lost — releasing GL resources (game state preserved)");
+    if (m_characterScene) {
+        m_characterScene->ReleaseGpuResources();  // B19: also resets piece.gpuMeshHandle
+    }
+    if (m_renderer) {
+        m_renderer->ReleaseGlResources();
+    }
+}
+
+bool RANMobileEngine::EnsureGpuContext(int width, int height) {
+    if (!m_initialized) return Initialize();
+    if (!m_renderer) return false;
+    if (m_renderer->IsInitialized()) {
+        m_renderer->Resize(width, height);
+        return true;
+    }
+    // Rebuild after a context loss.  Initialize() recreates the GL objects
+    // (programs, VAO/VBO/EBO, palette UBO); the scene re-uploads lazily because
+    // ReleaseGpuResources reset every cached handle.
+    if (!m_renderer->Initialize(width, height)) {
+        RANMobile::Logger::Error("RANMobileEngine", "Failed to rebuild renderer after GPU context loss");
+        return false;
+    }
+    if (m_characterScene) {
+        m_characterScene->SetRenderer(m_renderer.get());
+    }
+    return true;
 }
 
 void RANMobileEngine::Shutdown() {

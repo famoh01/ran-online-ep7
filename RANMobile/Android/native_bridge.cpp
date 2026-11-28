@@ -8,7 +8,11 @@
 #include <GLES3/gl3.h>
 #include <jni.h>
 #include <chrono>
+#include <cstdio>
+#include <string>
+#include <sys/stat.h>
 #include "../Engine/Core/RANMobileEngine.h"
+#include "../Engine/Renderer/GpuSelfTest.h"
 #include "../UI/Login/LoginScreen.h"
 
 struct AndroidAppContext {
@@ -18,6 +22,45 @@ struct AndroidAppContext {
     EGLContext context = EGL_NO_CONTEXT;
     bool hasWindow = false;
 };
+
+// B19: launch-mode flag.  When the activity is started with the intent extra
+// "selftest" = "gpu", the app runs the live-GLES3 verification harness once
+// (after the EGL surface exists), writes gpu_selftest.json + a PPM screenshot
+// into the app's internal files dir, and exits.  The normal game path is
+// untouched when the extra is absent.
+static std::string g_selfTestMode;
+static bool g_selfTestDone = false;
+
+static std::string GetSelfTestMode(ANativeActivity* activity) {
+    JNIEnv* env = nullptr;
+    if (activity->vm->AttachCurrentThread(&env, nullptr) != JNI_OK || !env) return "";
+    jclass actCls = env->GetObjectClass(activity->clazz);
+    jmethodID getIntent = env->GetMethodID(actCls, "getIntent", "()Landroid/content/Intent;");
+    std::string mode;
+    jobject intent = getIntent ? env->CallObjectMethod(activity->clazz, getIntent) : nullptr;
+    if (intent) {
+        jclass intentCls = env->GetObjectClass(intent);
+        jmethodID getStr =
+            env->GetMethodID(intentCls, "getStringExtra", "(Ljava/lang/String;)Ljava/lang/String;");
+        jstring key = env->NewStringUTF("selftest");
+        jstring value =
+            getStr ? static_cast<jstring>(env->CallObjectMethod(intent, getStr, key)) : nullptr;
+        if (value) {
+            const char* c = env->GetStringUTFChars(value, nullptr);
+            if (c) {
+                mode = c;
+                env->ReleaseStringUTFChars(value, c);
+            }
+            env->DeleteLocalRef(value);
+        }
+        env->DeleteLocalRef(key);
+    }
+    activity->vm->DetachCurrentThread();
+    return mode;
+}
+
+static ANativeActivity* ctx_activity = nullptr;   // B19 selftest target (valid during init)
+static std::string g_authAssetRoot;               // B19: optional adb-push root (unused on device path)
 
 static void InitEGL(AndroidAppContext* ctx, ANativeWindow* window) {
     const EGLint attribs[] = {
@@ -62,17 +105,78 @@ static void InitEGL(AndroidAppContext* ctx, ANativeWindow* window) {
         return;
     }
     eglMakeCurrent(ctx->display, ctx->surface, ctx->surface, ctx->context);
+    // B19 CI: bracket logs — the +8s window showed a run stuck between
+    // APP_CMD_INIT_WINDOW and "EGL+engine ready" with nothing in between;
+    // these lines pinpoint the exact stage (EGL calls vs engine Initialize).
+    __android_log_print(ANDROID_LOG_INFO, "RANMobile", "EGL context+surface current");
 
     EGLint w = 1280, h = 720;
     eglQuerySurface(ctx->display, ctx->surface, EGL_WIDTH, &w);
     eglQuerySurface(ctx->display, ctx->surface, EGL_HEIGHT, &h);
-    ctx->engine.Initialize();
+    if (!ctx->engine.IsInitialized()) {
+        if (!ctx->engine.Initialize()) {
+            __android_log_print(ANDROID_LOG_ERROR, "RANMobile",
+                                "engine Initialize FAILED (renderer init returned false)");
+        }
+    } else {
+        // B19: re-entry after context loss (rotation/restore) — rebuild GL objects.
+        ctx->engine.EnsureGpuContext(w, h);
+    }
     ctx->engine.Resize(w, h);
-    ctx->engine.Start();
     ctx->hasWindow = true;
+    __android_log_print(ANDROID_LOG_INFO, "RANMobile", "EGL+engine ready %dx%d, selftest=%s",
+                        w, h, g_selfTestMode.empty() ? "<none>" : g_selfTestMode.c_str());
+
+    // B19 GPU verification mode: run the harness once, persist the verdict, exit.
+    if (g_selfTestMode == "gpu" && !g_selfTestDone) {
+        g_selfTestDone = true;
+        ANativeActivity* activity = ctx_activity;
+        const char* dataPath = activity->internalDataPath;
+        const std::string outDir = (dataPath && *dataPath) ? dataPath : "/data/local/tmp";
+        // The files dir is created lazily by the framework; make sure it exists
+        // before the harness writes its verdict (best effort).
+        mkdir(outDir.c_str(), 0775);
+        std::string shot = outDir + "/gpu_selftest.ppm";
+        const RANMobile::GpuSelfTestResult result = RANMobile::RunGpuSelfTest(
+            *ctx->engine.GetRenderer(), activity->assetManager, g_authAssetRoot, shot);
+        const std::string jsonPath = outDir + "/gpu_selftest.json";
+        std::FILE* f = std::fopen(jsonPath.c_str(), "w");
+        if (f) {
+            std::fwrite(result.json.data(), 1, result.json.size(), f);
+            std::fclose(f);
+        }
+        __android_log_print(ANDROID_LOG_INFO, "RANMobile", "gpu selftest verdict=%s -> %s",
+                            result.overallPass ? "PASS" : "FAIL", jsonPath.c_str());
+        // B19 CI: logcat is the only retrieval channel that worked on every CI
+        // run (run-as cat returns empty; adbd-root cat died mid-poll once).
+        // Emit the verdict as COMPACT single-line chunks under a fixed tag;
+        // CI reassembles the chunks by index.  Chunk < 3000 chars stays well
+        // under the ~4068-char logcat line limit.
+        std::string compact;
+        compact.reserve(result.json.size() + 16);
+        for (char c : result.json) {
+            if (c == '\n' || c == '\t' || c == '\r') compact += ' ';
+            else compact += c;
+        }
+        constexpr size_t kChunk = 3000;
+        const size_t parts = (compact.size() + kChunk - 1) / kChunk;
+        for (size_t i = 0; i < parts; ++i) {
+            __android_log_print(ANDROID_LOG_INFO, "GPUSELFTEST_JSON", "%zu/%zu %s",
+                                i + 1, parts, compact.substr(i * kChunk, kChunk).c_str());
+        }
+        ANativeActivity_finish(activity);
+        return;
+    }
+    ctx->engine.Start();
 }
 
 static void TermEGL(AndroidAppContext* ctx) {
+    // B19: the EGL context is about to be destroyed — release every GL object the
+    // engine owns while the context is still current, so the next window rebuilds
+    // instead of drawing with stale handles (rotation / restore / background).
+    if (ctx->hasWindow) {
+        ctx->engine.OnGpuContextLost();
+    }
     if (ctx->display != EGL_NO_DISPLAY) {
         eglMakeCurrent(ctx->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         if (ctx->context != EGL_NO_CONTEXT) eglDestroyContext(ctx->display, ctx->context);
@@ -89,8 +193,10 @@ static void HandleAppCmd(struct android_app* app, int32_t cmd) {
     auto* ctx = static_cast<AndroidAppContext*>(app->userData);
     if (!ctx) return;
     if (cmd == APP_CMD_INIT_WINDOW && app->window != nullptr) {
+        __android_log_print(ANDROID_LOG_INFO, "RANMobile", "APP_CMD_INIT_WINDOW -> InitEGL");
         InitEGL(ctx, app->window);
     } else if (cmd == APP_CMD_TERM_WINDOW) {
+        __android_log_print(ANDROID_LOG_INFO, "RANMobile", "APP_CMD_TERM_WINDOW -> TermEGL");
         TermEGL(ctx);
     } else if (cmd == APP_CMD_PAUSE) {
         ctx->engine.Pause();
@@ -203,6 +309,12 @@ extern "C" void android_main(struct android_app* state) {
     state->userData = &ctx;
     state->onAppCmd = HandleAppCmd;
     state->onInputEvent = HandleInputEvent;
+    ctx_activity = state->activity;
+    g_selfTestMode = GetSelfTestMode(state->activity);
+    // Unconditional entry log: if this line is absent from logcat, the native
+    // library never ran (activity start / library load failure upstream).
+    __android_log_print(ANDROID_LOG_INFO, "RANMobile", "android_main entered, selftest=%s",
+                        g_selfTestMode.empty() ? "<none>" : g_selfTestMode.c_str());
 
     auto lastTime = std::chrono::steady_clock::now();
     int events;
@@ -224,6 +336,7 @@ extern "C" void android_main(struct android_app* state) {
             ctx.engine.Render();
             eglSwapBuffers(ctx.display, ctx.surface);
         }
+        if (g_selfTestDone) break;  // B19: selftest writes its verdict and exits
         if (ctx.engine.GetLoginScreen() && ctx.engine.GetLoginScreen()->WantsExit()) {
             ANativeActivity_finish(state->activity);
             break;

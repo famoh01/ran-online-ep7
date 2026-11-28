@@ -14,7 +14,16 @@ android {
         versionName "1.0.0-ep7"
 
         ndk {
-            abiFilters 'arm64-v8a'
+            // arm64-v8a is the device target; x86_64 lets the Android emulator
+            // (x86_64 with KVM on CI) install and run the debug APK — the B19
+            // GPU selftest job depends on this second ABI.  The emulator CI job
+            // builds with -PemulatorOnly to compile ONLY the x86_64 ABI (halves
+            // the native build time); default builds target both ABIs.
+            if (project.hasProperty('emulatorOnly')) {
+                abiFilters 'x86_64'
+            } else {
+                abiFilters 'arm64-v8a', 'x86_64'
+            }
         }
 
         externalNativeBuild {

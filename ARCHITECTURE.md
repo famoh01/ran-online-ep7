@@ -67,7 +67,7 @@ RANMobile/
 │   ├── EP7XFile.{h,cpp}     .x text tokenizer (rejects binary encodings)
 │   ├── EP7Skeleton.{h,cpp}  .x Frame hierarchy -> bones, pose accumulation
 │   ├── EP7SkinPiece.{h,cpp} .cps 0x0104..0x0107
-│   ├── EP7CharacterFile.{h,cpp}  .chf 0x0100..0x0102
+│   ├── EP7CharacterFile.{h,cpp}  .chf 0x0100..0x0102, 0x0103+ mobile (0x0103..0x0108, no 0x0105)
 │   ├── EP7SkinnedMesh.{h,cpp}    Mesh + SkinWeights + materials + CPU skinning
 │   └── EP7Animation.{h,cpp}      .bin 0x0100..0x0102, .cfg 0x0107, player
 ├── Engine/Scene/
@@ -389,3 +389,204 @@ Two consequences for this codebase:
 
 The `.cfg` reader (`ParseInfo`) *does* validate the family and reports *"not a SANIMCONINFO
 file"* for a genuine mismatch; that behaviour is correct and should be the model for `.bin`.
+
+
+> Preserved-branch B11 evidence: the following append was copied from
+> commits 80f932b/cf4e03c on arena/1491d572-ran-online-ep7. Its CI results
+> describe that source branch, NOT a newly integrated PR #5 head. Target CI
+> must be rerun after integration. No Phase 3B–3I implementation is copied.
+
+
+## 2026-11-27 — B11 verifier-only classification boundary
+
+The tool's printable-ASCII rejection is removed. Source references:
+`SAnimation.cpp:22,1573-1735`, `basestream.h:16`, `SerialFile.cpp:34-65`.
+SAnimContainer is a 128-byte NUL-terminated `AnimContainer` type field followed
+by the version DWORD at byte 128, then payload at byte 132. Trailing type-field
+padding need not be zero. The original loader dispatches on the version; the
+mobile production parser is unchanged and does not enforce type identity.
+
+The verifier now adds explicit type/header validation before calling that parser,
+without a headerless fallback. PASS requires successful parsing. Only the parser's
+explicit unsupported-container-version error yields UNSUPPORTED. Truncated header,
+unrecognized type, and recognized-header parser rejection remain FAIL with distinct
+diagnostics. Unrecognized type is not proof of foreign data versus corruption;
+parser rejection is not proof of malformed data versus a reader limitation.
+`.bin` counters are split by diagnostic bucket and pack/loose scope. Other format
+classifiers and all runtime code are untouched. This tool is not a complete
+semantic validator: successful parsing does not prove animation playback/rendering.
+
+
+### 2026-11-27 — B11 post-correction CI evidence (final results)
+
+Implementation commit `80f932b287ebb2c5144014b8eb59f897efe1fc74` was tested in
+[CI run 45937494300](https://github.com/famoh01/ran-online-ep7/actions/runs/45937494300).
+Core C++ tests with downloaded release data PASSED; Phase 3J PASSED; verifier
+590/0 normal and 590/0 ASan+UBSan+integrated LSan PASSED. Android ARM64 native
+library and debug/release APK + release AAB PASSED. The authentic verifier ran
+against the extracted release and correctly remained FAIL (exit 1), not a green
+coverage claim. Full log artifact: `phase3j-authentic-assets-log`; core/sanitizer
+logs and Android outputs are also uploaded.
+
+#### Exact comparison: same pack baseline, separate loose .bin result
+
+| Scope / metric | Before | After | Delta |
+|---|---:|---:|---:|
+| Pack parsed | 6,479 | 6,479 | 0 |
+| Pack failed | 3,550 | 3,550 | 0 |
+| Pack unsupported | 1,631 | 1,631 | 0 |
+| Loose .bin parsed | 0 | 982 | +982 |
+| Loose .bin failed (parser-rejected after recognized header) | 0 | 1,209 | +1,209 |
+| Loose .bin unsupported | 6,228 (incorrect printable gate) | 4,037 (explicit version rejection) | -2,191 |
+| Loose .bin total | 6,228 | 6,228 | 0 |
+
+After correction: **0 invalid-header**, **0 unrecognized-type** among these 6,228.
+All have the recognized header, but only **982 parse successfully**. The 4,037
+unsupported outer container versions are **0x0103: 1,533**, **0x0104: 2,495**,
+**0x0200: 9**. All 1,209 recognized-header parser rejections report the existing
+parser diagnostic `unsupported animation version` (track-level, NOT the explicit
+outer-container-version error). They remain FAIL/parser-rejected; no assertion is
+made that the original files are corrupt or that every such failure is a parser
+bug. No parser implementation is changed to force them green.
+
+**Critical scope finding:** every .bin candidate in this release scan is a loose
+file under `data/animation`; **zero .bin entries were encountered inside packs**.
+That is why the pack verdict/counts remain unchanged. This does not prove no pack
+in any EP7 distribution contains .bin files; it describes this run only. The
+historical 6,228 figure must not be presented as a pack-only count or as 6,228
+valid animations. Header recognition/parse success also does not prove gameplay
+or rendered animation correctness. The old binUnsupported summary counter was
+not incremented; the before figure here is the actual emitted UNSUPPORTED outcome
+count, not that erroneous zero-valued counter.
+
+Remaining blockers: unsupported versions above; 1,209 parser rejections requiring
+separate investigation; pre-existing pack .chf/.cps/.abf/.cfg coverage gaps; and
+PR #5 head belonging to another session branch. The verifier correction is done
+on `arena/1491d572-ran-online-ep7`; PR #5 remains OPEN/DRAFT, unmerged, with its
+head unchanged. This task does not authorize changing runtime/parser behavior.
+
+---
+
+## 2026-11-27 — Phase 3J B17: Authentic animation runtime integration
+
+The character layer now runs the authentic playback chain end-to-end:
+
+```
+.chf → pieces (.cps/.x) ─┐
+.skt → EP7Skeleton ──────┤→ EP7CharacterAsset (loader, byte readers unchanged)
+.cfg → EP7AnimInfo ──────┤
+.bin → EP7AnimClip ──→ ConvertMatToQuat (SAnimation::Load_* parity) → BindToSkeleton
+                          ↓
+            EP7CharacterScene::Spawn → EP7SkinAniControl (DxSkinAniControl parity:
+            registry, SELECTANI/DEFAULTANI/skill fallback, 4-clock core, weight
+            blend-in 0→1 @ +7/s, backup clock on switch)
+                          ↓ per frame
+            Update: FrameMove(dt·4800 anikeys, loop wrap / end-window freeze)
+            EvaluatePose: ResetToRestPose → UpdateTime (SetTime parity: matrix
+            direct write / quatPos snap CUR-PREV / S·R·T fmod) → UpdateMix →
+            EP7Skeleton::UpdateBones(worldRoot, weight) (DxSkeleton::UpdateBones
+            parity: BLENDING, ADD, aniScale) → CPU skinning (DxSkinMesh9_CPU parity)
+                          ↓
+            RANMobileEngine (CharacterPreview): MobileRenderer::BeginScene3D →
+            per-piece DrawSkinnedMesh (piece-local base pointer) → EndScene3D
+```
+
+Rules baked into the architecture (all source-verified, see
+`ANIMATION_CONTAINER_INVESTIGATION.md` §18 and `PHASE3J_CHARACTER_ANIMATION.md` §14):
+
+* **Creation auto-plays**: a character with loadable clips never rests in the bind pose
+  (`DxSkinChar::SetCharDataData` always selects; DEFAULTANI = nodes[0]); the bind pose is only
+  observable for characters with zero loadable clips.
+* **Every selection blends in** (`m_fWeight = 0` → +7/s); re-selecting the current clip keeps
+  playing (SetAnimation FALSE at the node level, TRUE at the SELECTANI level).
+* **No per-frame allocation**: instance-owned scratch buffers + geometric-growth VBO/EBO
+  (measured stable across 2,000 frames).
+* **dt is clamped** (non-finite/≤0 → 0, >0.25 s → 0.25 s) — a documented divergence from the
+  original's unconditional `fElapsedTime` trust, for pause/resume safety.
+* **Real assets only**: pieces failing parse/bounds are skipped, never substituted; textures are
+  recorded but not bound yet (default gray material); GPU palette binding (B10 remainder) still open.
+
+---
+
+## 2026-11-27 — Phase 3J B18: GPU skinning & texture pipeline (mobile runtime)
+
+Render path per visible character instance (engine loop, per frame):
+
+```
+EP7CharacterScene::EvaluatePose            (B17: Reset→UpdateTime→UpdateMix→UpdateBones→per-piece palette+CPU skin)
+  └─ per instance: piecePalettes[slot] snapshot written per frame (no alloc after warm-up)
+RANMobileEngine render loop
+  └─ per visible instance, per piece:
+       EnsurePieceGpuHandle(asset, slot)   lazy upload-once (64-B-stride VBO/EBO; scene-owned)
+       GetPiecePalette(instance, slot)     row-major floats (offset×combined, HLSL parity)
+       GetPieceTextureId(asset, slot, s)   .cps name → .x subset name → ladder (.mtf → DecryptMTF
+                                           → DecodeDDS / DecodeTGA → RGBA8 → GL texture, cached)
+       renderer->DrawGpuSkinnedMesh(...)   palette → shared 1024x1 RGBA32F texture (256 mat4; B19 live-GLES correction — std140 UBO demoted to default uniforms by some GLES3 stacks, exceeding GL_MAX_VERTEX_UNIFORM_VECTORS);
+                                           glDrawElements at faceStart*3*4 byte offset; alphaBlend
+                                           from FLAG_ALPHATEXTURE; textureId 0 → flat colour
+       fallback: B17 CPU path (DrawSkinnedMesh with bounds-checked pieceVertexOffsets[slot])
+```
+
+Invariants:
+* **GPU/CPU agree by construction** — both consume the same evaluated `matCombined` and the same
+  offset×combined palette formula; the shader reproduces `SkinVerticesCPU` semantics exactly
+  (w-divide, translation-dropped normals, `|sum−1|>1e-4` renormalize, zero-sum passthrough).
+* **Validation before any GL work**: invalid handle / palette null or >256 / face range OOB →
+  logged error + counter + `false`; missing texture is NOT a failure (flat colour).
+* **No per-frame geometry allocation**: static per-piece buffers, palette-only per-frame upload;
+  GPU resources are scene-owned and released in `Clear()` (idempotent).
+* **Authentic conventions, no invented approximations**: `D3DINDEXEDHLSLVS` (DxSkinMesh9.cpp:18),
+  HLSL vertex declaration (DxSkinMesh9_HLSL.cpp:95-106), `lhtDir = normalize(0,1,-1)`,
+  `SMATERIAL_PIECE::LoadTexture` name order, `MemoryTexture` `.mtf` transform.
+
+---
+
+## 2026-11-27 — Phase 3J B19: GPU verification harness & lifecycle (mobile runtime)
+
+Verification path (isolated from the game):
+
+```
+adb shell am start ... --es selftest gpu
+  native_bridge android_main     reads the intent extra once
+  InitEGL (surface ready)        engine.Initialize (or EnsureGpuContext after context loss)
+  RunGpuSelfTest(renderer, AAssetManager, authRoot, ppmPath)
+    env report -> compile/link evidence
+    TF capture (production VS vSkinnedPos/vNormal, RASTERIZER_DISCARD)
+        vs SkinVerticesCPU  (SYNTHETIC fixtures; tol 5e-4 / 5e-3)
+    pixel tests (flat / textured / alpha / subset offsets; NDC VP override)
+    lifecycle (invalid handle / palette 257 / face-range / double release)
+    authentic character (EP7 files from assets/ep7auth via the production loader,
+        scene, subset validation, GPU path; PPM screenshot + per-piece JSON)
+  writes gpu_selftest.json -> ANativeActivity_finish
+CI pulls the verdict via run-as and fails the job unless PASS.
+```
+
+Lifecycle invariants added in B19:
+* **Context loss**: bridge `TermEGL` → `RANMobileEngine::OnGpuContextLost()` (scene
+  `ReleaseGpuResources` resets every `piece.gpuMeshHandle`, renderer `ReleaseGlResources`
+  frees programs/VAO/palette-texture/meshes); re-entry `InitEGL` → `EnsureGpuContext(w,h)` rebuilds GL
+  objects; the scene re-uploads lazily (upload-once contract preserved per context).
+* **Subset/material**: every GPU piece draw is preceded by `ValidatePieceSubsets`; a mismatch
+  falls back to the B17 CPU path with a logged reason — the GPU path never draws an unvalidated
+  index range or an unresolvable material index.
+* **Sampling**: character textures are mipmap-complete and trilinear with `GL_REPEAT`
+  (authentic D3D9 default address mode); the font atlas stays LINEAR/no-mips (UI needs exact
+  atlas texel access — intentional divergence from the character path).
+
+## 2026-11-28 — B19 live-GLES corrections (mobile runtime)
+
+* **Palette transport**: the 16 KB std140 UBO was replaced by a 1024×1 RGBA32F texture
+  (texel `b*4+i` = column `i` of bone `b`) after live-GLES evidence; the shader fetches
+  columns with `texelFetch(uBonePalette, ivec2(bi*4+i, 0), 0)` — same math, ES-safe
+  transport. Uploads are skipped when the palette bytes are unchanged (subset draws share
+  one per-frame palette).
+* **Capture transport**: transform-feedback capture of `vSkinnedPos`/`vNormal` is unusable on
+  the emulator stack (VAO-scoped TF bindings; `RASTERIZER_DISCARD` captures nothing); the
+  verification harness transports the production vertex shader's skinned outputs through the
+  raster path as 16-bit hi/lo-split RGBA8 into an offscreen RGBA8 FBO (quantization far
+  below the comparison tolerances). The probe's color target binds on texture unit 0 —
+  unit 1 holds the bone palette, and attaching a sampled texture to its own framebuffer
+  (feedback loop) hangs the emulator translator.
+* **Verdict transport**: the selftest emits `GPUSELFTEST_JSON` logcat chunks; CI snapshots
+  the buffer while adb is alive and reassembles the JSON host-side, so device-side adbd
+  wedges cannot lose the verdict.

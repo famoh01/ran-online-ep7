@@ -1,0 +1,315 @@
+name: Phase 3J B12 Authentic Animation Container Investigation
+
+# Reproducible read-only investigation workflow for Phase 3J B12:
+#   1. Retrieves and SHA-256-verifies focused EP7 engine animation serialization
+#      sources from the authorized backup repository against their Git LFS pointers.
+#   2. Runs the read-only C++17 animation container forensic inspector (including
+#      ASan/UBSan/LSan self-tests) against the authentic ran-ep7-full-v1 client
+#      release without modifying any asset or parser behavior.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - arena/00fd13f9-ran-online-ep7
+    paths:
+      - '.github/workflows/phase3j_b12_animation_investigation.yml'
+      - 'RANMobile/Tools/inspect_ep7_animation_containers.cpp'
+      - 'RANMobile/Tests/test_ep7_animation_inspector.cpp'
+      - 'RANMobile/Tests/run_ep7_animation_inspector_tests.sh'
+
+permissions:
+  contents: write
+  checks: write
+
+jobs:
+  retrieve-engine-anim-sources:
+    name: Retrieve verified EP7 engine animation sources
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+
+      - name: Install Git LFS
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git-lfs
+          git lfs version
+
+      - name: Pull focused animation sources and publish verified blobs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          cat <<'EOF' > /tmp/b12_lfs_paths.txt
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/SAnimation.h
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/SAnimation.cpp
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/SAnimationSaveLoad.cpp
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/SAnimationInfo.h
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/SAnimationInfo.cpp
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/SAnimationInfoSaveLoad.cpp
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxAniKeys.h
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxAniBoneScale.h
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxAniBoneScale.cpp
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxAnimationManager.h
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxAnimationManagerSaveLoad.cpp
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxAnimationManagerSetSaveLoad.cpp
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxAnimationSaveLoad.cpp
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxSkinAniMan.h
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxSkinAniMan.cpp
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxSkinAniControl.h
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxSkinAniControl.cpp
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Common/CompByte.h
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Common/CompByte.cpp
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxSkinDefine.h
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxBoneCollector.h
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxBoneCollector.cpp
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxSkinMesh9_NORMAL.h
+          (Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/DxSkinMesh9_NORMAL.cpp
+          EOF
+          sed -i 's/^[[:space:]]*//' /tmp/b12_lfs_paths.txt
+
+          GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 \
+            https://github.com/matheomedrana/Ran-Online-EP7-Complete-Files.git /tmp/ep7backup
+          cd /tmp/ep7backup
+          BACKUP_HEAD=$(git rev-parse HEAD)
+          echo "Backup repo HEAD: $BACKUP_HEAD"
+          git lfs install --local
+          : > .git/info/attributes
+          while IFS= read -r p; do
+            [ -n "$p" ] || continue
+            printf '"%s" filter=lfs diff=lfs merge=lfs -text\n' "$p" >> .git/info/attributes
+          done < /tmp/b12_lfs_paths.txt
+
+          INCLUDES_JOINED=$(paste -sd, /tmp/b12_lfs_paths.txt)
+          git lfs pull --include="$INCLUDES_JOINED" --exclude=""
+
+          : > /tmp/b12_source_manifest.tsv
+          printf "backup_commit\t%s\n" "$BACKUP_HEAD" >> /tmp/b12_source_manifest.tsv
+          while IFS= read -r p; do
+            [ -n "$p" ] || continue
+            git show "HEAD:$p" > /tmp/b12_ptr.txt
+            expected_oid=$(sed -n 's/^oid sha256://p' /tmp/b12_ptr.txt)
+            expected_size=$(sed -n 's/^size //p' /tmp/b12_ptr.txt)
+            actual_size=$(stat -c %s "$p")
+            actual_sha=$(sha256sum "$p" | cut -d' ' -f1)
+            if [ "$actual_sha" != "$expected_oid" ] || [ "$actual_size" != "$expected_size" ]; then
+              echo "ERROR: LFS verification mismatch for $p ($actual_sha/$actual_size vs $expected_oid/$expected_size)" >&2
+              exit 1
+            fi
+            python3 - "$p" <<'PY'
+          import base64, json, sys
+          with open(sys.argv[1], 'rb') as f:
+              b64 = base64.b64encode(f.read()).decode('ascii')
+          with open('/tmp/b12_blob.json', 'w') as out:
+              json.dump({'content': b64, 'encoding': 'base64'}, out)
+          PY
+            blob_sha=$(gh api --method POST "repos/$REPO/git/blobs" --input /tmp/b12_blob.json --jq .sha)
+            printf "%s\t%s\t%s\t%s\n" "$p" "$actual_sha" "$actual_size" "$blob_sha" >> /tmp/b12_source_manifest.tsv
+          done < /tmp/b12_lfs_paths.txt
+
+          python3 - <<'PY'
+          import json, os
+          text = open('/tmp/b12_source_manifest.tsv').read()
+          payload = {
+              'name': 'b12-engine-anim-sources',
+              'head_sha': os.environ['HEAD_SHA'],
+              'status': 'completed',
+              'conclusion': 'success',
+              'output': {
+                  'title': 'Phase 3J B12 verified EP7 engine animation sources',
+                  'summary': 'All 24 focused Lib_Engine animation/serialization files verified against LFS SHA-256 pointers (B17 adds DxSkinDefine.h, DxBoneCollector.*, DxSkinMesh9_NORMAL.*; the backup repo has no DxSkinMesh9_CPU.* — the CPU skinning path lives in DxSkinMesh9_NORMAL.* there).',
+                  'text': '```tsv\n' + text[:60000] + '\n```'
+              }
+          }
+          with open('/tmp/b12_check_sources.json', 'w') as f:
+              json.dump(payload, f)
+          PY
+          gh api --method POST "repos/$REPO/check-runs" --input /tmp/b12_check_sources.json --jq .id
+
+          # ------------------------------------------------------------------
+          # B17 runtime-semantics evidence: fingerprint the EP7-era runtime
+          # evaluation code that the mobile animation runtime must reproduce.
+          # Settles, from authentic source: the USE_ANI_QUATERNION build flag,
+          # what SAnimation::SetTime does for matrix-keyed tracks, what
+          # DxSkeleton::UpdateBones composes, and the CPU skinning palette.
+          # ------------------------------------------------------------------
+          cat > /tmp/b17_evidence.py <<'PYEOF'
+          import json, os, re
+          base = '/tmp/ep7backup/(Source Code) Ran Online Server Files and Developer Tools/Lib_Engine/Meshs/'
+          def read(name):
+              try:
+                  return open(base + name, 'r', encoding='cp949', errors='replace').read()
+              except FileNotFoundError:
+                  return ''
+          facts = {}
+          define = read('DxSkinDefine.h')
+          facts['USE_ANI_QUATERNION_defined'] = bool(re.search(r'^\s*#define\s+USE_ANI_QUATERNION', define, re.M))
+          facts['USE_ANI_QUATERNION_undefed'] = bool(re.search(r'^\s*#undef\s+USE_ANI_QUATERNION', define, re.M))
+          sani = read('SAnimation.cpp')
+          m = re.search(r'void SAnimation::SetTime\s*\([^)]*\)\s*\{(.*?)\n\}', sani, re.S)
+          if m:
+              body = m.group(1)
+              # Order of key-source branches inside SetTime.
+              facts['settime_matrix_first'] = body.find('m_pMatrixKeys') != -1 and body.find('m_pMatrixKeys') < body.find('m_pQuatPosKeys')
+              facts['settime_writes_matrot_only_for_matrix'] = 'SetMatrix' in body
+              # Does the matrix branch also touch m_pQuatPosCUR? (whole-body check)
+              facts['settime_matrix_branch_touches_sqt'] = 'm_pQuatPosCUR' in body
+          bone = read('DxBoneCollector.cpp')
+          facts['updatebones_blending_lerp'] = 'USE_ANI_BLENDING' in bone and 'D3DXQuaternionSlerp' in bone
+          facts['updatebones_mix_add'] = 'USE_ANI_ADD' in bone and 'm_vQuatMIX' in bone
+          facts['updatebones_scale_rows_multiplied'] = bone.count('m_vScale') >= 3 and 'm_fScale' in bone
+          facts['resetbone_cur_prev_to_orig'] = 'm_pQuatPosCUR = m_pQuatPosORIG' in bone and 'm_pQuatPosPREV = m_pQuatPosORIG' in bone
+          skin = read('DxSkinMesh9_NORMAL.cpp')
+          facts['cpu_skin_palette_offset_times_bone'] = 'pBoneOffsetMatrices' in skin and 'ppBoneMatrixPtrs' in skin
+          summary_lines = ''.join('%s: %s\n' % (k, v) for k, v in sorted(facts.items()))
+          payload = {
+              'name': 'b17-runtime-semantics-evidence',
+              'head_sha': os.environ['HEAD_SHA'],
+              'status': 'completed',
+              'conclusion': 'success',
+              'output': {
+                  'title': 'Phase 3J B17 authentic runtime-semantics evidence',
+                  'summary': ('EP7-era runtime fingerprint from verified LFS sources: '
+                              'USE_ANI_QUATERNION defined=%s; SetTime matrix branch writes matRot (SQT untouched)=%s; '
+                              'UpdateBones blending/mix/scale path present=%s/%s/%s.' % (
+                                  facts.get('USE_ANI_QUATERNION_defined'),
+                                  facts.get('settime_writes_matrot_only_for_matrix'),
+                                  facts.get('updatebones_blending_lerp'),
+                                  facts.get('updatebones_mix_add'),
+                                  facts.get('updatebones_scale_rows_multiplied'))),
+                  'text': '```\n' + summary_lines[:60000] + '\n```\n\n```cpp\n' + (m.group(0)[:4000] if m else '') + '\n```'
+          }
+          }
+          with open('/tmp/b17_check_evidence.json', 'w') as f:
+              json.dump(payload, f)
+          PYEOF
+          python3 /tmp/b17_evidence.py
+          gh api --method POST "repos/$REPO/check-runs" --input /tmp/b17_check_evidence.json --jq .id
+
+  inspect-authentic-anim-containers:
+    name: Inspect authentic ran-ep7-full-v1 animation containers
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+
+      - name: Run inspector unit & sanitizer tests (ASan + UBSan + LSan)
+        run: |
+          bash RANMobile/Tests/run_ep7_animation_inspector_tests.sh
+
+      - name: Build standalone inspect_ep7_animation_containers tool
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -O2 \
+            RANMobile/Data/Importer/EP7Animation.cpp \
+            RANMobile/Data/Importer/EP7RccArchive.cpp \
+            RANMobile/Data/Importer/EP7Skeleton.cpp \
+            RANMobile/Data/Importer/EP7XFile.cpp \
+            RANMobile/Tools/inspect_ep7_animation_containers.cpp \
+            -o inspect_ep7_animation_containers
+
+      - name: Download & extract authentic EP7 client release (ran-ep7-full-v1)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p external/ep7_release/original external/ep7_release/client_original
+          gh release download ran-ep7-full-v1 \
+            --repo famoh01/ran-online-ep7 \
+            --pattern "RAN-EP7-Client-TH.zip.part*" \
+            --dir external/ep7_release/original
+          sha256sum external/ep7_release/original/RAN-EP7-Client-TH.zip.part* | tee b12_archive_hashes.txt
+          cat external/ep7_release/original/RAN-EP7-Client-TH.zip.part00 \
+              external/ep7_release/original/RAN-EP7-Client-TH.zip.part01 \
+              > external/ep7_release/original/RAN-EP7-Client-TH.zip
+          sha256sum external/ep7_release/original/RAN-EP7-Client-TH.zip | tee -a b12_archive_hashes.txt
+          unzip -q -o external/ep7_release/original/RAN-EP7-Client-TH.zip -d external/ep7_release/client_original
+          find external/ep7_release/client_original -iname "*.rcc" -exec sha256sum {} + | sort | tee -a b12_archive_hashes.txt
+
+      - name: Run authentic animation container survey & publish verified report blobs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          ./inspect_ep7_animation_containers external/ep7_release/client_original \
+            --json b12_anim_survey.json \
+            --samples-tsv b12_samples.tsv | tee b12_anim_survey.txt
+
+          publish_blob() {
+            python3 - "$1" <<'PY'
+          import base64, json, sys
+          with open(sys.argv[1], 'rb') as f:
+              b64 = base64.b64encode(f.read()).decode('ascii')
+          with open('/tmp/b12_pub.json', 'w') as out:
+              json.dump({'content': b64, 'encoding': 'base64'}, out)
+          PY
+            gh api --method POST "repos/$REPO/git/blobs" --input /tmp/b12_pub.json --jq .sha
+          }
+
+          JSON_BLOB=$(publish_blob b12_anim_survey.json)
+          TXT_BLOB=$(publish_blob b12_anim_survey.txt)
+          JSON_SHA256=$(sha256sum b12_anim_survey.json | cut -d' ' -f1)
+          TXT_SHA256=$(sha256sum b12_anim_survey.txt | cut -d' ' -f1)
+
+          : > b12_published_samples.tsv
+          count=0
+          while IFS=$'\t' read -r rel sha sz ver bucket; do
+            [ -n "$rel" ] || continue
+            full="external/ep7_release/client_original/$rel"
+            if [ -f "$full" ] && [ "$sz" -le 300000 ] && [ "$count" -lt 40 ]; then
+              disk_sha=$(sha256sum "$full" | cut -d' ' -f1)
+              if [ "$disk_sha" != "$sha" ]; then
+                echo "ERROR: sample SHA mismatch for $rel" >&2
+                exit 1
+              fi
+              sblob=$(publish_blob "$full")
+              printf "%s\t%s\t%s\t%s\t%s\t%s\n" "$rel" "$sha" "$sz" "$ver" "$bucket" "$sblob" >> b12_published_samples.tsv
+              count=$((count + 1))
+            fi
+          done < b12_samples.tsv
+
+          python3 - "$JSON_BLOB" "$JSON_SHA256" "$TXT_BLOB" "$TXT_SHA256" <<'PY'
+          import json, os, sys
+          json_blob, json_sha, txt_blob, txt_sha = sys.argv[1:5]
+          arch = open('b12_archive_hashes.txt').read()
+          samps = open('b12_published_samples.tsv').read()
+          survey_txt = open('b12_anim_survey.txt').read()
+          body = (
+              f"b12_anim_survey.json: blob={json_blob} sha256={json_sha}\n"
+              f"b12_anim_survey.txt:  blob={txt_blob} sha256={txt_sha}\n\n"
+              f"=== Archive Hashes ===\n{arch}\n"
+              f"=== Published Compact Authentic Sample Blobs ===\n{samps}\n"
+              f"=== Survey Summary ===\n{survey_txt}\n"
+          )
+          payload = {
+              'name': 'b12-authentic-anim-survey',
+              'head_sha': os.environ['HEAD_SHA'],
+              'status': 'completed',
+              'conclusion': 'success',
+              'output': {
+                  'title': 'Phase 3J B12 authentic animation container survey',
+                  'summary': f'json_blob={json_blob} txt_blob={txt_blob}',
+                  'text': '```\n' + body[:60000] + '\n```'
+              }
+          }
+          with open('/tmp/b12_check_survey.json', 'w') as f:
+              json.dump(payload, f)
+          PY
+          gh api --method POST "repos/$REPO/check-runs" --input /tmp/b12_check_survey.json --jq .id
+
+      - name: Upload B12 investigation report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase3j-b12-animation-investigation
+          path: |
+            b12_archive_hashes.txt
+            b12_anim_survey.txt
+            b12_anim_survey.json
+            b12_samples.tsv
+            b12_published_samples.tsv

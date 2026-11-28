@@ -31,6 +31,7 @@
 #include "../../Data/Importer/EP7Skeleton.h"
 #include "../../Data/Importer/EP7SkinPiece.h"
 #include "../../Data/Importer/EP7SkinnedMesh.h"
+#include "../Animation/EP7SkinAniControl.h"
 #include "../Camera/MobileCamera.h"
 #include "../Renderer/MobileRenderer.h"
 
@@ -42,6 +43,13 @@ struct EP7CharacterPiece {
     EP7SkinnedMesh mesh;
     bool loaded = false;
     std::string error;
+
+    // B18: per-vertex GPU skinning streams (DxSkinMesh9_HLSL.cpp:95-106 parity),
+    // built once at load from the SkinWeights lists — renderer independent.
+    EP7GpuSkinStreams gpuStreams;
+    // Renderer handle of the uploaded static GPU mesh (0 = not uploaded).  Owned by
+    // the scene session: EP7CharacterScene::Clear releases every handle it created.
+    uint32_t gpuMeshHandle = 0;
 };
 
 // Everything shared by every instance of one .chf.
@@ -100,8 +108,10 @@ struct EP7CharacterInstance {
     float yawDegrees = 0.0f;
     float scale = 1.0f;
 
-    // Playback.
-    EP7AnimationPlayer player;
+    // Playback: the authentic DxSkinAniControl state machine (B17). Spawn registers
+    // every valid clip and plays DEFAULTANI (registry entry 0) exactly like the
+    // original does when it has no explicit selection yet.
+    EP7SkinAniControl aniControl;
     int32_t currentClip = -1;
 
     // Render state produced by EvaluatePose().
@@ -109,8 +119,22 @@ struct EP7CharacterInstance {
     std::vector<float> skinnedNormals;
     std::vector<uint32_t> pieceVertexOffsets;
 
+    // B17: persistent scratch buffers — the per-frame pose path must not allocate
+    // (engine-quality requirement); capacity is reused across frames.
+    std::vector<ep7math::Mat4> skinPaletteScratch;
+    std::vector<float> skinPosScratch;
+    std::vector<float> skinNormScratch;
+
+    // B18: per-piece palette snapshots (offset*combined, DxSkinMesh9_HLSL.cpp:220
+    // "mWorldMatrixArray" parity) captured during EvaluatePose and consumed by the
+    // GPU skinned draw. Capacity is reused across frames.
+    std::vector<std::vector<ep7math::Mat4>> piecePalettes;
+
     bool visible = true;
     bool poseValid = false;
+    // TRUE while a non-looping clip is playing and has reported its end
+    // (ANIMCONTNODE::FrameMove bEndAnim) — the gameplay layer re-selects on this.
+    bool animationEnded = false;
     // World-space AABB, from the authentic .chf bounding box when present.
     float boundsMin[3] = {0.0f, 0.0f, 0.0f};
     float boundsMax[3] = {0.0f, 0.0f, 0.0f};
@@ -151,6 +175,11 @@ public:
     bool Destroy(uint32_t instanceId);
     void Clear();
 
+    // B19: releases every GL object this scene created (mesh handles + texture
+    // cache) and resets the pieces' cached handles.  Called by the engine when
+    // the GPU context is lost and by Clear(); safe to call twice.
+    void ReleaseGpuResources();
+
     EP7CharacterInstance* Find(uint32_t instanceId);
     const std::vector<std::unique_ptr<EP7CharacterInstance>>& Instances() const { return m_instances; }
 
@@ -158,6 +187,14 @@ public:
     // name is not part of the character.
     bool PlayAnimation(uint32_t instanceId, const std::string& clipName);
     bool PlayAnimationIndex(uint32_t instanceId, int32_t clipIndex);
+
+    // B17: authentic type-based selection (DxSkinAniControl::SELECTANI(MType, SType,
+    // dwFlags, dwSelect)) and the DEFAULTANI / end-state helpers for the gameplay layer.
+    bool SelectAnimationByType(uint32_t instanceId, int32_t mainType, int32_t subType = 0, uint32_t select = 0);
+    void DefaultAnimation(uint32_t instanceId);
+    void DoShockMix(uint32_t instanceId);
+    // TRUE while a non-looping clip is playing and has reached its end window.
+    bool IsAnimationEnded(uint32_t instanceId) const;
 
     // Advances animation clocks and re-evaluates poses.
     void Update(float deltaSeconds);
@@ -186,6 +223,53 @@ public:
     // `outSkinMs` receives the measured skinning time for this character.
     static bool EvaluatePose(EP7CharacterInstance& instance, float* outSkinMs);
 
+    // ------------------------------------------------------------------
+    // B18: GPU skinning + texture binding integration.
+    //
+    // The renderer pointer must be set before GPU resources are requested
+    // (RANMobileEngine wires it at Initialize).  Uploaded mesh handles and
+    // decoded textures are scene-scoped caches; Clear() releases them.
+    //
+    // Authentic texture association (DxSkinPieceContainer.cpp:82
+    // SMATERIAL_PIECE::LoadTexture): the .cps material texture name is the
+    // binding key — TextureManager::LoadTexture(name) resolves it (with
+    // IsEncrypt: a ".mtf" name decrypts through CMemoryTexture) and caches by
+    // lowercase name.  The mobile resolver receives candidate names; the
+    // resolution ladder is: exact name -> stem + ".mtf" -> name + ".mtf".
+    // ------------------------------------------------------------------
+    using AssetResolver = bool (*)(void* userData, const std::string& name, std::vector<uint8_t>& outBytes);
+    void SetRenderer(MobileRenderer* renderer) { m_renderer = renderer; }
+    void SetTextureResolver(AssetResolver resolver, void* userData) {
+        m_textureResolver = resolver;
+        m_textureResolverData = userData;
+    }
+
+    // B19 (§5): subset/material mapping validation — resolves the B18 TODO.
+    // Authentic semantics (DxSkinMesh9_CPU.cpp:584-587): each attribute group
+    // ("subset") indexes the material array through its AttribId, not by position.
+    // Validates every subset of the piece: face range inside the index buffer and
+    // materialIndex inside the material array.  Mismatches are reported, never
+    // guessed or patched.
+    struct EP7SubsetValidation {
+        bool valid = false;
+        uint32_t subsetCount = 0;
+        uint32_t materialCount = 0;
+        std::string detail;   // empty when valid; first mismatch otherwise
+    };
+    bool ValidatePieceSubsets(const AssetPtr& asset, uint32_t slot, EP7SubsetValidation* out) const;
+
+    // Returns the renderer handle for the piece's static GPU mesh (0 = unsupported
+    // piece; the caller falls back to the B17 CPU path).  Uploads once per piece.
+    uint32_t EnsurePieceGpuHandle(const AssetPtr& asset, uint32_t slot);
+
+    // Returns the GL texture id for the piece's subset material (0 = untextured:
+    // missing/unresolvable texture names are never fabricated).
+    uint32_t GetPieceTextureId(const AssetPtr& asset, uint32_t slot, uint32_t subsetIndex);
+
+    // Palette snapshot (offset*combined, row-major floats) for the piece's GPU draw.
+    bool GetPiecePalette(const EP7CharacterInstance& instance, uint32_t slot,
+                         const float** outPtr, uint32_t* outCount) const;
+
 private:
 
     std::vector<std::unique_ptr<EP7CharacterInstance>> m_instances;
@@ -194,6 +278,15 @@ private:
     float m_lastFrameMs = 0.0f;
     float m_lastFps = 0.0f;
     std::string m_lastError;
+
+    MobileRenderer* m_renderer = nullptr;
+    AssetResolver m_textureResolver = nullptr;
+    void* m_textureResolverData = nullptr;
+    std::unordered_map<std::string, uint32_t> m_textureCache;  // lowercase name -> GL id
+    std::vector<uint32_t> m_uploadedGpuMeshes;                 // handles this scene created
+    std::vector<AssetPtr> m_assetRegistry;                     // B19: so ReleaseGpuResources can reset piece.gpuMeshHandle
+
+    uint32_t ResolveTextureLocked(const std::string& textureName);
 };
 
 }  // namespace RANMobile

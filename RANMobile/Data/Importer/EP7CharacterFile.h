@@ -30,6 +30,70 @@
 //   * each animation name is a fixed ACF_SZNAME (128) byte buffer,
 //   * the payload ends after the bounding box (no world-obj / height-radius fields).
 //
+// Version 0x0103+ (mobile-exported SkinCharData, Phase 3J B20)
+// ------------------------------------------------------------
+// The authentic EP7 character pack (skinobject.rcc) ships no 0x0100..0x0102
+// .chf at all.  CI census of its 243 .chf (run 46131351370): 0x0104 x33,
+// 0x0106 x83, 0x0107 x81, 0x0108 x3, 0x0200 x43.  Payload-head dumps prove the
+// newer files carry NO leading scale (the version DWORD is followed directly
+// by the piece count), then the same length-prefixed piece slots.  Tail dumps
+// of the four smallest examples (NPC_ark 0x0104/309 B, event_Athena
+// 0x0106/311 B, npc_police_1 0x0107/307 B, NPC_hangar 0x0108/319 B) were
+// reconstructed byte-exactly against this layout:
+//
+//   DWORD  pieceCount                 (per-file, observed 10..13, <= PIECE_SIZE)
+//   repeat pieceCount:
+//       BOOL   present
+//       if present: string pieceName (DWORD len+1 + bytes)   [unchanged encoding]
+//   string skeletonName                  (DWORD len+1 + bytes)
+//   DWORD  animationCount
+//   repeat animationCount: string animationName
+//   trailer block, total size selects the variant (all values LE):
+//       60 B: float scale;      DWORD fA=1;                     // 0x0104 sample
+//             float height; float radius; DWORD 0; DWORD 1;
+//             float vMax[3]; float vMin[3]; DWORD 1; DWORD 0; DWORD 0;
+//   The block shape is VALUE-ADAPTIVE (runs 46133690603..46147778604; both
+//   shapes attest under 0x0104 AND 0x0106+ — m_cos_wing04 vs NPC_ark):
+//     15 dwords (60 B): scale f32; DWORD Y; height f32; radius f32;
+//                       DWORD 0; DWORD 1; vMax[3]; vMin[3];
+//                       DWORD t0=1; DWORD t1=0; DWORD more=0
+//     16 dwords (64 B): as 60 B plus DWORD X immediately after Y
+//     0x0108: two extra flag DWORDs (1, 0) between vMin and the final run
+//   (72 B).  Y/X are raw (the TrickBoomLow class carries an arbitrary float
+//   12.5f in Y); the shape is picked by value: X-slot dword 0/1 selects the
+//   16-dword shape (a real height float never has bit pattern 0 or 1), an
+//   exact 60-B block forces the 15-dword shape.  The dword after [r] is a
+//   bone-attach COUNT: 0 in table-less files (then a constant 1 dword), >= 2
+//   switches count x records after which the same constant 1 dword precedes
+//   the box.  Record shape is version-gated: 0x0103/0x0104 = fixed 40-byte
+//   [3 floats][0][16-byte name field][strlen][15] (m_cos_wing04: 5 records,
+//   Bip01_Head/R_Thigh/L_Thigh/R_Calf/L_Calf, floats 0.7..1.2);
+//   0x0106+ = [3 floats][strlen][name bytes incl NUL] (sumon_ocmyeonsin: 7
+//   Bip01 bones).  Records are skipped positionally, not interpreted.
+//   The trailing [t0 t1 more] run maps naturally to hasWorldObj=1 /
+//   worldObj=0 in the 0x0102 field order, and more switches an opaque
+//   extension section on that runs to EOF (attested sizes: 8 B and 24 B
+//   minimal (0,0) markers, 120 B prop-geometry block in GBOX02, 200 B = 5 x
+//   40 B bone-attach records [3 floats][0][16-byte bone name][strlen][15] in
+//   m_cos_wing04).  The parser skips it positionally and records its size.
+//
+//   In every authentic sample height/vMax/vMin satisfy vMax == (radius, height,
+//   radius) and vMin == (-radius, 0, -radius) (the mobile exporter writes the
+//   SetRadiusHeight-derived box).  The parser fills these fields positionally
+//   and only sanity-checks the flag DWORDs as booleans (0/1); it does not
+//   hard-assert the geometry relation.
+//
+//   0x0105 is shipped by NO authentic pack and has no known layout -> still
+//   unsupported.  0x0103 is admitted with the same value-adaptive block:
+//   no authentic 0x0103 sample exists (the sibling DxSkinPieceContainer
+//   evolution 0x0102->0x0103 only made fixed arrays count-prefixed, which
+//   SkinCharData already is at 0x0102), so 0x0103 files are parsed with the
+//   0x0104-observed shape; a real 0x0103 file that diverges fails cleanly and
+//   surfaces in the verify-tool census.
+//
+//   0x0200 (43 files in skinobject.rcc, type block "default", high-entropy
+//   payload) is a different, still-undeciphered container -> unsupported.
+//
 // The .chf is only an index: the mesh geometry lives in the referenced `.cps` pieces,
 // each of which points at a `.x` skin mesh and a skeleton.  Animation clips are named by
 // the .chf and loaded from the separate animation container (.bin) + .cfg pair.
@@ -60,9 +124,16 @@ inline constexpr uint32_t kEP7MaxPath = 260;
 inline constexpr uint32_t kEP7AnimNameSize = 128;
 
 struct EP7CharacterFileInfo {
-    static constexpr uint32_t kVersion102 = 0x0102;
-    static constexpr uint32_t kVersion101 = 0x0101;
     static constexpr uint32_t kVersion100 = 0x0100;
+    static constexpr uint32_t kVersion101 = 0x0101;
+    static constexpr uint32_t kVersion102 = 0x0102;
+    // Mobile-exported SkinCharData versions (Phase 3J B20).  0x0105 has no
+    // authentic sample and no known layout -> deliberately no constant.
+    static constexpr uint32_t kVersion103 = 0x0103;
+    static constexpr uint32_t kVersion104 = 0x0104;
+    static constexpr uint32_t kVersion106 = 0x0106;
+    static constexpr uint32_t kVersion107 = 0x0107;
+    static constexpr uint32_t kVersion108 = 0x0108;
 
     uint32_t version = 0;
     float scale = 1.0f;
@@ -79,6 +150,10 @@ struct EP7CharacterFileInfo {
     float boundsMin[3] = {-7.0f, 0.0f, -7.0f};
     bool hasWorldObj = false;
     bool worldObj = false;
+    bool hasExtensionSections = false;  // 0x0103+: opaque tail after more==1
+    uint32_t extensionBytes = 0;        // size of that tail (skipped, not interpreted)
+    bool hasBoneAttachTable = false;    // 0x0103+: count dword >= 2 after [r]
+    uint32_t boneAttachCount = 0;       // records [3 floats][strlen][name], skipped
     bool hasHeightRadius = false;
     float height = 20.0f;   // default m_fHeight
     float radius = 7.0f;    // default m_fRadius
