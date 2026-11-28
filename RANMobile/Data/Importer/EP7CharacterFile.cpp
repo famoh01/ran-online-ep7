@@ -140,8 +140,23 @@ bool LoadVer0103Plus(ep7byte::Stream& s, EP7CharacterFileInfo& info, uint32_t ve
         for (uint32_t i = 0; i < boneCount; ++i) {
             float bx = 0.0f, by = 0.0f, bz = 0.0f;
             std::string boneName;
-            if (!s.ReadF32(bx) || !s.ReadF32(by) || !s.ReadF32(bz) ||
-                !s.ReadString(boneName, kMaxPieceName)) {
+            bool recordOk = false;
+            if (!s.ReadF32(bx) || !s.ReadF32(by) || !s.ReadF32(bz)) {
+                recordOk = false;
+            } else if (version <= EP7CharacterFileInfo::kVersion104) {
+                // m_cos_wing04 class (run 46157679279, window decoded
+                // byte-exact): [0 u32][16-byte name field][strlen u32][15 u32]
+                // -- a FIXED 40-byte stride; the name field holds the
+                // NUL-terminated name zero-padded to 16.
+                uint32_t pad0 = 0, strlenField = 0, fixedTail = 0;
+                recordOk = s.ReadU32(pad0) && s.ReadFixedString(16, boneName) &&
+                           s.ReadU32(strlenField) && s.ReadU32(fixedTail);
+            } else {
+                // sumon_ocmyeonsin class (run 46151830460): [strlen u32][name
+                // bytes incl NUL] -- the standard length-prefixed string.
+                recordOk = s.ReadString(boneName, kMaxPieceName);
+            }
+            if (!recordOk) {
                 // The offset lets the verify tool dump the table region of the
                 // authentic file so the record shape can be decoded from CI.
                 info.error = "truncated .chf bone table (table starts at " +

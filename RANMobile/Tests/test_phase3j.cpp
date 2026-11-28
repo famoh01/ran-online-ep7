@@ -1824,6 +1824,29 @@ void TestCharacterFileMobileV3() {
         J_CHECK(FloatBitsOf(info.boundsMin[0]) == 0xc0e00000u);
     }
 
+    // m_cos_wing04 class (0x0104): the bone-attach records THEMSELVES use a
+    // FIXED 40-byte wing shape [3 floats][0][16-byte name field][strlen][15]
+    // (0x0106+ uses [3 floats][strlen][name]).  Authentic decode, run
+    // 46157679279: 15-dword block, scale=1.0, raw Y=1, h=20, r=7, count=5,
+    // Bip01_Head/R_Thigh/L_Thigh/R_Calf/L_Calf floats 0.7..1.2, no extension.
+    // Two records here; exact floats and names.
+    {
+        ChfV3Fixture f;
+        f.version = 0x0104;
+        for (int i = 0; i < 13; ++i) f.pieces.push_back({false, ""});
+        f.skeleton = "b_m.X";
+        f.anims = {"a_m_00_stay.x"};
+        f.blockHex = "0000803f010000000000a0410000e040020000003333333f3333733f0000803f0000000042697030315f486561640000000000000b0000000f0000009a99993f3333733f0000803f0000000042697030315f525f54686967680000000e0000000f000000010000000000e0400000a0410000e0400000e0c0000000000000e0c0010000000000000000000000";
+        const RANMobile::EP7CharacterFileInfo info = RANMobile::EP7CharacterFileReader::Parse(BuildChfV3(f), false);
+        J_CHECK_MSG(info.valid, info.error);
+        J_CHECK(info.hasBoneAttachTable);
+        J_CHECK(info.boneAttachCount == 2);
+        J_CHECK(!info.hasExtensionSections);
+        J_CHECK(info.extensionBytes == 0);
+        J_CHECK(FloatBitsOf(info.height) == 0x41a00000u);  // 20
+        J_CHECK(FloatBitsOf(info.radius) == 0x40e00000u);  // 7
+    }
+
     // Bone-table negatives: count=2 pointed at the box bytes reads an
     // over-long name -> truncated reject; a huge count hits the sanity
     // limit.  count == 1 is not special-cased: it parses as the table-less

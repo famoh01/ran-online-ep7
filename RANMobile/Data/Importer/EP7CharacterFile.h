@@ -64,8 +64,12 @@
 //   16-dword shape (a real height float never has bit pattern 0 or 1), an
 //   exact 60-B block forces the 15-dword shape.  The dword after [r] is a
 //   bone-attach COUNT: 0 in table-less files (then a constant 1 dword), >= 2
-//   switches count x ([3 floats][strlen][name]) records (sumon_ocmyeonsin: 7
-//   Bip01 bones) after which the same constant 1 dword precedes the box.
+//   switches count x records after which the same constant 1 dword precedes
+//   the box.  Record shape is version-gated: 0x0103/0x0104 = fixed 40-byte
+//   [3 floats][0][16-byte name field][strlen][15] (m_cos_wing04: 5 records,
+//   Bip01_Head/R_Thigh/L_Thigh/R_Calf/L_Calf, floats 0.7..1.2);
+//   0x0106+ = [3 floats][strlen][name bytes incl NUL] (sumon_ocmyeonsin: 7
+//   Bip01 bones).  Records are skipped positionally, not interpreted.
 //   The trailing [t0 t1 more] run maps naturally to hasWorldObj=1 /
 //   worldObj=0 in the 0x0102 field order, and more switches an opaque
 //   extension section on that runs to EOF (attested sizes: 8 B and 24 B
