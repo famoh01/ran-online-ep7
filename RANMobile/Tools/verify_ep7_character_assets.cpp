@@ -248,9 +248,16 @@ struct ChfVersionExample {
     std::string name;
     size_t size = 0;
     std::string hexHead;  // payload head from file offset 132, hex
+    std::string hexTail;  // last 160 file bytes, hex
+    std::vector<uint8_t> full;  // kept only for the globally smallest example
 };
 std::map<uint32_t, int> g_chfUnsupportedVersions;
-std::map<uint32_t, std::vector<ChfVersionExample>> g_chfUnsupportedExamples;
+// One SMALLEST example per version: the tail (vs the head) reveals what
+// follows the piece slots -- fixed-width skeleton buffer (0x0100-style) vs
+// length-prefixed (0x0101-style), anim section, and any new trailing fields.
+std::map<uint32_t, ChfVersionExample> g_chfUnsupportedExamples;
+// The globally smallest unsupported file is dumped in full (chunks).
+std::pair<uint32_t, ChfVersionExample> g_chfSmallest{0, ChfVersionExample{}};
 
 }  // namespace
 
@@ -281,30 +288,37 @@ Outcome VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& b
             // unencoded; every working format classification proves that).
             if (info.error.find("unsupported .chf version") != std::string::npos) {
                 ++g_chfUnsupportedVersions[info.version];
-                auto& exs = g_chfUnsupportedExamples[info.version];
-                bool distinct = true;
-                for (const auto& e : exs) {
-                    if (e.size == bytes.size()) distinct = false;
-                }
-                if (exs.size() < 3 && distinct) {
-                    ChfVersionExample ex;
+                auto& ex = g_chfUnsupportedExamples[info.version];
+                if (ex.size == 0 || bytes.size() < ex.size) {
                     ex.name = path;
                     ex.size = bytes.size();
-                    // Payload head from file offset 132: version DWORD + the first
-                    // 188 payload bytes (scale / counts / piece slots / strings in
-                    // the 0x0100-0x0102 layouts) -- enough to align an unknown
-                    // version's fields against the known templates.
-                    const size_t payload = 132;
-                    const size_t take = std::min<size_t>(188, bytes.size() > payload ? bytes.size() - payload : 0);
-                    static const char* hexd = "0123456789abcdef";
-                    std::string hx;
-                    hx.reserve(take * 2);
-                    for (size_t i = 0; i < take; ++i) {
-                        hx.push_back(hexd[bytes[payload + i] >> 4]);
-                        hx.push_back(hexd[bytes[payload + i] & 0xF]);
+                    ex.full = bytes;  // replaced by smaller examples; freed on swap-out
+                    auto toHex = [](const uint8_t* d, size_t n) {
+                        static const char* hexd = "0123456789abcdef";
+                        std::string hx;
+                        hx.reserve(n * 2);
+                        for (size_t i = 0; i < n; ++i) {
+                            hx.push_back(hexd[d[i] >> 4]);
+                            hx.push_back(hexd[d[i] & 0xF]);
+                        }
+                        return hx;
+                    };
+                    // Head: payload from file offset 132 (version DWORD + first
+                    // 188 payload bytes) -- aligns an unknown version's leading
+                    // fields against the known 0x0100-0x0102 templates.
+                    const size_t take = std::min<size_t>(188, bytes.size() > 132 ? bytes.size() - 132 : 0);
+                    ex.hexHead = toHex(bytes.data() + 132, take);
+                    // Tail: the LAST 160 bytes of the file -- reveals the section
+                    // order after the piece slots (skeleton/anims/bbox) and any
+                    // fields the newer versions append.
+                    const size_t tailTake = std::min<size_t>(160, bytes.size());
+                    ex.hexTail = toHex(bytes.data() + bytes.size() - tailTake, tailTake);
+                    if (g_chfSmallest.second.size == 0 || bytes.size() < g_chfSmallest.second.size) {
+                        g_chfSmallest = {info.version, ex};
+                    } else {
+                        ex.full.clear();
+                        ex.full.shrink_to_fit();
                     }
-                    ex.hexHead = hx;
-                    exs.push_back(ex);
                 }
             }
         }
@@ -942,10 +956,32 @@ int main(int argc, char** argv) {
         for (const auto& [ver, count] : g_chfUnsupportedVersions) {
             std::printf("  chf-census: 0x%04X x%d\n", ver, count);
         }
-        for (const auto& [ver, exs] : g_chfUnsupportedExamples) {
-            for (const auto& ex : exs) {
-                std::printf("  chf-example: v0x%04X %s size=%zu\n", ver, ex.name.c_str(), ex.size);
-                std::printf("  chf-hex: v0x%04X %s\n", ver, ex.hexHead.c_str());
+        for (const auto& [ver, ex] : g_chfUnsupportedExamples) {
+            std::printf("  chf-tail: v0x%04X %s size=%zu tail=%s\n", ver, ex.name.c_str(),
+                        ex.size, ex.hexTail.c_str());
+            std::printf("  chf-hex: v0x%04X %s\n", ver, ex.hexHead.c_str());
+        }
+        if (g_chfSmallest.second.size != 0 && !g_chfSmallest.second.full.empty()) {
+            // Full dump of the globally smallest unsupported file: 188-byte
+            // chunk lines sized for the per-line annotation budget.
+            const auto& ex = g_chfSmallest.second;
+            std::printf("  chf-dump-file: v0x%04X %s size=%zu\n", g_chfSmallest.first,
+                        ex.name.c_str(), ex.size);
+            static const char* hexd = "0123456789abcdef";
+            const size_t chunk = 188;
+            size_t off = 0;
+            int idx = 0;
+            while (off < ex.full.size() && idx < 10) {
+                const size_t n = std::min(chunk, ex.full.size() - off);
+                std::string hx;
+                hx.reserve(n * 2);
+                for (size_t i = 0; i < n; ++i) {
+                    hx.push_back(hexd[ex.full[off + i] >> 4]);
+                    hx.push_back(hexd[ex.full[off + i] & 0xF]);
+                }
+                std::printf("  chf-dump: %d %s\n", idx, hx.c_str());
+                off += n;
+                ++idx;
             }
         }
     }
