@@ -1,0 +1,67 @@
+name: Fetch reference source (B21)
+
+# One-shot evidence fetch: the DxAttBone* classes (.abf / .abl loaders) exist
+# only in the complete-files repository, which stores every file in Git LFS.
+# Runners have git-lfs and unrestricted GitHub access, so they fetch the
+# reference sources and commit them to this branch under reference/ (the repo
+# already embeds the same original source tree under enginelib/).
+on:
+  workflow_dispatch: {}
+  push:
+    paths:
+      - ".github/workflows/fetch-reference-source.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Fetch AttBone reference source from complete-files repo (LFS)
+        run: |
+          set -e
+          export GIT_LFS_SKIP_SMUDGE=1
+          git clone --depth 1 https://github.com/matheomedrana/Ran-Online-EP7-Complete-Files.git /tmp/refs
+          cd /tmp/refs
+          git lfs pull --include="*Meshs/*"
+          git lfs pull --include="*RanClientLib/G-Logic/*"
+          echo "=== files referencing .abf / .abl ==="
+          grep -rl --include=*.cpp --include=*.h -E "\.ab(l|f)\b" Lib_Engine RanClientLib 2>/dev/null | head -20 || true
+          echo "=== fetched Meshs file sizes (AttBone + ani) ==="
+          ls -la "Lib_Engine/Meshs" 2>/dev/null | grep -iE "attbone|sanimation|skinani" || true
+
+      - name: Copy reference sources into the branch
+        run: |
+          set -e
+          mkdir -p reference/attbone reference/ranclient-glogic
+          SRC="/tmp/refs/(Source Code) Ran Online Server Files and Developer Tools"
+          cp "$SRC"/Lib_Engine/Meshs/DxAttBone*.cpp reference/attbone/ 2>/dev/null || true
+          cp "$SRC"/Lib_Engine/Meshs/DxAttBone*.h reference/attbone/ 2>/dev/null || true
+          cp "$SRC"/Lib_Engine/Meshs/SAnimation*.cpp reference/attbone/ 2>/dev/null || true
+          cp "$SRC"/Lib_Engine/Meshs/SAnimation*.h reference/attbone/ 2>/dev/null || true
+          cp "$SRC"/Lib_Engine/Meshs/SAnimationInfo*.cpp reference/attbone/ 2>/dev/null || true
+          cp "$SRC"/Lib_Engine/Meshs/SAnimationInfo*.h reference/attbone/ 2>/dev/null || true
+          for f in DxSkinCharData.cpp DxSkinCharData.h DxSkinAniControl.cpp DxSkinAniControl.h \
+                   DxSkinAniMan.cpp DxSkinAniMan.h DxSkinAniManSaveLoad.cpp DxBoneCollector.cpp DxBoneCollector.h; do
+            cp "$SRC/Lib_Engine/Meshs/$f" reference/attbone/ 2>/dev/null || true
+          done
+          # The .abf referencers in the client lib (attachment wiring).
+          for name in $(grep -rl --include=*.cpp --include=*.h -E "\.ab(l|f)\b" "$SRC/RanClientLib" 2>/dev/null | head -12 || true); do
+            cp "$name" reference/ranclient-glogic/ 2>/dev/null || true
+          done
+          ls -la reference/attbone reference/ranclient-glogic
+
+      - name: Commit reference sources
+        run: |
+          set -e
+          git config user.name "arena-agent"
+          git config user.email "arena-agent@users.noreply.github.com"
+          git add reference/
+          if git diff --cached --quiet; then
+            echo "no reference changes"
+            exit 0
+          fi
+          git commit -m "Phase 3J B21: fetch DxAttBone reference source (LFS, complete-files repo)"
+          git push origin HEAD:${{ github.ref_name }}

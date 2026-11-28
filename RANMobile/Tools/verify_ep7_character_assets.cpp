@@ -284,6 +284,59 @@ std::string NormalizeChfReason(const std::string& err) {
 std::map<std::string, ChfFailExample> g_chfFailExamples;
 std::pair<std::string, ChfFailExample> g_chfFailSmallest;
 
+// B21: same evidence technique for the three downstream-asset classes the
+// census flags -- version-rejected .cps (info.fileVersion recorded pre-gate),
+// failing .skt/.abf skeletons, and the 0x00000200 .bin container class.
+struct DownstreamExample {
+    std::string name;
+    size_t size = 0;
+    uint32_t version = 0;
+    std::string error;
+    std::string hexHead;   // first bytes (type block + version area)
+    std::string hexTail;   // last bytes (trailing structure)
+    std::vector<uint8_t> full;  // kept for the globally smallest example only
+};
+std::map<uint32_t, int> g_cpsUnsupportedVersions;
+std::map<uint32_t, DownstreamExample> g_cpsUnsupportedExamples;
+std::pair<uint32_t, DownstreamExample> g_cpsSmallest{0, DownstreamExample{}};
+std::map<std::string, int> g_skelFailReasons;
+std::map<std::string, DownstreamExample> g_skelFailExamples;
+std::pair<std::string, DownstreamExample> g_skelSmallest{"", DownstreamExample{}};
+std::map<uint32_t, int> g_binUnsupportedVersions;
+std::map<uint32_t, DownstreamExample> g_binUnsupportedExamples;
+std::pair<uint32_t, DownstreamExample> g_binSmallest{0, DownstreamExample{}};
+
+void RecordDownstreamExample(std::map<uint32_t, DownstreamExample>& byKey,
+                             std::pair<uint32_t, DownstreamExample>& smallest,
+                             uint32_t key, const std::string& path,
+                             const std::vector<uint8_t>& bytes, const std::string& error) {
+    DownstreamExample& ex = byKey[key];
+    if (ex.size == 0 || bytes.size() < ex.size) {
+        ex.name = path;
+        ex.size = bytes.size();
+        ex.version = key;
+        ex.error = error;
+        auto toHex = [](const uint8_t* d, size_t n) {
+            static const char* hexd = "0123456789abcdef";
+            std::string hx;
+            hx.reserve(n * 2);
+            for (size_t i = 0; i < n; ++i) {
+                hx.push_back(hexd[d[i] >> 4]);
+                hx.push_back(hexd[d[i] & 0xF]);
+            }
+            return hx;
+        };
+        const size_t headTake = std::min<size_t>(256, bytes.size());
+        ex.hexHead = toHex(bytes.data(), headTake);
+        const size_t tailTake = std::min<size_t>(96, bytes.size());
+        ex.hexTail = toHex(bytes.data() + bytes.size() - tailTake, tailTake);
+        ex.full = bytes;  // smallest example per key: dumped by the summary
+        if (smallest.first == key || smallest.second.size == 0 || bytes.size() < smallest.second.size) {
+            smallest = {key, ex};
+        }
+    }
+}
+
 }  // namespace
 
 // Verifies one asset buffer. `path` is only used for reporting (it may be
@@ -399,6 +452,13 @@ Outcome VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& b
                           info.skeletonFile.c_str(), info.materials.size(), info.traces.size());
             ReportOutcome("cps", path, Outcome::Pass, detail);
         } else {
+            // B21: version-rejected .cps feed the downstream census (the raw
+            // on-disk version is recorded pre-gate by the parser).
+            if (info.error.find("unsupported .cps version") == 0) {
+                RecordDownstreamExample(g_cpsUnsupportedExamples, g_cpsSmallest, info.fileVersion,
+                                        path, bytes, info.error);
+                ++g_cpsUnsupportedVersions[info.fileVersion];
+            }
             ReportOutcome("cps", path, Outcome::Fail, info.error);
         }
         return info.valid ? Outcome::Pass : Outcome::Fail;
@@ -414,6 +474,34 @@ Outcome VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& b
             std::snprintf(detail, sizeof(detail), "bones=%zu", skeleton.BoneCount());
             ReportOutcome("skeleton", path, Outcome::Pass, detail);
         } else {
+            // B21: the failure census keys on the base reason; heads show
+            // whether the payload is text .x, binary .x, or another container.
+            const size_t cut = skeleton.Error().find(":");
+            const std::string reason = cut == std::string::npos ? skeleton.Error() : skeleton.Error().substr(0, cut);
+            ++g_skelFailReasons[reason];
+            DownstreamExample& ex = g_skelFailExamples[reason];
+            if (ex.size == 0 || bytes.size() < ex.size) {
+                ex.name = path;
+                ex.size = bytes.size();
+                ex.error = skeleton.Error();
+                auto toHex = [](const uint8_t* d, size_t n) {
+                    static const char* hexd = "0123456789abcdef";
+                    std::string hx;
+                    hx.reserve(n * 2);
+                    for (size_t i = 0; i < n; ++i) {
+                        hx.push_back(hexd[d[i] >> 4]);
+                        hx.push_back(hexd[d[i] & 0xF]);
+                    }
+                    return hx;
+                };
+                const size_t headTake = std::min<size_t>(256, bytes.size());
+                ex.hexHead = toHex(bytes.data(), headTake);
+                const size_t tailTake = std::min<size_t>(96, bytes.size());
+                ex.hexTail = toHex(bytes.data() + bytes.size() - tailTake, tailTake);
+                if (g_skelSmallest.second.size == 0 || bytes.size() < g_skelSmallest.second.size) {
+                    g_skelSmallest = {reason, ex};
+                }
+            }
             ReportOutcome("skeleton", path, Outcome::Fail, skeleton.Error());
         }
         return ok ? Outcome::Pass : Outcome::Fail;
@@ -490,6 +578,11 @@ Outcome VerifySingleAsset(const std::string& path, const std::vector<uint8_t>& b
         // Use the parser's explicit version rejection, not a guessed byte signature.
         if (clip.error.rfind("unsupported animation container version ", 0) == 0) {
             ++counters.binUnsupported;
+            // B21: dump the type block + version area of the smallest example
+            // per version so the real container can be identified.
+            RecordDownstreamExample(g_binUnsupportedExamples, g_binSmallest, clip.version, path,
+                                    bytes, clip.error);
+            ++g_binUnsupportedVersions[clip.version];
             ReportOutcome("bin", path, Outcome::Unsupported, clip.error + diagnostic);
             return Outcome::Unsupported;
         }
@@ -1041,8 +1134,74 @@ int main(int argc, char** argv) {
         std::printf("\n(that category is untested against real data — not a pass)   \n");
     }
 
-    // Annotation budget: GitHub keeps the FIRST 10 warnings per step, so the
-    // highest-value evidence is printed FIRST and aggregated onto few lines.
+    // B21 downstream evidence: aggregated FIRST (highest value per line).
+    // .cps version rejects: one census line + the smallest example per
+    // version, head at offset 0 (type block + version area, 96 B).
+    if (!g_cpsUnsupportedVersions.empty()) {
+        std::printf("\ncps version census (raw on-disk versions the parser rejects):\n");
+        std::string agg;
+        for (const auto& [ver, count] : g_cpsUnsupportedVersions) {
+            if (!agg.empty()) agg += ";  ";
+            char piece[64];
+            std::snprintf(piece, sizeof(piece), "0x%04X x%d", ver, count);
+            agg += piece;
+        }
+        std::printf("  cps-census: %s\n", agg.c_str());
+        int heads = 0;
+        for (const auto& [ver, ex] : g_cpsUnsupportedExamples) {
+            if (heads >= 3) break;
+            std::printf("  cps-ex: v0x%04X %s size=%zu head=%s tail=%s\n", ver, ex.name.c_str(),
+                        ex.size, ex.hexHead.c_str(), ex.hexTail.c_str());
+            ++heads;
+        }
+        if (!g_cpsSmallest.second.full.empty()) {
+            DumpChfFile("cps-dump", g_cpsSmallest.first, g_cpsSmallest.second.name,
+                        g_cpsSmallest.second.size, g_cpsSmallest.second.full);
+        }
+    }
+    // .skt/.abf skeleton failures: reason census + smallest example per
+    // reason (head at offset 0: the 128-B type block + version).
+    if (!g_skelFailReasons.empty()) {
+        std::printf("\nskeleton failure census:\n");
+        std::string agg;
+        for (const auto& [reason, count] : g_skelFailReasons) {
+            if (!agg.empty()) agg += ";  ";
+            agg += reason + " x" + std::to_string(count);
+        }
+        std::printf("  skel-census: %s\n", agg.c_str());
+        int heads = 0;
+        for (const auto& [reason, ex] : g_skelFailExamples) {
+            if (heads >= 3) break;
+            std::printf("  skel-ex: %s | %s size=%zu head=%s tail=%s\n", reason.c_str(),
+                        ex.name.c_str(), ex.size, ex.hexHead.c_str(), ex.hexTail.c_str());
+            ++heads;
+        }
+        if (!g_skelSmallest.second.full.empty() && g_skelSmallest.second.size <= 4096) {
+            DumpChfFile("skel-dump", 0, g_skelSmallest.second.name, g_skelSmallest.second.size,
+                        g_skelSmallest.second.full);
+        }
+    }
+    // .bin unsupported versions: one census line + type-block heads.
+    if (!g_binUnsupportedVersions.empty()) {
+        std::printf("\nbin version census (unsupported containers):\n");
+        std::string agg;
+        for (const auto& [ver, count] : g_binUnsupportedVersions) {
+            if (!agg.empty()) agg += ";  ";
+            char piece[64];
+            std::snprintf(piece, sizeof(piece), "0x%08X x%d", ver, count);
+            agg += piece;
+        }
+        std::printf("  bin-census: %s\n", agg.c_str());
+        int heads = 0;
+        for (const auto& [ver, ex] : g_binUnsupportedExamples) {
+            if (heads >= 3) break;
+            std::printf("  bin-ex: v0x%08X %s size=%zu head=%s tail=%s\n", ver, ex.name.c_str(),
+                        ex.size, ex.hexHead.c_str(), ex.hexTail.c_str());
+            ++heads;
+        }
+    }
+    // Annotation budget: evidence beyond this point is legacy chf data (fully
+    // decoded in B20; dumps kept in the follow-up annotation step only).
     if (!g_chfFailCounts.empty()) {
         // Full dumps, prioritized: the 88/184/260-byte classes are decoded
         // (runs 46145908605 + 46147778604); what remains unknown are files
