@@ -521,7 +521,7 @@ RANMobileEngine render loop
        GetPiecePalette(instance, slot)     row-major floats (offset×combined, HLSL parity)
        GetPieceTextureId(asset, slot, s)   .cps name → .x subset name → ladder (.mtf → DecryptMTF
                                            → DecodeDDS / DecodeTGA → RGBA8 → GL texture, cached)
-       renderer->DrawGpuSkinnedMesh(...)   palette → shared 16 KB std140 UBO (256 mat4);
+       renderer->DrawGpuSkinnedMesh(...)   palette → shared 1024x1 RGBA32F texture (256 mat4; B19 live-GLES correction — std140 UBO demoted to default uniforms by some GLES3 stacks, exceeding GL_MAX_VERTEX_UNIFORM_VECTORS);
                                            glDrawElements at faceStart*3*4 byte offset; alphaBlend
                                            from FLAG_ALPHATEXTURE; textureId 0 → flat colour
        fallback: B17 CPU path (DrawSkinnedMesh with bounds-checked pieceVertexOffsets[slot])
@@ -538,3 +538,37 @@ Invariants:
 * **Authentic conventions, no invented approximations**: `D3DINDEXEDHLSLVS` (DxSkinMesh9.cpp:18),
   HLSL vertex declaration (DxSkinMesh9_HLSL.cpp:95-106), `lhtDir = normalize(0,1,-1)`,
   `SMATERIAL_PIECE::LoadTexture` name order, `MemoryTexture` `.mtf` transform.
+
+---
+
+## 2026-11-27 — Phase 3J B19: GPU verification harness & lifecycle (mobile runtime)
+
+Verification path (isolated from the game):
+
+```
+adb shell am start ... --es selftest gpu
+  native_bridge android_main     reads the intent extra once
+  InitEGL (surface ready)        engine.Initialize (or EnsureGpuContext after context loss)
+  RunGpuSelfTest(renderer, AAssetManager, authRoot, ppmPath)
+    env report -> compile/link evidence
+    TF capture (production VS vSkinnedPos/vNormal, RASTERIZER_DISCARD)
+        vs SkinVerticesCPU  (SYNTHETIC fixtures; tol 5e-4 / 5e-3)
+    pixel tests (flat / textured / alpha / subset offsets; NDC VP override)
+    lifecycle (invalid handle / palette 257 / face-range / double release)
+    authentic character (EP7 files from assets/ep7auth via the production loader,
+        scene, subset validation, GPU path; PPM screenshot + per-piece JSON)
+  writes gpu_selftest.json -> ANativeActivity_finish
+CI pulls the verdict via run-as and fails the job unless PASS.
+```
+
+Lifecycle invariants added in B19:
+* **Context loss**: bridge `TermEGL` → `RANMobileEngine::OnGpuContextLost()` (scene
+  `ReleaseGpuResources` resets every `piece.gpuMeshHandle`, renderer `ReleaseGlResources`
+  frees programs/VAO/palette-texture/meshes); re-entry `InitEGL` → `EnsureGpuContext(w,h)` rebuilds GL
+  objects; the scene re-uploads lazily (upload-once contract preserved per context).
+* **Subset/material**: every GPU piece draw is preceded by `ValidatePieceSubsets`; a mismatch
+  falls back to the B17 CPU path with a logged reason — the GPU path never draws an unvalidated
+  index range or an unresolvable material index.
+* **Sampling**: character textures are mipmap-complete and trilinear with `GL_REPEAT`
+  (authentic D3D9 default address mode); the font atlas stays LINEAR/no-mips (UI needs exact
+  atlas texel access — intentional divergence from the character path).

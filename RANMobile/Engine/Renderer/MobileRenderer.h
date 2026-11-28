@@ -213,8 +213,7 @@ private:
 
     // B18 GPU skinned pass state.
     uint32_t m_charGpuProgram = 0;
-    uint32_t m_gpuPaletteUBO = 0;   // shared std140 mat4[kMaxGpuBones] palette block
-    size_t m_gpuPaletteUBOBytes = 0;
+    uint32_t m_gpuPaletteTex = 0;   // 1024x1 RGBA32F palette texture (B19: replaces the std140 UBO — GL_MAX_VERTEX_UNIFORM_VECTORS demotion on some GLES3 stacks)
 #endif
 };
 

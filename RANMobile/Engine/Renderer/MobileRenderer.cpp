@@ -158,6 +158,13 @@ void main() {
 // mat3), |sum-1|>1e-4 weight renormalization, zero-weight-sum -> bind passthrough,
 // final normal normalization.
 // ---------------------------------------------------------------------------
+// B19 live-GLES correction: the emulator's GL translator demotes std140 UBO
+// arrays to default uniform arrays (driver: "Vertex shader active uniforms
+// exceed GL_MAX_VERTEX_UNIFORM_VECTORS (256)") so a 256-mat4 palette can never
+// fit.  Transport the palette as a 1024x1 RGBA32F texture instead: texel
+// x = bone*4+i holds column i of bone b's mat4, which reproduces the std140
+// memory layout (column-major, 16 floats per entry) bit-identically; texelFetch
+// supports dynamic indexing on every GLES3 stack.
 static const char* kCharGpuVertexShader = R"(#version 300 es
 precision highp float;
 layout(location = 0) in vec3 aPos;
@@ -165,9 +172,7 @@ layout(location = 1) in vec3 aNormal;
 layout(location = 2) in vec2 aUV;
 layout(location = 3) in vec4 aBoneIdx;
 layout(location = 4) in vec4 aBoneWt;
-layout(std140) uniform BonePaletteBlock {
-    mat4 uBonePalette[256];
-};
+uniform highp sampler2D uBonePalette;   // 1024x1 RGBA32F: column texels
 uniform mat4 uVP;
 out vec3 vNormal;
 out vec2 vUV;
@@ -180,7 +185,11 @@ void main() {
         float w = aBoneWt[i];
         if (w <= 0.0) continue;
         int bi = int(aBoneIdx[i] + 0.5);
-        mat4 m = uBonePalette[bi];
+        mat4 m = mat4(
+            texelFetch(uBonePalette, ivec2(bi * 4 + 0, 0), 0),
+            texelFetch(uBonePalette, ivec2(bi * 4 + 1, 0), 0),
+            texelFetch(uBonePalette, ivec2(bi * 4 + 2, 0), 0),
+            texelFetch(uBonePalette, ivec2(bi * 4 + 3, 0), 0));
         vec4 tp = m * vec4(aPos, 1.0);
         tp.xyz /= tp.w;                       // TransformCoord parity (affine: w==1)
         acc += w * tp;
@@ -403,24 +412,27 @@ bool MobileRenderer::Initialize(int width, int height) {
         }
     }
     if (m_charGpuProgram) {
-        GLint maxBlockSize = 0;
-        glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &maxBlockSize);
-        if (maxBlockSize < static_cast<GLint>(kMaxGpuBones * 64)) {
-            Logger::Error("MobileRenderer", "GL_MAX_UNIFORM_BLOCK_SIZE (" + std::to_string(maxBlockSize) +
-                          ") below the 16 KB palette requirement; GPU skinning will be skipped");
+        // Palette texture: 1024x1 RGBA32F (kMaxGpuBones*4 column texels).
+        GLint maxTextureSize = 0;
+        glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+        if (maxTextureSize < static_cast<GLint>(kMaxGpuBones * 4)) {
+            Logger::Error("MobileRenderer", "GL_MAX_TEXTURE_SIZE (" + std::to_string(maxTextureSize) +
+                          ") below the 1024-texel palette requirement; GPU skinning will be skipped");
         }
-        glGenBuffers(1, &m_gpuPaletteUBO);
-        m_gpuPaletteUBOBytes = kMaxGpuBones * 64;
-        glBindBuffer(GL_UNIFORM_BUFFER, m_gpuPaletteUBO);
-        glBufferData(GL_UNIFORM_BUFFER, static_cast<GLsizeiptr>(m_gpuPaletteUBOBytes), nullptr, GL_DYNAMIC_DRAW);
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
-        const GLuint blockIndex = glGetUniformBlockIndex(m_charGpuProgram, "BonePaletteBlock");
-        if (blockIndex != GL_INVALID_INDEX) {
-            glUniformBlockBinding(m_charGpuProgram, blockIndex, 0);
-        }
-        glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_gpuPaletteUBO);
+        glGenTextures(1, &m_gpuPaletteTex);
+        glBindTexture(GL_TEXTURE_2D, m_gpuPaletteTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, static_cast<GLsizei>(kMaxGpuBones * 4), 1, 0,
+                     GL_RGBA, GL_FLOAT, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glUseProgram(m_charGpuProgram);
+        glUniform1i(glGetUniformLocation(m_charGpuProgram, "uBonePalette"), 1);
+        glUseProgram(0);
         Logger::Info("MobileRenderer", "GPU skinning program ready (palette " +
-                     std::to_string(kMaxGpuBones) + " bones, " + std::to_string(maxBlockSize) + " B max block)");
+                     std::to_string(kMaxGpuBones) + " bones as 1024x1 RGBA32F texture, unit 1)");
     }
 #endif
 
@@ -468,7 +480,7 @@ void MobileRenderer::ReleaseGlResources() {
     m_gpuMeshCount = 0;
     m_nextGpuMeshHandle = 1;
 #ifdef __ANDROID__
-    if (m_gpuPaletteUBO) { glDeleteBuffers(1, &m_gpuPaletteUBO); m_gpuPaletteUBO = 0; }
+    if (m_gpuPaletteTex) { glDeleteTextures(1, &m_gpuPaletteTex); m_gpuPaletteTex = 0; }
     if (m_fontAtlasTex) { glDeleteTextures(1, &m_fontAtlasTex); m_fontAtlasTex = 0; }
     if (m_uiVBO) { glDeleteBuffers(1, &m_uiVBO); m_uiVBO = 0; }
     if (m_uiVAO) { glDeleteVertexArrays(1, &m_uiVAO); m_uiVAO = 0; }
@@ -1020,12 +1032,15 @@ bool MobileRenderer::DrawGpuSkinnedMesh(uint32_t handle,
     if (!m_initialized || !m_charGpuProgram) return false;
 
     // Palette upload (offset*combined, row-major — DxSkinMesh9_HLSL.cpp:220-229
-    // "mWorldMatrixArray" parity) into the shared uniform block; only the live
-    // entries are written, entries beyond paletteCount stay stale but are
-    // unreachable (the streams reference indices < mesh bone count = paletteCount).
-    glBindBuffer(GL_UNIFORM_BUFFER, m_gpuPaletteUBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, static_cast<GLsizeiptr>(paletteCount) * 64, paletteRowMajor);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    // "mWorldMatrixArray" parity) into the shared 1024x1 RGBA32F palette
+    // texture; only the live entries are written, entries beyond paletteCount
+    // stay stale but are unreachable (the streams reference indices < mesh bone
+    // count = paletteCount).  texel (b*4+i) = column i of bone b — identical to
+    // the std140 mat4 layout this replaced (B19 live-GLES correction).
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, m_gpuPaletteTex);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, static_cast<GLsizei>(paletteCount) * 4, 1,
+                    GL_RGBA, GL_FLOAT, paletteRowMajor);
 
     glUseProgram(m_charGpuProgram);
     glUniformMatrix4fv(glGetUniformLocation(m_charGpuProgram, "uVP"), 1, GL_FALSE, m_viewProj);

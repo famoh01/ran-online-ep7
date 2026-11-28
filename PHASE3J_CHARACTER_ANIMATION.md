@@ -684,7 +684,11 @@ explicitly labeled synthetic fixtures. NOT TESTED ON DEVICE.**
 3. **GLES3 GPU skinning** (`MobileRenderer`): one 64-byte-stride interleaved buffer per piece
    (pos3+normal3+uv2+boneIdx4+boneWt4 — the authentic HLSL declaration), static VBO/EBO uploaded
    once per piece; per-frame data is ONLY the palette (offset×combined, row-major floats) written
-   into a shared 16 KB UBO (`std140`, 256 mat4 = the ES 3.0 guaranteed minimum). The vertex shader
+   into a shared 1024x1 RGBA32F palette texture (B19 live-GLES correction - the emulator's GL
+   translator demotes std140 UBO arrays to default uniform arrays, driver error "Vertex shader
+   active uniforms exceed GL_MAX_VERTEX_UNIFORM_VECTORS (256)", so the B18 16 KB UBO could never
+   link there; texelFetch x = bone*4+i reproduces the std140 mat4 layout bit-identically, so the
+   skinning math is unchanged). The vertex shader
    reproduces `SkinVerticesCPU` semantics exactly: per-influence row-vector transform with w-divide,
    translation-dropped normals, zero-sum → bind passthrough, `|sum−1|>1e-4` → renormalize.
    `DrawGpuSkinnedMesh(handle, palette, count, textureId, color, alphaBlend, faceStart, faceCount)`
@@ -734,8 +738,8 @@ plus **ASan+UBSan+LSan clean**. B18 coverage:
 
 62 bones / 3,000 vertices × 4 pieces, `-O2`, headless (no GL):
 - `BuildGpuSkinStreams` (load-time, once per piece): 0.675 ms total ≈ **56 ns/vertex**.
-- `BuildBonePalette` (per frame): 0.0008 ms (62 bones); UBO payload **3,968 B/frame** of the
-  16 KB block.
+- `BuildBonePalette` (per frame): 0.0008 ms (62 bones); palette payload **3,968 B/frame** of the
+  64 KB texture (B19: palette transported as a 1024x1 RGBA32F texture).
 - `DrawGpuSkinnedMesh` CPU-side validation (headless; on device replaced by the real GL draw):
   0.006 µs/draw, 20,000/20,000 accepted.
 - Per-frame uploads: palette only (one `glBufferSubData` per draw ≤ 3,968 B) — no per-frame
@@ -755,7 +759,7 @@ against `external/ep7_release` when present.
 
 **NOT TESTED ON DEVICE.** No Android device or emulator execution exists for B18 (sandbox blocker
 B1). APK compile ≠ device proof. The GPU path requires an ES 3.0 context
-(`MAX_UNIFORM_BLOCK_SIZE ≥ 16 KB` is the ES 3.0 guarantee the design relies on); GLES2-only devices
+(`GL_MAX_TEXTURE_SIZE ≥ 1024` is the requirement the texture-palette transport relies on — met by every ES 3.0 device, which guarantees ≥ 2048); GLES2-only devices
 fall back to the B17 CPU path.
 
 ### 15.8 Explicit non-claims / documented divergences
@@ -788,3 +792,147 @@ fall back to the B17 CPU path.
 `Tools/verify_ep7_character_assets.cpp` (B18 evidence block), `.github/workflows/
 build-ranmobile-android.yml` (phase3j compile list + verifier tool compile list gained
 `EP7TextureDecoder.cpp` and the scene/renderer sources).
+
+---
+
+## 16. Phase 3J B19 — Live GLES3 GPU Verification, Subset/Material Semantics & Resource Lifecycle (`arena/00fd13f9-ran-online-ep7`)
+
+**Status: the B18 GPU path is now verified against a live GLES3 implementation (Android emulator,
+SwiftShader, via a CI-booted AVD running the selftest harness inside the debug APK), the B18
+subset→material assumption is resolved to the authentic AttribId semantics, the texture sampling
+state is corrected to the original's trilinear-mip/WRAP configuration, and three GPU-resource
+lifecycle defects are fixed. Physical-device testing remains NOT PERFORMED.**
+
+### 16.1 Sources inspected (verified before changing anything)
+
+| Question | Source file | Finding |
+|---|---|---|
+| Which material does a subset bind? | `DxSkinMesh9_CPU.cpp:584-587` | The draw loop iterates attribute groups and binds `pMaterialEx[pAttribTable[iAttrib].AttribId]` — the material index is the **AttribId of the attribute group**, not the group's position. Subsets may be out of order or share one material. |
+| Texture sampling state | `DxSkinMesh9_HLSL.cpp:324-325` (and `:486-487`, `:880-881`) | Skin draws set `D3DSAMP_MINFILTER = D3DTEXF_LINEAR` **and** `D3DSAMP_MIPFILTER = D3DTEXF_LINEAR` — trilinear over mipmaps. |
+| Mip generation | `TextureManager.cpp:212-217` | `D3DXCreateTextureFromFileInMemoryEx(..., MipLevels=D3DX_DEFAULT, ..., MipFilter=D3DX_FILTER_BOX|D3DX_FILTER_MIRROR, ...)` — a full mip chain is generated for every piece texture. |
+| Texture addressing | D3D9 defaults (no `SetSamplerState` for address modes found) | `D3DTADDRESS_WRAP` (U/V) — not CLAMP. |
+| `.cps` material array | `DxCharPart.cpp SetPart` | `SMATERIAL_PIECE[m_dwMaterialNum]` copies verbatim — the array is indexed by material id, confirming the AttribId-based lookup. |
+
+### 16.2 What was fixed (each with tests)
+
+1. **Subset→material semantics (B18 TODO resolved, §15.8 item closed).**
+   `EP7CharacterScene::GetPieceTextureId` now resolves the texture through
+   `mesh.subsets[subsetIndex].materialIndex` (the AttribId), falling back to the `.x`
+   MeshMaterialList name. New `ValidatePieceSubsets(asset, slot)` checks every subset's face
+   range against the index buffer and its materialIndex against both material arrays; the
+   engine render loop calls it before the GPU path and falls back to the B17 CPU path on
+   mismatch (logged, never guessed). Tests: out-of-order AttribIds resolve the correct `.cps`
+   material; materialIndex outside both arrays is rejected with a precise detail string; face
+   ranges outside the index buffer are rejected; out-of-range subset indices return 0.
+2. **Authentic texture sampling (§6).** `UploadRGBA8Texture` now generates mipmaps and samples
+   `GL_LINEAR_MIPMAP_LINEAR`/`GL_LINEAR` with `GL_REPEAT` wrap (GLES3 supports both on NPOT
+   textures), matching the D3DX mip chain + HLSL sampler states + D3D9 WRAP default. The font
+   atlas path (separate texture, LINEAR, no mips) is unchanged — documented intentionally.
+3. **Stale GPU handles after context loss (§7).** `EP7CharacterScene::ReleaseGpuResources` now
+   resets every registered piece's `gpuMeshHandle` (previously a rotation/restore re-entered the
+   render loop with handles whose GL objects no longer exist). The Android bridge calls
+   `RANMobileEngine::OnGpuContextLost()` on `APP_CMD_TERM_WINDOW` and `EnsureGpuContext()` on
+   re-entry, so the renderer rebuilds programs/VAO/palette-texture and the scene re-uploads lazily.
+4. **Headless GPU-registry leak (§7).** `MobileRenderer::Shutdown` freed the per-mesh
+   `GpuMeshGlState` heap objects only under `__ANDROID__`; the cleanup now runs on every build
+   via `MobileRenderer::ReleaseGlResources()` (headless builds delete the registry objects; GL
+   builds delete the GL objects too). Renderer reuse after release is preserved.
+5. **Alpha-flag indexing (§5 ride-along).** The engine loop read `info.materials[s]` for the
+   per-subset alpha flag with the same wrong positional assumption; it now uses
+   `subsets[s].materialIndex`.
+
+### 16.3 Live GLES3 verification harness (`GpuSelfTest`)
+
+`RANMobile/Engine/Renderer/GpuSelfTest.{h,cpp}` runs the following suite against the CURRENT GL
+context (launched inside the app via the intent extra `selftest=gpu`; headless builds return
+`SKIPPED` and never call GL):
+
+1. **Environment report**: `GL_RENDERER`/`GL_VERSION`/`GL_SHADING_LANGUAGE_VERSION`,
+   `MAX_UNIFORM_BLOCK_SIZE`, `MAX_TEXTURE_SIZE`.
+2. **Shader compile/link**: `GpuSkinProgramReady()` — the programs were compiled and linked by
+   the live driver inside `MobileRenderer::Initialize` (driver info-log diagnostics already
+   wired); the palette-transport requirement (GL_MAX_TEXTURE_SIZE >= 1024) is asserted.
+3. **CPU vs GPU skinning (transform feedback)**: the production vertex shader gains an inert
+   `out vec3 vSkinnedPos` capture point, declared for transform feedback at link time
+   (`vSkinnedPos`+`vNormal`, interleaved). The harness draws SYNTHETIC quad fixtures (bind pose
+   and an animated 90° pose through `BuildBonePalette`) with `GL_RASTERIZER_DISCARD`, captures
+   the skinned positions/normals from the SAME program that renders, and compares against
+   `SkinVerticesCPU` (tolerances 5e-4 position / 5e-3 normal — float32 vs float32, MAD rounding).
+   This validates bone transform order, offset×combined composition, weight blending, zero-weight
+   passthrough and w-division on real GPU execution.
+4. **Pixel-level rasterization**: flat-colour draw (also proves zero-weight passthrough),
+   2×2-texture draw (bilinear centre + exact texel), alpha blending (0.5 red over blue
+   background), and subset draw offsets (two subsets, red/green, per-half pixel checks) — all
+   with an NDC view-projection override (`SetViewProjectionOverride`, diagnostic) and expected
+   colours computed from the shader's own lighting constant (authentic `lhtDir` → lit=0.35 for
+   n·l≤0). Tolerance ≤10/255.
+5. **GL resource lifecycle**: invalid handle, palette-257 overflow and face-range OOB draws
+   rejected; double release safe; registry counts correct.
+6. **Authentic character render** (when EP7 files are bundled): loads one original `.chf`
+   through `EP7CharacterLoader` + the scene (textures via the production ladder), evaluates the
+   pose, validates subsets, uploads/draws every piece through the production GPU path, counts
+   resolved/missing textures, renders 256×256 and writes a PPM screenshot + per-piece stats
+   (subset/material counts, gpuHandle, palette size, validation verdict) into the verdict JSON.
+   SYNTHETIC fixtures in sections 3-4 are labeled SYNTHETIC; section 6 uses only original
+   client files — nothing is fabricated.
+
+The verdict is written to `<internalDataPath>/gpu_selftest.json` (+ PPM) by
+`native_bridge.cpp`, which then finishes the activity — the normal game path is untouched.
+
+### 16.4 Android emulator verification (CI)
+
+New workflow job `android-emulator-gpu-verification` (ubuntu-latest):
+
+- downloads the original EP7 client release (`ran-ep7-full-v1`), runs
+  `verify_ep7_character_assets --bundle-plan` to extract ONE authentic character's dependency
+  set (chf + cps + x + textures + manifest) from the packs,
+- copies the set into the APK assets (`assets/ep7auth/`), builds the debug APK (arm64-v8a +
+  **x86_64** — the second ABI exists so the emulator can install it),
+- boots an x86_64 AVD (API 30) with `-gpu swiftshader_indirect` under KVM — a real Android GLES3
+  stack — installs the APK, starts the activity with `--es selftest gpu`,
+- polls the verdict JSON via `run-as cat`, records renderer/version/verdict in the step summary,
+  uploads JSON + PPM + logcat as the `android-emulator-gpu-selftest` artifact, and fails the job
+  unless the harness verdict is PASS.
+
+**Device classification (honest):** SwiftShader-in-emulator is a REAL GLES3 implementation and a
+real Android runtime — but it is an EMULATOR with a software GPU. This is NOT a physical-device
+test: **NOT TESTED ON DEVICE** remains true for B19. CI compile of an APK was never treated as
+rendering proof; the emulator harness is.
+
+### 16.5 Tests (§9/§11)
+
+- `test_phase3j`: **5,846 checks, 0 failures** (B18: 5,821; +25 B19 checks) — subset semantics,
+  validation rejections, handle reset, double release, headless Shutdown leak fix — all with
+  ASan+UBSan+LSan clean (the Shutdown-leak fix is ASan-verified).
+- Verifier suite **3,757/0** + sanitizers; inspector suite **13,423/0 ×2** + sanitizers.
+- Full-engine compile: all 44 engine TUs `-Wall -Wextra -Werror` clean (headless).
+- Android-path compile: `MobileRenderer.cpp` / `GpuSelfTest.cpp` / `RANMobileEngine.cpp` /
+  `EP7CharacterScene.cpp` clean under `-D__ANDROID__` against a GLES3 stub (extended with
+  transform-feedback/TF-buffer/`glReadPixels` declarations). `native_bridge.cpp` is compiled by
+  the CI gradle/NDK build (headless cannot provide the full Android header set — documented).
+
+### 16.6 Explicit non-claims / remaining work
+
+- **NOT TESTED ON DEVICE.** The emulator harness is real GLES3 execution but software-rendered
+  (SwiftShader); no physical device or emulator-with-hardware-GPU run exists.
+- GPU-vs-CPU skinning equivalence is verified on small SYNTHETIC fixtures plus the authentic
+  character render; the authentic character's CPU/GPU vertex-level comparison happens through
+  the same transform-feedback path only when its fixtures are used (the authentic render itself
+  is verified at pixel-count/statistics level, not per-vertex).
+- The B18 "glGetUniformLocation per draw" inefficiency remains (documented, non-blocking).
+- Context-loss handling covers window loss/restore via the bridge; EGL context-lost callbacks
+  (`eglMakeCurrent` returning EGL_CONTEXT_LOST mid-frame) are not separately handled — the
+  term/init cycle is the supported path.
+- If the emulator job fails for infrastructure reasons (AVD download/boot), the job is red and
+  the evidence gap is reported — it is never treated as a rendering PASS.
+
+### 16.7 Files changed (B19)
+
+`RANMobile/Engine/Renderer/GpuSelfTest.{h,cpp}` (new harness), `MobileRenderer.{h,cpp}`
+(TF capture point, ReleaseGlResources, authentic sampling, VP override, source accessors),
+`Engine/Scene/EP7CharacterScene.{h,cpp}` (subset validation, AttribId resolution, handle reset),
+`Engine/Core/RANMobileEngine.{h,cpp}` (OnGpuContextLost/EnsureGpuContext),
+`Android/native_bridge.cpp` (selftest mode + context-loss wiring),
+`Android/app/build.gradle` (x86_64 ABI), `CMakeLists.txt` (harness in sources),
+`Tests/test_phase3j.cpp` (+25 checks), `Tools/verify_ep7_character_assets.cpp` (--bundle-plan),
+`.github/workflows/build-ranmobile-android.yml` (emulator job).

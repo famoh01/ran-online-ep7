@@ -250,9 +250,9 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
                      ready ? "GPU skin program linked on live GL (renderer Initialize)"
                            : "GPU skin program failed to compile/link; driver: " +
                                  (driverLog.empty() ? std::string("<no info log>") : driverLog));
-        tests.Record("uniform_block_capacity", maxBlock >= 16384,
-                     "MAX_UNIFORM_BLOCK_SIZE=" + std::to_string(maxBlock) +
-                         " required>=16384 (256 mat4 palette)");
+        tests.Record("palette_texture_transport", maxTexSize >= 1024,
+                     "MAX_TEXTURE_SIZE=" + std::to_string(maxTexSize) +
+                         " required>=1024 (1024x1 RGBA32F palette, B19 live-GLES correction)");
         const char* vs = MobileRenderer::CharGpuVertexShaderSource();
         const char* fs = MobileRenderer::CharGpuFragmentShaderSource();
         tests.Record("shader_source_available", vs != nullptr && fs != nullptr,

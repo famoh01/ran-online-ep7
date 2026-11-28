@@ -932,7 +932,7 @@ are unchanged. The runtime integration itself is COMPLETE at the engine level on
 ## 2026-11-27 — Phase 3J B18: Authentic GPU Skinning, Bone Palette & Texture Binding
 
 **Resolved in code (pending device verification):**
-1. **GPU bone palette binding** — GLES3 std140 UBO (256 mat4 = 16 KB, ES 3.0 guaranteed
+1. **GPU bone palette binding** — GLES3 palette texture (1024x1 RGBA32F, 256 mat4; B19 live-GLES correction of the original std140 UBO design, which cannot link where a GLES3 stack demotes UBO arrays to default uniforms — GL_MAX_VERTEX_UNIFORM_VECTORS (256))
    `MAX_UNIFORM_BLOCK_SIZE`), palette = offset×combined (`DxSkinMesh9_HLSL.cpp:220-229` parity),
    row-major floats × column-major mat4 preserves the original v·M semantics; per-frame upload is
    palette-only. Pieces above 256 bones are skipped+logged, never approximated.
@@ -955,3 +955,30 @@ are unchanged. The runtime integration itself is COMPLETE at the engine level on
 8. **Live-GL verification gap:** unit tests validate the GPU path headlessly (same validation
    logic runs before the early-return stub); shader compile/link and actual rasterization have
    only the GLES3-stub compile as evidence until a device/emulator run happens.
+
+---
+
+## 2026-11-27 — Phase 3J B19: Live GLES3 GPU Verification & Integration Validation
+
+**Resolved in B19:**
+1. **Subset/material mapping (B18 TODO)** — resolved to the authentic AttribId semantics with
+   runtime validation (`ValidatePieceSubsets`); mismatches reject safely, never guessed.
+2. **Texture sampling divergence** — mipmaps + trilinear + WRAP now match the original
+   (`D3DXCreateTextureFromFileEx` + `SetSamplerState` states).
+3. **Stale GPU handles after EGL context loss** — released + rebuilt via
+   `OnGpuContextLost`/`EnsureGpuContext`; `ReleaseGpuResources` resets piece handles.
+4. **Headless GPU-registry leak** — `ReleaseGlResources` cleans on every build (ASan-verified).
+5. **Live GLES shader verification** — real GLES3 implementation exercised by the CI emulator
+   job (`GpuSelfTest` harness): compile/link, TF CPU/GPU equivalence, pixel rasterization,
+   lifecycle, authentic character render. Emulator SwiftShader evidence, not device evidence.
+
+**Still open:**
+6. **Physical-device verification — NOT TESTED ON DEVICE** (B1 sandbox; no hardware GPU). The
+   emulator job is software-rendered GLES3; a hardware-GPU device/emulator run remains future
+   work (the harness + CI job are reusable for it unchanged).
+7. **0x0113 `.cfg`** UNSUPPORTED; **`.bin` 0x0200 EMBYTECRYPT** NOT implemented (unchanged).
+8. **`SkinObject.rcc` pack gaps** (3,550 entries) — unchanged; diagnostic exit-1 expected.
+9. **GPU-path inefficiencies (documented):** `glGetUniformLocation` per draw; per-draw palette
+   rebind. Non-blocking.
+10. **EGL mid-frame context-lost callback** — not separately handled; term/init cycle is the
+    supported path (documented).

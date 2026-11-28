@@ -1296,7 +1296,7 @@ green. **Device: NOT TESTED ON DEVICE** (sandbox blocker B1). Details:
 **Shipped (branch tip, unmerged Draft PR #7):** the verified B17 CPU skinning pipeline gained its
 GLES3 twin built to the original's `D3DINDEXEDHLSLVS` convention (`DxSkinMesh9.cpp:18`):
 authentic 64-byte-stride vertex streams (`BuildGpuSkinStreams`, influence rules identical to
-`SkinVerticesCPU`), palette = offset×combined uploaded as row-major floats into a 16 KB std140 UBO
+`SkinVerticesCPU`), palette = offset×combined uploaded as row-major floats into a 1024x1 RGBA32F palette texture (B19 live-GLES correction: the std140 UBO could not link on the emulator's GL translator — active-uniform demotion; texelFetch reproduces the std140 layout bit-identically)
 (256 mat4, ES 3.0 guaranteed minimum), a vertex shader reproducing `SkinVerticesCPU` semantics
 (w-divide, translation-dropped normals, renormalize windows, zero-sum passthrough), per-subset
 draws via `faceStart` byte ranges without re-upload, and an authentic texture path
@@ -1307,8 +1307,28 @@ fragment shaders now use the authentic `lhtDir = normalize(0,1,-1)`.
 **Tests:** phase3j **5,821/0** (+89 B18 checks) incl. ASan+UBSan+LSan; verifier **3,757/0**;
 inspector **13,423/0 ×2**; full-engine compile (44 TUs) + Android-path GLES3-stub compile clean.
 **Perf (synthetic 62 bones / 4×3,000 verts, host, NOT device):** streams build 56 ns/vertex
-(load-time), palette 0.0008 ms/frame (3,968 B/frame UBO payload), headless draw validation
+(load-time), palette 0.0008 ms/frame (3,968 B/frame palette payload), headless draw validation
 0.006 µs/draw. **Compatibility:** no parser touched; 0x0113 / 0x0200 EMBYTECRYPT unchanged.
 **Device: NOT TESTED ON DEVICE** (sandbox blocker B1). Details:
 `PHASE3J_CHARACTER_ANIMATION.md` §15 (B18 report), `ANIMATION_CONTAINER_INVESTIGATION.md` §19,
 `TESTING_CHECKLIST.md` §22, `BLOCKERS.md` B18 update, `ARCHITECTURE.md` B18 section.
+
+---
+
+## 2026-11-27 — Phase 3J B19: Live GLES3 GPU Verification & Integration Validation (`arena/00fd13f9-ran-online-ep7`)
+
+**Shipped (branch tip, unmerged Draft PR #7):** live-GLES3 verification of the B18 GPU pipeline
+through a CI-booted Android emulator (x86_64 AVD + KVM + SwiftShader) running the new
+`GpuSelfTest` harness inside the debug APK — shader compile/link, transform-feedback CPU/GPU
+skinning equivalence from the production program, pixel-level texture/flat/alpha/subset-offset
+rasterization checks, GL lifecycle rejections, and an authentic-character render (EP7 files
+bundled via the verifier tool's new `--bundle-plan` mode) with per-piece subset/material stats
+and a PPM screenshot. Source-verified fixes: subset→material resolution now goes through the
+attribute group's **AttribId** (`DxSkinMesh9_CPU.cpp:584-587`) instead of the B18 positional
+assumption; texture sampling corrected to the original's trilinear-mip/WRAP state
+(`DxSkinMesh9_HLSL.cpp:324-325` + D3DX mip chain); stale GPU handles after EGL context loss now
+reset (bridge `OnGpuContextLost`/`EnsureGpuContext`); headless Shutdown no longer leaks the GPU
+mesh registry. **Tests:** phase3j 5,846/0 (+25) with ASan/UBSan/LSan; verifier 3,757/0;
+inspector 13,423/0 ×2; 44-TU engine compile clean. **Device: NOT TESTED ON DEVICE** (emulator
+with software GPU is not device proof). Details: `PHASE3J_CHARACTER_ANIMATION.md` §16,
+`TESTING_CHECKLIST.md` §23, `BLOCKERS.md` B19 update, `ARCHITECTURE.md` B19 section.
