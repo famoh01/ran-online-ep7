@@ -61,6 +61,19 @@ void main() {
 }
 )";
 
+// B19: last shader compile/link info log for the GPU skin program — surfaced
+// through GpuSkinProgramLog() so the self-test verdict JSON carries the exact
+// driver error (the CI evidence channel cannot read device logcat off-box).
+static std::string g_gpuSkinProgramLog;
+
+static std::string SanitizeLogLine(const char* log) {
+    std::string s(log ? log : "");
+    for (char& c : s) {
+        if (c == '\n' || c == '\r' || c == '\t') c = ' ';
+    }
+    return s;
+}
+
 static GLuint CompileShader(GLenum type, const char* src) {
     GLuint shader = glCreateShader(type);
     glShaderSource(shader, 1, &src, nullptr);
@@ -70,6 +83,7 @@ static GLuint CompileShader(GLenum type, const char* src) {
     if (!ok) {
         char log[512];
         glGetShaderInfoLog(shader, sizeof(log), nullptr, log);
+        g_gpuSkinProgramLog = SanitizeLogLine(log);
         Logger::Error("MobileRenderer", std::string("Shader compile error: ") + log);
         glDeleteShader(shader);
         return 0;
@@ -207,6 +221,13 @@ void main() {
     FragColor = vec4(lit, uColor.a);
 }
 )";
+#endif
+
+#ifndef __ANDROID__
+const std::string& MobileRenderer::GpuSkinProgramLog() {
+    static const std::string kEmpty;
+    return kEmpty;
+}
 #endif
 
 uint32_t MobileRenderer::DecodeUTF8(const std::string& text, size_t& index) {
@@ -371,6 +392,7 @@ bool MobileRenderer::Initialize(int width, int height) {
         if (!linked) {
             char log[512];
             glGetProgramInfoLog(m_charGpuProgram, sizeof(log), nullptr, log);
+            g_gpuSkinProgramLog = SanitizeLogLine(log);
             Logger::Error("MobileRenderer", std::string("GPU skin program link error: ") + log);
             glDeleteProgram(m_charGpuProgram);
             m_charGpuProgram = 0;

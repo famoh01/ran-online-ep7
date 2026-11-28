@@ -126,6 +126,9 @@ public:
         return false;
 #endif
     }
+    // B19: driver info log of the last GPU skin program compile/link attempt
+    // ("" when none).  Embedded in the self-test JSON for CI evidence.
+    static const std::string& GpuSkinProgramLog();
     static const char* CharGpuVertexShaderSource();
     static const char* CharGpuFragmentShaderSource();
 

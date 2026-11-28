@@ -241,9 +241,15 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
         // program's readiness is the compile/link evidence; the 16 KB uniform
         // block is the ES 3.0 guarantee the palette UBO relies on.
         const bool ready = renderer.GpuSkinProgramReady();
+        // B19 CI: embed the driver's compile/link info log so the verdict JSON
+        // (the only evidence channel readable off-box) carries the exact
+        // GLSL error instead of a bare boolean.
+        std::string driverLog = renderer.GpuSkinProgramLog();
+        if (driverLog.size() > 400) driverLog = driverLog.substr(0, 400);
         tests.Record("shader_compile_link", ready,
                      ready ? "GPU skin program linked on live GL (renderer Initialize)"
-                           : "GPU skin program failed to compile/link — see driver logs");
+                           : "GPU skin program failed to compile/link; driver: " +
+                                 (driverLog.empty() ? std::string("<no info log>") : driverLog));
         tests.Record("uniform_block_capacity", maxBlock >= 16384,
                      "MAX_UNIFORM_BLOCK_SIZE=" + std::to_string(maxBlock) +
                          " required>=16384 (256 mat4 palette)");
