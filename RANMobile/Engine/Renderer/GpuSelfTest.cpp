@@ -450,15 +450,31 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
         glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, kStride, reinterpret_cast<const void*>(48));
         glBindVertexArray(0);
 
-        // Probe render region: a 256x256 corner of the default EGL surface (the
-        // rasterization path used by the passing pixel tests — no FBO, no
-        // extensions).  Sentinel clear color = pure blue; a decoded value can
-        // never read as blue (blue channel 255 means hi+lo are 0 -> range min
-        // for BOTH components, which the CPU reference never produces for the
-        // fixtures used here).
+        // Probe render target: an offscreen RGBA8 FBO (ES 3.0 required-renderable
+        // format — no extensions).  B19 CI evidence: the on-screen EGL surface on
+        // this stack carries 5/6-bit channels (decoded probe values landed on
+        // 1/32 position and 2/255 normal grids — exactly the RGB565-class
+        // quantization), which destroys the 16-bit hi/lo split.  An RGBA8 FBO
+        // guarantees 8 bits per channel everywhere.  Sentinel clear color = pure
+        // blue; a decoded value can never read as blue (blue channel 255 means
+        // hi+lo are 0 -> range minimum for BOTH components, which the CPU
+        // reference never produces for the fixtures used here).
         const int W = 256;
         const int H = 256;
-        renderer.Resize(W, H);
+        GLuint probeTex = 0;
+        GLuint probeFbo = 0;
+        glGenTextures(1, &probeTex);
+        glBindTexture(GL_TEXTURE_2D, probeTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, W, H, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glGenFramebuffers(1, &probeFbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, probeFbo);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, probeTex, 0);
+        const bool fboComplete =
+            glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
         glViewport(0, 0, W, H);
         const GLboolean depthWas = glIsEnabled(GL_DEPTH_TEST);
         glDisable(GL_DEPTH_TEST);
@@ -555,17 +571,21 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
         glDeleteProgram(probeProg);
         renderer.ReleaseGpuSkinnedMesh(handle);
 
-        const bool match = warmed && probed > 0 && errProbe == GL_NO_ERROR &&
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);  // back to the default surface
+        glDeleteFramebuffers(1, &probeFbo);
+        glDeleteTextures(1, &probeTex);
+        const bool match = warmed && fboComplete && probed > 0 && errProbe == GL_NO_ERROR &&
                            errRead == GL_NO_ERROR &&
                            maxPosDiff <= 5e-4f && maxNrmDiff <= 5e-3f;
         char detail[224];
         std::snprintf(detail, sizeof(detail),
                       "maxPosDiff=%.2e maxNrmDiff=%.2e (tol 5e-4/5e-3) probed=%d/%u warm=%d "
-                      "err=w%uPr%uRd%u first=(%.4f,%.4f)%s",
+                      "err=w%uPr%uRd%u fbo=%d first=(%.4f,%.4f)%s",
                       maxPosDiff, maxNrmDiff, probed, static_cast<unsigned>(vertexCount),
                       static_cast<int>(warmed), static_cast<unsigned>(errWarm),
                       static_cast<unsigned>(errProbe), static_cast<unsigned>(errRead),
-                      firstA, firstB, probeLinked ? "" : probeLog.c_str());
+                      static_cast<int>(fboComplete), firstA, firstB,
+                      probeLinked ? "" : probeLog.c_str());
         tests.Record(label, match, detail);
         return match;
     };
