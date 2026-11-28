@@ -25,62 +25,32 @@ jobs:
 
       - name: Clone complete-files repo and resolve LFS pointers
         run: |
-          set -e
           export GIT_LFS_SKIP_SMUDGE=1
-          git clone --depth 1 https://github.com/matheomedrana/Ran-Online-EP7-Complete-Files.git /tmp/refs
+          git clone --depth 1 https://github.com/matheomedrana/Ran-Online-EP7-Complete-Files.git /tmp/refs || echo "::warning title=fetch clone failed::see logs"
           cd /tmp/refs
-          # Resolve LFS pointers with the batch API (patterns are unreliable).
-          FILES=$(find . -path "*Lib_Engine/Meshs*" \( -name "DxAttBone*" -o -name "SAnimation*" -o -name "DxSkinAni*" -o -name "DxBoneCollector*" -o -name "DxSkinCharData*" \) -type f | head -60)
-          FILES="$FILES
-          $(find . -path "*RanClientLib/G-Logic*" -type f | grep -iE "GLChar|GLCrow|GLCharacter" | head -14)"
-          echo "$FILES" | head -60
-          python3 - <<'PYEOF'
-          import base64, json, os, subprocess, sys
-          files = [l for l in open('/tmp/reflist.txt').read().splitlines() if l.strip()]
-          os.chdir('/tmp/refs')
-          ok, fail = 0, []
-          byoid = {}
-          # collect pointer info
-          for f in files:
-              try:
-                  raw = open(f, 'rb').read()
-              except Exception as e:
-                  fail.append((f, str(e))); continue
-              if not raw.startswith(b'version https://git-lfs'):
-                  ok += 1; continue
-              oid = size = None
-              for line in raw.decode('latin1').splitlines():
-                  if line.startswith('oid '): oid = line.split()[1]
-                  if line.startswith('size '): size = int(line.split()[1])
-              if oid: byoid.setdefault((oid, size), []).append(f)
-          if byoid:
-              body = json.dumps({'objects': [{'oid': o, 'size': s} for (o, s) in byoid],
-                                 'operation': 'download'})
-              out = subprocess.run(['curl', '-s', '-X', 'POST',
-                                    'https://github.com/matheomedrana/Ran-Online-EP7-Complete-Files.git/info/lfs/objects/batch',
-                                    '-H', 'Accept: application/vnd.git-lfs+json',
-                                    '-H', 'Content-Type: application/vnd.git-lfs+json',
-                                    '-d', body], capture_output=True, text=True)
-              data = json.loads(out.stdout or '{}')
-              for obj in data.get('objects', []):
-                  oid, size = obj.get('oid'), obj.get('size')
-                  href = (obj.get('actions') or {}).get('download', {}).get('href')
-                  if not href:
-                      for (o, s), fs in byoid.items():
-                          if o == oid: fail.extend((f, 'no href') for f in fs)
-                      continue
-                  blob = subprocess.run(['curl', '-sL', '--max-time', '60', href],
-                                        capture_output=True).stdout
-                  for (o, s), fs in byoid.items():
-                      if o == oid:
-                          for f in fs:
-                              open(f, 'wb').write(blob)
-                          ok += len(fs)
-          print(f'RESOLVED ok={ok} fail={len(fail)}')
-          for f, e in fail[:6]:
-              print(f'FAIL {f}: {e}')
-          sys.exit(0)
-          PYEOF
+          find . -path "*Lib_Engine/Meshs*" \( -name "DxAttBone*" -o -name "SAnimation*" -o -name "DxSkinAni*" -o -name "DxBoneCollector*" -o -name "DxSkinCharData*" \) -type f > /tmp/reflist.txt
+          find . -path "*RanClientLib/G-Logic*" -type f | grep -iE "GLChar|GLCrow|GLCharacter" | head -14 >> /tmp/reflist.txt
+          echo "::warning title=fetch candidates::$(wc -l < /tmp/reflist.txt) files"
+          resolved=0; failed=0
+          while IFS= read -r f; do
+            head -c 10 "$f" | grep -q "version ht" || { resolved=$((resolved+1)); continue; }
+            oid=$(grep -m1 "^oid " "$f" | awk '{print $2}')
+            size=$(grep -m1 "^size " "$f" | awk '{print $2}')
+            [ -z "$oid" ] && { failed=$((failed+1)); continue; }
+            printf '{"operation":"download","objects":[{"oid":"%s","size":%s}]}' "$oid" "$size" > /tmp/req.json
+            curl -s --max-time 30 -X POST \
+              "https://github.com/matheomedrana/Ran-Online-EP7-Complete-Files.git/info/lfs/objects/batch" \
+              -H "Accept: application/vnd.git-lfs+json" \
+              -H "Content-Type: application/vnd.git-lfs+json" \
+              -d @/tmp/req.json > /tmp/resp.json
+            href=$(sed -n 's/.*"href":"\([^"]*\)".*/\1/p' /tmp/resp.json | head -1)
+            if [ -n "$href" ]; then
+              curl -sL --max-time 60 -o "$f" "$href" && resolved=$((resolved+1)) || failed=$((failed+1))
+            else
+              failed=$((failed+1))
+            fi
+          done < /tmp/reflist.txt
+          echo "::warning title=fetch resolved::${resolved} resolved, ${failed} failed; sample: $(find . -name "DxAttBoneDataSaveLoad*" -type f | head -1 | xargs wc -c 2>/dev/null | awk '{print $1}') bytes"
 
       - name: Copy reference sources into the branch
         run: |
