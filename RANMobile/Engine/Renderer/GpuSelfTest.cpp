@@ -227,14 +227,21 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
     const char* glSl = reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION));
     GLint maxBlock = 0;
     GLint maxTexSize = 0;
+    GLint bitsR = 0, bitsG = 0, bitsB = 0, bitsA = 0;
     glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &maxBlock);
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
+    glGetIntegerv(GL_RED_BITS, &bitsR);
+    glGetIntegerv(GL_GREEN_BITS, &bitsG);
+    glGetIntegerv(GL_BLUE_BITS, &bitsB);
+    glGetIntegerv(GL_ALPHA_BITS, &bitsA);
     const std::string rendererStr = glRenderer ? glRenderer : "";
     const std::string versionStr = glVersion ? glVersion : "";
     const std::string slStr = glSl ? glSl : "";
     json += "    \"gl\": {\"renderer\": " + JStr(rendererStr) + ", \"version\": " + JStr(versionStr) +
             ", \"glsl\": " + JStr(slStr) + ", \"maxUniformBlockSize\": " + std::to_string(maxBlock) +
-            ", \"maxTextureSize\": " + std::to_string(maxTexSize) + "},\n";
+            ", \"maxTextureSize\": " + std::to_string(maxTexSize) +
+            ", \"surfaceBits\": [" + std::to_string(bitsR) + "," + std::to_string(bitsG) + "," +
+            std::to_string(bitsB) + "," + std::to_string(bitsA) + "]},\n";
     Logger::Info("GpuSelfTest", "GL renderer: " + rendererStr + " / " + versionStr);
 
     TestLog tests;
@@ -461,6 +468,7 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
         // reference never produces for the fixtures used here).
         const int W = 256;
         const int H = 256;
+        Logger::Info("GpuSelfTest", "probe: creating RGBA8 FBO");
         GLuint probeTex = 0;
         GLuint probeFbo = 0;
         glGenTextures(1, &probeTex);
@@ -475,6 +483,7 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, probeTex, 0);
         const bool fboComplete =
             glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+        Logger::Info("GpuSelfTest", "probe: FBO complete=1");
         glViewport(0, 0, W, H);
         const GLboolean depthWas = glIsEnabled(GL_DEPTH_TEST);
         glDisable(GL_DEPTH_TEST);
@@ -483,6 +492,7 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
         glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        Logger::Info("GpuSelfTest", "probe: program linked, palette bound");
         glUseProgram(probeProg);
         glUniform1i(glGetUniformLocation(probeProg, "uBonePalette"), 1);
         // Probe VP: place skinned positions into the safe middle of the clip
@@ -529,6 +539,9 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
             const int sy = static_cast<int>((ndcY + 1.0f) * 0.5f * static_cast<float>(H));
             if (sx < 0 || sx >= W || sy < 0 || sy >= H) continue;
             for (int pass = 0; pass < 3; ++pass) {
+                if (pass == 0) {
+                    Logger::Info("GpuSelfTest", "probe: vertex");
+                }
                 float rMin0 = -4.0f, rMax0 = 4.0f, rMin1 = -4.0f, rMax1 = 4.0f;
                 if (pass == 1) { rMin1 = -1.0f; rMax1 = 1.0f; }
                 else if (pass == 2) { rMin0 = -1.0f; rMax0 = 1.0f; rMin1 = -1.0f; rMax1 = 1.0f; }
@@ -571,6 +584,7 @@ GpuSelfTestResult RunGpuSelfTest(MobileRenderer& renderer, void* assetManager,
         glDeleteProgram(probeProg);
         renderer.ReleaseGpuSkinnedMesh(handle);
 
+        Logger::Info("GpuSelfTest", "probe: done");
         glBindFramebuffer(GL_FRAMEBUFFER, 0);  // back to the default surface
         glDeleteFramebuffers(1, &probeFbo);
         glDeleteTextures(1, &probeTex);
